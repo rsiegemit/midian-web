@@ -9,8 +9,10 @@
 agent is a `ToolCallingAgent(tools=[], model=…, name=<candidate name>, description=<self-description>)`.
 
 The name is the only identifier the model ever sees, and smolagents requires it to be a valid Python
-identifier (`MultiStepAgent._validate_name` → `is_valid_name`, `agents.py:364`). Our candidate names are
-`agent_%06d`, which already satisfy that, so no sanitizing/reverse map is needed.
+identifier (`MultiStepAgent._validate_name` → `is_valid_name`, `agents.py:364`) — the one framework of the
+four with a name constraint, so the worker runs candidate names through `workers/_wk.sanitize` and maps the
+pick back. Our names are `agent_%06d`, so today the map is the identity; the call is what keeps it correct
+if `_common` ever names agents differently.
 
 ## Where we intercept
 SPEC §6A recipe 8 says `step_callbacks` + `ActionStep.tool_calls[0].name`. In smolagents 1.26.0 step
@@ -43,8 +45,9 @@ The same name/description pair is also sent as an OpenAI tool schema (`models.ge
 model sees the roster twice: once in the system prompt, once in `tools`.
 
 ## Model client
-`OpenAIServerModel` (an alias of `OpenAIModel`, `models.py:1796`): `OpenAIServerModel(model_id, api_base,
-api_key, temperature=0.0)`. Built once per (model, base_url, api_key) and reused for the process.
+`OpenAIServerModel` (an alias of `OpenAIModel`, `models.py:1796`), built from `workers/_wk.openai_kwargs(req)`
+as `OpenAIServerModel(model_id, api_base, api_key, temperature=0.0)`. Constructed per request: it opens no
+connection, and caching it was duplicated plumbing for no measurable gain.
 
 ## Caveats
 - `max_steps=1` on the outer agent and on every managed agent, `tools=[]` everywhere. The only base tool

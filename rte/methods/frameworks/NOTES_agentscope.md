@@ -31,8 +31,8 @@ Answer with JSON {"agent": "<the name of the single best agent>"} and nothing el
 
 ## Model client
 `OpenAIChatModel(credential=OpenAICredential(api_key=…, base_url=…), model=…, stream=False,
-parameters=OpenAIChatModel.Parameters(temperature=0.0))`. `OpenAIChatModel.__call__` is a coroutine, so the
-worker holds one `asyncio` event loop for the life of the process and drives every request through it.
+parameters=OpenAIChatModel.Parameters(temperature=0.0))`. `OpenAIChatModel.__call__` is a coroutine, so every request goes
+through `workers/_wk.run_async`, which owns the single event loop shared by all framework workers.
 Messages must be `Msg(name=…, role=…, content=[TextBlock(type="text", text=…)])`; `content` is
 `list[ContentBlock]` and a bare `str` fails pydantic validation.
 

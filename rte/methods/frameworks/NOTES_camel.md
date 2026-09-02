@@ -56,8 +56,8 @@ Following is the information of the existing worker nodes. The format is <ID>:<d
 with regex rather than using the OpenAI `response_format` parameter.
 
 ## Model client
-`ModelFactory.create(model_platform=ModelPlatformType.VLLM, model_type=<model>, url=<base_url>,
-api_key=…, model_config_dict={"temperature": 0.0})`. `default_model=` is passed to `Workforce` as well as
+`ModelFactory.create(model_platform=ModelPlatformType.VLLM, …)` over `workers/_wk.openai_kwargs(req)`,
+with `model_config_dict={"temperature": 0.0}`. `default_model=` is passed to `Workforce` as well as
 explicit `coordinator_agent`/`task_agent`, otherwise CAMEL falls back to `ModelPlatformType.DEFAULT` and
 demands a real `OPENAI_API_KEY`.
 

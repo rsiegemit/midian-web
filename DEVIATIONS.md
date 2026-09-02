@@ -476,3 +476,28 @@
   transferring (1 of 6 live calls) → counted as a fallback (declared argmax among the top-k); per-method `stats` are now written to each
   result row (`method_stats`) so fallback rates are reported, not hidden. `fw_llamaindex`: the live model sometimes names several agents;
   the worker takes the first selection.
+  - Simplicity pass (lead directive): the three implemented workers now take their event loop, name
+    sanitizing and OpenAI-client kwargs from `workers/_wk.py`, and no longer cache the model client between
+    requests. Constructing an `OpenAIServerModel` / `ModelFactory` model / `OpenAIChatModel` opens no
+    connection, and the caching was ~8 duplicated lines per worker for no measurable gain (20 fetches
+    against the mock: smolagents 4.5s -> 4.4s, CAMEL 4.1s -> 4.1s, AgentScope 2.7s -> 2.6s).
+  - The four framework venvs now carry a `zzz_no_user_site.pth` that strips `~/.local/lib/python3.*` from
+    `sys.path`, per fw-a's finding that pip treats user-site packages as already satisfying requirements and
+    silently skips them. Re-running `pip install -r` afterwards installed nothing further and `pip check` is
+    clean in all three implemented envs, so the leak had hidden only the numpy already recorded above.
+- 2026-09-02 (llm client, MEASURED): Gemma-2 REJECTS the `system` role — every call returns
+  HTTP 400 `{'message': 'System role not supported'}`, so both gemma models (2 of the 7 rungs)
+  failed every generation until fixed. `configs/models.yaml` now carries `system_role: false` on
+  those entries and `rte.llm_client.for_model` folds the system turn into the first user turn for
+  such models, so no caller has to know. The memo key is computed from the ORIGINAL messages: it
+  is the same logical request either way. `population.pinned_cfg` inherits per-model capabilities
+  from the real ladder, because dropping them silently reintroduced the bug.
+- 2026-09-02 (structure, lead's simplicity directive): `rte/backends/llm.py` was split into
+  `families.py` (the `{generate, question, score}` adapter protocol, Reasoning Gym as ONE adapter,
+  the 16/64 family lists as data), `population.py` (ladder from configs/models.yaml + profile
+  drawing), `prompts.py` (messages in, answer out), `tools.py` (calculator/python), and
+  `rte/measure.py` (the population-building CLI). The model ladder is `configs/models.yaml`;
+  no model id appears anywhere else in this agent's files. `scripts/_serve_env.sh` holds the
+  serving setup both sbatch scripts source. `llm_supervisor` is now a 43-line subclass of
+  `frameworks/_common.FrameworkMethod`, reusing its retrieval, name mapping, ledger and message
+  accounting, and differing only in calling the supervisor directly instead of via a bridge.
