@@ -10,6 +10,16 @@ Backend protocol (duck-typed; see bernoulli.py for the reference):
 """
 from __future__ import annotations
 
+import numpy as np
+
+from ..stable_hash import stable_seed_32
+
+
+def noisy_declared(S, seed, sigma=0.05):
+    """Honest programmatic declaration D = clip(S + N(0, sigma)). Backends without an LLM use it for both sources."""
+    rng = np.random.default_rng(stable_seed_32(seed, "declared"))
+    return np.clip(S + rng.normal(0, sigma, S.shape), 0, 1).astype(np.float32)
+
 
 def make(name: str, **kw):
     if name == "bernoulli":

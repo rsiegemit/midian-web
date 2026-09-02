@@ -52,3 +52,35 @@
   - `sequential_halving` runs entirely at build (per family: rounds of halving, one `probe_many` call per
     round, budget `n*b` per family); `fetch` is an O(1) cached lookup charging `compare(1)`, matching "no
     online update; charge compare(1) at fetch."
+- 2026-09-02 (decentralized rivals, SPEC §6 "verified outcomes, decentralized"): a referral network cannot afford
+  `d` independent probes per edge at the shared `n*K*b` budget. Implemented faithfully to the budget instead: each agent
+  is probed exactly `b` times per family (total `n*K*b`, the full cap and no more) and each single outcome is observed
+  and reported by exactly ONE peer — a random one of the agent's `d` graph neighbours (`referral_network`) or a random
+  peer (`gossip_reputation_greedy`). Consequence: per-edge, per-family coverage is `b/d` (30% at b=3, d=10; 10% at b=1),
+  so most (node, neighbour, family) beliefs are empty. This is the price of decentralization at a fixed probe budget,
+  and it is the dominant driver of `referral_network`'s low success — not an implementation shortcut.
+- 2026-09-02 `referral_network`: exact d-regularity via a union of `d/2` random permutations (slot `2k` of `i` points at
+  `sigma_k(i)`, slot `2k+1` of `sigma_k(i)` points back at `i`), so the relation is symmetric with partner slot `s ^ 1`.
+  Odd `d` is rounded up to the next even number; self-loops and parallel edges occur with probability O(d^2/n) and are
+  left in place. Beliefs are stored float16 (`n*d*K*2` bytes: 320 MB at n=1e6, d=10, K=16; 1.3 GB at K=64); values are
+  means of <= b binary outcomes so half precision is exact enough. Unobserved (node, neighbour, family) triples read as
+  0.0, i.e. "no evidence" is ranked equal to "observed and failed".
+- 2026-09-02 `gossip_reputation_greedy`: EigenTrust runs with no pre-trusted seed (as SPEC §6 specifies), uniform start,
+  <= 50 power iterations; rows of peers who reported nothing are dangling and redistribute their mass uniformly rather
+  than making the matrix dense. With `collude=True` this is captured completely by the liar clique (liars report 1 for
+  liars), which is the known failure mode of seedless EigenTrust and shows up as misroute_to_liar = 1.00 at beta >= 0.25.
+  The T-Man similarity overlay is the standard gossip approximation of the exact O(n^2) c-nearest-in-est graph: start
+  from c random peers, then 3 rounds over a candidate set of own neighbours + one random neighbour's neighbours + 2
+  fresh random peers, keeping the c most cosine-similar; duplicate neighbours are possible and left in place.
+  Build holds all `n*K*b` reports in memory (int32 reporter + int8 value) because the trust weights used for
+  `est[a,f]` only exist after the trust vector is computed, and the probe budget forbids a second probing pass.
+- 2026-09-02 `flat_nsw_router`: hnswlib exposes no count of nodes visited during a search, so per query we charge
+  `hop(ceil(log2 n))` (textbook expected greedy-search depth in an NSW graph) and `compare(ef)` (candidate-list size).
+  Both are approximations of the true search cost, not measured quantities. The index uses hnswlib's inner-product
+  space over unnormalized `est` rows with a one-hot query, which is maximum-inner-product search rather than a metric
+  NN search; measured against the exact `argmax_a est[a,f]` on the same estimates it returned an agent tied at the
+  maximum est on 100% of queries at n=1e3 (b=3) and n=1e5 (b=1), so the ANN approximation is not what costs it quality.
+  At small `b` the est matrix has huge ties at the maximum (114 agents at n=1e3/b=3, ~30k at n=1e5/b=1), so which tied
+  agent is returned is arbitrary and the success number is correspondingly high-variance across seeds.
+- 2026-09-02 CPU deps (hnswlib, scipy) installed with `pip install --user` into `~/miniconda3/bin/python` per CONTRACT.md
+  via `scripts/03_install_deps.sh`; move to `$RTE_DATA/env/rte` once that env exists.

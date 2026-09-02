@@ -38,13 +38,10 @@ class AccessError(RuntimeError):
 # --------------------------------------------------------------------------- skill distributions (bernoulli)
 def sample_skill(dist: str, n: int, K: int, rng: np.random.Generator) -> np.ndarray:
     """S[n,K] in [0,1] for the bernoulli backend. Same shapes the llm backend realizes via profiles."""
+    from .backends._profiles import pick_k_per_agent, group_of
     if dist == "specialist":
-        S = rng.uniform(0.05, 0.30, size=(n, K))
-        k = min(3, K)
-        for a in range(n):
-            fam = rng.choice(K, size=k, replace=False)
-            S[a, fam] = rng.uniform(0.70, 0.95, size=k)
-        return S
+        good = pick_k_per_agent(n, K, 3, rng)
+        return np.where(good, rng.uniform(0.70, 0.95, size=(n, K)), rng.uniform(0.05, 0.30, size=(n, K)))
     if dist == "heavy_tail":
         return 0.05 + 0.90 * rng.beta(0.5, 3.0, size=(n, K))
     if dist == "bimodal":
@@ -53,10 +50,7 @@ def sample_skill(dist: str, n: int, K: int, rng: np.random.Generator) -> np.ndar
         S[good] = rng.uniform(0.75, 0.95, size=(int(good.sum()), K))
         return S
     if dist == "correlated":
-        G = 4
-        group_of_family = np.arange(K) % G
-        group_skill = rng.uniform(0.15, 0.90, size=(n, G))
-        S = group_skill[:, group_of_family] + rng.normal(0, 0.05, size=(n, K))
+        S = rng.uniform(0.15, 0.90, size=(n, 4))[:, group_of(K, 4)] + rng.normal(0, 0.05, size=(n, K))
         return np.clip(S, 0.0, 1.0)
     if dist == "iid_uniform":
         return rng.uniform(0.20, 0.90, size=(n, K))
