@@ -7,8 +7,8 @@ CHUNK = 1_000_000
 
 
 def probe_successes(view, b: int) -> np.ndarray:
-    """Probe every agent b times per family (n*K*b probes, chunked). Returns successes int64[n, K]."""
-    S = np.zeros((view.n, view.K), np.int64)
+    """Probe every agent b times per family (n*K*b probes, chunked). Returns successes float64[n, K]."""
+    S = np.zeros((view.n, view.K))                 # float: exact-estimate mocks return fractions
     for f in range(view.K):
         for lo in range(0, view.n, CHUNK):
             hi = min(view.n, lo + CHUNK)

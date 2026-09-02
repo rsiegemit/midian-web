@@ -84,3 +84,26 @@
   agent is returned is arbitrary and the success number is correspondingly high-variance across seeds.
 - 2026-09-02 CPU deps (hnswlib, scipy) installed with `pip install --user` into `~/miniconda3/bin/python` per CONTRACT.md
   via `scripts/03_install_deps.sh`; move to `$RTE_DATA/env/rte` once that env exists.
+- 2026-09-02 `disrouter_cascade`: when nobody in the cost-ordered cascade takes the task (only possible near tau=1,
+  or if every declarer under-reports for a family), SPEC/task offered two options ("return the last agent (or the
+  highest D[a,f]; document"). We return the highest declarer, not the literal last-in-cost-order agent: returning
+  the cheapest-declared (lowest-skill) agent whenever the whole population under-declares for a family would be a
+  silent quality cliff with no corresponding "somebody actually claimed capability" signal. `hops`/`messages` still
+  charge as if the task forwarded through the full order (n-1 forwards) before the fallback triggers.
+- 2026-09-02 `cluster_head_router`: naive k-means with k=ceil(n/r) centroids (r=10) is O(n*k) per assignment sweep —
+  at n=1e6 that is k=1e5 centroids, ~1e11 scored (point, centroid) pairs per sweep. Measured at n=1e5, k=1e4: ~9s per
+  sweep single-bucket, i.e. an extrapolated ~15 min/sweep at n=1e6 (~100x the flops), infeasible for `build`. Instead
+  `build` first splits agents into random buckets of `bucket=20_000` (plain `view.rng.permutation`, no distance
+  computation, so it doesn't bias which agents can cluster together beyond bucket membership) and runs the same
+  vectorized/chunked k-means independently within each bucket, targeting ceil(bucket_size/r) local clusters per
+  bucket. This bounds assignment cost to O(n * bucket / r) instead of O(n^2 / r), while every cluster still has size
+  ~r. `fetch`'s two-level lookup (compare over all k heads, then compare within the winning cluster's members) is
+  unchanged and still operates over the full global set of ~n/r clusters — only the *build*-time clustering search
+  space is bucketed. Consequence: cluster membership can only combine agents that landed in the same random bucket,
+  slightly less globally-optimal than exact flat k-means, but on i.i.d.-ish declared-skill rows (no adjacency
+  structure to exploit) this costs essentially nothing in practice.
+- 2026-09-02: report-channel lie "top-20% honest by j's observed outcomes" has two faithful readings and both exist: the scalar
+  `report()` decides ONLINE from what j has observed so far (sequential), the vectorized `report_many()` decides on the batch's
+  complete per-agent means. They agree on most reports (28/31 in the checker) and differ only where the ranking changes within a
+  batch. Every method at scale uses `report_many`; the scalar path exists for the spec's `report_channel` interface and tests.
+- 2026-09-02: `_est.probe_successes` accumulates in float64 (counts are exact either way) so exact-estimate correctness mocks work.
