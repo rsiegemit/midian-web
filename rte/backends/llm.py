@@ -15,6 +15,8 @@ from __future__ import annotations
 import json
 import os
 import sys
+import threading
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import numpy as np
@@ -50,6 +52,7 @@ class LLMBackend:
             POP_DIR / f"{dist}_n{self.n}_K{self.K}_seed{self.seed}"
         self._S = self._desc = None
         self._counts = {"executions": 0, "tool_calls": 0}
+        self._lock = threading.Lock()
         global _CURRENT
         _CURRENT = self
 
@@ -84,13 +87,14 @@ class LLMBackend:
             model, _h, _t, mt = self._sig(a, f)
             groups.setdefault((model, mt), []).append(i)
 
-        for (model, mt), idx in groups.items():
+        def run(group) -> None:
+            (model, mt), idx = group
             msgs = []
             for i in idx:
-                a, f, inst = items[i]
+                a, f, _ = items[i]
                 _m, hand, tool, _ = self._sig(a, f)
                 fam = self.families[f]
-                msgs.append(prompts.build(fam, families.question(fam, inst), hand, tool))
+                msgs.append(prompts.build(fam, families.question(fam, items[i][2]), hand, tool))
             # No caller-supplied keys anywhere: rte.llm_client hashes the full request, so two
             # agents with the same prompt still share one entry and a reworded prompt cannot
             # collide with a stale one.
@@ -98,19 +102,31 @@ class LLMBackend:
 
             follow = []                                     # one tool round for whoever asked
             for j, i in enumerate(idx):
-                a, f, inst = items[i]
+                a, f, _ = items[i]
                 tool = self._sig(a, f)[2]
                 call = prompts.find_tool_call(texts[j], tool)
                 if call is None:
                     out[i] = prompts.extract_answer(texts[j])
                     continue
-                self._counts["tool_calls"] += 1
+                with self._lock:
+                    self._counts["tool_calls"] += 1
                 follow.append((i, prompts.follow_up(msgs[j], texts[j], tools.RUN[tool](call))))
             if follow:
                 for (i, _), t in zip(follow, llm_client.complete_batch(
                         model, [m for _, m in follow], None, mt, self.concurrency)):
                     out[i] = prompts.extract_answer(t)
-        self._counts["executions"] += len(items)
+
+        # One thread per (model, budget) group, each keeping its own client-side concurrency: the
+        # groups hit DIFFERENT vLLM servers, so serialising them left most of the fleet idle and
+        # capped a measurement sweep at the slowest model's rate. Writes are to distinct `out`
+        # slots; only the shared counter needs the lock.
+        if len(groups) == 1:
+            run(next(iter(groups.items())))
+        else:
+            with ThreadPoolExecutor(max_workers=len(groups)) as ex:
+                list(ex.map(run, list(groups.items())))
+        with self._lock:
+            self._counts["executions"] += len(items)
         return out
 
     def _outcomes(self, items) -> np.ndarray:
@@ -141,8 +157,12 @@ class LLMBackend:
         S = np.zeros((self.n, self.K), dtype=np.float32)
         chunk = int(os.environ.get("RTE_MEASURE_AGENT_CHUNK", "64"))
         for f, fam in enumerate(self.families):
-            seeds = [int(stable_seed_32(self.seed, "measure", fam, r))
-                     for r in range(self.measure_probes)]
+            # NOT seeded by the population: S is a property of the prompt SIGNATURE, not of the
+            # population that happens to contain it. A fixed project-wide probe set means the
+            # ~86k measurement generations are produced ONCE and every population, at every grid
+            # seed and every n, is served from the memo. It also makes equal signatures get
+            # identical S, which is the honest reading of "measured once per population".
+            seeds = [int(stable_seed_32("measure", fam, r)) for r in range(self.measure_probes)]
             for lo in range(0, self.n, chunk):
                 agents = range(lo, min(self.n, lo + chunk))
                 reps = {a: (self.measure_probes_large if self.profiles[a]["model"] in self._large

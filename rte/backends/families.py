@@ -21,42 +21,55 @@ DEFAULT_SOURCE = "rg"
 # `propositional_logic` and `graph_color` are deliberately absent: in reasoning-gym 0.1.19 both
 # emit entries with answer=None and score their own gold answer 0.0, so no agent can ever be
 # right on them. scripts/probe_families.py re-checks every name below.
-FAMILIES_16 = ["basic_arithmetic", "chain_sum", "leg_counting", "word_sorting", "letter_counting",
-               "syllogism", "family_relationships", "gcd", "lcm", "prime_factorization",
-               "base_conversion", "caesar_cipher", "spell_backward", "number_sorting",
-               "bitwise_arithmetic", "simple_equations"]
+# leg_counting / caesar_cipher / base_conversion / bitwise_arithmetic / spell_backward / word_sorting
+# were demoted to the K=64 tail: measured <=0.20 on BOTH the 7B and the 14B, so they carry no signal
+# about which agent to route to (DEVIATIONS.md 2026-09-02). True/False families are avoided here on
+# purpose -- a chance-level responder floors at 0.50, which no weak agent can score below.
+FAMILIES_16 = ["basic_arithmetic", "chain_sum", "letter_counting", "syllogism",
+               "family_relationships", "gcd", "lcm", "prime_factorization", "number_sorting",
+               "simple_equations", "count_bits", "number_format", "time_intervals",
+               "word_sequence_reversal", "binary_alternation", "calendar_arithmetic"]
 FAMILIES_64 = FAMILIES_16 + [
-    "count_bits", "count_primes", "decimal_arithmetic", "decimal_chain_sum", "products",
-    "fraction_simplification", "number_format", "number_filtering", "number_sequence",
+    "leg_counting", "caesar_cipher", "base_conversion", "bitwise_arithmetic", "spell_backward",
+    "word_sorting", "count_primes", "decimal_arithmetic", "decimal_chain_sum", "products",
+    "fraction_simplification", "number_filtering", "number_sequence",
     "power_function", "polynomial_equations", "polynomial_multiplication", "complex_arithmetic",
-    "simple_geometry", "advanced_geometry", "time_intervals", "calendar_arithmetic",
+    "simple_geometry", "advanced_geometry", "palindrome_generation",
     "aiw", "knights_knaves", "coin_flip", "dice", "jugs", "quantum_lock", "circuit_logic",
-    "letter_jumble", "group_anagrams", "isomorphic_strings", "palindrome_generation",
-    "palindrome_partitioning", "word_sequence_reversal", "sentence_reordering", "ransom_note",
+    "letter_jumble", "group_anagrams", "isomorphic_strings",
+    "palindrome_partitioning", "sentence_reordering", "ransom_note",
     "string_insertion", "string_splitting", "string_manipulation", "string_synthesis",
-    "binary_alternation", "binary_matrix", "rotate_matrix", "spiral_matrix", "manipulate_matrix",
+    "binary_matrix", "rotate_matrix", "spiral_matrix", "manipulate_matrix",
     "pool_matrix", "rectangle_count", "largest_island", "shortest_path",
     "course_schedule", "tower_of_hanoi", "self_reference"]
 
 SEED_KEY = "_rte_instance"      # generate() stamps the seed so score() can rebuild the verifier
 
+# Per-family generator settings, passed straight to `create_dataset`. This is the difficulty knob:
+# at stock settings `basic_arithmetic` (up to 6 terms, 4 digits) scored 0.25 on the 7B and 0.10 on
+# the 14B, far below the 0.70-0.95 band SPEC §3 wants for a specialty family.
+PARAMS: dict[str, dict] = {
+    "basic_arithmetic": {"max_terms": 3, "max_digits": 2},
+    "chain_sum": {"max_terms": 3, "max_digits": 2},
+}
+
 
 @lru_cache(maxsize=8192)
-def _rg_dataset(name: str, seed: int):
+def _rg_dataset(name: str, seed: int, params: tuple = ()):
     from reasoning_gym.factory import create_dataset
-    return create_dataset(name, size=1, seed=seed)
+    return create_dataset(name, size=1, seed=seed, **dict(params))
 
 
 class ReasoningGym:
     """reasoning-gym adapter: the library seeds the problem from the dataset seed, so the
     instance seed IS the dataset seed and (family, instance) regenerates the identical problem."""
 
-    def __init__(self, name: str):
-        self.name = name
+    def __init__(self, name: str, **params):
+        self.name, self.params = name, tuple(sorted(params.items()))
 
     def generate(self, instance_seed: int) -> dict:
         seed = int(instance_seed) & 0x7FFFFFFF
-        return dict(_rg_dataset(self.name, seed)[0], **{SEED_KEY: seed})
+        return dict(_rg_dataset(self.name, seed, self.params)[0], **{SEED_KEY: seed})
 
     def question(self, entry: dict) -> str:
         return entry["question"]
@@ -65,7 +78,8 @@ class ReasoningGym:
         # Some verifiers parse the answer (prime_factorization calls int()): a malformed model
         # answer is a wrong answer, never a crash of the run.
         try:
-            return float(_rg_dataset(self.name, entry[SEED_KEY]).score_answer(answer=answer, entry=entry))
+            ds = _rg_dataset(self.name, entry[SEED_KEY], self.params)
+            return float(ds.score_answer(answer=answer, entry=entry))
         except Exception:                                       # noqa: BLE001
             return 0.0
 
@@ -76,7 +90,7 @@ SOURCES = {"rg": ReasoningGym}
 @lru_cache(maxsize=1024)
 def adapter(family: str):
     src, _, name = family.rpartition(":")
-    return SOURCES[src or DEFAULT_SOURCE](name)
+    return SOURCES[src or DEFAULT_SOURCE](name, **PARAMS.get(family, {}))
 
 
 def names(K: int) -> list[str]:

@@ -513,3 +513,66 @@
   and now provable: equal signatures emit byte-identical prompts, hence the same hash. Memo
   entries written before this change are unreachable, not wrong -- they cost disk in
   $RTE_DATA/cache only.
+- 2026-09-02 (llm backend): `configs/models.yaml` is ordered ASCENDING by params_b, so gemma-2-2b
+  sits third. A profile picks its model by index into that list, so populations differ from the
+  commit-20304d0 draw. Accepted: that draw never produced a measured S, so nothing downstream
+  depends on it. The draw ORDER within a profile (model, then specialty) is unchanged.
+- 2026-09-02 (llm backend): three prompts are reworded relative to commit 20304d0 -- the agent
+  self-description, the agent self-rating, and the tool follow-up turn. Kept deliberately. They
+  are safe now only because the memo key is a hash of the full request, so a reworded prompt
+  cannot be served a stale answer; under the old signature keys this was a live bug.
+- 2026-09-02 (llm backend, MEASURED): `calculator` is dropped from the tool draw. On the 7B it
+  measured at or BELOW the no-tool arm (basic_arithmetic 0.40 vs 0.47, gcd 0.73 vs 0.80): one
+  expression cannot carry a multi-step task and emitting it costs a turn. Every agent now holds
+  `python`, withheld on handicapped families, which is SPEC §1's "family tool removed" exactly.
+  Two consequences: the prompt signature collapses from 28 to 14 distinct values (7 models x 2
+  handicap states), halving the `--measure` generation count; and two agents sharing a model and a
+  handicap pattern are now identical, so within-model variety comes only from WHICH families are
+  specialties. This departs from the spec's three-way tool set {calculator, python, none}.
+- 2026-09-02 (llm backend, MEASURED): six K=16 families replaced. Out: leg_counting,
+  caesar_cipher, base_conversion, bitwise_arithmetic, spell_backward, word_sorting -- each <=0.20
+  on BOTH the 7B and the 14B, so they cannot tell one agent from another. In: count_bits,
+  number_format, palindrome_generation, word_sequence_reversal, binary_alternation,
+  calendar_arithmetic. True/False families (isomorphic_strings, ransom_note) were rejected as
+  candidates on purpose: a chance-level responder floors at 0.50, so no weak agent can score the
+  <=0.4 that routing needs -- the handicapped 0.5B already scored 0.85 on syllogism, a Yes/No
+  family, by guessing. The demoted six stay in the K=64 tail.
+- 2026-09-02 (llm backend): `basic_arithmetic` and `chain_sum` are capped to <=3 terms and <=2
+  digits via `families.PARAMS` (kwargs passed to `create_dataset`). At stock settings (6 terms,
+  4 digits) basic_arithmetic scored 0.25 on the 7B and 0.10 on the 14B, far below the 0.70-0.95
+  band SPEC §3 wants of a specialty family. Difficulty is now a per-family config entry.
+- 2026-09-02 (llm backend): `LLMBackend._answers` runs one thread per (model, token-budget) group.
+  The groups address DIFFERENT vLLM servers, so serialising them left most of the fleet idle and
+  capped a sweep at the slowest model's rate (0.5B, 33 gen/s, against a 889 gen/s fleet aggregate).
+- 2026-09-02 (llm backend, MEASURED): the `python` tool is gated at `tool_min_b: 3.0` in
+  configs/models.yaml -- agents on the 0.5B, 1.5B and gemma-2-2b get NO tool, even on a specialty
+  family. Measured over 16 families x 20 probes, the mean specialty-minus-handicapped gap is
+  NEGATIVE for the two smallest models (0.5B -0.03, 1.5B -0.11) and positive for every model at or
+  above 3B (+0.08, +0.03, +0.00, +0.06). The worst cell is the 1.5B on chain_sum, 0.30 with the
+  tool against 0.65 without: small models emit code they cannot write and spend their turn on it.
+  Tool-call counts across the sweep were 11 / 217 / 68 / 280 / 190 / 0 / 0 (0.5B ... 14B), so the
+  two gemma models never invoked it at all. Gating keeps the handicap monotone across the ladder.
+- 2026-09-02 (llm backend, MEASURED): final K=16 list. `palindrome_generation` dropped (<=0.10 on
+  all seven models). `time_intervals` takes the slot, chosen by sweeping 16 K=64-tail candidates on
+  the 3B and 14B: it scored 0.90 (3B) and 0.75 (14B), well clear of the next best
+  (decimal_chain_sum 0.65/0.50), and 0.00 on the 0.5B, so it spans the ladder. Erratic
+  cross-model families (count_bits, word_sequence_reversal, binary_alternation, calendar_arithmetic)
+  are KEPT deliberately: the arbiter is heterogeneity across agents
+  (skill_excess_ratio_family >= 1.5), not band membership, and a family that only one rung solves
+  is exactly what a router must discover.
+- 2026-09-02: true skill is measured per prompt SIGNATURE (model × handicap × tool), with probe instances drawn from a fixed
+  project-wide seed, so the ~86k-generation measurement happens once and is shared by every population, seed and n through the memo.
+  Agents with equal signatures get identical S. This is the honest reading of "measured once per population" at temperature 0.
+- 2026-09-02 (llm backend): S is MEASURED PER SIGNATURE, SHARED ACROSS POPULATIONS. `true_skill()`
+  draws its probe instances from `stable_seed_32("measure", family, r)` -- a fixed project-wide
+  set -- not from `stable_seed_32(self.seed, ...)`. Skill is a property of the prompt signature
+  (model, handicapped, tool, budget), not of the population that happens to contain it, so every
+  population at every grid seed and every n is served the same ~86k generations from the memo
+  instead of re-measuring them. This is also the honest reading of SPEC §1's "measured once per
+  population". CONSEQUENCE FOR THE STATISTICS: S for a given signature is now identical across
+  grid seeds 1-5, so cross-seed confidence intervals capture variation in the PROFILE DRAW only,
+  not measurement noise in S. The per-cell binomial error on S (200 probes, or 60 on the >=9B
+  rungs) is a systematic offset shared by every seed, not something the seed envelope averages
+  over -- report it separately rather than reading it out of the seed spread.
+  The self-rating and self-description prompts already drew their examples from
+  `families._aux(family, kind)`, which never depended on the population seed, so they are unchanged.

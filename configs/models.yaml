@@ -25,3 +25,7 @@ models:
 small_max_b: 1.5      # "0.5-1.5B" agents
 big_min_b: 7.0        # "7-14B" agents
 large_min_b: 9.0      # measured with fewer probes (SPEC §1: 60 instead of 200)
+tool_min_b: 3.0       # below this an agent gets NO python tool, even on a specialty
+                      # family: measured, the tool makes small models WORSE (the 1.5B
+                      # scored 0.30 with it on chain_sum against 0.65 without), because
+                      # they emit code they cannot write and spend their turn on it.

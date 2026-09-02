@@ -13,7 +13,22 @@ import numpy as np
 import yaml
 
 from ..stable_hash import stable_seed_32
-from . import tools
+
+# The tool axis collapsed to one option: `calculator` measured at or BELOW the no-tool arm on the
+# 7B (0.40 vs 0.47 on basic_arithmetic, 0.73 vs 0.80 on gcd) because one expression cannot carry a
+# multi-step task and emitting it costs a turn. Every agent therefore holds `python`, and
+# `signature()` withholds it on handicapped families -- which is exactly SPEC §1's "family tool
+# removed". The field stays in the profile for the record.
+TOOL = "python"
+
+
+def tool_for(model: str, cfg: dict) -> str:
+    """`python` only for agents at or above `tool_min_b`. MEASURED: below it the tool is a
+    handicap, not a capability -- the mean specialty-minus-handicapped gap is -0.03 on the 0.5B and
+    -0.11 on the 1.5B, worst on chain_sum where the 1.5B scores 0.30 with the tool and 0.65
+    without. Gating it keeps the handicap monotone across the whole ladder."""
+    b = next((m["params_b"] for m in cfg["models"] if m["id"] == model), 0.0)
+    return TOOL if b >= cfg.get("tool_min_b", 0.0) else "none"
 
 CONFIG = Path(os.environ.get("RTE_MODELS_YAML",
                              Path(__file__).resolve().parents[2] / "configs" / "models.yaml"))
@@ -34,36 +49,36 @@ def bands(cfg: dict) -> tuple[list[str], list[str], list[str], frozenset[str]]:
 
 
 def draw_profiles(n: int, K: int, dist: str, seed: int, cfg: dict | None = None) -> list[dict]:
-    ids, small, big, _ = bands(cfg or ladder())
+    cfg = cfg or ladder()
+    ids, small, big, _ = bands(cfg)
     rng = np.random.default_rng(stable_seed_32(seed, "profiles", n, K, dist))
     pick = lambda pool: pool[int(rng.integers(len(pool)))]              # noqa: E731
-    tool = lambda: tools.NAMES[int(rng.integers(3))]                    # noqa: E731
     out = []
-    # DRAW ORDER IS PART OF THE SEED CONTRACT: model, then specialty, then tool, in that order for
-    # every distribution. Reordering these rng calls changes every population.
+    # DRAW ORDER IS PART OF THE SEED CONTRACT: model, then specialty, for every distribution.
+    # Reordering these rng calls changes every population.
     for a in range(n):
         if dist == "specialist":            # 3 families unhandicapped, models mixed
             model = pick(ids)
             spec = sorted(int(x) for x in rng.choice(K, min(3, K), replace=False))
-            t = tool()
         elif dist == "heavy_tail":          # 1 in 10 is a big model, unhandicapped everywhere
             e = bool(rng.random() < 0.1)
             model = pick(big) if e else pick(small)
-            spec, t = (list(range(K)), "python") if e else ([], "none")
+            spec = list(range(K)) if e else []
         elif dist == "bimodal":             # 20% smallest big model with tools, 80% smallest without
             g = bool(rng.random() < 0.2)
             model = big[0] if g else small[0]
-            spec, t = (list(range(K)), "python") if g else ([], "none")
+            spec = list(range(K)) if g else []
         elif dist == "correlated":          # handicaps are group-level over 4 family groups
             model = pick(ids)
             good = {g for g in range(4) if rng.random() < 0.5}
-            spec, t = [f for f in range(K) if f % 4 in good], tool()
+            spec = [f for f in range(K) if f % 4 in good]
         elif dist == "iid_uniform":         # per-(agent, family), independent
             model = pick(ids)
-            spec, t = [f for f in range(K) if rng.random() < 0.5], tool()
+            spec = [f for f in range(K) if rng.random() < 0.5]
         else:
             raise ValueError(f"unknown skill_dist {dist!r}")
-        out.append({"id": a, "model": model, "specialty": list(spec), "tool": t})
+        out.append({"id": a, "model": model, "specialty": list(spec),
+                    "tool": tool_for(model, cfg)})
     return out
 
 

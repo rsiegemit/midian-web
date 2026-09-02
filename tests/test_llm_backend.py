@@ -16,7 +16,7 @@ import pytest
 
 from rte.backends import families, prompts, tools
 from rte.backends.llm import LLMBackend, current_backend
-from rte.backends.population import bands, draw_profiles, ladder, signature
+from rte.backends.population import TOOL, bands, draw_profiles, ladder, signature
 
 LADDER = bands(ladder())[0]
 
@@ -61,6 +61,23 @@ def test_score_never_raises_on_malformed_answers():
         assert families.correct("prime_factorization", 77, bad) == 0
 
 
+def test_difficulty_params_are_applied():
+    """Stock `basic_arithmetic` reaches 6 terms and 4 digits and scored 0.25 on the 7B; the cap
+    in families.PARAMS is what puts a specialty family in the 0.70-0.95 band."""
+    assert families.PARAMS["basic_arithmetic"] == {"max_terms": 3, "max_digits": 2}
+    for i in range(30):
+        q = families.question("basic_arithmetic", i)
+        assert sum(c.isdigit() for c in q.replace(" ", "")) <= 8      # <=4 terms x 2 digits
+    assert families.adapter("basic_arithmetic").params == (("max_digits", 2), ("max_terms", 3))
+    assert families.adapter("gcd").params == ()
+
+
+def test_dead_families_are_out_of_the_k16_list():
+    for dead in ("leg_counting", "caesar_cipher", "base_conversion", "bitwise_arithmetic",
+                 "spell_backward", "word_sorting"):
+        assert dead not in families.FAMILIES_16 and dead in families.FAMILIES_64
+
+
 def test_family_lists_are_unique_and_sized():
     assert len(families.names(16)) == 16
     assert len(families.FAMILIES_64) == len(set(families.FAMILIES_64)) == 64
@@ -75,6 +92,27 @@ def test_specialist_has_exactly_three_unhandicapped_families():
     assert all(x["model"] in LADDER and x["tool"] in tools.NAMES for x in p)
 
 
+def test_python_is_gated_by_size_and_withheld_off_specialties():
+    """`calculator` measured at or below the no-tool arm, so the draw collapsed to python. python
+    itself is gated at `tool_min_b`: MEASURED, it makes smaller models worse (the 1.5B scored 0.30
+    with it on chain_sum against 0.65 without). Above the gate `signature` still withholds it on
+    handicapped families -- that is SPEC §1's "family tool removed"."""
+    cfg = ladder()
+    size = {m["id"]: m["params_b"] for m in cfg["models"]}
+    assert TOOL == "python" and cfg["tool_min_b"] == 3.0
+    for p in draw_profiles(200, 16, "specialist", seed=1):
+        want = "python" if size[p["model"]] >= cfg["tool_min_b"] else "none"
+        assert p["tool"] == want
+        for f in range(16):
+            assert signature(p, f, 512, 512)[2] == (want if f in p["specialty"] else "none")
+
+
+def test_signature_count_is_two_per_model():
+    sigs = {signature(p, f, 512, 512) for p in draw_profiles(300, 16, "specialist", 1)
+            for f in range(16)}
+    assert len(sigs) == 2 * len(LADDER)      # one specialty + one handicapped per model
+
+
 def test_profile_draw_is_seeded():
     assert draw_profiles(50, 16, "specialist", 7) == draw_profiles(50, 16, "specialist", 7)
     assert draw_profiles(50, 16, "specialist", 7) != draw_profiles(50, 16, "specialist", 8)
@@ -84,8 +122,8 @@ def test_heavy_tail_and_bimodal_shapes():
     ht = draw_profiles(2000, 16, "heavy_tail", 3)
     experts = [x for x in ht if x["specialty"]]
     assert 0.06 < len(experts) / len(ht) < 0.15
-    assert all(x["tool"] == "python" for x in experts)
-    assert all(x["tool"] == "none" for x in ht if not x["specialty"])
+    # heavy_tail experts are drawn from `big`, all of which clear the tool gate
+    assert all(x["tool"] == "python" for x in ht if x["specialty"])
 
     bm = draw_profiles(2000, 16, "bimodal", 5)
     good = [x for x in bm if x["specialty"]]
@@ -359,3 +397,21 @@ def test_live_execute_many_shape(live_ladder):
     b = LLMBackend(n=3, K=2, dist="specialist", seed=1, families=["basic_arithmetic", "gcd"])
     out = b.execute_many(np.array([0, 1, 2]), np.array([0, 0, 0]), 2, np.random.default_rng(0))
     assert out.shape == (3, 2) and set(np.unique(out)) <= {0, 1}
+
+
+def test_measurement_instances_do_not_depend_on_the_population_seed(tmp_path, monkeypatch):
+    """S is a property of the prompt SIGNATURE, so the probe set is fixed project-wide: the ~86k
+    measurement generations are produced once and every population at every grid seed and every n
+    is served from the memo."""
+    seen = {}
+
+    def record(self, items):
+        seen.setdefault(self.seed, []).extend(i for _, _, i in items)
+        return np.zeros(len(items), dtype=np.int8)
+
+    monkeypatch.setattr(LLMBackend, "_outcomes", record)
+    for seed in (1, 7):
+        LLMBackend(n=2, K=2, dist="specialist", seed=seed, families=["gcd", "basic_arithmetic"],
+                   measure_probes=5, measure_probes_large=5,
+                   population_dir=str(tmp_path / f"s{seed}")).true_skill()
+    assert seen[1] == seen[7] and len(set(seen[1])) == 2 * 5      # 2 families x 5 probes, shared
