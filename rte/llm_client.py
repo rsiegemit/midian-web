@@ -75,15 +75,36 @@ def _memo() -> tuple[dict, sqlite3.Connection]:
         CACHE_DIR.mkdir(parents=True, exist_ok=True)
         mine = CACHE_DIR / f"memo_{socket.gethostname()}_{os.getpid()}.sqlite"
         _mem = {}
-        for f in sorted(CACHE_DIR.glob("*.sqlite")):
-            try:
-                con = _open(f, readonly=True)
-                _mem.update(con.execute("SELECT k, v FROM memo"))
-                con.close()
-            except sqlite3.Error:
-                continue                            # not one of ours, or half-written: skip it
+        _refresh(force=True)
         _shard = _open(mine)
     return _mem, _shard
+
+
+_seen: dict = {}                              # shard file -> last rowid read
+_last_refresh = 0.0
+REFRESH_S = 30.0
+
+
+def _refresh(force: bool = False) -> None:
+    """Pull rows other processes have written since we last looked (rowid > last seen per shard), so
+    concurrent grid jobs share generations live instead of only at startup. Cheap; rate-limited."""
+    global _last_refresh
+    if not force and time.time() - _last_refresh < REFRESH_S:
+        return
+    _last_refresh = time.time()
+    mine = f"memo_{socket.gethostname()}_{os.getpid()}.sqlite"
+    for f in sorted(CACHE_DIR.glob("*.sqlite")):
+        if f.name == mine:
+            continue
+        try:
+            con = _open(f, readonly=True)
+            rows = con.execute("SELECT rowid, k, v FROM memo WHERE rowid > ?", (_seen.get(f, 0),)).fetchall()
+            con.close()
+        except sqlite3.Error:
+            continue                            # not one of ours, or mid-write: next time
+        if rows:
+            _seen[f] = rows[-1][0]
+            _mem.update((k, v) for _, k, v in rows)
 
 
 def _bump(field: str, k: int = 1) -> None:
@@ -182,6 +203,11 @@ def complete_batch(model: str, batch: Sequence[Sequence[dict]], keys: Sequence[s
     _bump("hits", sum(1 for k in keys if k not in todo))
     _bump("misses", len(todo))                    # misses == unique generations, not positions
 
+    if todo:
+        with _LOCK:                               # another job may have generated these since we started
+            _refresh()
+            answer.update({k: mem[k] for k in todo if k in mem})
+            todo = {k: i for k, i in todo.items() if k not in mem}
     if todo:
         with ThreadPoolExecutor(max_workers=max(1, min(concurrency, len(todo)))) as ex:
             texts = list(ex.map(lambda i: _generate(model, batch[i], max_tokens), todo.values()))
