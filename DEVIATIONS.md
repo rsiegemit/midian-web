@@ -471,3 +471,8 @@
     `PYTHONNOUSERSITE=1` (without it pip treats the user-site copy as already satisfying the requirement).
     The general fix, for whoever owns `_bridge.py`, is `env.setdefault("PYTHONNOUSERSITE", "1")` in
     `Bridge._start` beside the existing proxy stripping.
+- 2026-09-02 (live 7B checks): `fw_smolagents`' own ToolCallingAgent system prompt + 10 descriptions exceeds a 4096-token context
+  → the supervisor must be served with max_model_len 8192 (fleet restart). `fw_google_adk` sometimes answers the task itself instead of
+  transferring (1 of 6 live calls) → counted as a fallback (declared argmax among the top-k); per-method `stats` are now written to each
+  result row (`method_stats`) so fallback rates are reported, not hidden. `fw_llamaindex`: the live model sometimes names several agents;
+  the worker takes the first selection.

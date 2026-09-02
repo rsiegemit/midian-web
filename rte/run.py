@@ -109,7 +109,8 @@ def run_method(world, stream, spec, b):
         for a, oa in zip(agents, outs): m.observe(task, a, oa)
         route += time.perf_counter() - t
         outcomes.append(o); liar.append(world.liars[agents[0]])
-    return metrics(outcomes, liar, build, world.ledger.snapshot(), len(stream), wall_build, route, time.perf_counter() - t_run)
+    return {**metrics(outcomes, liar, build, world.ledger.snapshot(), len(stream), wall_build, route, time.perf_counter() - t_run),
+            "method_stats": jkey(getattr(m, "stats", {}))}          # e.g. framework picks/fallbacks, LLM-descent parse failures
 
 
 def run_unit(cell, seed, specs, rows_dir, grid):
