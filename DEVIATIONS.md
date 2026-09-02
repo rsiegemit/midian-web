@@ -636,3 +636,4 @@
   regenerated its own n·K·b probes per unit — 60 verified-framework jobs would have cost ~3M generations). Backend protocol:
   `execute_many(agents, families, inst)`. Bernoulli outcomes are a deterministic hash of the instance seed. Live rows written
   before this change used per-method instances; both are valid samples, and pairing across methods is by the task stream.
+- 2026-09-02 17:30: python tool runs are memoised alongside generations (deterministic sandbox); wall-clock columns of runs before/after differ only by that CPU cost, outcomes are unchanged.

@@ -43,6 +43,10 @@ behind ~1000 queued requests on the 7B and gemma-9b servers), so `launch_live.sh
 camel/langgraph/llamaindex) sharded by dist,beta. Idle 14B/1.5B replicas were replaced by gemma-9b + 7B replicas (RTE_MAX_NUM_SEQS 256/384;
 the fleet's own servers cap at 64 seqs). midian_internals finished (300/300).
 
+Profiling (17:30): with 100% memo hits a probe still cost 10-15 ms because every python tool call re-forked the 10 GB process;
+tool runs are now memoised in the shared memo (`llm_client.memo_call`, commit 230f132) and `_refresh` skips unchanged shards by stat.
+Shard jobs with >=2 units left were restarted to pick this up. Memo load on a compute node: ~107 s for 37M rows.
+
 ## 3. Method variants in the grids (all paired on the same streams)
 midian (v1, pre-registered), midian(online=false), midian(r=5), midian(verify,cached) = MIDIAN-V, midian(verify,cached,r=5),
 midian_internals adds r∈{5,10,20}×δ∈{0,1/3} and V at r∈{5,10,20}; sequential_halving and sequential_halving(peer_reported);
