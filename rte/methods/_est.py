@@ -35,3 +35,41 @@ class BetaBandit(Method):
 
     def observe(self, task, agent, outcome):
         (self.alpha if outcome else self.beta)[agent, task.family] += 1
+
+
+REPORT_ELEMS = 8_000_000       # cap on one report tensor: n*K*b*(r-1) is never materialized at once
+
+
+def trim_k(delta: float, s: int, b: int) -> int:
+    """Reports trimmed from each side for a cohort of size s (SPEC §5), clamped to leave one report."""
+    return max(0, min(int(delta * (s - 1) + 1e-9), ((s - 1) * b - 1) // 2))
+
+
+def peer_reported_estimates(view, b: int, cohorts: np.ndarray, delta: float) -> np.ndarray:
+    """MIDIAN's level-0 estimates (SPEC §5): b probes per (agent, family), each outcome reported by
+    every other member of the agent's cohort, aggregated by a trimmed mean. `cohorts` is int32[N, r]
+    of agent ids with -1 padding, which (padding being contiguous) can only shorten the last cohort.
+    Spends exactly n*K*b probes and sum_c size_c*(size_c-1)*K*b reports, in cohort-sized chunks."""
+    K, r = view.K, cohorts.shape[1]
+    est = np.zeros((view.n, K), np.float32)
+    step = max(1, min(CHUNK, REPORT_ELEMS // (K * b * max(r - 1, 1))) // r)
+    short = cohorts[-1, -1] < 0
+    full = cohorts[:len(cohorts) - short]
+    blocks = [full[lo:lo + step] for lo in range(0, len(full), step)]
+    if short:
+        blocks.append(cohorts[-1][cohorts[-1] >= 0][None, :])
+    for ag in blocks:
+        C, s = ag.shape
+        out = view.probe_many(ag.reshape(-1, 1), np.arange(K)[None, :], b)              # (C*s, K, b)
+        if s == 1:                                                                       # no peers to report
+            est[ag.ravel()] = out.mean(2)
+            continue
+        peers = np.array([[j for j in range(s) if j != m] for m in range(s)], np.int32)   # (s, s-1)
+        rep = view.report_many(ag[:, peers][:, :, None, :, None],                        # reporter j
+                               ag[:, :, None, None, None],                               # about member m
+                               out.reshape(C, s, K, 1, b)                                # what j saw
+                               ).reshape(C * s, K, (s - 1) * b)
+        rep.sort(-1)                                                                     # trimmed mean =
+        t = trim_k(delta, s, b)
+        est[ag.ravel()] = rep[:, :, t:rep.shape[2] - t].mean(-1)                         # sort, then slice
+    return est

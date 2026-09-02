@@ -217,3 +217,6 @@
   llguidance 1.7.6 abi3 build from the validated reference env (compiled on this same cluster, same
   CPython 3.12, same glibc) and redirects CARGO_HOME/RUSTUP_HOME/TMPDIR/XDG_CACHE_HOME to
   $RTE_DATA. The from-source path is still in the script behind `RTE_LLGUIDANCE_SRC`.
+- 2026-09-02: MIDIAN's optional `stratify` flag (cohorts stratified by declared mean, SPEC §5 comment) is NOT implemented:
+  it was the only path by which MIDIAN could read the declared channel, no grid used it, and its padding layout broke the
+  estimator's one-short-cohort assumption. Plain MIDIAN never reads D, full stop.
