@@ -16,6 +16,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import random
 import socket
 import sqlite3
 import threading
@@ -136,7 +137,8 @@ def _generate(model: str, messages: Sequence[dict], max_tokens: int) -> str:
                 if model not in eps:
                     raise NoEndpointsError(f"model {model!r} not served; have {sorted(eps)}")
                 from openai import OpenAI
-                _clients[model] = OpenAI(base_url=eps[model], api_key="EMPTY", timeout=600.0,
+                urls = [u for k, u in eps.items() if k == model or k.startswith(model + "#")]   # replicas: "<model>#<job>"
+                _clients[model] = OpenAI(base_url=random.choice(urls), api_key="EMPTY", timeout=600.0,
                                          max_retries=0)
             r = _clients[model].chat.completions.create(
                 model=model, messages=for_model(model, messages), max_tokens=int(max_tokens),

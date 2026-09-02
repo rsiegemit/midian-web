@@ -35,9 +35,10 @@ def _endpoint(model: str) -> str:
     if not os.path.exists(p):
         raise RuntimeError(f"no vLLM endpoints configured at {p}")
     ep = json.load(open(p))
-    if model not in ep:
+    urls = [u for k, u in ep.items() if k == model or k.startswith(model + "#")]   # replicas register as "<model>#<job>"
+    if not urls:
         raise RuntimeError(f"model {model!r} not served; endpoints.json has {list(ep)}")
-    return ep[model]
+    return np.random.default_rng().choice(urls)
 
 
 class FrameworkMethod(Method):
