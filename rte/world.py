@@ -288,7 +288,7 @@ class World:
 
     def report_many(self, reporters: np.ndarray, agents: np.ndarray, outcomes: np.ndarray) -> np.ndarray:
         reporters, agents, outcomes = np.broadcast_arrays(reporters, agents, outcomes)
-        out = outcomes.astype(np.int8).copy()
+        out = np.array(outcomes, dtype=np.float32 if outcomes.dtype.kind == "f" else np.int8, order="C")   # contiguous copy: the lie edits it in place
         self.ledger.report(out.size)
         if not self.collude or not self.liars.any():
             return out

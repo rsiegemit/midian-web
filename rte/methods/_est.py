@@ -73,14 +73,15 @@ def peer_reported_estimates(view, b: int, cohorts: np.ndarray, delta: float, by_
             est[ag.ravel()] = out.mean(2)
             continue
         peers = np.array([[j for j in range(s) if j != m] for m in range(s)], np.int32)   # (s, s-1)
+        if by_reporter:                                                                  # one report per PEER: its mean
+            per = view.report_many(ag[:, peers][:, :, None, :], ag[:, :, None, None],    # of the b outcomes it saw
+                                   out.reshape(C, s, K, 1, b).mean(-1)).reshape(C * s, K, s - 1)
+            est[ag.ravel()] = trimmed_by_reporter(per[..., None], delta, s)
+            continue
         rep = view.report_many(ag[:, peers][:, :, None, :, None],                        # reporter j
                                ag[:, :, None, None, None],                               # about member m
                                out.reshape(C, s, K, 1, b)                                # what j saw
-                               ).reshape(C * s, K, s - 1, b)                             # (member, family, peer, probe)
-        if by_reporter:
-            est[ag.ravel()] = trimmed_by_reporter(rep, delta, s)
-            continue
-        rep = rep.reshape(C * s, K, (s - 1) * b)
+                               ).reshape(C * s, K, (s - 1) * b)
         rep.sort(-1)                                                                     # trimmed mean =
         t = trim_k(delta, s, b)
         est[ag.ravel()] = rep[:, :, t:rep.shape[2] - t].mean(-1)                         # sort, then slice

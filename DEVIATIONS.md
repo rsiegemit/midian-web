@@ -614,3 +614,7 @@
   peer-report channel (r-1 random reporters per probe, per-reporter trimming), no trusted observer. Plain sequential halving
   (trusted observer) is flat in β by construction — liars change what agents say, never what they do — so its flat line is not
   robustness; the peer-reported variant is what MIDIAN must be compared with. Both are reported.
+- 2026-09-02: MIDIAN-V reports one number per peer per (member, family) — the peer's mean of the b outcomes it saw — instead of
+  b separate reports (per-reporter trimming only ever uses that mean, so the estimates are bit-identical): reports fall from
+  n·K·b·(r-1) to n·K·(r-1) (+ (r-1) per verified candidate). Plain MIDIAN keeps the spec's per-outcome reports (§5 iii) since it is
+  pre-registered and trims per report. The report channel now carries floats (World.report_many keeps float inputs as float32).

@@ -70,8 +70,8 @@ class Midian(Method):
         for lo in range(0, len(agents), max(1, CHUNK_ELEMS // (r * e))):
             sl = slice(lo, lo + max(1, CHUNK_ELEMS // (r * e)))
             out = view.probe_many(agents[sl], fam[sl], e)                                    # (v, e)
-            rep = view.report_many(rep_of[sl][:, :, None], agents[sl][:, None, None], out[:, None, :])   # (v, r-1, e)
-            m_new = trimmed_by_reporter(rep, self.delta, r)
+            per = view.report_many(rep_of[sl], agents[sl][:, None], out.mean(-1)[:, None])           # one report per peer
+            m_new = trimmed_by_reporter(per[..., None], self.delta, r)
             a, f = agents[sl], fam[sl]
             self.est[a, f] = (self.est[a, f] * self.k[a, f] + m_new * e) / (self.k[a, f] + e)
             self.k[a, f] += e
