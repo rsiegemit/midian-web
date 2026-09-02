@@ -25,7 +25,7 @@ FAMILIES = ["basic_arithmetic", "gcd", "leg_counting", "spell_backward"]
 
 
 def main() -> int:
-    served = sorted(llm_client.endpoints())
+    served = llm_client.served_models()
     print(f"endpoints: {served}")
     if not served:
         print("FAIL: nothing is being served")

@@ -43,6 +43,11 @@ class NoEndpointsError(RuntimeError):
     """No vLLM fleet configured — callers degrade with a clear message."""
 
 
+def served_models() -> list[str]:
+    """Model ids actually served (replica aliases "<model>#<job>" collapsed onto their model)."""
+    return sorted({k.split("#")[0] for k in endpoints()})
+
+
 def endpoints() -> dict[str, str]:
     """{model_id: base_url}. The per-model directory wins: it is what each server writes, so it is
     never a stale merge. Re-read every call — servers register as they warm up."""

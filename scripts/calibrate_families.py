@@ -30,7 +30,7 @@ def main() -> int:
     ap.add_argument("--names", default=None, help="comma-separated families to sweep instead")
     a = ap.parse_args()
 
-    model = a.model or sorted(llm_client.endpoints())[0]
+    model = a.model or llm_client.served_models()[0]
     fams = a.names.split(",") if a.names else families.names(16)[:a.families]
     cfg = population.pinned_cfg([model])
     llm.ladder = population.ladder = lambda: cfg

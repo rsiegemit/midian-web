@@ -23,12 +23,10 @@ LADDER = bands(ladder())[0]
 
 
 def _served() -> list[str]:
-    """An endpoints.json left behind by a finished job is an empty dict, not a missing file, so
-    the file existing proves nothing."""
     try:
-        from rte import llm_client
-        return sorted(llm_client.endpoints())
-    except Exception:                                            # noqa: BLE001
+        from rte.llm_client import served_models
+        return served_models()
+    except Exception:
         return []
 
 
