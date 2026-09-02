@@ -610,3 +610,7 @@
   ~b(r-1) probes. Bernoulli n=1000, 3 seeds: +0.03..+0.14 over plain at β≤0.25 with liar-route rate = β; worse than plain at β=0.5
   (majority of reporters lie: beyond any trimmed mean, per TARGETS item 3). Plain MIDIAN is byte-identical to before (verified) and
   stays the pre-registered method; MIDIAN-V is reported alongside as a post-hoc variant.
+- 2026-09-02: `sequential_halving(peer_reported=True)` added as the apples-to-apples control for MIDIAN: same budget, same
+  peer-report channel (r-1 random reporters per probe, per-reporter trimming), no trusted observer. Plain sequential halving
+  (trusted observer) is flat in β by construction — liars change what agents say, never what they do — so its flat line is not
+  robustness; the peer-reported variant is what MIDIAN must be compared with. Both are reported.

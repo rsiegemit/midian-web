@@ -19,6 +19,7 @@ defaults:
     - {name: flat_probe_argmax, params: {online: true}}
     - {name: midian, params: {online: false}}
     - {name: midian, params: {verify: true}}     # MIDIAN-V: verify at promotion (post-hoc variant, see DEVIATIONS)
+    - {name: sequential_halving, params: {peer_reported: true}}   # the fair control: halving through MIDIAN's report channel
   exclude: []
 
 _sets:
