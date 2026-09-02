@@ -163,7 +163,7 @@ def main(argv=None):
         specs = [s for s in method_specs(blk) if not a.methods or s["name"] in a.methods.split(",")]
         only = dict(kv.split("=") for kv in a.only.split(",")) if a.only else {}
         for cell in cells(blk):
-            if any(str(cell[k]).lower() != v.lower() for k, v in only.items()):
+            if any(cell[k] != yaml.safe_load(v) for k, v in only.items()):     # yaml-typed: beta=0 == 0.0, collude=true
                 continue
             for seed in seeds(a.seeds or blk["seeds"]):
                 todo = [s for s in specs if row_id(cell, s["name"], s["params"], seed) not in have]

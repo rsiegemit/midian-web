@@ -37,6 +37,12 @@ Monitor: `squeue -u $USER | grep rte_`; errors: `grep -l Traceback $RTE_DATA/log
 rows-done script in this file's history (blocks/cells/method_specs/row_id over configs/grid.yaml).
 GPU quota: 16/user incl. the user's other job; replicas pending on Priority start as GPUs free.
 
+Sharding (2026-09-02 15:20): sequential per-method jobs for MIDIAN/halving/flat at n=1000 were ETA 50-110 h (each unit waits
+behind ~1000 queued requests on the 7B and gemma-9b servers), so `launch_live.sh` now shards: `RTE_SHARD=dist,beta RTE_SEED_SHARD=1`
+(one job per axis-value combo x seed, via `--only` + `--seeds`; `--only` values are yaml-typed). Slow fw jobs (magentic_one, verified
+camel/langgraph/llamaindex) sharded by dist,beta. Idle 14B/1.5B replicas were replaced by gemma-9b + 7B replicas (RTE_MAX_NUM_SEQS 256/384;
+the fleet's own servers cap at 64 seqs). midian_internals finished (300/300).
+
 ## 3. Method variants in the grids (all paired on the same streams)
 midian (v1, pre-registered), midian(online=false), midian(r=5), midian(verify,cached) = MIDIAN-V, midian(verify,cached,r=5),
 midian_internals adds r∈{5,10,20}×δ∈{0,1/3} and V at r∈{5,10,20}; sequential_halving and sequential_halving(peer_reported);
