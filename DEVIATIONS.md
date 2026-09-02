@@ -107,3 +107,6 @@
   complete per-agent means. They agree on most reports (28/31 in the checker) and differ only where the ranking changes within a
   batch. Every method at scale uses `report_many`; the scalar path exists for the spec's `report_channel` interface and tests.
 - 2026-09-02: `_est.probe_successes` accumulates in float64 (counts are exact either way) so exact-estimate correctness mocks work.
+- 2026-09-02: report-channel lie strength grows with n at fixed budget: with one observer per outcome and b=1, a peer sees only
+  K·b outcomes, so "zero the top 20% honest agents I saw" degenerates to zeroing nearly every honest agent it saw (ceil(0.2·1)=1 of 1).
+  Inherent to the rule, not a batching artifact; stated beside large-n results rather than tuned away. (Found by the decentral-rivals agent.)

@@ -305,12 +305,11 @@ class World:
             uk, inv = np.unique(key, return_inverse=True)
             means = np.bincount(inv, weights=outcomes.ravel()[idx]) / np.bincount(inv)
             uj = uk // self.n
-            zero_pairs = np.zeros(uk.size, dtype=bool)
-            for j in np.unique(uj):
-                sel = np.flatnonzero(uj == j)
-                k = max(1, math.ceil(REPORT_LIE_TOP_FRAC * sel.size))
-                order = np.lexsort((uk[sel] % self.n, -means[sel]))     # by mean desc, then agent id
-                zero_pairs[sel[order[:k]]] = True
+            order = np.lexsort((uk % self.n, -means, uj))            # by reporter, then mean desc, then agent id
+            ujs = uj[order]
+            start = np.searchsorted(ujs, ujs, "left"); size = np.searchsorted(ujs, ujs, "right") - start
+            zero_sorted = (np.arange(ujs.size) - start) < np.ceil(REPORT_LIE_TOP_FRAC * size)   # first ceil(20%) per reporter
+            zero_pairs = np.empty(uk.size, dtype=bool); zero_pairs[order] = zero_sorted
             ro[idx[zero_pairs[inv]]] = 0
         return out
 
