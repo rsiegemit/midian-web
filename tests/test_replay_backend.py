@@ -95,7 +95,7 @@ def test_execute_many_shape_dtype(fake_cells):
     b = ReplayBackend(n=n, K=K, dist="iid_uniform", seed=0, rng=rng, cells_path=fake_cells)
     agents = np.array([0, 1, 2, 3])
     families = np.array([0, 1, 2, 3])
-    out = b.execute_many(agents, families, reps=5, rng=np.random.default_rng(99))
+    out = b.execute_many(agents[:, None], families[:, None], np.arange(5)[None, :] + 1000 * agents[:, None])
     assert out.shape == (4, 5)
     assert out.dtype == np.int8
     assert np.all((out == 0) | (out == 1))

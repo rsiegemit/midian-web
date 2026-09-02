@@ -89,6 +89,14 @@ def skill_summary(S: np.ndarray, n_probes: int = 200) -> dict:
 
 
 # --------------------------------------------------------------------------- lying
+def probe_seed(salt: int, a, f, k) -> np.ndarray:
+    """Deterministic 31-bit instance seed for the k-th probe of (agent a, family f); vectorized integer mixing."""
+    x = (np.asarray(a, np.uint64) * np.uint64(0x9E3779B97F4A7C15) + np.asarray(f, np.uint64) * np.uint64(0xC2B2AE3D27D4EB4F)
+         + np.asarray(k, np.uint64) * np.uint64(0x165667B19E3779F9) + np.uint64(salt))
+    x ^= x >> np.uint64(33); x *= np.uint64(0xFF51AFD7ED558CCD); x ^= x >> np.uint64(33); x *= np.uint64(0xC4CEB9FE1A85EC53); x ^= x >> np.uint64(33)
+    return (x & np.uint64(0x7FFFFFFF)).astype(np.int64)
+
+
 def select_liars(S: np.ndarray, beta: float, how: str, rng: np.random.Generator) -> np.ndarray:
     n = S.shape[0]
     m = int(round(beta * n))
@@ -224,7 +232,8 @@ class World:
         self.D = apply_lying(D_honest, self.liars, lie_mode, self.demand)
         self.D_view = self.D.copy(); self.D_view.setflags(write=False)
         self._obs: dict[int, dict[int, list]] = {}    # reporter j -> {a: [sum, cnt]} (scalar report path)
-        self._probe_rng = np.random.default_rng(stable_seed_32(seed, "probes"))
+        self._probe_idx = np.zeros((self.n, self.K), np.uint16)    # probes drawn so far per (agent, family)
+        self._probe_salt = stable_seed_32(seed, "probes")
 
     # ---- demand / tasks
     def _demand_vector(self) -> np.ndarray:
@@ -255,14 +264,17 @@ class World:
 
     # ---- probes: fresh instance each time, charged once each
     def probe(self, a: int, f: int) -> int:
-        self.ledger.probe(1)
-        inst = int(self._probe_rng.integers(0, 2**31 - 1))
-        return int(self.backend.execute(a, Task(-1, f, inst)))
+        return int(self.probe_many(np.array([a]), np.array([f]), 1)[0, 0])
 
     def probe_many(self, agents: np.ndarray, families: np.ndarray, reps: int) -> np.ndarray:
-        agents, families = np.broadcast_arrays(agents.astype(np.int64), families.astype(np.int64))
+        """The k-th probe of (agent, family) is the same fresh instance for EVERY method (index-seeded), so methods that
+        probe the same cells share generations through the memo, and no method's build depends on the run order."""
+        agents, families = np.broadcast_arrays(np.asarray(agents, np.int64), np.asarray(families, np.int64))
         self.ledger.probe(agents.size * reps)
-        return self.backend.execute_many(agents, families, reps, self._probe_rng)
+        k = self._probe_idx[agents, families].astype(np.int64)[..., None] + np.arange(reps)
+        self._probe_idx[agents, families] += reps
+        inst = probe_seed(self._probe_salt, agents[..., None], families[..., None], k)
+        return self.backend.execute_many(np.broadcast_to(agents[..., None], inst.shape), np.broadcast_to(families[..., None], inst.shape), inst)
 
     # ---- reports: the only channel decentralized methods learn through
     def _lie_report(self, j: int, a: int, outcome: int, observed_mean_of: dict) -> int:
@@ -314,10 +326,10 @@ class World:
         return out
 
     def reset(self, tag: str = "") -> None:
-        """Start a method: zero the ledger, forget reporters' observations, reseed probes by `tag` so a method's
+        """Start a method: zero the ledger, forget reporters' observations, reset the probe index so a method's
         build never depends on which methods ran before it (pairing is through the task stream + deterministic execute)."""
         self.ledger.reset(); self._obs.clear()
-        self._probe_rng = np.random.default_rng(stable_seed_32(self.seed, "probes", tag))
+        self._probe_idx[:] = 0                      # every method starts at probe index 0 of every cell
 
     # ---- view
     def view(self, needs: Iterable[str], seed: int | None = None) -> View:

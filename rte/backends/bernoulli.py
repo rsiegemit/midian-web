@@ -45,9 +45,9 @@ class BernoulliBackend:
         u = np.random.default_rng(stable_seed_32(self.seed, "exec", int(a), task.family, task.instance)).random()
         return int(u < self._S[a, task.family])
 
-    def execute_many(self, agents, families, reps, rng) -> np.ndarray:
-        p = self._S[agents, families][..., None]
-        return (rng.random(p.shape[:-1] + (int(reps),)) < p).astype(np.int8)
+    def execute_many(self, agents, families, inst) -> np.ndarray:
+        u = (np.asarray(inst, np.uint64) * np.uint64(0x9E3779B97F4A7C15) + np.uint64(self.seed)) >> np.uint64(11)   # 53-bit uniform
+        return ((u.astype(np.float64) / 2 ** 53) < self._S[agents, families]).astype(np.int8)
 
     def stats(self) -> dict:
         return {}

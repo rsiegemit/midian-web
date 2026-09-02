@@ -141,13 +141,10 @@ class LLMBackend:
     def execute(self, a: int, task) -> int:
         return int(self._outcomes([(int(a), int(task.family), int(task.instance))])[0])
 
-    def execute_many(self, agents, fam, reps: int, rng) -> np.ndarray:
-        agents, fam, reps = np.ravel(agents).astype(int), np.ravel(fam).astype(int), int(reps)
-        fam = np.repeat(fam, agents.size) if fam.size == 1 < agents.size else fam
-        inst = rng.integers(0, 2**31 - 1, size=(agents.size, reps))
-        items = [(int(agents[i]), int(fam[i]), int(inst[i, r]))
-                 for i in range(agents.size) for r in range(reps)]
-        return self._outcomes(items).reshape(agents.size, reps)
+    def execute_many(self, agents, fam, inst) -> np.ndarray:
+        agents, fam, inst = np.broadcast_arrays(np.asarray(agents), np.asarray(fam), np.asarray(inst))
+        items = [(int(a), int(f), int(i)) for a, f, i in zip(agents.ravel(), fam.ravel(), inst.ravel())]
+        return self._outcomes(items).reshape(inst.shape)
 
     def true_skill(self) -> np.ndarray:
         """Measured S[n,K], cached to disk. Both the generation and the scoring happen once per

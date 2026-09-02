@@ -5,7 +5,7 @@ Backend protocol (duck-typed; see bernoulli.py for the reference):
     true_skill() -> S[n,K]                      float in [0,1]; runner-only
     declared(source) -> D[n,K]                  honest declared skill; source in {programmatic, self_described}
     execute(a, task) -> int                     0/1; Task.instance is the instance seed
-    execute_many(agents, families, reps, rng) -> (len(agents), reps) int8   fresh instances
+    execute_many(agents, families, inst) -> int8 of inst.shape   fresh instances from the given seeds (World index-seeds them)
     stats() -> dict                             e.g. cache hit rate
 """
 from __future__ import annotations

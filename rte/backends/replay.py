@@ -92,14 +92,11 @@ class ReplayBackend:
         m = int(self._weakest_model[f]) if self.mask[a, f] else int(self.model_id[a])
         return int(self._outcomes[row, m])
 
-    def execute_many(self, agents, families, reps: int, rng: np.random.Generator) -> np.ndarray:
-        agents, families = np.broadcast_arrays(np.asarray(agents), np.asarray(families))
-        n_prompts = self._n_prompts[families][..., None]
-        idx = np.minimum((rng.random(agents.shape + (int(reps),)) * n_prompts).astype(np.int64), n_prompts - 1)
-        rows = self._row_start[families][..., None] + idx
-        model_idx = np.where(self.mask[agents, families][..., None],
-                             self._weakest_model[families][..., None], self.model_id[agents][..., None])
-        return self._outcomes[rows, np.broadcast_to(model_idx, rows.shape)].astype(np.int8)
+    def execute_many(self, agents, families, inst) -> np.ndarray:
+        agents, families, inst = np.broadcast_arrays(np.asarray(agents), np.asarray(families), np.asarray(inst))
+        rows = self._row_start[families] + inst % self._n_prompts[families]
+        model_idx = np.where(self.mask[agents, families], self._weakest_model[families], self.model_id[agents])
+        return self._outcomes[rows, model_idx].astype(np.int8)
 
     def stats(self) -> dict:
         return {"replay_K_used": self.K, "replay_n_models": len(self.model_names), "replay_dist": self.dist}

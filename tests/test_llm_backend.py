@@ -301,7 +301,7 @@ def test_backend_end_to_end_and_tool_round(fleet):
     b = LLMBackend(n=4, K=2, dist="specialist", seed=1, families=["basic_arithmetic", "gcd"])
     assert current_backend() is b
     assert b.execute(0, Task(0, 0, 999)) in (0, 1)
-    out = b.execute_many(np.arange(4), np.zeros(4, int), reps=2, rng=np.random.default_rng(0))
+    out = b.execute_many(np.arange(4)[:, None], np.zeros((4, 1), int), np.arange(2)[None, :] + 10 * np.arange(4)[:, None])  # (np.random.default_rng(0))
     assert out.shape == (4, 2) and set(np.unique(out)) <= {0, 1}
 
     # a calculator agent: one <calc> reply, we evaluate it, one follow-up turn -> 2 server calls
@@ -397,7 +397,7 @@ def test_live_execution(live_ladder):
 @needs_endpoints
 def test_live_execute_many_shape(live_ladder):
     b = LLMBackend(n=3, K=2, dist="specialist", seed=1, families=["basic_arithmetic", "gcd"])
-    out = b.execute_many(np.array([0, 1, 2]), np.array([0, 0, 0]), 2, np.random.default_rng(0))
+    out = b.execute_many(np.array([0, 1, 2])[:, None], np.zeros((3, 1), int), np.arange(2)[None, :] + 7 * np.arange(3)[:, None])  # (np.random.default_rng(0))
     assert out.shape == (3, 2) and set(np.unique(out)) <= {0, 1}
 
 

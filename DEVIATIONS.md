@@ -630,3 +630,9 @@
   TF-IDF over self-descriptions; the framework's own primitive still chooses among the k using names + self-descriptions. Needs
   become {declared, probe, reports}; MIDIAN's build/fetch/observe are charged through the same ledger. The original description-only
   frameworks are unchanged. Shows whether a deployed framework becomes robust by swapping only its shortlist source.
+- 2026-09-02 (probe instances): the k-th probe of (agent, family) is now the SAME fresh instance for every method (seed =
+  hash(world seed, agent, family, k)), instead of a per-method random stream. Order-independence is kept (a method always
+  starts at k=0) and methods that probe the same cells now share generations through the memo (before, every probing method
+  regenerated its own n·K·b probes per unit — 60 verified-framework jobs would have cost ~3M generations). Backend protocol:
+  `execute_many(agents, families, inst)`. Bernoulli outcomes are a deterministic hash of the instance seed. Live rows written
+  before this change used per-method instances; both are valid samples, and pairing across methods is by the task stream.
