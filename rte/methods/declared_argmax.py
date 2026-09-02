@@ -1,36 +1,26 @@
-"""Declared-channel floor: argmax_a D[a,f]. `needs = {"declared"}`.
-
-Default is a flat O(n) scan per fetch, charging `compare(n)`. With
-`cached=True`, the per-family argmax is precomputed once at `build` (a build
-step, not charged -- the runner resets the ledger after build) and each
-fetch is an O(1) lookup charged as `compare(1)`.
-"""
-from __future__ import annotations
-
+"""Declared-channel floor: argmax_a D[a,f]. cached=True precomputes the per-family argmax
+at build (O(1) fetch); default is a flat O(n) scan per fetch."""
 import numpy as np
-
 from .base import Method
+from ._decl import declared, scan
 
 
 class DeclaredArgmax(Method):
     name = "declared_argmax"
     needs = frozenset({"declared"})
 
-    def __init__(self, **params):
-        super().__init__(**params)
-        self.cached = bool(params.get("cached", False))
+    def __init__(self, cached=False, **p):
+        super().__init__(cached=cached, **p)
+        self.cached = cached
 
-    def build(self, view, budget) -> None:
+    def build(self, view, budget):
         self.view = view
+        self.D = declared(view)
         if self.cached:
-            D = view.declared           # (n, K)
-            self._best = np.argmax(D, axis=0).astype(np.int64)   # (K,) per-family argmax
+            self.best = np.argmax(self.D, axis=0)
 
-    def fetch(self, task) -> int:
-        f = task.family
+    def fetch(self, task):
         if self.cached:
             self.view.ledger.compare(1)
-            return int(self._best[f])
-        D = self.view.declared
-        self.view.ledger.compare(self.view.n)
-        return int(np.argmax(D[:, f]))
+            return int(self.best[task.family])
+        return int(np.argmax(scan(self.view, self.D, task.family)))

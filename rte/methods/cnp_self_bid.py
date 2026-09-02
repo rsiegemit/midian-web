@@ -1,39 +1,28 @@
-"""Contract Net Protocol, self-bid variant.
-
-A virtual coordinator broadcasts the task to every agent (`view.bus.broadcast`,
-n messages); each agent bids its declared skill plus noise; all n agents
-reply with their bid (`view.bus.send_many(n)`); the coordinator picks the
-argmax bid. Total messages per fetch = 2n (broadcast + replies), matching the
-CONTRACT convention. `needs = {"declared", "bus"}`. O(n) flat scan over bids:
-charge `compare(n)`.
-"""
-from __future__ import annotations
-
+"""Contract Net Protocol: broadcast the task, every agent self-bids D[a,f]+noise, argmax bid wins.
+2n messages per fetch (broadcast + every agent's reply), matching the CNP primitive."""
 import numpy as np
-
 from .base import Method
+from ._decl import declared
 
-BID_NOISE_STD = 0.02
-COORDINATOR = -1   # not a real agent id; sentinel for the broadcast source
+NOISE = 0.02
 
 
 class CnpSelfBid(Method):
     name = "cnp_self_bid"
     needs = frozenset({"declared", "bus"})
 
-    def __init__(self, **params):
-        super().__init__(**params)
-        self.bid_noise_std = float(params.get("bid_noise_std", BID_NOISE_STD))
+    def __init__(self, noise=NOISE, **p):
+        super().__init__(noise=noise, **p)
+        self.noise = noise
 
-    def build(self, view, budget) -> None:
+    def build(self, view, budget):
         self.view = view
+        self.D = declared(view)
 
-    def fetch(self, task) -> int:
-        f = task.family
+    def fetch(self, task):
         v = self.view
-        v.bus.broadcast(COORDINATOR, task)                 # announce the task: n messages
-        noise = v.rng.normal(0.0, self.bid_noise_std, size=v.n)
-        bids = v.declared[:, f] + noise
-        v.bus.send_many(v.n)                                # every agent replies with a bid: n messages
+        v.bus.broadcast(-1, task)
+        bids = self.D[:, task.family] + v.rng.normal(0, self.noise, v.n)
+        v.bus.send_many(v.n)
         v.ledger.compare(v.n)
         return int(np.argmax(bids))

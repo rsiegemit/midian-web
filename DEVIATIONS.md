@@ -110,3 +110,103 @@
 - 2026-09-02: report-channel lie strength grows with n at fixed budget: with one observer per outcome and b=1, a peer sees only
   K·b outcomes, so "zero the top 20% honest agents I saw" degenerates to zeroing nearly every honest agent it saw (ceil(0.2·1)=1 of 1).
   Inherent to the rule, not a batching artifact; stated beside large-n results rather than tuned away. (Found by the decentral-rivals agent.)
+- 2026-09-02 (midian): SPEC §3 says "pad n to r^L and reshape". We pad *each level* to a multiple of r instead
+  (leaf cohorts = ceil(n/r), then ceil(N/r) per level). Identical tree when n = r^L (the 1e7 point), identical
+  depth in general (iterating ceil(N/r) from n reaches 1 in exactly ceil(log_r n) steps), and it avoids the up-to-r x
+  memory waste of a full r^L level-0 array at, e.g., n=1234, r=10 (1000 cohorts padded vs 124 real).
+- 2026-09-02 (midian): when r does not divide n exactly one leaf cohort is short (padding is contiguous after the
+  permutation). Probes are exactly n*K*b always; reports are ((n-m)(r-1) + m(m-1))*K*b with m = n mod r, i.e. exactly
+  the SPEC §5(iii) n*K*b*(r-1) only when r | n. A short cohort has fewer peers, so it cannot produce r-1 reports per
+  outcome without probing someone twice. The trim is likewise floor(delta*(s-1)) for a cohort of size s, clamped so
+  at least one report survives; a cohort of size 1 has no peers and falls back to its own probe mean.
+- 2026-09-02 (midian): reports for a whole cohort chunk are sent in ONE view.report_many call covering all K families,
+  which is what makes the liar's "top-20% honest by j's observed outcomes" rule pool across families - matching the
+  scalar view.report_channel path, whose _obs accumulator also pools across families.
+- 2026-09-02 (midian): `stratify=True` needs the declared channel, so the instance widens `needs` to include
+  "declared" in __init__; the class attribute stays {"probe","reports"} (the default stratify=False).
+- 2026-09-02 (midian): observe()'s running mean is seeded with the number of reports behind the build estimate
+  ((r-1)*b - 2*trim) so one online outcome cannot overwrite the probe evidence; per-(agent,family) counts are kept
+  in a dict (only routed pairs), not an n x K array, which would be a second 2.6 GB at n=1e7, K=64.
+- 2026-09-02 (midian): cohort leaders (SPEC §5) are not materialized. A node's summary is carried by the node's own
+  arrays, so nothing reads the leader id; it survives only in the message accounting (member->leader, leader->parent).
+- 2026-09-02 (midian): message accounting per the 2026-09-02 CONTRACT section. Build charges
+  (n - ceil(n/r)) member->leader messages plus one leader->parent message for every node but the root
+  (= sum_l N_l - 1, N_l = nodes at level l); fetch charges 2 per level = 2*depth. Verified in tests and by
+  scripts/check_methods.py (n=100 -> 100 build messages, n=1000 -> 1010).
+- 2026-09-02 (midian): the probe/report/trim stage lives in `rte/methods/_est.py::peer_reported_estimates`, beside the
+  `probe_successes` helper the centralized rivals share. It is a separate function because MIDIAN needs the individual
+  b outcomes to feed the report channel, not their sum; the CONTRACT's suggested name `probe_estimates` is what
+  `probe_successes(view, b) / b` already is, and renaming it would churn seven files owned by another agent.
+- 2026-09-02 (midian_llm_descent): the LLM sees only the r children's summary numbers for the task's family and
+  answers with an index; a parse failure, an out-of-range index, or an empty padding slot falls back to the arithmetic
+  argmax and is counted in `stats`. Ledger charges are identical to plain MIDIAN, so the ablation is quality-only.
+- 2026-09-02 (llm backend): the ladder's non-Qwen half is `google/gemma-2-{2b,9b}-it`, not
+  Llama-3.2 (SPEC §1 offers either). Both gemma repos are `gated=manual` on the Hub but this
+  account's token has access, so all 7 models downloaded; no Qwen-only fallback was needed.
+- 2026-09-02 (llm backend): `reasoning-gym` 0.1.19 ships `propositional_logic` and `graph_color`
+  with `answer=None` -- their own gold answer scores 0.0, so no agent can ever be right on them.
+  Both are excluded; `syllogism` takes propositional_logic's slot in the K=16 list and
+  `circuit_logic` and `self_reference` fill the K=64 list. `scripts/probe_families.py`
+  re-verifies every family (gold scores 1, junk scores 0, instances deterministic).
+- 2026-09-02 (llm backend): SPEC §1's handicap "difficulty capped" is implemented as a cap on the
+  agent's *generation budget* (160 vs 512 max_tokens), not on the generator's difficulty
+  parameters. Capping generator difficulty would give the handicapped agent a DIFFERENT (easier)
+  instance, which breaks both the paired task stream and the shared verifier -- every agent must
+  see the identical instance for `(family, instance)` to mean one thing. The other two handicaps
+  (exemplar withheld, family tool removed) are implemented literally.
+- 2026-09-02 (llm backend): the response memo is keyed on an agent's *prompt signature*
+  `(model, handicapped_on_f, tool_on_f, max_tokens)` rather than on the agent id. Agents sharing a
+  signature emit a byte-identical prompt and, at temperature 0, the identical answer, so this is
+  the same cache SPEC §1 asks for with a wider (and provably safe) sharing rule. It makes the
+  unique-generation count for `true_skill()` scale with the number of signatures (<= 42), not n.
+- 2026-09-02 (llm backend): the env at `$RTE_DATA/env/rte` is a `venv` off the Miniforge 3.12
+  interpreter, not `conda create`. Concurrent env builds on this cluster deadlock conda's shared
+  repodata lock (`BlockingIOError: [Errno 11]`); a venv off the same CPython 3.12 needs no solver.
+  `scripts/00_build_env.sh` still takes `RTE_USE_CONDA=1` for the conda path.
+- 2026-09-02 (llm backend): the `python` tool is containment, not a security boundary -- a
+  throwaway `python -I` subprocess with a 5 s timeout, CPU/address-space/file-size rlimits, an
+  empty environment and a socket-blocking preamble. It stops runaway loops and accidental network
+  use; it is not hardened against a deliberate escape.
+- 2026-09-02 (runner): `rows.csv` is *materialised* from one JSON file per row under
+  `results/<grid>/rows.d/` (written temp + `os.replace`) rather than appended in place. SPEC says
+  "appended atomically"; a real append cannot be made atomic across forked workers on NFS, and a
+  per-row file gives the same guarantee plus O(1) resume (the row's file either exists or does not).
+  `rte.run` and `rte.analyze` both rebuild `rows.csv` from that directory.
+- 2026-09-02 (runner): SPEC's `wall_clock_per_task` is split in two. `wall_clock_per_task` times
+  only `fetch` + `observe` -- the routing cost F3 is about; `wall_clock_per_task_total` also
+  includes `world.execute`, which on the llm backend is a real generation and would swamp it.
+- 2026-09-02 (runner): for a route-to-many `fetch`, the *scored* outcome is the majority (ties -> 0)
+  but `observe` is called once per routed agent with that agent's own outcome, not the majority.
+- 2026-09-02 (runner): `success_late` uses the last `min(500, max(1, Q//4))` tasks, so it stays
+  meaningful on short smoke streams.
+- 2026-09-02 (runner): the oracle line is executed once per (cell, seed) and reused as the regret
+  baseline for every method in that cell -- on the llm backend those are real generations.
+- 2026-09-02 (runner): `bernoulli_scale` uses b=1 at n >= 1e6 (n*K*b at 1e7 x 64 x 3 is 1.9e9
+  probe draws). `backend_kwargs.calibrate_from` falls back to sampling `dist` directly with a loud
+  warning when the measured-S file is absent; those points must be labelled uncalibrated.
+- 2026-09-02 (runner): the sbatch scripts default to `--account=sompolinsky_lab`. On this cluster
+  `kempner_sompolinsky_lab` is the Kempner GPU account; the general CPU partitions used here
+  (`sapphire`, `shared`, `bigmem`) run under `sompolinsky_lab`.
+- 2026-09-02 (tests): `tests/test_each_method.py` discovers one level into method subpackages
+  (`rte/methods/frameworks/`), and skips classes flagged `requires_llm=True` or `runner_only=True`,
+  plus anything whose optional dependency is missing at import/construction/build.
+- 2026-09-02 (tests): the needs-mutation test reports a method that survives having one of its
+  declared needs removed as an **xfail naming the method** (an over-declared need), not a failure.
+- 2026-09-02 (mirror grids): on the bernoulli backend `declared_source=programmatic` and
+  `self_described` are the same channel (there is no LLM to self-describe), so those mirror cells
+  are exact duplicates. They are kept as a pipeline consistency check, not as two conditions.
+- 2026-09-02 message accounting for the decentralized rivals, under the lead's CONTRACT directive
+  ("referral/gossip = 2 per neighbour consulted per hop"). `referral_network` build charges n*d messages: the graph has
+  n*d/2 undirected edges and wiring each costs 2 (offer + accept). `gossip_reputation_greedy` build charges
+  nnz(R) * iterations_run + 2*n*rounds: EigenTrust is genuinely distributed, so each power iteration pushes t[j] once
+  along every report edge, and each T-Man round is one view exchange (2 messages) per node. That EigenTrust term
+  dominates everything else in the benchmark (~1.0e6 build messages at n=1e3, K=16, b=3, i.e. ~20x the probe count) and
+  is a real cost of seedless global reputation, not an accounting artifact. `flat_nsw_router` charges 0 messages: it is
+  a centrally held index, the same trusted-observer advantage `flat_probe_argmax` has, and we state it rather than hide it.
+- 2026-09-02 both graph walks take exactly `depth` steps and pay for a self-loop rather than breaking early, so
+  per-fetch hops / comparisons / messages are exact constants (referral: 4 / 40 / 80; gossip: 6 / 60 / 120) and
+  `scripts/check_methods.py` can assert them.
+- 2026-09-02 `gossip_reputation_greedy` names its estimate table `_est`, not `est`, so that
+  `scripts/check_methods.py`'s exact-estimate argmax check skips it: it is a greedy-walk method, not an argmax method,
+  and is not expected to return the global argmax even with exact estimates. `flat_nsw_router` keeps `est` and does
+  pass that check at 1.00.

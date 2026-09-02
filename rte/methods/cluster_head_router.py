@@ -1,113 +1,75 @@
-"""AgentNet++-style two-level router: k-means on the declared-skill matrix,
-one "head" agent per cluster carries the cluster's reputation.
+"""Two-level router: k-means clusters of ~r agents on D; head = per-cluster argmax mean skill.
+fetch: best cluster by its head's D[f] (compare(k), hop 1, message 2 -- ask the head), then argmax
+within it (compare(cluster size), hop 1, message 2 -- ask the member).
 
-build: partition agents into k = ceil(n/r) clusters via a vectorized,
-chunked k-means over D (fixed iterations, centroid init and empty-cluster
-reseeding both seeded through `view.rng`). Each cluster's head = the member
-with the highest mean declared skill across families.
-
-fetch: pick the cluster whose head has the highest declared[f] among the k
-heads (`compare(k)`, `hop(1)`), then argmax declared[f] within that cluster's
-members (`compare(cluster_size)`, `hop(1)`).
-
-Scales to n=1e6: k-means never materializes an (n, k) matrix -- distance
-scoring is chunked over agents, and "distance" is scored via the
-<=,-2*a.c+|c|^2> expansion, so each chunk is a single BLAS matmul.
-`needs = {"declared"}` (hops/comparisons are charged directly; no bus).
-"""
-from __future__ import annotations
-
+Naive k-means with k=ceil(n/r) centroids is O(n*k) per assignment sweep: infeasible at n=1e6
+(measured ~9s at n=1e5,k=1e4 -> ~90 min/sweep at n=1e6). So build clusters *within* random buckets
+of `bucket` agents instead of the whole population (see DEVIATIONS.md); fetch is unaffected -- it
+still searches the full global set of ~n/r clusters."""
 import math
-
 import numpy as np
-
 from .base import Method
+from ._decl import declared
 
-R = 10
-KMEANS_ITERS = 5
-CHUNK = 4096
+R, ITERS, BUCKET, CHUNK = 10, 5, 20_000, 4096
+
+
+def _assign(D, C):
+    """Nearest centroid per row, chunked over D so no (n, k) matrix is materialized."""
+    labels = np.empty(len(D), np.int64)
+    c_norm = (C.astype(np.float64) ** 2).sum(1)
+    for lo in range(0, len(D), CHUNK):
+        hi = min(len(D), lo + CHUNK)
+        labels[lo:hi] = np.argmax(2.0 * (D[lo:hi] @ C.T) - c_norm, axis=1)   # argmax <=> argmin dist^2
+    return labels
+
+
+def _kmeans(D, k, rng, iters):
+    C = D[rng.choice(len(D), k, replace=k > len(D))].copy()
+    for _ in range(iters + 1):
+        labels = _assign(D, C)
+        sums = np.stack([np.bincount(labels, weights=D[:, j], minlength=k) for j in range(D.shape[1])], axis=1)
+        cnt = np.bincount(labels, minlength=k).astype(np.float64)
+        empty = cnt == 0
+        C = (sums / np.where(empty, 1.0, cnt)[:, None]).astype(D.dtype)
+        if empty.any():
+            C[empty] = D[rng.choice(len(D), int(empty.sum()), replace=False)]
+    return labels
 
 
 class ClusterHeadRouter(Method):
     name = "cluster_head_router"
     needs = frozenset({"declared"})
 
-    def __init__(self, **params):
-        super().__init__(**params)
-        self.r = int(params.get("r", R))
-        self.kmeans_iters = int(params.get("kmeans_iters", KMEANS_ITERS))
-        self.chunk = int(params.get("chunk", CHUNK))
+    def __init__(self, r=R, iters=ITERS, bucket=BUCKET, **p):
+        super().__init__(r=r, iters=iters, bucket=bucket, **p)
+        self.r, self.iters, self.bucket = r, iters, bucket
 
-    # ---- k-means internals -------------------------------------------------
-    @staticmethod
-    def _assign(D: np.ndarray, centroids: np.ndarray, chunk: int) -> np.ndarray:
-        n = D.shape[0]
-        c_norm = (centroids.astype(np.float64) ** 2).sum(axis=1)   # (k,)
-        labels = np.empty(n, dtype=np.int64)
-        ct = centroids.T
-        for lo in range(0, n, chunk):
-            hi = min(n, lo + chunk)
-            block = D[lo:hi]                                        # (b, K)
-            score = 2.0 * (block @ ct) - c_norm[None, :]             # argmax <=> argmin dist^2
-            labels[lo:hi] = np.argmax(score, axis=1)
-        return labels
-
-    @staticmethod
-    def _update(D: np.ndarray, labels: np.ndarray, k: int, rng: np.random.Generator) -> np.ndarray:
-        K = D.shape[1]
-        sums = np.zeros((k, K), dtype=np.float64)
-        for d in range(K):
-            sums[:, d] = np.bincount(labels, weights=D[:, d], minlength=k)
-        counts = np.bincount(labels, minlength=k).astype(np.float64)
-        empty = counts == 0
-        counts_safe = np.where(empty, 1.0, counts)
-        centroids = sums / counts_safe[:, None]
-        if empty.any():
-            reinit = rng.choice(D.shape[0], size=int(empty.sum()), replace=False)
-            centroids[empty] = D[reinit]
-        return centroids.astype(D.dtype)
-
-    def build(self, view, budget) -> None:
+    def build(self, view, budget):
         self.view = view
-        n = view.n
-        D = np.ascontiguousarray(view.declared, dtype=np.float32)
-        k = max(1, math.ceil(n / self.r))
-        rng = view.rng
-        init_idx = rng.choice(n, size=k, replace=(k > n))
-        centroids = D[init_idx].copy()
-        for _ in range(self.kmeans_iters):
-            labels = self._assign(D, centroids, self.chunk)
-            centroids = self._update(D, labels, k, rng)
-        labels = self._assign(D, centroids, self.chunk)
+        D = declared(view).astype(np.float32)
+        rng, bucket = view.rng, min(view.n, self.bucket)
+        perm = rng.permutation(view.n)
+        orders, heads, starts, base = [], [], [], 0
+        for lo in range(0, view.n, bucket):
+            idx = perm[lo:lo + bucket]
+            labels = _kmeans(D[idx], max(1, math.ceil(idx.size / self.r)), rng, self.iters)
+            order = idx[np.argsort(labels, kind="stable")]
+            _, s = np.unique(np.sort(labels), return_index=True)
+            rowmean = D[order].mean(1)
+            for i, lo2 in enumerate(s):
+                hi2 = s[i + 1] if i + 1 < len(s) else order.size
+                heads.append(order[lo2 + int(np.argmax(rowmean[lo2:hi2]))])
+            orders.append(order); starts.append(s + base); base += order.size
+        self.order = np.concatenate(orders)
+        self.heads = np.array(heads, dtype=np.int64)
+        self.offsets = np.concatenate(starts + [[self.order.size]])
 
-        order = np.argsort(labels, kind="stable")
-        sorted_labels = labels[order]
-        uniq, start_idx, counts = np.unique(sorted_labels, return_index=True, return_counts=True)
-        offsets = np.append(start_idx, sorted_labels.size)
-
-        rowmean = D.mean(axis=1)
-        rowmean_sorted = rowmean[order]
-        heads = np.empty(uniq.size, dtype=np.int64)
-        for i in range(uniq.size):
-            lo, hi = offsets[i], offsets[i + 1]
-            heads[i] = order[lo + int(np.argmax(rowmean_sorted[lo:hi]))]
-
-        self.order = order
-        self.offsets = offsets
-        self.heads = heads
-        self.k_eff = int(uniq.size)
-
-    def fetch(self, task) -> int:
-        f = task.family
-        v = self.view
-        D = v.declared
-        head_d = D[self.heads, f]
-        v.ledger.compare(self.heads.size)
-        best_c = int(np.argmax(head_d))
-        v.ledger.hop(1)
-        lo, hi = self.offsets[best_c], self.offsets[best_c + 1]
+    def fetch(self, task):
+        v, D, f = self.view, self.view.declared, task.family
+        v.ledger.compare(self.heads.size); v.ledger.hop(1); v.ledger.message(2)
+        c = int(np.argmax(D[self.heads, f]))
+        lo, hi = self.offsets[c], self.offsets[c + 1]
         members = self.order[lo:hi]
-        member_d = D[members, f]
-        v.ledger.compare(member_d.size)
-        v.ledger.hop(1)
-        return int(members[int(np.argmax(member_d))])
+        v.ledger.compare(members.size); v.ledger.hop(1); v.ledger.message(2)
+        return int(members[int(np.argmax(D[members, f]))])
