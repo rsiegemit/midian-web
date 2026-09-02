@@ -12,8 +12,9 @@ saying so in your final report (append-only additions are fine).
   `RTE_DATA=/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte` (exists). Use `os.environ.get("RTE_DATA", ...)`.
 - Python: `~/miniconda3/bin/python` (3.13, numpy 2.5, matplotlib) for CPU work. A dedicated env for vLLM/reasoning-gym is the
   llm-backend agent's job: `$RTE_DATA/env/rte` (conda, python 3.12, `pip install vllm reasoning-gym openai`). Extra CPU deps
-  (pytest, pandas, scipy, pyyaml, hnswlib, trueskill, scikit-learn) go into that same env; until it exists, `pip install --user` into
-  the base python is acceptable for pure-python packages needed to run tests.
+  (pytest, pandas, scipy, pyyaml, hnswlib, trueskill, scikit-learn) go into that same env. NO MORE `pip install --user`: the user
+  site (~/.local/lib/python3.12) is visible to every conda prefix and silently shadows venv dependencies (found 2026-09-02);
+  framework workers run with PYTHONNOUSERSITE=1 and build scripts must set it when pip-installing.
 - Run everything from `~/rte` with `PYTHONPATH=~/rte` (or `pip install -e .` once pyproject exists). Tests: `python -m pytest tests -q`.
 - Never run GPU work on the login node. Submit sbatch; scripts go in `~/rte/scripts/`.
 - Always seed through `rte.stable_hash.stable_seed_32(*parts)`; never `hash()` of strings; never unseeded RNG.
