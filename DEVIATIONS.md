@@ -501,3 +501,15 @@
   serving setup both sbatch scripts source. `llm_supervisor` is now a 43-line subclass of
   `frameworks/_common.FrameworkMethod`, reusing its retrieval, name mapping, ledger and message
   accounting, and differing only in calling the supervisor directly instead of via a bridge.
+- 2026-09-02 (llm backend): `descriptions()` no longer prefixes each agent's paragraph with
+  "Agent {a} ({model}, tool=...)". Mirrors commit 4ae856e: agent-id tokens poison the hashed
+  TF-IDF retrieval that `frameworks/_common` and `llm_supervisor` use to shortlist candidates.
+  The model and tool still reach the description through the prompt the agent answers.
+- 2026-09-02 (llm client, ROOT FIX): the memo key is `blake2b(json.dumps([model, messages,
+  max_tokens]))` -- the FULL request -- computed inside `rte.llm_client`. Caller-supplied keys are
+  readability prefixes only, never a substitute. Keying on a signature of the prompt's *inputs*
+  let a reworded prompt be served an answer it never produced; the byte-identity harness caught
+  that three times (self-description, self-rating, tool follow-up). Signature sharing is preserved
+  and now provable: equal signatures emit byte-identical prompts, hence the same hash. Memo
+  entries written before this change are unreachable, not wrong -- they cost disk in
+  $RTE_DATA/cache only.

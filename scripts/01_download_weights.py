@@ -20,16 +20,10 @@ from pathlib import Path
 RTE_DATA = Path(os.environ.get("RTE_DATA", "/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte"))
 os.environ.setdefault("HF_HOME", str(RTE_DATA / "hf_cache"))
 
-# The ladder (SPEC §1). Gemma-2 replaces Llama-3.2 (both are gated; gemma access is granted here).
-LADDER = [
-    "Qwen/Qwen2.5-0.5B-Instruct",
-    "Qwen/Qwen2.5-1.5B-Instruct",
-    "Qwen/Qwen2.5-3B-Instruct",
-    "Qwen/Qwen2.5-7B-Instruct",
-    "Qwen/Qwen2.5-14B-Instruct",
-    "google/gemma-2-2b-it",
-    "google/gemma-2-9b-it",
-]
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from rte.backends.population import bands, ladder      # noqa: E402
+
+LADDER = bands(ladder())[0]                            # configs/models.yaml, the only model list
 
 # Download COMPLETE snapshots. An allow_patterns list looks tidy but breaks serving: vLLM calls
 # `snapshot_download(repo, local_files_only=True)` with NO patterns, and huggingface_hub then

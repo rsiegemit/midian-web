@@ -15,19 +15,18 @@ import sys
 
 sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parents[1]))
 
-from rte.backends.llm import FAMILIES_16, FAMILIES_64, instance_entry, score   # noqa: E402
+from rte.backends import families   # noqa: E402
 
 
 def check(name: str) -> tuple[bool, str]:
     try:
-        e = instance_entry(name, 7)
+        e = families.entry(name, 7)
         if e.get("answer") is None:
             return False, "answer=None (no gold answer; unsolvable)"
-        gold = score(name, 7, str(e["answer"]))
-        junk = score(name, 7, "zzz_not_an_answer")
-        det = instance_entry(name, 7)["question"] == e["question"]
-        ok = bool(gold == 1 and junk == 0 and det)
-        return ok, f"gold={gold} junk={junk} deterministic={det}"
+        gold = families.correct(name, 7, str(e["answer"]))
+        junk = families.correct(name, 7, "zzz_not_an_answer")
+        det = families.question(name, 7) == families.question(name, 7)
+        return bool(gold == 1 and junk == 0 and det), f"gold={gold} junk={junk} deterministic={det}"
     except Exception as ex:                                   # noqa: BLE001
         return False, f"{type(ex).__name__}: {str(ex)[:120]}"
 
@@ -40,12 +39,12 @@ def main() -> int:
         from reasoning_gym.factory import DATASETS
         names = sorted(DATASETS)
     else:
-        names = FAMILIES_64
+        names = families.FAMILIES_64
     bad = []
     for name in names:
         ok, why = check(name)
         tag = "OK  " if ok else "FAIL"
-        mark = " [K=16]" if name in FAMILIES_16 else ""
+        mark = " [K=16]" if name in families.FAMILIES_16 else ""
         print(f"{tag} {name:32s} {why}{mark}", flush=True)
         if not ok:
             bad.append(name)

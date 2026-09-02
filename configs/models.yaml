@@ -1,0 +1,27 @@
+# The agent model ladder (SPEC §1). THE ONLY PLACE A MODEL ID IS WRITTEN, besides
+# `SUPERVISOR` in rte/methods/frameworks/_common.py. Read by rte.backends.llm (population
+# building) and by scripts/serve_fleet.sbatch (which GPU, which port, how much HBM).
+# Swapping the ladder = editing this file. Nothing in the code changes.
+#
+# gpu_share is the fraction of one GPU's HBM given to that server; shares on the same gpu
+# must sum below 1.0. Sized for 80 GB H100s (kempner_h200's 141 GB leaves more headroom).
+# ORDER MATTERS: ascending by params_b. A profile picks its model by INDEX into this list, so
+# reordering changes every population. The serve script sorts largest-first itself for launch.
+# system_role: false  -- that model's chat template REJECTS a system message (Gemma-2 returns
+# HTTP 400 'System role not supported'); rte.llm_client folds the system text into the first
+# user turn for those models, so callers never have to care.
+models:
+  - {id: Qwen/Qwen2.5-0.5B-Instruct, params_b:  0.5, tp: 1, gpu: 2, port: 8004, gpu_share: 0.15}
+  - {id: Qwen/Qwen2.5-1.5B-Instruct, params_b:  1.5, tp: 1, gpu: 2, port: 8005, gpu_share: 0.25}
+  - {id: google/gemma-2-2b-it,       params_b:  2.0, tp: 1, gpu: 1, port: 8003, gpu_share: 0.35, system_role: false}
+  - {id: Qwen/Qwen2.5-3B-Instruct,   params_b:  3.0, tp: 1, gpu: 2, port: 8006, gpu_share: 0.35}
+  - {id: Qwen/Qwen2.5-7B-Instruct,   params_b:  7.0, tp: 1, gpu: 1, port: 8002, gpu_share: 0.55}
+  - {id: google/gemma-2-9b-it,       params_b:  9.0, tp: 1, gpu: 3, port: 8007, gpu_share: 0.88, system_role: false}
+  - {id: Qwen/Qwen2.5-14B-Instruct,  params_b: 14.0, tp: 1, gpu: 0, port: 8001, gpu_share: 0.88}
+
+# Population thresholds, in billions of parameters. The skill distributions of SPEC §3 are
+# defined by these bands, not by model ids: `heavy_tail`'s 1-in-10 expert and `bimodal`'s 20%
+# are drawn from `big`, the rest from `small`.
+small_max_b: 1.5      # "0.5-1.5B" agents
+big_min_b: 7.0        # "7-14B" agents
+large_min_b: 9.0      # measured with fewer probes (SPEC §1: 60 instead of 200)
