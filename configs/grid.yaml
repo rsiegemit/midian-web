@@ -41,6 +41,7 @@ _sets:
     - {name: midian, params: {r: 20, delta: 0.3333333333333333}}
     - {name: midian, params: {verify: true, cached: true, r: 5}}      # MIDIAN-V at r=5: half the reports, equal quality on bernoulli
     - {name: midian, params: {verify: true, cached: true, r: 20}}
+    - {name: midian, params: {verify: true, cached: true, r: 10}}      # added 2026-09-02 16:10 to complete the V r-sweep
   frameworks: &frameworks [fw_langgraph, fw_crewai, fw_autogen, fw_magentic_one, fw_maf, fw_openai_agents, fw_google_adk,
                            fw_llamaindex, fw_smolagents, fw_camel_workforce]
   frameworks_verified: &frameworks_verified   # same frameworks, shortlist = MIDIAN-V's leaf cohort instead of TF-IDF over self-descriptions
