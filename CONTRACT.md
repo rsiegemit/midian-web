@@ -66,3 +66,15 @@ A backend may change n (e.g. rounding); World re-reads backend.n/K.
   `$RTE_DATA/results/<grid_name>/rows.csv`, appended atomically; runner resumable (skip rows already present).
 - Report honestly. If something in SPEC is impossible or ambiguous, implement the closest faithful thing, and write the deviation
   into `DEVIATIONS.md` (append a dated bullet). Do not silently change the spec.
+
+## Simplicity & modularity (lead directive, 2026-09-02 — overrides everything above on style)
+- MINIMUM lines. No speculative flexibility, no abstractions for single-use code, no defensive handling of impossible cases.
+  If a file can be 40 lines, it is 40 lines. Prefer one vectorized numpy expression to a loop; prefer a function to a class.
+- ZERO duplication. Shared logic lives in exactly one place: probe-then-estimate → `rte/methods/_est.py` helper (`probe_estimates(view, budget)`);
+  framework plumbing → `frameworks/_common.py`; LLM calls → `rte/llm_client.py`. If two files share 5+ lines, factor them.
+- SWAPPABLE BY CONFIG, not by code edits: (a) models — the ladder is a list in `configs/models.yaml` (id, params_b, tp, gpu share); nothing
+  hardcodes a model id except that file and `SUPERVISOR` in one place; (b) selection algorithms — already `Method` files, discovered by name;
+  (c) datasets/verifiers — a task family is one small adapter `{generate(instance_seed) -> entry, question(entry) -> str, score(answer, entry) -> float}`;
+  Reasoning Gym is ONE such adapter in `rte/backends/families.py`; adding a new source = one new adapter, nothing else changes;
+  (d) backends — already the 6-member protocol.
+- Read like a paper appendix: a reader should be able to see the whole algorithm of any method on one screen.
