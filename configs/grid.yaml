@@ -18,6 +18,7 @@ defaults:
   extra:                                        # paired variants that make target 2 a like-for-like test (online vs frozen)
     - {name: flat_probe_argmax, params: {online: true}}
     - {name: midian, params: {online: false}}
+    - {name: midian, params: {verify: true}}     # MIDIAN-V: verify at promotion (post-hoc variant, see DEVIATIONS)
   exclude: []
 
 _sets:

@@ -45,7 +45,15 @@ def trim_k(delta: float, s: int, b: int) -> int:
     return max(0, min(int(delta * (s - 1) + 1e-9), ((s - 1) * b - 1) // 2))
 
 
-def peer_reported_estimates(view, b: int, cohorts: np.ndarray, delta: float) -> np.ndarray:
+def trimmed_by_reporter(rep: np.ndarray, delta: float, s: int):
+    """rep[..., s-1, b] -> mean after dropping the floor(delta*(s-1)) highest- and lowest-reporting PEERS
+    (a colluding peer corrupts all b of its reports at once, so trimming reports one by one under-trims)."""
+    per = np.sort(rep.mean(-1), axis=-1)
+    t = min(int(delta * (s - 1) + 1e-9), (s - 2) // 2)
+    return per[..., t:per.shape[-1] - t].mean(-1)
+
+
+def peer_reported_estimates(view, b: int, cohorts: np.ndarray, delta: float, by_reporter: bool = False) -> np.ndarray:
     """MIDIAN's level-0 estimates (SPEC §5): b probes per (agent, family), each outcome reported by
     every other member of the agent's cohort, aggregated by a trimmed mean. `cohorts` is int32[N, r]
     of agent ids with -1 padding, which (padding being contiguous) can only shorten the last cohort.
@@ -68,7 +76,11 @@ def peer_reported_estimates(view, b: int, cohorts: np.ndarray, delta: float) -> 
         rep = view.report_many(ag[:, peers][:, :, None, :, None],                        # reporter j
                                ag[:, :, None, None, None],                               # about member m
                                out.reshape(C, s, K, 1, b)                                # what j saw
-                               ).reshape(C * s, K, (s - 1) * b)
+                               ).reshape(C * s, K, s - 1, b)                             # (member, family, peer, probe)
+        if by_reporter:
+            est[ag.ravel()] = trimmed_by_reporter(rep, delta, s)
+            continue
+        rep = rep.reshape(C * s, K, (s - 1) * b)
         rep.sort(-1)                                                                     # trimmed mean =
         t = trim_k(delta, s, b)
         est[ag.ravel()] = rep[:, :, t:rep.shape[2] - t].mean(-1)                         # sort, then slice

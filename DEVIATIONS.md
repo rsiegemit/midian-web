@@ -602,3 +602,11 @@
 - 2026-09-02 (ops): the live grids run as one SLURM job per (grid, method, seed) against the vLLM fleet; the memo is sharded per
   process with a 30 s incremental refresh so concurrent jobs share generations; replicas of saturated models are registered as
   "<model>#<job>" and clients pick one uniformly. The routed-agent mix decides which server saturates (argmax routers → the 14B).
+- 2026-09-02 (MIDIAN-V, added after the CPU-side mirrors, before any live result was read): plain MIDIAN at b=3 rests its pick on 3
+  probes; ~116 agents per family tie at est=1.0 and the argmax breaks ties blindly, which is why sequential halving (winner on ~12
+  probes) beats it. `midian(verify=True)` keeps the same tree and the same n·K·b budget but spends b-1 probes per cell at level 0 and
+  re-probes every promoted candidate at each parent (e = floor((b-b0)·n/#candidates) probes, observed and reported by RANDOM members
+  of the sibling subtrees, trimmed BY REPORTER — a colluding peer corrupts all its reports at once), so the root's pick rests on
+  ~b(r-1) probes. Bernoulli n=1000, 3 seeds: +0.03..+0.14 over plain at β≤0.25 with liar-route rate = β; worse than plain at β=0.5
+  (majority of reporters lie: beyond any trimmed mean, per TARGETS item 3). Plain MIDIAN is byte-identical to before (verified) and
+  stays the pre-registered method; MIDIAN-V is reported alongside as a post-hoc variant.
