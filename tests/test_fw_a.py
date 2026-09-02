@@ -59,7 +59,7 @@ def _built(method, base_url, n=N):
 
 
 @pytest.mark.parametrize("method,env", CASES)
-def test_framework_picks_the_first_candidate(method, env, mock_url):
+def test_framework_pick_is_its_own_choice(method, env, mock_url):
     try:
         venv_python(env)
     except RuntimeError as e:
@@ -67,8 +67,11 @@ def test_framework_picks_the_first_candidate(method, env, mock_url):
     world, m = _built(method, mock_url)
     try:
         before = world.ledger.snapshot()
+        seen, orig = [], m.bridge.select                          # the pick must be the framework's own choice
+        m.bridge.select = lambda *a, **kw: seen.append(orig(*a, **kw)) or seen[-1]
         for task in world.tasks(QUERIES):
-            assert int(m.fetch(task)) == int(m.retrieve(task)[0]), f"{method}: not the first retrieved candidate"
+            a = int(m.fetch(task))
+            assert a == m._name2id[seen[-1]["choice"]] and a in set(map(int, m.retrieve(task))), f"{method}: pick != framework choice"
         assert m.stats == {"picks": QUERIES, "fallbacks": 0, "bad_name": 0}, \
             f"{method}: {m.stats}, bridge={m.bridge.stats}"
         # SPEC §6A ledger formula: per fetch, k descriptions compared, one supervisor hop, k+2 messages.
