@@ -37,6 +37,8 @@ _sets:
     - {name: midian, params: {r: 10, delta: 0.3333333333333333}}
     - {name: midian, params: {r: 20, delta: 0.0}}
     - {name: midian, params: {r: 20, delta: 0.3333333333333333}}
+    - {name: midian, params: {verify: true, cached: true, r: 5}}      # MIDIAN-V at r=5: half the reports, equal quality on bernoulli
+    - {name: midian, params: {verify: true, cached: true, r: 20}}
   frameworks: &frameworks [fw_langgraph, fw_crewai, fw_autogen, fw_magentic_one, fw_maf, fw_openai_agents, fw_google_adk,
                            fw_llamaindex, fw_smolagents, fw_camel_workforce]
   fw_paired: &fw_paired [midian, random, declared_argmax, flat_probe_argmax, llm_supervisor]
