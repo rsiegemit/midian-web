@@ -65,15 +65,19 @@ class LLMBackend:
             g.setdefault(p["model"], []).append(a)
         return g
 
-    def _ask(self, prompt, max_tokens: int) -> list[str]:
-        """Ask every agent's OWN model one question, batched per model. The self-rating and
-        self-description passes differ only in their prompt, so they share this."""
+    def _ask(self, jobs: dict, prompt, max_tokens: int) -> dict:
+        """`jobs` maps a job key to the model that must answer it; returns {key: text}, batched
+        per model. Self-rating keys on the SIGNATURE (the answer depends only on model, tool and
+        family), self-description keys on the agent (it names the agent's own specialty list)."""
         from .. import llm_client
-        out = [""] * self.n
-        for model, agents in self._by_model().items():
-            for a, t in zip(agents, llm_client.complete_batch(
-                    model, [prompt(a) for a in agents], None, max_tokens, self.concurrency)):
-                out[a] = t
+        by_model: dict[str, list] = {}
+        for k, model in jobs.items():
+            by_model.setdefault(model, []).append(k)
+        out = {}
+        for model, ks in by_model.items():
+            for k, t in zip(ks, llm_client.complete_batch(
+                    model, [prompt(k) for k in ks], None, max_tokens, self.concurrency)):
+                out[k] = t
         return out
 
     def _answers(self, items: list[tuple[int, int, int]]) -> list[str]:
@@ -146,8 +150,8 @@ class LLMBackend:
         return self._outcomes(items).reshape(agents.size, reps)
 
     def true_skill(self) -> np.ndarray:
-        """Measured S[n,K], cached to disk. Measurement instances are shared across agents
-        (deterministic from the population seed) so equal signatures share memo entries."""
+        """Measured S[n,K], cached to disk. Both the generation and the scoring happen once per
+        prompt SIGNATURE, from a project-wide probe set -- see the comments below."""
         if self._S is not None:
             return self._S
         cache = self.dir / "S.npy"
@@ -203,9 +207,13 @@ class LLMBackend:
         D = np.zeros((self.n, self.K), dtype=np.float32)
         for f, fam in enumerate(self.families):             # the agent's OWN model rates itself
             q, _ = families.exemplar(fam)
-            D[:, f] = [prompts.parse_rating(t) for t in self._ask(
-                lambda a, f=f, fam=fam, q=q: prompts.rate_self(fam, self._sig(a, f)[2], q), 64)]
-            print(f"[llm] self-rated {f+1}/{self.K} {fam}: mean={D[:, f].mean():.3f}", flush=True)
+            sigs = {self._sig(a, f) for a in range(self.n)}
+            text = self._ask({sig: sig[0] for sig in sigs},
+                             lambda sig, fam=fam, q=q: prompts.rate_self(fam, sig[2], q), 64)
+            rate = {sig: prompts.parse_rating(t) for sig, t in text.items()}
+            D[:, f] = [rate[self._sig(a, f)] for a in range(self.n)]
+            print(f"[llm] self-rated {f+1}/{self.K} {fam}: {len(sigs)} signatures, "
+                  f"mean={D[:, f].mean():.3f}", flush=True)
         self._write("D_self_described.npy", D)
         return D
 
@@ -220,11 +228,13 @@ class LLMBackend:
             self._desc = json.loads(path.read_text())
             return self._desc
         spec = lambda a: ", ".join(self.families[f] for f in self.profiles[a]["specialty"])  # noqa: E731
-        texts = self._ask(
-            lambda a: prompts.describe_self(self.profiles[a]["model"], self.profiles[a]["tool"],
-                                            spec(a)), 160)
-        self._desc = [f"{' '.join(t.split())} Declared areas: {spec(a) or 'general tasks'}."
-                      for a, t in enumerate(texts)]
+        # Per AGENT, not per signature: the prompt names this agent's own specialty list, which two
+        # agents sharing a signature need not share. Identical prompts still cost one generation.
+        texts = self._ask({a: self.profiles[a]["model"] for a in range(self.n)},
+                          lambda a: prompts.describe_self(self.profiles[a]["model"],
+                                                          self.profiles[a]["tool"], spec(a)), 160)
+        self._desc = [f"{' '.join(texts[a].split())} Declared areas: {spec(a) or 'general tasks'}."
+                      for a in range(self.n)]
         self.dir.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(self._desc, indent=2))
         return self._desc

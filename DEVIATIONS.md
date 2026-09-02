@@ -579,3 +579,21 @@
 - 2026-09-02 (statistics): because S is shared across seeds, the seed envelope in every live-grid CI captures profile-draw and stream
   variation only; the per-cell binomial error of S (200 probes; 60 on the ≥9B rungs, i.e. ±0.035 / ±0.065 at p=0.5) is a systematic
   offset common to all seeds and is reported separately in RESULTS, not read out of the seed spread.
+- 2026-09-02 (llm client): the memo is SHARDED PER PROCESS. Each process writes only
+  `$RTE_DATA/cache/memo_<host>_<pid>.sqlite` and, at startup, reads every `*.sqlite` in that
+  directory into one in-memory dict; `python -m rte.llm_client compact` merges the shards between
+  stages. This replaces the single-writer owner stamp, which would have failed every process after
+  the first once the live grid runs one process per method against the shared cache. Two
+  properties make it safe: no two processes ever write the same file (so `nolock=1` is sound on a
+  mount where SQLite locking hangs), and keys are content hashes, so a shard that is missed or
+  read mid-write costs at most a regenerated answer -- it can never serve a wrong one. A process
+  sees whatever finished before it started, not results produced concurrently.
+- 2026-09-02 (llm backend): `true_skill()` GENERATES AND SCORES once per prompt signature, then
+  broadcasts `S[a, f] = S_sig[sig(a), f]`. There are at most 2 signatures per model on a family
+  (specialty / handicapped), so this is ~14 cells whatever n is. Scoring per agent would have run
+  32M verifier calls at n=1e4 to learn those same 14 numbers. Self-rating is likewise per
+  signature (it depends only on model, tool and family). Self-DESCRIPTION stays per agent: its
+  prompt names the agent's own specialty list, which two agents sharing a signature need not
+  share. CONSEQUENCE: agents with equal signatures now have exactly equal S rows by construction,
+  so within-signature sampling noise is gone from S -- the spread in S comes from the profile
+  draw alone.

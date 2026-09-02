@@ -8,6 +8,7 @@ identical answer and counts a hit; profile shape matches each skill distribution
 from __future__ import annotations
 
 import json
+import pathlib
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
@@ -268,7 +269,8 @@ def fleet(tmp_path, monkeypatch):
     monkeypatch.setattr(llm_client, "ENDPOINTS_PATH", tmp_path / "endpoints.json")
     monkeypatch.setattr(llm_client, "ENDPOINT_DIR", tmp_path / "endpoints.d")
     monkeypatch.setattr(llm_client, "CACHE_DIR", tmp_path / "cache")
-    monkeypatch.setattr(llm_client, "_dbs", {})
+    monkeypatch.setattr(llm_client, "_mem", None)
+    monkeypatch.setattr(llm_client, "_shard", None)
     monkeypatch.setattr(llm_client, "_clients", {})
     monkeypatch.setattr(_common, "RTE_DATA", str(tmp_path))       # its own _endpoint() lookup
     llm_client.reset_stats()
@@ -415,3 +417,41 @@ def test_measurement_instances_do_not_depend_on_the_population_seed(tmp_path, mo
                    measure_probes=5, measure_probes_large=5,
                    population_dir=str(tmp_path / f"s{seed}")).true_skill()
     assert seen[1] == seen[7] and len(set(seen[1])) == 2 * 5      # 2 families x 5 probes, shared
+
+
+def test_memo_shards_are_per_process_and_read_by_later_processes(tmp_path):
+    """The live grid runs one process per method against the same cache directory. Each writes
+    only its own shard; a process reads every shard that exists when it starts."""
+    import subprocess
+    import sys
+    write = ("import sys; sys.path.insert(0, %r)\n"
+             "from rte import llm_client as c\n"
+             "c.CACHE_DIR = __import__('pathlib').Path(%r)\n"
+             "c._mem = c._shard = None\n"
+             "mem, shard = c._memo()\n"
+             "shard.execute('INSERT OR REPLACE INTO memo VALUES (?,?)', (sys.argv[1], sys.argv[2]))\n"
+             "shard.commit()\n"
+             "print(len(list(__import__('pathlib').Path(%r).glob('*.sqlite'))))\n")
+    root = str(pathlib.Path(__file__).resolve().parents[1])
+    cache = str(tmp_path / "cache")
+    for k, v in (("k_a", "from_A"), ("k_b", "from_B")):
+        r = subprocess.run([sys.executable, "-c", write % (root, cache, cache), k, v],
+                           capture_output=True, text=True, timeout=120)
+        assert r.returncode == 0, r.stderr
+
+    shards = sorted(p.name for p in (tmp_path / "cache").glob("*.sqlite"))
+    assert len(shards) == 2 and all(n.startswith("memo_") for n in shards)
+
+    from rte import llm_client
+    llm_client.CACHE_DIR = tmp_path / "cache"
+    llm_client._mem = llm_client._shard = None
+    try:
+        mem, shard = llm_client._memo()
+        assert mem["k_a"] == "from_A" and mem["k_b"] == "from_B"   # third process reads both
+        assert len(list((tmp_path / "cache").glob("*.sqlite"))) == 3   # and added its own
+        assert llm_client.compact() == 2
+        left = list((tmp_path / "cache").glob("*.sqlite"))
+        assert [p.name for p in left] == ["memo_compact.sqlite"]
+    finally:
+        llm_client.CACHE_DIR = llm_client.RTE_DATA / "cache"
+        llm_client._mem = llm_client._shard = None

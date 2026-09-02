@@ -4,10 +4,12 @@ Endpoints: one file per served model under `$RTE_DATA/endpoints.d/` (written loc
 scripts/_register_endpoint.py), merged into `$RTE_DATA/endpoints.json` for the contract.
 
 NFS: `fcntl.flock` never returns on this cluster's netscratch mount (instant on $HOME and /tmp),
-and the env's SQLite 3.50.3 picks a locking style that hits it, so the memo opens with `nolock=1`.
-Sound here — one writer process, threads serialised by a per-database lock; `_claim` turns a second
-live writer on the same host into an error instead of a corrupt cache. RTE_LLM_CACHE_NOLOCK=0
-restores real locking. See DEVIATIONS.md 2026-09-02.
+and the env's SQLite 3.50.3 picks a locking style that hits it, so every database opens `nolock=1`.
+The memo is therefore SHARDED PER PROCESS: this process writes only its own
+`$RTE_DATA/cache/memo_<host>_<pid>.sqlite`, and at startup reads EVERY `*.sqlite` in that directory
+into one in-memory dict. No two processes ever write the same file, so the live grid can run one
+process per method against the shared cache; a process sees whatever finished before it started.
+`python -m rte.llm_client compact` merges the shards between stages.
 """
 from __future__ import annotations
 
@@ -31,8 +33,9 @@ MAX_RETRIES = int(os.environ.get("RTE_LLM_RETRIES", "5"))
 
 _STATS = {"hits": 0, "misses": 0, "generations": 0, "errors": 0, "retries": 0}
 _LOCK = threading.Lock()
-_dbs: dict[str, tuple] = {}
 _clients: dict[str, object] = {}
+_mem: dict[str, str] | None = None      # every shard, read once at startup
+_shard: sqlite3.Connection | None = None
 
 
 class NoEndpointsError(RuntimeError):
@@ -52,37 +55,34 @@ def endpoints() -> dict[str, str]:
     return eps
 
 
-def _claim(path: Path) -> None:
-    """With nolock=1 SQLite cannot see a second writer, so make the common case fail loudly."""
-    stamp, pid, host = path.with_suffix(".owner"), os.getpid(), socket.gethostname()
-    prev = json.loads(stamp.read_text()) if stamp.exists() else {}
-    if prev.get("host") == host and prev.get("pid") not in (None, pid):
-        try:
-            os.kill(prev["pid"], 0)
-        except OSError:
-            pass                                    # stale stamp: the owner is gone, take over
-        else:
-            raise RuntimeError(f"{path.name} is already open by pid {prev['pid']} on {host}; the "
-                               f"memo runs without SQLite locking here, so two live writers would "
-                               f"corrupt it.")
-    stamp.write_text(json.dumps({"host": host, "pid": pid, "t": time.time()}))
+def _open(path: Path, readonly: bool = False) -> sqlite3.Connection:
+    uri = f"file:{path}?nolock=1" + ("&mode=ro" if readonly else "")
+    con = sqlite3.connect(uri if NOLOCK else str(path), uri=NOLOCK, check_same_thread=False,
+                          timeout=60.0)
+    if not readonly:
+        con.execute("PRAGMA journal_mode=TRUNCATE")
+        con.execute("CREATE TABLE IF NOT EXISTS memo (k TEXT PRIMARY KEY, v TEXT)")
+        con.commit()
+    return con
 
 
-def _db(model: str) -> tuple:
-    key = model.replace("/", "__")
-    with _LOCK:
-        if key not in _dbs:
-            CACHE_DIR.mkdir(parents=True, exist_ok=True)
-            path = CACHE_DIR / f"{key}.sqlite"
-            if NOLOCK:
-                _claim(path)
-            con = sqlite3.connect(f"file:{path}?nolock=1" if NOLOCK else str(path), uri=NOLOCK,
-                                  check_same_thread=False, timeout=60.0)
-            con.execute("PRAGMA journal_mode=TRUNCATE")
-            con.execute("CREATE TABLE IF NOT EXISTS memo (k TEXT PRIMARY KEY, v TEXT)")
-            con.commit()
-            _dbs[key] = (con, threading.Lock())
-        return _dbs[key]
+def _memo() -> tuple[dict, sqlite3.Connection]:
+    """(all cached answers, this process's write shard). Every `*.sqlite` in CACHE_DIR is read
+    once; only `memo_<host>_<pid>.sqlite` is ever written, so processes never share a writer."""
+    global _mem, _shard
+    if _mem is None:
+        CACHE_DIR.mkdir(parents=True, exist_ok=True)
+        mine = CACHE_DIR / f"memo_{socket.gethostname()}_{os.getpid()}.sqlite"
+        _mem = {}
+        for f in sorted(CACHE_DIR.glob("*.sqlite")):
+            try:
+                con = _open(f, readonly=True)
+                _mem.update(con.execute("SELECT k, v FROM memo"))
+                con.close()
+            except sqlite3.Error:
+                continue                            # not one of ours, or half-written: skip it
+        _shard = _open(mine)
+    return _mem, _shard
 
 
 def _bump(field: str, k: int = 1) -> None:
@@ -173,26 +173,22 @@ def complete_batch(model: str, batch: Sequence[Sequence[dict]], keys: Sequence[s
         raise ValueError(f"keys/batch length mismatch: {len(keys)} vs {len(batch)}")
     prefixes = list(keys) if keys is not None else [None] * len(batch)
     keys = [content_key(model, m, max_tokens, pre) for m, pre in zip(batch, prefixes)]
-    con, lock = _db(model)
-
-    answer: dict[str, str] = {}
-    todo: dict[str, int] = {}                     # unique key -> a representative index
-    with lock:
-        for i, k in enumerate(keys):
-            if k in answer or k in todo:
-                continue
-            row = con.execute("SELECT v FROM memo WHERE k=?", (k,)).fetchone()
-            (answer if row else todo).__setitem__(k, row[0] if row else i)
+    with _LOCK:
+        mem, shard = _memo()
+        answer = {k: mem[k] for k in keys if k in mem}
+        todo = {k: i for i, k in enumerate(keys) if k not in mem}
     _bump("hits", sum(1 for k in keys if k not in todo))
     _bump("misses", len(todo))                    # misses == unique generations, not positions
 
     if todo:
         with ThreadPoolExecutor(max_workers=max(1, min(concurrency, len(todo)))) as ex:
             texts = list(ex.map(lambda i: _generate(model, batch[i], max_tokens), todo.values()))
-        answer.update(zip(todo, texts))
-        with lock:
-            con.executemany("INSERT OR REPLACE INTO memo VALUES (?, ?)", list(zip(todo, texts)))
-            con.commit()
+        rows = list(zip(todo, texts))
+        answer.update(rows)
+        with _LOCK:
+            mem.update(rows)
+            shard.executemany("INSERT OR REPLACE INTO memo VALUES (?, ?)", rows)
+            shard.commit()
     return [answer[k] for k in keys]
 
 
@@ -206,3 +202,27 @@ def stats() -> dict:
 def reset_stats() -> None:
     with _LOCK:
         _STATS.update(dict.fromkeys(_STATS, 0))
+
+
+def compact() -> int:
+    """Merge every shard into one file and delete the ones merged. Run BETWEEN stages: a shard
+    still being written by a live process would lose whatever it writes after the merge."""
+    mem, _ = _memo()
+    out = CACHE_DIR / "memo_compact.sqlite"
+    old = [f for f in sorted(CACHE_DIR.glob("*.sqlite")) if f != out]
+    con = _open(out)
+    con.executemany("INSERT OR REPLACE INTO memo VALUES (?, ?)", list(mem.items()))
+    con.commit()
+    con.close()
+    for f in old:
+        f.unlink()
+    print(f"compacted {len(old)} shard(s) -> {out} ({len(mem)} rows)")
+    return len(mem)
+
+
+if __name__ == "__main__":                        # python -m rte.llm_client compact
+    import sys
+    if sys.argv[1:2] == ["compact"]:
+        compact()
+    else:
+        print(json.dumps(endpoints(), indent=2))
