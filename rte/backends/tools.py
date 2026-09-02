@@ -6,7 +6,7 @@ is not hardened against a determined escape (the author is a 0.5-14B model doing
 """
 from __future__ import annotations
 
-import ast
+import ast, hashlib
 import operator as op
 import subprocess
 import sys
@@ -51,14 +51,19 @@ def calculator(expr: str) -> str:
 
 
 def python(code: str, timeout: float = 5.0) -> str:
+    if len(code) > 8000:
+        return "ERROR: code too long"                # no exception-type prefix (commit 20304d0)
+    from ..llm_client import memo_call               # runs are deterministic (PYTHONHASHSEED=0): memoise like a generation
+    return memo_call("tool:python:" + hashlib.blake2b(code.encode(), digest_size=16).hexdigest(), lambda: _python(code, timeout))
+
+
+def _python(code: str, timeout: float) -> str:
     def limits():
         import resource
         for res, lim in ((resource.RLIMIT_CPU, int(timeout) + 1), (resource.RLIMIT_AS, 2 << 30),
                          (resource.RLIMIT_NPROC, 64), (resource.RLIMIT_FSIZE, 1 << 20)):
             resource.setrlimit(res, (lim, lim))
 
-    if len(code) > 8000:
-        return "ERROR: code too long"                # no exception-type prefix (commit 20304d0)
     try:
         r = subprocess.run([sys.executable, "-I", "-c", _PY_PREAMBLE + code],
                            capture_output=True, text=True, timeout=timeout, cwd="/tmp",

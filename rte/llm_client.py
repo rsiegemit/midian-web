@@ -192,6 +192,17 @@ def _generate(model: str, messages: Sequence[dict], max_tokens: int) -> str:
     raise RuntimeError(f"generation failed for {model} after {MAX_RETRIES} attempts: {last}")
 
 
+def memo_call(key: str, fn) -> str:
+    """Memoise any deterministic str-valued call (e.g. a tool run) in the same shared memo as the generations."""
+    mem, shard = _memo()
+    if key not in mem:
+        v = fn()
+        with _LOCK:
+            mem[key] = v
+            shard.execute("INSERT OR REPLACE INTO memo VALUES (?, ?)", (key, v)); shard.commit()
+    return mem[key]
+
+
 def complete(model: str, messages: Sequence[dict], max_tokens: int = 512,
              cache_key: str | None = None) -> str:
     """One deterministic completion, disk-memoized. `cache_key` is an optional readability PREFIX
