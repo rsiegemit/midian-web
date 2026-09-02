@@ -597,3 +597,8 @@
   share. CONSEQUENCE: agents with equal signatures now have exactly equal S rows by construction,
   so within-signature sampling noise is gone from S -- the spread in S comes from the profile
   draw alone.
+- 2026-09-02: `bernoulli_scale` (10^2–10^7 cost curves) runs at K=16, not 64: it is calibrated to the measured live S, which has 16
+  families. `replay_scale` keeps K=64 (real RouterBench categories). Cost exponents do not depend on K.
+- 2026-09-02 (ops): the live grids run as one SLURM job per (grid, method, seed) against the vLLM fleet; the memo is sharded per
+  process with a 30 s incremental refresh so concurrent jobs share generations; replicas of saturated models are registered as
+  "<model>#<job>" and clients pick one uniformly. The routed-agent mix decides which server saturates (argmax routers → the 14B).
