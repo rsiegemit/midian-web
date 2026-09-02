@@ -19,15 +19,17 @@ defaults:
     - {name: flat_probe_argmax, params: {online: true}}
     - {name: midian, params: {online: false}}
     - {name: midian, params: {verify: true, cached: true}}   # MIDIAN-V: verify at promotion, root caches its pick (post-hoc, see DEVIATIONS)
+    - {name: midian, params: {r: 5}}                          # cohorts of 5: our scale is small (n=100..10^4)
+    - {name: midian, params: {verify: true, cached: true, r: 5}}
     - {name: sequential_halving, params: {peer_reported: true}}   # the fair control: halving through MIDIAN's report channel
   exclude: []
 
 _sets:
   live: &live {backend: llm, n: [1000], dist: [specialist, heavy_tail, bimodal], beta: [0, 0.1, 0.25, 0.5],
                liar_select: [random, low_skill_first], declared_source: [programmatic, self_described]}
-  core4: &core4 [midian, {name: midian, params: {verify: true, cached: true}}, random, declared_argmax, flat_probe_argmax]
+  core4: &core4 [midian, {name: midian, params: {r: 5}}, {name: midian, params: {verify: true, cached: true}}, {name: midian, params: {verify: true, cached: true, r: 5}}, random, declared_argmax, flat_probe_argmax]
   # SPEC §6A: the frameworks are the paper's HEADLINE comparison, so they ride the core grid too
-  budget: &budget [midian, {name: midian, params: {verify: true, cached: true}}, flat_probe_argmax, ucb_per_family, thompson_per_family, sequential_halving, verify_on_claim,
+  budget: &budget [midian, {name: midian, params: {r: 5}}, {name: midian, params: {verify: true, cached: true}}, {name: midian, params: {verify: true, cached: true, r: 5}}, flat_probe_argmax, ucb_per_family, thompson_per_family, sequential_halving, verify_on_claim,
                    warm_start_bandit, referral_network, gossip_reputation_greedy, declared_argmax, random]
   midian_variants: &midian_variants
     - flat_probe_argmax
@@ -41,8 +43,8 @@ _sets:
     - {name: midian, params: {verify: true, cached: true, r: 20}}
   frameworks: &frameworks [fw_langgraph, fw_crewai, fw_autogen, fw_magentic_one, fw_maf, fw_openai_agents, fw_google_adk,
                            fw_llamaindex, fw_smolagents, fw_camel_workforce]
-  fw_paired: &fw_paired [midian, {name: midian, params: {verify: true, cached: true}}, random, declared_argmax, flat_probe_argmax, llm_supervisor]
-  cost_curve: &cost_curve [midian, {name: midian, params: {verify: true, cached: true}}, flat_probe_argmax, declared_argmax, ucb_per_family, flat_nsw_router, cnp_self_bid, random]
+  fw_paired: &fw_paired [midian, {name: midian, params: {r: 5}}, {name: midian, params: {verify: true, cached: true}}, {name: midian, params: {verify: true, cached: true, r: 5}}, random, declared_argmax, flat_probe_argmax, llm_supervisor]
+  cost_curve: &cost_curve [midian, {name: midian, params: {r: 5}}, {name: midian, params: {verify: true, cached: true}}, {name: midian, params: {verify: true, cached: true, r: 5}}, flat_probe_argmax, declared_argmax, ucb_per_family, flat_nsw_router, cnp_self_bid, random]
 
 grids:
   smoke:            {n: [100], dist: [specialist], beta: [0, 0.25], Q: 200, seeds: 1-2}
