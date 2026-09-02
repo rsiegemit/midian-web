@@ -22,6 +22,12 @@ EXPECT = {
     "cnp_self_bid":        (lambda n: dict(messages=n),              lambda n: dict(messages=2*n, comparisons=n)),
     "declared_argmax":     (lambda n: dict(messages=n),              lambda n: dict(comparisons=n, messages=0)),
     "random":              (lambda n: dict(),                        lambda n: dict(probes=0, messages=0)),
+    "referral_network":    (lambda n: dict(probes=n*K*B, reports=n*K*B, messages=n*10),
+                            lambda n: dict(hops=4, comparisons=40, messages=80)),
+    "gossip_reputation_greedy": (lambda n: dict(probes=n*K*B, reports=n*K*B),
+                            lambda n: dict(hops=6, comparisons=60, messages=120)),
+    "flat_nsw_router":     (lambda n: dict(probes=n*K*B, messages=0),
+                            lambda n: dict(hops=math.ceil(math.log2(n)), comparisons=50, messages=0)),
 }
 
 
@@ -42,6 +48,7 @@ def exact_argmax(name, n):
     """Make probes return S exactly; an argmax-type method must then return argmax S for every family."""
     w = World(n, K, "specialist", 0.0, seed=1); M = load_method(name)(); v = w.view(M.needs)
     v.probe_many = lambda agents, fams, reps: np.broadcast_to(w.S[np.asarray(agents), np.asarray(fams)][..., None], np.broadcast_arrays(np.asarray(agents), np.asarray(fams))[0].shape + (reps,)).astype(np.float64)
+    v.report_many = lambda R, A, O: np.broadcast_arrays(R, A, O)[2].astype(np.float64)   # honest pass-through, float
     M.build(v, Budget(B)); truth = w.oracle_all()
     hits = sum(M.fetch(t) == truth[t.family] for t in w.tasks(200))
     return hits / 200
