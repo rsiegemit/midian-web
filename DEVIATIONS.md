@@ -618,3 +618,10 @@
   b separate reports (per-reporter trimming only ever uses that mean, so the estimates are bit-identical): reports fall from
   n·K·b·(r-1) to n·K·(r-1) (+ (r-1) per verified candidate). Plain MIDIAN keeps the spec's per-outcome reports (§5 iii) since it is
   pre-registered and trims per report. The report channel now carries floats (World.report_many keeps float inputs as float32).
+- 2026-09-02: MIDIAN-V knobs measured on bernoulli n=1000 (2 seeds): fewer observers per probe (5 or 3 instead of r-1) and a
+  1-probe level 0 cut reports but cost 0.03-0.10 success; promoting top-2/3 per cohort is neutral-to-worse (verification budget
+  per candidate shrinks); r ∈ {5,10,20} — see sweep in the log. Final live variant: `verify=True, cached=True` (top=1, b0=b-1,
+  r-1 observers): the root caches its pick per family and refreshes it on the online path update, so a fetch is 1 comparison
+  and 2 messages (root -> agent); picks are identical to the uncached descent. The residual gap to peer-reported halving at
+  β≤0.25 is structural (a cohort discards 9 of 10 members after b-1 probes; halving never discards a top agent that early);
+  at β=0.5 with low-skill liars the tree's locality is what survives (bimodal: MIDIAN 0.82-0.85 vs halving 0.36).

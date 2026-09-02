@@ -22,8 +22,9 @@ class Midian(Method):
     name = "midian"
     needs = frozenset({"probe", "reports"})
 
-    def __init__(self, r=10, delta=1 / 3, online=True, verify=False, observers=None, b0=None, cached=False, **p):
-        super().__init__(r=r, delta=delta, online=online, verify=verify, observers=observers, b0=b0, cached=cached, **p)
+    def __init__(self, r=10, delta=1 / 3, online=True, verify=False, observers=None, b0=None, cached=False, top=1, **p):
+        super().__init__(r=r, delta=delta, online=online, verify=verify, observers=observers, b0=b0, cached=cached, top=top, **p)
+        self.top = int(top)                                                   # candidates each node forwards per family (V only)
         self.r, self.delta, self.online, self.verify = int(r), float(delta), bool(online), bool(verify)
         self.observers = int(observers) if observers else self.r - 1          # peers observing each probe (V only)
         self.b0, self.cached = b0, bool(cached)                               # level-0 probes per cell (V only); cache root picks
@@ -55,15 +56,16 @@ class Midian(Method):
             self.parent.append(par); self.children.append(nxt.reshape(-1, self.r)); m = len(self.children[-1])
         self.depth = len(self.children)
 
-    def _verify(self, view, ch, cand, lead, e):
+    def _verify(self, view, ch, cand, lead, e, slot_child=None):
         """Verify at promotion: every candidate a child forwards is re-probed e times, observed and reported
         by the r-1 OTHER leaders of the node (trimmed as at level 0), and folded into its running estimate.
         cand int32[M,r,K] candidate agents (-1 empty), lead int32[M,r] the children's leaders."""
         r, K, k = self.r, view.K, min(self.observers, self.r - 1)
         node, slot, fam = np.nonzero(cand >= 0)                                             # valid candidates only
+        child = slot if slot_child is None else slot_child[slot]                            # which child each slot came from
         peers = np.array([[j for j in range(r) if j != m] for m in range(r)], np.int32)
         L = np.where(ch >= 0, lead, -1)
-        rep_of = L[node[:, None], peers[slot]]                                              # (V, r-1) sibling reporters
+        rep_of = L[node[:, None], peers[child]]                                             # (V, r-1) OTHER children's reps
         bad = rep_of < 0                                                                    # short (padded) node: cycle
         if bad.any():
             first = np.where(ch >= 0, lead, lead[:, :1])[node]                              # a valid reporter per node
@@ -87,7 +89,7 @@ class Midian(Method):
         self.leaf_of = np.empty(view.n, np.int32)
         self.leaf_of[self.leaves[ok]] = np.repeat(np.arange(len(self.leaves), dtype=np.int32), r)[ok.ravel()]
         b0 = (max(1, min(b, self.b0 or b - 1))) if self.verify else b     # level 0 keeps b0 (default b-1); the rest buys promotions
-        C = sum((c >= 0).sum() for c in self.children[1:])                 # candidates re-verified over all upper levels
+        C = self.top * sum((c >= 0).sum() for c in self.children[1:])      # candidates re-verified over all upper levels
         e = int((b - b0) * view.n // C) if self.verify and C else 0        # probes per promoted candidate; exact budget
         self.est = peer_reported_estimates(view, b0, self.leaves, self.delta, by_reporter=self.verify, observers=self.observers)
         self.k = np.full((view.n, K), float(b0), np.float32)
@@ -97,19 +99,25 @@ class Midian(Method):
         lead = None
         for l, ch in enumerate(self.children):
             if l > 0:
-                cand, lead = self.cand[-1][ch], self.lead[-1][ch]        # (M,r,K) agents, (M,r) leaders
-                cand[ch < 0] = -1
+                lead = self.lead[-1][ch]                                 # (M, r) the children's leaders
+                cand = self.topc[-1][ch].reshape(len(ch), -1, K)        # (M, r*top, K) forwarded agents
+                cand[np.repeat(ch < 0, self.top, 1)] = -1
+                slot_child = np.repeat(np.arange(self.r), self.top)       # which child each slot came from
                 if e:                                                    # reporters: RANDOM members of the sibling
-                    self._verify(view, ch, cand, self.rep[-1][ch], e)   # subtrees, so liars are not enriched upward
+                    self._verify(view, ch, cand, self.rep[-1][ch], e, slot_child)
                     valid = self.cand[-1] >= 0                                                     # children's summaries now
                     self.summary[-1] = np.where(valid, self.est[np.where(valid, self.cand[-1], 0), np.arange(K)], NEG)
             v = np.where(cand >= 0, self.est[np.where(cand >= 0, cand, 0), np.arange(K)], NEG)
-            best = v.argmax(1).astype(np.int32)
-            self.summary.append(np.take_along_axis(v, best[:, None, :], 1)[:, 0]); self.best.append(best)
+            order = np.argsort(-v, axis=1, kind="stable")
+            best = (order[:, 0] if l == 0 else slot_child[order[:, 0]]).astype(np.int32)         # best CHILD per family
+            self.summary.append(np.take_along_axis(v, order[:, :1], 1)[:, 0]); self.best.append(best)
             self.cand = getattr(self, "cand", []) if l else []
-            self.cand.append(np.take_along_axis(cand, best[:, None, :], 1)[:, 0])                 # (M,K) summary holder
+            self.cand.append(np.take_along_axis(cand, order[:, :1], 1)[:, 0])                     # (M,K) summary holder
+            self.topc = getattr(self, "topc", []) if l else []
+            self.topc.append(np.take_along_axis(cand, order[:, :self.top], 1))                    # (M,top,K) forwarded
             self.lead = getattr(self, "lead", []) if l else []
-            mean = np.where(cand[:, :, 0] >= 0, v.mean(2), NEG)                                   # leader = best mean
+            mc = (v if l == 0 else v.reshape(len(ch), self.r, self.top, K).mean(2)).mean(2)      # per-child mean est
+            mean = np.where(ch >= 0, mc, NEG)                                                      # leader = best mean
             self.lead.append((self.leaves if l == 0 else lead)[np.arange(len(ch)), mean.argmax(1)])
             self.rep = getattr(self, "rep", []) if l else []              # one random subtree member per node
             nvalid = (ch >= 0).sum(1)
