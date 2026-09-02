@@ -83,6 +83,7 @@ def _memo() -> tuple[dict, sqlite3.Connection]:
 _seen: dict = {}                              # shard file -> last rowid read
 _last_refresh = 0.0
 REFRESH_S = 30.0
+ENDPOINT_TTL = 20.0                          # seconds a process sticks to one endpoint before re-picking among replicas
 
 
 def _refresh(force: bool = False) -> None:
@@ -153,15 +154,17 @@ def _generate(model: str, messages: Sequence[dict], max_tokens: int) -> str:
     last: Exception | None = None
     for attempt in range(MAX_RETRIES):
         try:
+            if model in _clients and time.time() - _clients[model][1] > ENDPOINT_TTL:
+                _clients.pop(model)                               # re-pick: replicas may have joined since
             if model not in _clients:
                 eps = endpoints()
                 if model not in eps:
                     raise NoEndpointsError(f"model {model!r} not served; have {sorted(eps)}")
                 from openai import OpenAI
                 urls = [u for k, u in eps.items() if k == model or k.startswith(model + "#")]   # replicas: "<model>#<job>"
-                _clients[model] = OpenAI(base_url=random.choice(urls), api_key="EMPTY", timeout=600.0,
-                                         max_retries=0)
-            r = _clients[model].chat.completions.create(
+                _clients[model] = (OpenAI(base_url=random.choice(urls), api_key="EMPTY", timeout=600.0,
+                                          max_retries=0), time.time())
+            r = _clients[model][0].chat.completions.create(
                 model=model, messages=for_model(model, messages), max_tokens=int(max_tokens),
                 temperature=0.0, seed=0)
             _bump("generations")
