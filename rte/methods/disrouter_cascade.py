@@ -28,6 +28,6 @@ class DisrouterCascade(Method):
         d = self.D[self.order, task.family]
         takers = np.flatnonzero(d >= self.tau)
         pos = int(takers[0]) if takers.size else d.size - 1
-        v.ledger.message(pos); v.ledger.hop(pos)
+        v.bus.send_many(pos); v.ledger.hop(pos)                  # one forward message per hop
         a = self.order[pos] if takers.size else self.order[int(np.argmax(d))]
         return int(a)

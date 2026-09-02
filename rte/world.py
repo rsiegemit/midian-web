@@ -313,6 +313,12 @@ class World:
             ro[idx[zero_pairs[inv]]] = 0
         return out
 
+    def reset(self, tag: str = "") -> None:
+        """Start a method: zero the ledger, forget reporters' observations, reseed probes by `tag` so a method's
+        build never depends on which methods ran before it (pairing is through the task stream + deterministic execute)."""
+        self.ledger.reset(); self._obs.clear()
+        self._probe_rng = np.random.default_rng(stable_seed_32(self.seed, "probes", tag))
+
     # ---- view
     def view(self, needs: Iterable[str], seed: int | None = None) -> View:
         return View(self, needs, self.seed if seed is None else seed)

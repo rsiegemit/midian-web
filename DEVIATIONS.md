@@ -210,3 +210,10 @@
   `scripts/check_methods.py`'s exact-estimate argmax check skips it: it is a greedy-walk method, not an argmax method,
   and is not expected to return the global argmax even with exact estimates. `flat_nsw_router` keeps `est` and does
   pass that check at 1.00.
+- 2026-09-02 (llm backend env): vLLM 0.22.1 requires `llguidance>=1.7.0,<1.8.0`, whose published
+  Linux wheels are `manylinux_2_31` while these nodes run glibc 2.28 (Rocky 8.10). pip therefore
+  falls back to the sdist and compiles it from Rust, bootstrapping a ~1.5 GB toolchain into
+  `$HOME/.cache` -- on a home quota that is nearly full. `scripts/00_build_env.sh` now vendors the
+  llguidance 1.7.6 abi3 build from the validated reference env (compiled on this same cluster, same
+  CPython 3.12, same glibc) and redirects CARGO_HOME/RUSTUP_HOME/TMPDIR/XDG_CACHE_HOME to
+  $RTE_DATA. The from-source path is still in the script behind `RTE_LLGUIDANCE_SRC`.
