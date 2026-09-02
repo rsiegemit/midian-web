@@ -12,5 +12,6 @@ class WarmStartBandit(BetaBandit):
         self.n0 = n0
 
     def prior(self, view):
+        view.ledger.message(view.n)                          # collect declarations
         D = np.clip(view.declared, 1e-3, 1 - 1e-3)          # Beta shape params must be > 0
         return self.n0 * D, self.n0 * (1 - D)

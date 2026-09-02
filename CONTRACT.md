@@ -35,8 +35,8 @@ View  (what a method sees; raises AccessError on anything outside `needs`)
   .report_channel(j,a,outcome) -> value ; .report_many(reporters, agents, outcomes) -> int8  # needs "reports"; liar j may corrupt
   .bus.send(src,dst,payload) / .bus.send_many(k) / .bus.broadcast(src,payload)               # needs "bus"; charges messages
 Ledger: .probe(k) .report(k) .message(k) .hop(k) .compare(k) .task(k)  .snapshot() .diff(before) .reset()
-   -> methods charge ONLY hops/comparisons via view.ledger.hop(k)/compare(k); probes/reports/messages/tasks are charged by
-      the world/bus automatically. Do not touch ledger.probes etc. directly.
+   -> methods charge hops/comparisons/messages via view.ledger.hop(k)/compare(k)/message(k) (see 'Message accounting' below);
+      probes/reports/tasks are charged by the world automatically. Never touch the counters directly.
 Budget(probes_per_agent_family=3) ; .b ; .total_probes(n,K)
 Method: name, needs (frozenset), __init__(**params), build(view,budget), fetch(task)->int, observe(task,agent,outcome)
    load via rte.methods.load_method("midian") -> class; exactly ONE Method subclass per file; file name == method name.

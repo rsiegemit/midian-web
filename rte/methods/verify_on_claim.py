@@ -15,6 +15,7 @@ class VerifyOnClaim(Method):
 
     def build(self, view, budget):
         self.view, self.D = view, view.declared
+        view.ledger.message(view.n)                          # collect declarations
         self.order, self.verdict = {}, {}                   # family -> ranked agents ; (a, f) -> (accepted, mean)
 
     def fetch(self, task):

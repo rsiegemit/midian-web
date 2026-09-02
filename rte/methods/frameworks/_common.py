@@ -77,6 +77,7 @@ class FrameworkMethod(Method):
         self._Xa, self._Xf = X[:view.n], X[view.n:]
         self.bridge = Bridge(self.env, self.worker)
         self.base_url = self._base_url or _endpoint(self.supervisor)
+        view.ledger.message(view.n)                         # every agent sends its description to the registry once
 
     def retrieve(self, task) -> np.ndarray:
         sims = self._Xa @ self._Xf[task.family]
@@ -86,6 +87,7 @@ class FrameworkMethod(Method):
     def fetch(self, task) -> int:
         cand = self.retrieve(task)
         self.view.ledger.compare(len(cand)); self.view.ledger.hop(1)
+        self.view.ledger.message(len(cand) + 2)             # k descriptions read + supervisor request/reply
         payload = [{"name": self.names[a], "description": self.desc[a]} for a in cand]
         resp = self.bridge.select(self._task_text(task), payload, self.supervisor, self.base_url)
         choice = resp.get("choice")
