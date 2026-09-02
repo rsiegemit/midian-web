@@ -464,3 +464,10 @@
   The `calculator` tool is NOT: 0.40 / 0.73 / 0.07 on the same cells, at or below the no-tool arm,
   because one arithmetic expression cannot carry a multi-step task and emitting it costs a turn.
   Consider drawing tools from {python, none} rather than the spec's three-way set.
+  - Hardening, not a spec deviation: `$RTE_DATA/env/fw_*/bin/python` is a conda prefix, so it still puts
+    `~/.local/lib/python3.12/site-packages` on `sys.path`. Before this was noticed, fw_smolagents, fw_camel
+    and fw_agentscope had no numpy of their own and were resolving `import numpy` to the user-site copy
+    (1.26.4). numpy is now pinned into each of those three requirement files and installed with
+    `PYTHONNOUSERSITE=1` (without it pip treats the user-site copy as already satisfying the requirement).
+    The general fix, for whoever owns `_bridge.py`, is `env.setdefault("PYTHONNOUSERSITE", "1")` in
+    `Bridge._start` beside the existing proxy stripping.

@@ -1,0 +1,5 @@
+# fw_smolagents -> $RTE_DATA/env/fw_smolagents (python 3.12)
+smolagents==1.26.0
+openai>=1.0                 # smolagents.OpenAIServerModel backend
+requests
+numpy                        # otherwise the env silently imports numpy from ~/.local user site-packages

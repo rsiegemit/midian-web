@@ -1,0 +1,49 @@
+# fw_metagpt (appendix) -> $RTE_DATA/env/fw_metagpt (python 3.11; metagpt requires <3.12)
+requests
+# NOTE: `pip install -r` on this file alone does NOT work; see scripts/fw_envs/metagpt.sh and
+# NOTES_metagpt.md. metagpt 0.8.2 hard-pins lancedb==0.4.0 (yanked from PyPI) and has no TeamLeader,
+# so the venv installs the GitHub revision that does, --no-deps, plus the set below by hand.
+metagpt @ git+https://github.com/geekan/MetaGPT.git   # self-reports 1.0.0; 0.8.2 lacks TeamLeader entirely
+pydantic
+loguru
+openai~=1.39.0
+tenacity
+tiktoken
+aiofiles
+PyYAML
+rich
+typer
+fire
+anytree
+networkx
+numpy~=1.26.4
+tqdm
+httpx==0.27.2
+typing-inspect
+websockets<12.0,>=10.0
+gitpython
+gitignore-parser
+aiohttp
+python-docx
+pandas
+scikit-learn
+Pillow
+chardet
+playwright
+beautifulsoup4
+imap-tools
+google-generativeai
+spark_ai_python
+zhipuai
+qianfan
+dashscope~=1.19.3      # metagpt imports the private dashscope.api_entities._get_protocol_params
+volcengine-python-sdk[ark]
+anthropic
+boto3
+ollama
+tree-sitter~=0.23.2
+tree-sitter-python~=0.23.2
+pyarrow
+fsspec
+htmlmin
+grep_ast

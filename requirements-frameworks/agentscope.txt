@@ -1,0 +1,5 @@
+# fw_agentscope (appendix, DIY router) -> $RTE_DATA/env/fw_agentscope (python 3.12)
+agentscope==2.0.7
+openai>=1.0                 # agentscope OpenAIChatModel backend
+requests
+numpy                        # otherwise the env silently imports numpy from ~/.local user site-packages

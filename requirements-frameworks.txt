@@ -1,0 +1,124 @@
+# requirements-frameworks.txt -- SPEC §6A framework rivals.
+# NOT installable as one file: every framework gets its OWN venv at $RTE_DATA/env/fw_<name>,
+# because their pins conflict (pydantic, openai, httpx, mcp, python version).
+# Build one with `bash scripts/fw_envs/<name>.sh`; the per-framework sources are
+# requirements-frameworks/<name>.txt and this file is their concatenation.
+# Assembled 2026-09-02 from: agentscope, autogen, camel, crewai, google_adk, langgraph, llamaindex, maf, metagpt, openai_agents, smolagents.
+# Missing at assembly time: none.
+
+# ===== agentscope  ->  venv $RTE_DATA/env/fw_agentscope =====
+# fw_agentscope (appendix, DIY router) -> $RTE_DATA/env/fw_agentscope (python 3.12)
+agentscope==2.0.7
+openai>=1.0                 # agentscope OpenAIChatModel backend
+requests
+
+# ===== autogen  ->  venv $RTE_DATA/env/fw_autogen =====
+# fw_autogen venv (SPEC §6A rows 3-4). SelectorGroupChat + MagenticOneGroupChat
+autogen-agentchat==0.7.5
+autogen-ext[openai]==0.7.5
+requests
+
+# ===== camel  ->  venv $RTE_DATA/env/fw_camel =====
+# fw_camel_workforce -> $RTE_DATA/env/fw_camel (python 3.12)
+camel-ai==0.2.90
+requests
+mcp>=1.3.0,<2                # camel 0.2.90 imports mcp.server.FastMCP, removed in mcp 2.x
+
+# ===== crewai  ->  venv $RTE_DATA/env/fw_crewai =====
+# fw_crewai venv (SPEC §6A row 2). Selection primitive: Process.hierarchical manager -> DelegateWorkTool
+crewai==1.15.18
+numpy
+requests
+
+# ===== google_adk  ->  venv $RTE_DATA/env/fw_google_adk =====
+# Google ADK (SPEC §6A row 7) — fw_google_adk
+google-adk==2.8.0
+litellm
+requests
+
+# ===== langgraph  ->  venv $RTE_DATA/env/fw_langgraph =====
+# fw_langgraph venv (SPEC §6A row 1). Selection primitive: langgraph_supervisor.create_supervisor
+langgraph==1.2.11
+langgraph-supervisor==0.0.31
+langchain-openai==1.6.0
+requests
+
+# ===== llamaindex  ->  venv $RTE_DATA/env/fw_llamaindex =====
+# LlamaIndex (SPEC §6A row 8) — fw_llamaindex
+llama-index-core==0.14.24
+llama-index-llms-openai-like==0.8.0
+requests
+numpy
+
+# ===== maf  ->  venv $RTE_DATA/env/fw_maf =====
+# Microsoft Agent Framework (SPEC §6A row 5) — fw_maf.
+# The `agent-framework==1.16.0` meta-package is unresolvable on linux-x86_64 (its [all] extra pulls
+# agent-framework-hyperlight -> hyperlight-sandbox-backend-wasm, no distribution for this platform), so we
+# install the sub-packages the selection primitive needs at their newest releases. See DEVIATIONS.md.
+agent-framework-core==1.16.0
+agent-framework-openai==1.14.1
+agent-framework-orchestrations==1.1.1
+requests
+
+# ===== metagpt  ->  venv $RTE_DATA/env/fw_metagpt =====
+# fw_metagpt (appendix) -> $RTE_DATA/env/fw_metagpt (python 3.11; metagpt requires <3.12)
+requests
+# NOTE: `pip install -r` on this file alone does NOT work; see scripts/fw_envs/metagpt.sh and
+# NOTES_metagpt.md. metagpt 0.8.2 hard-pins lancedb==0.4.0 (yanked from PyPI) and has no TeamLeader,
+# so the venv installs the GitHub revision that does, --no-deps, plus the set below by hand.
+metagpt @ git+https://github.com/geekan/MetaGPT.git   # self-reports 1.0.0; 0.8.2 lacks TeamLeader entirely
+pydantic
+loguru
+openai~=1.39.0
+tenacity
+tiktoken
+aiofiles
+PyYAML
+rich
+typer
+fire
+anytree
+networkx
+numpy~=1.26.4
+tqdm
+httpx==0.27.2
+typing-inspect
+websockets<12.0,>=10.0
+gitpython
+gitignore-parser
+aiohttp
+python-docx
+pandas
+scikit-learn
+Pillow
+chardet
+playwright
+beautifulsoup4
+imap-tools
+google-generativeai
+spark_ai_python
+zhipuai
+qianfan
+dashscope~=1.19.3      # metagpt imports the private dashscope.api_entities._get_protocol_params
+volcengine-python-sdk[ark]
+anthropic
+boto3
+ollama
+tree-sitter~=0.23.2
+tree-sitter-python~=0.23.2
+pyarrow
+fsspec
+htmlmin
+grep_ast
+
+# ===== openai_agents  ->  venv $RTE_DATA/env/fw_openai_agents =====
+# OpenAI Agents SDK (SPEC §6A row 6) — fw_openai_agents
+openai-agents==0.22.0
+requests
+
+# ===== smolagents  ->  venv $RTE_DATA/env/fw_smolagents =====
+# fw_smolagents -> $RTE_DATA/env/fw_smolagents (python 3.12)
+smolagents==1.26.0
+openai>=1.0                 # smolagents.OpenAIServerModel backend
+requests
+

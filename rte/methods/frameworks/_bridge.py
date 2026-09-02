@@ -39,6 +39,7 @@ class Bridge:
         for k in ("http_proxy", "https_proxy", "HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "all_proxy"):
             env.pop(k, None)
         env.setdefault("OPENAI_API_KEY", "EMPTY")
+        env["PYTHONNOUSERSITE"] = "1"                  # conda prefixes see ~/.local site-packages; never let it shadow a venv
         self._proc = subprocess.Popen([venv_python(self.env_name), os.path.join(WORKERS, self.worker)],
                                       stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=sys.stderr,
                                       text=True, bufsize=1, env=env)

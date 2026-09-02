@@ -59,7 +59,7 @@ grids:
                      methods: [{name: fw_langgraph, params: {k: 5}}, {name: fw_langgraph, params: {k: 10}}, {name: fw_langgraph, params: {k: 20}},
                                {name: fw_autogen,   params: {k: 5}}, {name: fw_autogen,   params: {k: 10}}, {name: fw_autogen,   params: {k: 20}}]}
   fw_appendix:      {backend: llm, n: [100], dist: [specialist], beta: [0, 0.25], declared_source: [self_described], seeds: 1-3, Q: 300,
-                     methods: [fw_metagpt, fw_agentscope, midian, random]}
+                     methods: [fw_agentscope, midian, random]}          # fw_metagpt: NotImplemented, see NOTES_metagpt.md
 
   # ---- bernoulli twins of every live grid: exercise the pipeline before the fleet is up (never headline numbers)
   bernoulli_mirror_live_core_n100:   {mirror_of: live_core_n100,   backend: bernoulli, seeds: 1-10, Q: 2000}
