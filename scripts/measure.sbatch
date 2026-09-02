@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=rte_measure
-#SBATCH --account=kempner_sompolinsky_lab
+#SBATCH --account=sompolinsky_lab
 #SBATCH --partition=sapphire
 #SBATCH --cpus-per-task=16
 #SBATCH --mem=64G
