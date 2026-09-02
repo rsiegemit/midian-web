@@ -625,3 +625,8 @@
   and 2 messages (root -> agent); picks are identical to the uncached descent. The residual gap to peer-reported halving at
   β≤0.25 is structural (a cohort discards 9 of 10 members after b-1 probes; halving never discards a top agent that early);
   at β=0.5 with low-skill liars the tree's locality is what survives (bimodal: MIDIAN 0.82-0.85 vs halving 0.36).
+- 2026-09-02 (user request): framework rivals get a labeled variant `retrieval: midian` (grids fw_live_n{100,1000}_verified): the
+  shared adapter's shortlist is MIDIAN-V's leaf cohort (its pick first, then the cohort; k = r ∈ {10, 5}) instead of the top-k by
+  TF-IDF over self-descriptions; the framework's own primitive still chooses among the k using names + self-descriptions. Needs
+  become {declared, probe, reports}; MIDIAN's build/fetch/observe are charged through the same ledger. The original description-only
+  frameworks are unchanged. Shows whether a deployed framework becomes robust by swapping only its shortlist source.

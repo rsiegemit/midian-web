@@ -48,9 +48,13 @@ class FrameworkMethod(Method):
     env: str = ""
     worker: str = ""
 
-    def __init__(self, k: int = 10, supervisor: str = SUPERVISOR, base_url: str | None = None, **params):
-        super().__init__(k=k, supervisor=supervisor, **params)
+    def __init__(self, k: int = 10, supervisor: str = SUPERVISOR, base_url: str | None = None,
+                 retrieval: str = "tfidf", r: int = 10, **params):
+        super().__init__(k=k, supervisor=supervisor, retrieval=retrieval, r=r, **params)
         self.k, self.supervisor, self._base_url = int(k), supervisor, base_url
+        self.retrieval, self.r = retrieval, int(r)
+        if retrieval == "midian":                            # verified shortlist: MIDIAN-V's leaf cohort (k = r)
+            self.needs = self.needs | {"probe", "reports"}
         self.stats = {"picks": 0, "fallbacks": 0, "bad_name": 0}
 
     # ---- world accessors (llm backend provides real text; bernoulli/replay get synthesized descriptions)
@@ -79,11 +83,22 @@ class FrameworkMethod(Method):
         self.bridge = Bridge(self.env, self.worker)
         self.base_url = self._base_url or _endpoint(self.supervisor)
         view.ledger.message(view.n)                         # every agent sends its description to the registry once
+        if self.retrieval == "midian":
+            from ..midian import Midian
+            self.mid = Midian(verify=True, cached=True, r=self.r); self.mid.build(view, budget)
 
     def retrieve(self, task) -> np.ndarray:
+        if self.retrieval == "midian":                        # MIDIAN's pick first, then the rest of its leaf cohort
+            a = self.mid.fetch(task)
+            coh = self.mid.leaves[self.mid.leaf_of[a]]
+            return np.concatenate([[a], coh[(coh >= 0) & (coh != a)]])
         sims = self._Xa @ self._Xf[task.family]
         k = min(self.k, self.view.n)
         return np.argsort(-sims, kind="stable")[:k]
+
+    def observe(self, task, agent, outcome):
+        if self.retrieval == "midian":
+            self.mid.observe(task, agent, outcome)
 
     def fetch(self, task) -> int:
         cand = self.retrieve(task)

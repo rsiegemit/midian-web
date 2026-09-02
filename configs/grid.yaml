@@ -43,6 +43,27 @@ _sets:
     - {name: midian, params: {verify: true, cached: true, r: 20}}
   frameworks: &frameworks [fw_langgraph, fw_crewai, fw_autogen, fw_magentic_one, fw_maf, fw_openai_agents, fw_google_adk,
                            fw_llamaindex, fw_smolagents, fw_camel_workforce]
+  frameworks_verified: &frameworks_verified   # same frameworks, shortlist = MIDIAN-V's leaf cohort instead of TF-IDF over self-descriptions
+    - {name: fw_langgraph, params: {retrieval: midian, r: 10}}
+    - {name: fw_langgraph, params: {retrieval: midian, r: 5}}
+    - {name: fw_crewai, params: {retrieval: midian, r: 10}}
+    - {name: fw_crewai, params: {retrieval: midian, r: 5}}
+    - {name: fw_autogen, params: {retrieval: midian, r: 10}}
+    - {name: fw_autogen, params: {retrieval: midian, r: 5}}
+    - {name: fw_magentic_one, params: {retrieval: midian, r: 10}}
+    - {name: fw_magentic_one, params: {retrieval: midian, r: 5}}
+    - {name: fw_maf, params: {retrieval: midian, r: 10}}
+    - {name: fw_maf, params: {retrieval: midian, r: 5}}
+    - {name: fw_openai_agents, params: {retrieval: midian, r: 10}}
+    - {name: fw_openai_agents, params: {retrieval: midian, r: 5}}
+    - {name: fw_google_adk, params: {retrieval: midian, r: 10}}
+    - {name: fw_google_adk, params: {retrieval: midian, r: 5}}
+    - {name: fw_llamaindex, params: {retrieval: midian, r: 10}}
+    - {name: fw_llamaindex, params: {retrieval: midian, r: 5}}
+    - {name: fw_smolagents, params: {retrieval: midian, r: 10}}
+    - {name: fw_smolagents, params: {retrieval: midian, r: 5}}
+    - {name: fw_camel_workforce, params: {retrieval: midian, r: 10}}
+    - {name: fw_camel_workforce, params: {retrieval: midian, r: 5}}
   fw_paired: &fw_paired [midian, {name: midian, params: {r: 5}}, {name: midian, params: {verify: true, cached: true}}, {name: midian, params: {verify: true, cached: true, r: 5}}, random, declared_argmax, flat_probe_argmax, llm_supervisor]
   cost_curve: &cost_curve [midian, {name: midian, params: {r: 5}}, {name: midian, params: {verify: true, cached: true}}, {name: midian, params: {verify: true, cached: true, r: 5}}, flat_probe_argmax, declared_argmax, ucb_per_family, flat_nsw_router, cnp_self_bid, random]
 
@@ -57,6 +78,8 @@ grids:
   fw_live_n1000:    {backend: llm, n: [1000], dist: [specialist, heavy_tail, bimodal], beta: [0, 0.1, 0.25, 0.5],
                      declared_source: [self_described], seeds: 1-3, Q: 300, methods: [*frameworks, *fw_paired]}
   fw_live_n100:     {mirror_of: fw_live_n1000, n: [100]}
+  fw_live_n1000_verified: {mirror_of: fw_live_n1000, methods: *frameworks_verified}   # labeled variant: verified shortlist
+  fw_live_n100_verified:  {mirror_of: fw_live_n1000, n: [100], methods: *frameworks_verified}
   live_extra_n1000: {<<: *live, dist: [correlated, iid_uniform]}
   live_n10k:        {backend: llm, n: [10000], dist: [specialist], beta: [0, 0.25], b: [1], exclude: [trueskill_per_family]}
   budget_sweep:     {backend: llm, n: [1000], dist: [specialist, heavy_tail, bimodal], beta: [0.25], b: [1, 3, 10], methods: *budget}
