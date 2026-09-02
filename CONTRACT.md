@@ -32,8 +32,8 @@ World(n, K, dist, beta, liar_select="random", collude=True, seed=0, backend="ber
 View  (what a method sees; raises AccessError on anything outside `needs`)
   .n .K .families .ledger .rng .needs                 # always
   .declared -> D[n,K] read-only                      # needs "declared"
-  .probe(a,f) -> 0/1 ; .probe_many(agents, families, reps) -> int8[len(agents), reps]     # needs "probe"; fresh instances; charged
-  .report_channel(j,a,outcome) -> value ; .report_many(reporters, agents, outcomes) -> int8  # needs "reports"; liar j may corrupt
+  .probe(a,f) -> 0/1 ; .probe_many(agents, families, reps) -> int8[len(agents), reps]     # needs "probe"; the k-th probe of (a,f) is the SAME instance for every method (index-seeded, memo-shared); charged
+  .report_channel(j,a,outcome) -> value ; .report_many(reporters, agents, outcomes) -> int8|float32  # needs "reports"; liar j may corrupt; floats (per-peer means) pass through
   .bus.send(src,dst,payload) / .bus.send_many(k) / .bus.broadcast(src,payload)               # needs "bus"; charges messages
 Ledger: .probe(k) .report(k) .message(k) .hop(k) .compare(k) .task(k)  .snapshot() .diff(before) .reset()
    -> methods charge hops/comparisons/messages via view.ledger.hop(k)/compare(k)/message(k) (see 'Message accounting' below);
@@ -104,3 +104,7 @@ property check on the bernoulli world at n=100 and n=1000: valid agent ids, buil
 against the documented formula (probes, reports, messages, hops, comparisons), success ≥ random's on `specialist` at β=0
 (a router that loses to random is a bug until explained), and — where the method is an argmax over exact estimates — that it
 returns the true argmax when estimates are made exact (mock `probe_many` to return S). Findings go in the report, not under the rug.
+
+## Status / handoff
+See `STATUS.md` (kept current for context compaction) and `DEVIATIONS.md` (dated). Runner extras: `--only k=v` cell filter,
+`scripts/launch_live.sh` (RTE_ONLY, RTE_RUN_ARGS), `scripts/restart_wave.sh`, replicas via `scripts/serve_replica.sbatch`.
