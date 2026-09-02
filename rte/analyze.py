@@ -326,7 +326,7 @@ def summary(out, grids, df, agg, cmp_, fits, tgts, figs):
     sec = lambda t, table, *prose: ["", f"## {t}", "", *prose, *([""] if prose else []), table]
     L = [f"# RTE results -- {', '.join(grids)}", "",
          f"{len(df)} rows | {df.label.nunique()} methods | "
-         f"{df.groupby(cells(df), dropna=False).ngroups} cells | seeds {sorted(df.seed.unique())}",
+         f"{df.groupby(cells(df), dropna=False).ngroups} cells | seeds {sorted(map(int, df.seed.unique()))}",
          f"Backends: {', '.join(sorted(df.backend.astype(str).unique()))}.", "",
          "Intervals are 95% percentile bootstrap over seeds; MIDIAN-vs-rival deltas are paired by",
          f"seed. `{FLOOR}` means the delta does not exceed MIDIAN's own seed envelope in that cell.",
