@@ -27,7 +27,7 @@ def built(n=100, K=16, r=10, b=3, beta=0.0, delta=1 / 3, seed=1, exact=None, **w
     w = World(n, K, "specialist", beta, seed=seed, **wkw)
     m = Midian(r=r, delta=delta)
     if exact is not None:
-        exact.setattr("rte.methods.midian.peer_reported_estimates", lambda *a: w.S.copy())
+        exact.setattr("rte.methods.midian.peer_reported_estimates", lambda *a, **k: w.S.copy())
     before = w.ledger.snapshot()
     m.build(w.view(m.needs), Budget(b))
     return w, m, w.ledger.diff(before)
