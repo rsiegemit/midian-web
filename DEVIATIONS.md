@@ -357,11 +357,16 @@
   runs we abort at the pick leave connections queued, and the default backlog of 5 fills up and makes every
   later call fail with "Connection error". Unrelated: line 51 referenced a removed local `text` and raised
   NameError on every no-tools POST; fixed to read the messages.
-- 2026-09-02 (framework rivals B): `mode` reaches the worker through the `FW_MODE` environment variable,
-  set in `FrameworkMethod.build` by `fw_maf` / `fw_llamaindex` and inherited by the subprocess
-  (`_bridge.Bridge._start` copies `os.environ`). The frozen request schema in `_bridge.py` has no field for
-  per-method options and was not extended. Consequence: two framework methods with different modes must not
-  be built in one process before either issues its first request.
+- 2026-09-02 (framework rivals B): `mode` reaches the worker in the bridge request's `params` field, which
+  `_bridge.py` / `_common.py` now carry. (Superseded: an earlier version of this passed it in an `FW_MODE`
+  environment variable, which made two framework methods with different modes unsafe in one process.)
+- 2026-09-02 (framework rivals B, `fw_maf` handoff): `tests/test_fw_b.py` asserts the pick is the FIRST
+  retrieved candidate for every recipe EXCEPT MAF's handoff mode, where it only asserts membership in the
+  top-k. `HandoffBuilder` stores a source's targets in a `set` of `HandoffConfiguration` hashed by target id,
+  so the `handoff_to_<name>` tool order is Python's per-process randomized string hash order, not candidate
+  order. Measured directly: 5 runs over the same 10 candidates picked agents 2, 3, 7, 0 and 5. The mock's
+  fixed "first agent named" policy therefore cannot land on candidate 0 there, and the strict check would be
+  flaky. Nothing to fix in the recipe -- the interception point is still the framework's own HandoffSentEvent.
 - 2026-09-02 (serving): the `gpu_test` partition allocates A100 MIG slices, so SLURM sets
   `CUDA_VISIBLE_DEVICES` to a MIG UUID; vLLM 0.22.1 calls `int()` on it and dies with
   `ValueError: invalid literal for int() with base 10: 'MIG-adfbd773-...'`
@@ -378,3 +383,68 @@
   repo's own generation_config.json. Qwen2.5 ships `repetition_penalty=1.1` and a temperature
   there; without this flag the models on the ladder would be sampled under different rules, which
   is a confound in a benchmark that exists to compare them. Requests set temperature 0 and seed 0.
+- 2026-09-02 (llm client): the response memo opens its SQLite files with `nolock=1`. On this
+  cluster's netscratch mount, where `$RTE_DATA/cache` lives, a plain `sqlite3.connect` from the
+  rte env HANGS on the first write -- SQLite 3.50.3 (the env's build) selects a locking style that
+  depends on the same broken `flock`; base Python's SQLite 3.51.0 happens not to. Skipping SQLite's
+  file locking is sound because the memo has one writer process (the runner) whose threads are
+  already serialised by a per-database `threading.Lock`; `rte.llm_client._claim` writes an owner
+  stamp so a second live writer on the same host fails loudly instead of corrupting the cache.
+  `RTE_LLM_CACHE_NOLOCK=0` restores real locking on a filesystem where it works.
+- 2026-09-02 (framework rivals C: smolagents, CAMEL, MetaGPT, AgentScope):
+  - `fw_smolagents`: SPEC §6A recipe 8 says read `ActionStep.tool_calls[0].name` from a `step_callback`.
+    In smolagents 1.26.0 step callbacks fire in `MultiStepAgent._finalize_step`, which runs only AFTER
+    `process_tool_calls` has already executed the selected managed agent — i.e. after a full sub-agent run,
+    which is exactly what the interception must prevent. We instead consume `agent.run(task, stream=True)`
+    and return on the first `smolagents.memory.ToolCall`, which `process_tool_calls` yields immediately
+    before `execute_tool_call`. Same value, one step earlier, nothing executed.
+  - `fw_camel_workforce`: `Workforce.add_single_agent_worker(description, worker)` has no `node_id`
+    parameter and `BaseNode` defaults it to `str(id(self))`, but the coordinator's `ASSIGN_TASK_PROMPT`
+    roster is `<node_id>:<description>:<toolkits>` and it answers with `assignee_id`. To put the candidate
+    name where the framework's own primitive reads it, the worker assigns `wf._children[-1].node_id` after
+    adding each worker (the one private-attribute touch in these four rivals).
+  - `camel-ai` 0.2.90 declares `mcp>=1.3.0` but imports `mcp.server.FastMCP`, which mcp 2.x removed;
+    `requirements-frameworks/camel.txt` pins `mcp>=1.3.0,<2` (resolved to 1.29.1).
+  - `fw_metagpt`: the SPEC pin and the SPEC recipe are incompatible. `metagpt` 0.8.2 on PyPI contains NO
+    `TeamLeader` and no `publish_team_message` (`metagpt/roles/di/` holds only `data_interpreter.py`), and
+    0.8.2 routes purely by hardwired `Message.send_to` with no LLM and no agent descriptions read. It is
+    also not installable as published: it hard-pins `lancedb==0.4.0`, which no longer exists on PyPI. The
+    rival is therefore built against the GitHub `main` revision, which self-reports version 1.0.0 and does
+    contain `TeamLeader.publish_team_message(content, send_to)`, installed `--no-deps` with a hand-assembled
+    dependency set (see `requirements-frameworks/metagpt.txt`). Appendix material; caveats in NOTES_metagpt.md.
+  - `fw_agentscope`: AgentScope 2.0.7 has no multi-agent selection primitive at all (no supervisor, no
+    handoff, no speaker selector; `agentscope.pipeline` no longer exists). This rival is a DIY
+    structured-output router — one `OpenAIChatModel` call with a json_schema `response_format` forcing
+    `{"agent": <name>}` — and measures AgentScope's model layer, not a routing primitive. Report as DIY.
+  - `scripts/mock_openai_server.py` (shared, GPU-free test double) extended twice for these rivals:
+    (a) `ThreadingHTTPServer` instead of `HTTPServer`, because CAMEL's Workforce issues concurrent
+    completions and the single-threaded server dropped connections; (b) when the prompt enumerates
+    `Task ID: <id>` lines, the JSON answer also carries `assignments: [{task_id, assignee_id, dependencies}]`,
+    which is the shape CAMEL's `ASSIGN_TASK_PROMPT` demands. Without (b) CAMEL falls back to inventing a
+    brand-new worker with a uuid id, which is a real (and worth reporting) failure mode with a live model.
+  - Build note, not a spec deviation: parallel `conda create` runs sharing `CONDA_PKGS_DIRS` corrupt the
+    package cache (`InvalidArchiveError`). These four envs were created serially against a private cache
+    at `$RTE_DATA/conda_pkgs_fwc`; `scripts/fw_envs/<name>.sh` is unchanged and still correct when run alone.
+- 2026-09-02 (llm backend, MEASURED): the per-family handicap is prompt-side only -- no worked
+  exemplar, no family description, no family tool. The generation-budget cap that earlier stood in
+  for the spec's "difficulty capped" is OFF by default (`handicap_max_tokens=None`) because it was
+  measured to be NON-MONOTONE: on Qwen2.5-0.5B the capped ("handicapped") configuration BEAT the
+  uncapped one on syllogism, 0.85 vs 0.30 over 20 probes, and was +0.06 better on average across 8
+  families -- a short budget forces a terse answer while a long one lets a small model ramble past
+  the answer format. A handicap that sometimes helps would invert the `specialist` distribution.
+  With the prompt-side handicap the sign is correct on every family measured (+0.031 mean).
+  Handicapped agents still get the answer-format instruction: withholding it would measure format
+  compliance rather than skill, and all agents are scored by the same verifier.
+  `scripts/calibrate_families.py` reproduces the measurement.
+- 2026-09-02: two CrewAI defects found by running the worker for 150 consecutive requests rather than 20,
+  both fixed inside `workers/crewai_worker.py`:
+  - CrewAI prints to `sys.stdout` (a Rich "Tracing Preference Saved" panel on first run, and
+    `[CrewAIEventsBus] Warning:` lines), which is the `_bridge` JSON-lines protocol channel; a stray line
+    makes the bridge kill the worker and record an error. The crew now runs inside
+    `contextlib.redirect_stdout(sys.stderr)`. `_bridge.Bridge.select` would be more robust if it skipped
+    lines that do not parse as JSON instead of treating the first line as the response — flagged, not
+    changed, since `_bridge.py` is shared.
+  - Aborting inside the delegate tool leaves CrewAI's `tool_usage_started` scope unclosed; the scope stack
+    is a process-wide `ContextVar` whose `push_event_scope` raises at depth 100, so a persistent worker
+    started failing after ~100 requests. The worker resets it per request with
+    `crewai.events.event_context.restore_event_scope(())`.

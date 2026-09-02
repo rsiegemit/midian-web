@@ -66,6 +66,7 @@ from `handler.stream_events()`; the worker returns it and calls `handler.cancel_
 - `llama-index-core` declares numpy, but pip saw the numpy in `~/.local/lib/python3.12/site-packages` as
   satisfying it and skipped the install; the env then broke as soon as the user site was hidden. `numpy` is
   now pinned explicitly in `requirements-frameworks/llamaindex.txt`.
+- Mode arrives in the bridge request's `params`, not an environment variable.
 - The mock server's `"choice"` field had to become 1-based to match this parser (see DEVIATIONS.md); the
   0-based `"index"` key it also returns is untouched.
 

@@ -66,10 +66,11 @@ def test_framework_picks_the_agent_the_model_named(name, params, first, mock_url
         method.bridge.close()
 
 
+@pytest.mark.parametrize("n", [100, 1000])
 @pytest.mark.parametrize("name", NAMES)
-def test_unknown_choice_falls_back_to_declared_argmax(name):
+def test_unknown_choice_falls_back_to_declared_argmax(name, n):
     """A framework that answers with a name outside the top-k must not route there: fall back, count it."""
-    world = World(N, K, DIST, BETA, seed=SEED)
+    world = World(n, K, DIST, BETA, seed=SEED)
     method = load_method(name)(base_url="http://127.0.0.1:1/v1")     # never contacted: the bridge is stubbed
     method.build(world.view(method.needs), Budget(3))
     method.bridge.select = lambda *a, **kw: {"choice": "agent_999999", "error": None, "raw": None}
@@ -78,4 +79,4 @@ def test_unknown_choice_falls_back_to_declared_argmax(name):
         topk = method.retrieve(task)
         assert method.fetch(task) == int(topk[np.argmax(method.view.declared[topk, task.family])])
     assert method.stats == {"picks": 0, "fallbacks": 0, "bad_name": len(tasks)}
-    assert world.ledger.messages == N + len(tasks) * (method.k + 2)   # n at build, k + 2 per fetch
+    assert world.ledger.messages == n + len(tasks) * (method.k + 2)   # n at build, k + 2 per fetch

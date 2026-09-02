@@ -52,15 +52,18 @@ all the model selects on. `_AutoHandoffMiddleware` short-circuits the tool call,
   builder raises otherwise. Group-chat mode does not, and the worker sets the flag only for handoff.
 - Handoff mode runs the agent in **streaming** mode (`"stream": true` chat-completions request). The mock
   server had to grow an SSE branch for it; a real vLLM server handles this natively.
-- Aborting `run(stream=True)` mid-round is noisy: OpenTelemetry raises
+- `ResponseStream` has no `aclose`, so returning at the pick simply abandons the run; the pending task is
+  destroyed when the worker's loop moves on. Aborting mid-round is noisy: OpenTelemetry raises
   `ValueError: <Token ...> was created in a different Context` from its span teardown and asyncio logs
   "Task was destroyed but it is pending". Both are harmless artefacts of killing the run after the pick; the
   worker silences the `opentelemetry`, `asyncio`, `agent_framework` and `agent_framework_orchestrations`
   loggers and installs a no-op loop exception handler.
 - `HandoffBuilder` logs "No handoff configuration found for agent X" for every non-triage participant. That is
   expected: only the triage agent is given handoff targets, which is what makes it a router.
-- Ordering: the handoff tool list is not in candidate order, so with the fixed-policy mock the handoff mode
-  picks a different (still in-top-k) candidate than group-chat mode. Not a bug.
+- Ordering: `HandoffBuilder` keeps a source's targets in a `set`, so the `handoff_to_<name>` tool order is
+  Python's randomized string-hash order and differs run to run (measured: 5 runs over the same 10 candidates
+  picked agents 2, 3, 7, 0, 5). `tests/test_fw_b.py` therefore asserts only top-k membership for this mode
+  while every other recipe is held to "the pick is candidate 0".
 
 ## What still needs a real model
 The mock always answers with the first candidate, so these tests prove plumbing only: that the roster reaches

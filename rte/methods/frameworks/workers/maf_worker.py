@@ -23,15 +23,15 @@ INSTR = "You are a router. Pick the single participant best suited to solve the 
 
 
 async def _select(req):
-    mode = req.get("params", {}).get("mode", "groupchat")
-    KW = {"default_options": {"temperature": 0.0},          # handoff refuses participants without the history flag
-          "require_per_service_call_history_persistence": mode == "handoff"}
+    handoff = req["params"].get("mode") == "handoff"
+    kw = {"default_options": {"temperature": 0.0},      # handoff refuses participants without the history flag
+          "require_per_service_call_history_persistence": handoff}
     client = OpenAIChatCompletionClient(**openai_kwargs(req))
     safe, back = sanitize([c["name"] for c in req["candidates"]])
     agents = [Agent(client, c["description"], name=s, description=c["description"], **kw)
               for s, c in zip(safe, req["candidates"])]
-    router = Agent(client, INSTR, name="router", description="Routes the task.", **KW)
-    if mode == "handoff":
+    router = Agent(client, INSTR, name="router", description="Routes the task.", **kw)
+    if handoff:
         flow = HandoffBuilder(participants=[router] + agents).add_handoff(router, agents).with_start_agent(router)
         want, field = HandoffSentEvent, "target"
     else:
