@@ -86,6 +86,7 @@ def _memo() -> tuple[dict, sqlite3.Connection]:
 
 
 _seen: dict = {}                              # shard file -> last rowid read
+_sig: dict = {}                               # shard file -> (size, mtime) when last read
 _last_refresh = 0.0
 REFRESH_S = 30.0
 ENDPOINT_TTL = 20.0
@@ -104,11 +105,15 @@ def _refresh(force: bool = False) -> None:
         if f.name == mine:
             continue
         try:
+            st = f.stat(); sig = (st.st_size, st.st_mtime_ns)
+            if _sig.get(f) == sig:
+                continue                        # unchanged since last read: a stat, not an open (1000s of shards on NFS)
             con = _open(f, readonly=True)
             rows = con.execute("SELECT rowid, k, v FROM memo WHERE rowid > ?", (_seen.get(f, 0),)).fetchall()
             con.close()
-        except sqlite3.Error:
+        except (sqlite3.Error, OSError):
             continue                            # not one of ours, or mid-write: next time
+        _sig[f] = sig
         if rows:
             _seen[f] = rows[-1][0]
             _mem.update((k, v) for _, k, v in rows)
