@@ -1,0 +1,5 @@
+# fw_langgraph venv (SPEC §6A row 1). Selection primitive: langgraph_supervisor.create_supervisor
+langgraph==1.2.11
+langgraph-supervisor==0.0.31
+langchain-openai==1.6.0
+requests

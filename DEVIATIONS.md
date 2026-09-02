@@ -223,3 +223,53 @@
 - 2026-09-02: `check_methods.py`'s exact-estimate argmax check applies to argmax-type routers only; `gossip_reputation_greedy`
   (greedy walk of depth 6 on a 10-neighbour overlay from a random start) is not one and scores ~0.1 on it by design. `flat_nsw_router`
   (ef=50) trails `flat_probe_argmax` at n=1000 (0.70 vs 0.81 on bernoulli specialist): approximate NN search misses — a property of the rival.
+- 2026-09-02 `flat_nsw_router` single-seed numbers are dominated by tie-breaking, MEASURED not argued. At n=1e3, K=16,
+  b=3, specialist, ~116 agents tie at the maximum estimate in every family. Holding the estimates fixed and varying only
+  hnswlib's index random_seed over 6 values, success ranges 0.698-0.888 and misroute_to_liar ranges 0.046-0.398
+  (exact argmax on the same estimates: 0.810 / 0.286). So which tied agent is returned is arbitrary, the spread swamps
+  any real effect, and this method must be read only through the runner's 10-seed average. The same nuisance applies to
+  every argmax-over-b-probe-estimates method including `flat_probe_argmax`, which resolves the identical ties by lowest
+  agent index -- a different arbitrary rule, not a better one. Raising b shrinks the tie set; at b=1 it is far worse
+  (~30k tied at n=1e5).
+- 2026-09-02 simplicity pass (lead directive): the shared "probe every agent b times per family and have exactly one peer
+  observe and report each outcome" step now lives once in `rte/methods/_est.py` as `one_observer_reports(view, b, pick)`,
+  and the shared greedy-walk-on-a-graph route as `greedy_walk(view, start, depth, step)`; `flat_nsw_router` reuses
+  `probe_successes` from the same file. Both graph methods lost their own copies. `one_observer_reports` now reports a
+  whole family in ONE `report_many` batch rather than one per agent-chunk, which is also the semantically right grouping
+  for the liar's "top 20% of what I have seen" rule.
+- 2026-09-02: framework rivals rows 1-4 (`fw_langgraph`, `fw_crewai`, `fw_autogen`, `fw_magentic_one`).
+  All four SPEC §6A pins exist on PyPI and are installed as written (`langgraph 1.2.11` +
+  `langgraph-supervisor 0.0.31`, `crewai 1.15.18`, `autogen-agentchat 0.7.5` + `autogen-ext[openai] 0.7.5`);
+  `langchain-openai` is unpinned in the SPEC and resolved to 1.6.0. Recipe changes:
+  - CrewAI (recipe 2): the SPEC says subscribe to `ToolUsageStartedEvent` and read `tool_args["coworker"]`.
+    In 1.15.18 `crewai_event_bus.emit` dispatches handlers on a `ThreadPoolExecutor`, so a handler can
+    neither return a value synchronously nor stop the run. We read the identical `coworker` argument one
+    frame later at `BaseAgentTool._execute` and raise there. The exception subclasses `BaseException`
+    because CrewAI wraps the delegated call in `except Exception` and would otherwise convert the abort
+    into an error string fed back to the manager. The self-description goes in `role` as the SPEC requires,
+    prefixed with the `agent_XXXXXX` id so the manager's pick is invertible.
+  - AutoGen (recipe 3): `MaxMessageTermination(1)` cannot be used — the condition is evaluated on the task
+    message itself, so the team terminates before selecting a speaker; we use `MaxMessageTermination(2)`
+    plus an explicit break at the first `SelectSpeakerEvent`. Both AutoGen teams also publish the work
+    request to the chosen speaker *before* emitting that event and keep running in a background task, so
+    breaking at the event is a race: measured against the mock, a plain `AssistantAgent` participant spent
+    one model call answering the task. Participants are therefore an `Idle(AssistantAgent)` subclass whose
+    `on_messages` returns an empty `Response` without touching the model. Cost is then exactly one model
+    call per `fetch`.
+  - Magentic-One (recipe 3, second half): parsing `next_speaker` from the first ledger is not enough to
+    stop the run (measured 5 model calls per selection even with `max_turns=1`). We patch
+    `MagenticOneOrchestrator._log_message`, which announces `"Next Speaker: <name>"` immediately before the
+    dispatch, and raise there; the `SelectSpeakerEvent` remains as a fallback. Cost is 3 model calls per
+    `fetch` (fact sheet, plan, ledger) — inherent to the framework's outer loop. We also declare
+    `structured_output=True` in `model_info` so the ledger is requested as an OpenAI JSON-schema
+    `response_format`; this must be validated against the real vLLM endpoint.
+  - Not a recipe change but load-bearing: conda envs put `~/.local/lib/python3.12/site-packages` on
+    `sys.path`, which let `pip` skip dependencies that exist only in the user site and leave the venv
+    broken off-login-node. `scripts/fw_envs/{langgraph,crewai,autogen}.sh` write a `zzz_no_user_site.pth`
+    into the env before installing anything. Doing so surfaced that `crewai 1.15.18` imports `numpy`
+    without declaring it; `numpy` is pinned in `requirements-frameworks/crewai.txt`.
+  - `scripts/mock_openai_server.py` extended twice, generically: (a) the agent-name scan falls back from
+    `messages` to the whole request, because CrewAI puts its coworker roster in a tool description rather
+    than in the prompt; (b) `_fill` now resolves `$ref`/`allOf` and recurses into nested objects,
+    inheriting "agent-ish"-ness from the enclosing field, because Magentic-One's `LedgerEntry` schema
+    nests every answer as `{reason, answer}`. Flat-schema behaviour is unchanged.

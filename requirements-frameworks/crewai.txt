@@ -1,0 +1,4 @@
+# fw_crewai venv (SPEC §6A row 2). Selection primitive: Process.hierarchical manager -> DelegateWorkTool
+crewai==1.15.18
+numpy
+requests

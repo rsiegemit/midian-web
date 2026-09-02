@@ -1,0 +1,4 @@
+# fw_autogen venv (SPEC §6A rows 3-4). SelectorGroupChat + MagenticOneGroupChat
+autogen-agentchat==0.7.5
+autogen-ext[openai]==0.7.5
+requests
