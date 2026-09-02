@@ -155,24 +155,30 @@ class LLMBackend:
             self._S = S.astype(np.float32)
             return self._S
         S = np.zeros((self.n, self.K), dtype=np.float32)
-        chunk = int(os.environ.get("RTE_MEASURE_AGENT_CHUNK", "64"))
         for f, fam in enumerate(self.families):
-            # NOT seeded by the population: S is a property of the prompt SIGNATURE, not of the
-            # population that happens to contain it. A fixed project-wide probe set means the
-            # ~86k measurement generations are produced ONCE and every population, at every grid
-            # seed and every n, is served from the memo. It also makes equal signatures get
-            # identical S, which is the honest reading of "measured once per population".
+            # Instances are NOT seeded by the population: S is a property of the prompt SIGNATURE,
+            # not of the population that happens to contain it. A fixed project-wide probe set
+            # means the measurement generations are produced ONCE and every population, at every
+            # grid seed and every n, is served from the memo.
             seeds = [int(stable_seed_32("measure", fam, r)) for r in range(self.measure_probes)]
-            for lo in range(0, self.n, chunk):
-                agents = range(lo, min(self.n, lo + chunk))
-                reps = {a: (self.measure_probes_large if self.profiles[a]["model"] in self._large
-                            else self.measure_probes) for a in agents}
-                o, t = self._outcomes([(a, f, s) for a in agents for s in seeds[:reps[a]]]), 0
-                for a in agents:
-                    S[a, f] = o[t:t + reps[a]].mean()
-                    t += reps[a]
-            print(f"[llm] family {f+1}/{self.K} {fam}: mean={S[:, f].mean():.3f} "
-                  f"max={S[:, f].max():.3f}", flush=True)
+            # ... and we GENERATE AND SCORE once per signature too, not once per agent. There are
+            # at most 2 signatures per model on a given family (specialty / handicapped), so this
+            # is ~14 cells whatever n is; scoring per agent would run 32M verifier calls at n=1e4
+            # to learn those same 14 numbers.
+            rep = {}
+            for a in range(self.n):
+                rep.setdefault(self._sig(a, f), a)
+            n_probe = {sig: (self.measure_probes_large if sig[0] in self._large
+                             else self.measure_probes) for sig in rep}
+            o, t, S_sig = self._outcomes([(a, f, s) for sig, a in rep.items()
+                                          for s in seeds[:n_probe[sig]]]), 0, {}
+            for sig, a in rep.items():
+                S_sig[sig] = o[t:t + n_probe[sig]].mean()
+                t += n_probe[sig]
+            for a in range(self.n):
+                S[a, f] = S_sig[self._sig(a, f)]
+            print(f"[llm] family {f+1}/{self.K} {fam}: {len(rep)} signatures, "
+                  f"mean={S[:, f].mean():.3f} max={S[:, f].max():.3f}", flush=True)
         self._write("S.npy", S)
         (self.dir / "profiles.json").write_text(json.dumps(
             {"dist": self.dist, "n": self.n, "K": self.K, "seed": self.seed,

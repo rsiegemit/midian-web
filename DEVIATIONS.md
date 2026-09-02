@@ -576,3 +576,6 @@
   over -- report it separately rather than reading it out of the seed spread.
   The self-rating and self-description prompts already drew their examples from
   `families._aux(family, kind)`, which never depended on the population seed, so they are unchanged.
+- 2026-09-02 (statistics): because S is shared across seeds, the seed envelope in every live-grid CI captures profile-draw and stream
+  variation only; the per-cell binomial error of S (200 probes; 60 on the ≥9B rungs, i.e. ±0.035 / ±0.065 at p=0.5) is a systematic
+  offset common to all seeds and is reported separately in RESULTS, not read out of the seed spread.
