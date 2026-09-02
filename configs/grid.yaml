@@ -98,6 +98,9 @@ grids:
   bernoulli_mirror_live_n10k:        {mirror_of: live_n10k,        backend: bernoulli, seeds: 1-10, Q: 2000}
   bernoulli_mirror_budget_sweep:     {mirror_of: budget_sweep,     backend: bernoulli, seeds: 1-10, Q: 2000}
   bernoulli_mirror_midian_internals: {mirror_of: midian_internals, backend: bernoulli, seeds: 1-10, Q: 2000}
+  # ---- replay twins of the live F1 sweep (RouterBench real outcomes, K=64 real categories): every algorithmic rival, CPU only
+  replay_mirror_live_f1_n1000:    {mirror_of: live_f1_n1000,    backend: replay, K: [64], seeds: 1-10, Q: 2000}
+  replay_mirror_live_extra_n1000: {mirror_of: live_extra_n1000, backend: replay, K: [64], seeds: 1-10, Q: 2000}
 
   # ---- scale (F2/F3): replay 1e4-1e6 (real outcomes), bernoulli 1e2-1e7 calibrated to the measured S
   replay_scale:
