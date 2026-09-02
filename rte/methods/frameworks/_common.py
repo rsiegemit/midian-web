@@ -63,8 +63,8 @@ class FrameworkMethod(Method):
             pass
         D = view.declared
         fams = list(view.families)
-        desc = [f"Agent {a}. Self-rated competence: " + ", ".join(f"{fams[f]} {D[a, f]:.2f}" for f in np.argsort(-D[a])[:5])
-                for a in range(view.n)]
+        desc = ["Self-rated competence: " + ", ".join(f"{fams[f]} {D[a, f]:.2f}" for f in np.argsort(-D[a])[:5])
+                for a in range(view.n)]                  # no agent id in the text: id tokens collide with real words in the hash
         fdesc = [f"Tasks of family {fn}" for fn in fams]
         return desc, fdesc, (lambda task: f"A task of family {fams[task.family]} (instance {task.instance}).")
 

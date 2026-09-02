@@ -75,8 +75,13 @@ class Bridge:
 
 
 def _readline_timeout(proc, timeout):
+    """Next JSON line from the worker; frameworks that print to stdout (Rich panels, warnings) are skipped."""
     out = {}
-    def rd(): out["line"] = proc.stdout.readline()
+    def rd():
+        while True:
+            line = proc.stdout.readline()
+            if not line or line.lstrip().startswith("{"):
+                out["line"] = line; return
     t = threading.Thread(target=rd, daemon=True); t.start(); t.join(timeout)
     if t.is_alive():
         raise TimeoutError(f"worker did not answer within {timeout}s")
