@@ -1,0 +1,4 @@
+# Google ADK (SPEC §6A row 7) — fw_google_adk
+google-adk==2.8.0
+litellm
+requests

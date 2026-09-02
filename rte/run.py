@@ -37,7 +37,7 @@ def all_methods(backend):
 
 def method_specs(block):
     ms = block["methods"]
-    ms = all_methods(block["backend"]) if ms == "all" else [x for m in ms for x in (m if isinstance(m, list) else [m])]
+    ms = all_methods(block["backend"]) + list(block.get("extra") or []) if ms == "all" else [x for m in ms for x in (m if isinstance(m, list) else [m])]
     ms = [{"name": m, "params": {}} if isinstance(m, str) else {"name": m["name"], "params": m.get("params") or {}} for m in ms]
     drop = set(block.get("exclude") or [])           # LLM-only methods are dropped off the llm backend too, so a
     llm = block["backend"] == "llm"                   # bernoulli mirror of a framework grid skips them, not fails them

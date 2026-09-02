@@ -43,9 +43,10 @@ but they are never reached.
 - `create_supervisor` collects agent names into a **`set`** (`supervisor.py:397`, used at line 185 to build
   the handoff tools), so the order of the tools presented to the model is Python-hash order, not the order
   we pass the candidates in. The roster in the prompt *is* ordered. Any position bias a real model has will
-  therefore be driven by the prompt roster, while the tool list order is effectively arbitrary. Under the
-  mock (which answers with the first tool in the list) this shows up as a pick that is a valid candidate but
-  not necessarily candidate 0 — the tests assert membership in the retrieved top-k, not identity.
+  therefore be driven by the prompt roster, while the tool list order is effectively arbitrary. This is why
+  `scripts/mock_openai_server.py` answers with the tool that *names* the first agent in the request rather
+  than with the first tool in the list: otherwise the mock's pick would be Python hash order and no test
+  could assert which candidate was chosen.
 - `langgraph.prebuilt.create_react_agent` emits a `LangGraphDeprecatedSinceV10` warning (moved to
   `langchain.agents.create_agent` in V1). We keep the `langgraph.prebuilt` entry point because it is what
   `langgraph-supervisor` itself imports, and silence warnings in the worker.

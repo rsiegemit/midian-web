@@ -2,7 +2,7 @@
 
 Protocol (one JSON object per line, both directions):
   request : {"id": int, "task": str, "candidates": [{"name": str, "description": str}],
-             "model": str, "base_url": str, "api_key": str}
+             "model": str, "base_url": str, "api_key": str, "params": {method params, e.g. "mode"}}
   response: {"id": int, "choice": str|null, "error": str|null, "raw": any}
 `choice` must be one of the candidate names (the worker maps its framework's pick back to a name).
 Workers live in rte/methods/frameworks/workers/<fw>_worker.py and must run under the venv's python.
@@ -43,7 +43,7 @@ class Bridge:
                                       stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=sys.stderr,
                                       text=True, bufsize=1, env=env)
 
-    def select(self, task: str, candidates: list[dict], model: str, base_url: str, api_key: str = "EMPTY") -> dict:
+    def select(self, task: str, candidates: list[dict], model: str, base_url: str, api_key: str = "EMPTY", params: dict | None = None) -> dict:
         with self._lock:
             if self._proc is None or self._proc.poll() is not None:
                 if self._proc is not None:
@@ -51,7 +51,7 @@ class Bridge:
                 self._start()
             self._next += 1
             req = {"id": self._next, "task": task, "candidates": candidates, "model": model,
-                   "base_url": base_url, "api_key": api_key}
+                   "base_url": base_url, "api_key": api_key, "params": params or {}}
             self.stats["calls"] += 1
             try:
                 self._proc.stdin.write(json.dumps(req) + "\n"); self._proc.stdin.flush()

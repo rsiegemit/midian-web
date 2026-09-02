@@ -89,7 +89,7 @@ class FrameworkMethod(Method):
         self.view.ledger.compare(len(cand)); self.view.ledger.hop(1)
         self.view.ledger.message(len(cand) + 2)             # k descriptions read + supervisor request/reply
         payload = [{"name": self.names[a], "description": self.desc[a]} for a in cand]
-        resp = self.bridge.select(self._task_text(task), payload, self.supervisor, self.base_url)
+        resp = self.bridge.select(self._task_text(task), payload, self.supervisor, self.base_url, params=self.params)
         choice = resp.get("choice")
         if choice in self._name2id and self._name2id[choice] in set(int(a) for a in cand):
             self.stats["picks"] += 1

@@ -51,6 +51,12 @@ def _fill(schema, first, root=None, agentish=False):
     return out
 
 
+class Server(ThreadingHTTPServer):
+    daemon_threads = True
+    allow_reuse_address = True
+    request_queue_size = 512      # aborted framework runs leave connections queued; a small backlog stalls later calls
+
+
 class H(BaseHTTPRequestHandler):
     def log_message(self, *a): pass
 
@@ -67,7 +73,10 @@ class H(BaseHTTPRequestHandler):
         tools = req.get("tools") or []
         msg = {"role": "assistant", "content": None}
         if tools:
-            pick = next((t for t in tools if AGENT.search(json.dumps(t))), tools[0])
+            # prefer the tool that names `first`: LangGraph builds its handoff tools from a set, so
+            # tool order is hash order, not candidate order.
+            pick = next((t for t in tools if first in json.dumps(t)),
+                        next((t for t in tools if AGENT.search(json.dumps(t))), tools[0]))
             fn = pick["function"]["name"]
             props = pick["function"].get("parameters", {}).get("properties", {})
             args = {}
@@ -128,4 +137,4 @@ class H(BaseHTTPRequestHandler):
 if __name__ == "__main__":
     port = int(sys.argv[1]) if len(sys.argv) > 1 else 8123
     print(f"mock openai server on http://127.0.0.1:{port}/v1", flush=True)
-    ThreadingHTTPServer(("127.0.0.1", port), H).serve_forever()   # threaded: frameworks fire concurrent calls
+    Server(("127.0.0.1", port), H).serve_forever()   # threaded: frameworks fire concurrent calls

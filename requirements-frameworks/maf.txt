@@ -1,0 +1,8 @@
+# Microsoft Agent Framework (SPEC §6A row 5) — fw_maf.
+# The `agent-framework==1.16.0` meta-package is unresolvable on linux-x86_64 (its [all] extra pulls
+# agent-framework-hyperlight -> hyperlight-sandbox-backend-wasm, no distribution for this platform), so we
+# install the sub-packages the selection primitive needs at their newest releases. See DEVIATIONS.md.
+agent-framework-core==1.16.0
+agent-framework-openai==1.14.1
+agent-framework-orchestrations==1.1.1
+requests

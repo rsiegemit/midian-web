@@ -1,6 +1,6 @@
 # configs/grid.yaml -- named grids for `python -m rte.run --grid <name>` (SPEC §3, §7, §6A).
 # Axes: backend n K dist beta liar_select collude declared_source lie_mode demand b Q (lists = cartesian product).
-# methods: `all` = every algorithmic method file (LLM-only ones only on the llm backend) minus `exclude`; frameworks are listed;
+# methods: `all` = every algorithmic method file (LLM-only ones only on the llm backend) + `extra` variants, minus `exclude`;
 # or an explicit list of `name` | {name, params}. `mirror_of: <grid>` copies that grid, then overrides.
 # `blocks:` = several axis blocks in one grid. The runner always adds an `oracle` row per (cell, seed).
 defaults:
@@ -15,6 +15,9 @@ defaults:
   Q: 1000
   seeds: 1-5
   methods: all
+  extra:                                        # paired variants that make target 2 a like-for-like test (online vs frozen)
+    - {name: flat_probe_argmax, params: {online: true}}
+    - {name: midian, params: {online: false}}
   exclude: []
 
 _sets:
@@ -22,9 +25,6 @@ _sets:
                liar_select: [random, low_skill_first], declared_source: [programmatic, self_described]}
   core4: &core4 [midian, random, declared_argmax, flat_probe_argmax]
   # SPEC §6A: the frameworks are the paper's HEADLINE comparison, so they ride the core grid too
-  core4_fw: &core4_fw [midian, random, declared_argmax, flat_probe_argmax,
-                       fw_langgraph, fw_crewai, fw_autogen, fw_magentic_one, fw_maf,
-                       fw_openai_agents, fw_google_adk, fw_llamaindex, fw_smolagents, fw_camel_workforce]
   budget: &budget [midian, flat_probe_argmax, ucb_per_family, thompson_per_family, sequential_halving, verify_on_claim,
                    warm_start_bandit, referral_network, gossip_reputation_greedy, declared_argmax, random]
   midian_variants: &midian_variants
@@ -44,7 +44,7 @@ grids:
   smoke:            {n: [100], dist: [specialist], beta: [0, 0.25], Q: 200, seeds: 1-2}
 
   # ---- live LLM grids (SPEC §3 compute plan)
-  live_core_n100:   {<<: *live, n: [100], methods: *core4_fw}
+  live_core_n100:   {<<: *live, n: [100], methods: *core4}
   live_f1_n1000:    *live                                        # every algorithmic method incl. the two LLM-native ones
   # Headline comparison (SPEC §6A): the 10 frameworks vs MIDIAN, paired with core4 + llm_supervisor. Each framework fetch is
   # a real supervisor call (~1-2 s, serial per framework), so: ecological channel only, 3 seeds, Q=300, one process per method.
