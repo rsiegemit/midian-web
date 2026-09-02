@@ -88,7 +88,8 @@ def _memo() -> tuple[dict, sqlite3.Connection]:
 _seen: dict = {}                              # shard file -> last rowid read
 _last_refresh = 0.0
 REFRESH_S = 30.0
-ENDPOINT_TTL = 20.0                          # seconds a process sticks to one endpoint before re-picking among replicas
+ENDPOINT_TTL = 20.0
+_lat: dict = {}                                # endpoint url -> EWMA request latency (this process)                          # seconds a process sticks to one endpoint before re-picking among replicas
 
 
 def _refresh(force: bool = False) -> None:
@@ -167,11 +168,14 @@ def _generate(model: str, messages: Sequence[dict], max_tokens: int) -> str:
                     raise NoEndpointsError(f"model {model!r} not served; have {sorted(eps)}")
                 from openai import OpenAI
                 urls = [u for k, u in eps.items() if k == model or k.startswith(model + "#")]   # replicas: "<model>#<job>"
-                _clients[model] = (OpenAI(base_url=random.choice(urls), api_key="EMPTY", timeout=600.0,
-                                          max_retries=0), time.time())
+                # latency-aware: usually the endpoint with the lowest recent latency, sometimes a random one (explore)
+                url = random.choice(urls) if random.random() < 0.2 else min(urls, key=lambda u: _lat.get(u, 0.0))
+                _clients[model] = (OpenAI(base_url=url, api_key="EMPTY", timeout=600.0, max_retries=0), time.time())
+            t0 = time.time()
             r = _clients[model][0].chat.completions.create(
                 model=model, messages=for_model(model, messages), max_tokens=int(max_tokens),
                 temperature=0.0, seed=0)
+            u = str(_clients[model][0].base_url); _lat[u] = 0.7 * _lat.get(u, time.time() - t0) + 0.3 * (time.time() - t0)
             _bump("generations")
             return r.choices[0].message.content or ""
         except Exception as e:                                    # noqa: BLE001
