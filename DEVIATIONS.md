@@ -220,3 +220,6 @@
 - 2026-09-02: MIDIAN's optional `stratify` flag (cohorts stratified by declared mean, SPEC §5 comment) is NOT implemented:
   it was the only path by which MIDIAN could read the declared channel, no grid used it, and its padding layout broke the
   estimator's one-short-cohort assumption. Plain MIDIAN never reads D, full stop.
+- 2026-09-02: `check_methods.py`'s exact-estimate argmax check applies to argmax-type routers only; `gossip_reputation_greedy`
+  (greedy walk of depth 6 on a 10-neighbour overlay from a random start) is not one and scores ~0.1 on it by design. `flat_nsw_router`
+  (ef=50) trails `flat_probe_argmax` at n=1000 (0.70 vs 0.81 on bernoulli specialist): approximate NN search misses — a property of the rival.
