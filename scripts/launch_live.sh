@@ -11,6 +11,6 @@ import sys; sys.path.insert(0,'.'); import yaml
 from rte.run import blocks, method_specs
 cfg = yaml.safe_load(open('configs/grid.yaml')); print(' '.join(sorted({s['name'] for b in blocks(cfg, '$grid') for s in method_specs(b)})))"); do
     sbatch --parsable $DEP --job-name="rte_${grid}__${m}" -c 2 --mem=24G --time=2-00:00:00 --export=ALL,RTE_PYTHON="$PY",RTE_WORKERS=1 \
-      scripts/run_grid.sbatch "$grid" --methods "$m" | sed "s/$/  $grid $m/"
+      scripts/run_grid.sbatch "$grid" --methods "$m" ${RTE_RUN_ARGS:-} | sed "s/$/  $grid $m/"
   done
 done
