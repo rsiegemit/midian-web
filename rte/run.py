@@ -154,13 +154,17 @@ def main(argv=None):
     p.add_argument("--config", default=os.path.join(os.path.dirname(__file__), "..", "configs", "grid.yaml"))
     p.add_argument("--grid", required=True); p.add_argument("--seeds"); p.add_argument("--methods")
     p.add_argument("--workers", type=int); p.add_argument("--dry-run", action="store_true")
+    p.add_argument("--only", help="cell filter, e.g. beta=0.25,collude=true (splits one grid over many jobs)")
     a = p.parse_args(argv)
     cfg = yaml.safe_load(open(a.config)); out = f"{RTE_DATA}/results/{a.grid}"; rows_dir = f"{out}/rows.d"
     have = {f[:-5] for f in os.listdir(rows_dir)} if os.path.isdir(rows_dir) else set()
     units = []
     for blk in blocks(cfg, a.grid):
         specs = [s for s in method_specs(blk) if not a.methods or s["name"] in a.methods.split(",")]
+        only = dict(kv.split("=") for kv in a.only.split(",")) if a.only else {}
         for cell in cells(blk):
+            if any(str(cell[k]).lower() != v.lower() for k, v in only.items()):
+                continue
             for seed in seeds(a.seeds or blk["seeds"]):
                 todo = [s for s in specs if row_id(cell, s["name"], s["params"], seed) not in have]
                 if todo: units.append((cell, seed, todo, rows_dir, a.grid))
