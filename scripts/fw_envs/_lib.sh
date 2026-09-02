@@ -16,7 +16,7 @@ fw_build () {                                   # fw_build <name> [python-versio
     source "$HOME/miniconda3/etc/profile.d/conda.sh"
   fi
   # conda extracts into the shared package cache; concurrent creates corrupt it -> serialize with a lock
-  [ -x "$prefix/bin/python" ] || flock "$CONDA_PKGS_DIRS/.create.lock" conda create -y -p "$prefix" "python=$py"
+  [ -x "$prefix/bin/python" ] || flock "/tmp/rte_conda_create_$USER.lock" conda create -y -p "$prefix" "python=$py"
   "$prefix/bin/pip" install --no-input -q -r "$REPO/requirements-frameworks/$name.txt"
   "$prefix/bin/python" -c "import requests; print('$name env OK:', '$prefix')"
 }

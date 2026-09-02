@@ -47,3 +47,14 @@ chat-completions request per `fetch`, and `selected_agent.execute_task` is never
   without internet do not stall on an outbound connection.
 - Deterministic decoding via `LLM(..., temperature=0)`; the model is addressed as `openai/<model id>`
   against `base_url`.
+- **CrewAI writes to stdout, which is the bridge's JSON-lines protocol channel.** A Rich "Tracing
+  Preference Saved" panel on first run, and `[CrewAIEventsBus] Warning: ...` lines whenever an event pair
+  does not close, all go to `sys.stdout` and desynchronize the bridge (the reader gets a non-JSON line,
+  kills the worker and counts an error). The worker runs the whole crew inside
+  `contextlib.redirect_stdout(sys.stderr)`. Measured over 150 consecutive requests afterwards: 150 JSON
+  lines, 0 stray lines. No other rival here prints to stdout, but it is worth checking per framework.
+- Aborting inside the delegate tool leaves CrewAI's `tool_usage_started` scope unclosed. The scope stack
+  lives in a process-wide `ContextVar` and `push_event_scope` raises `StackDepthExceededError` at depth
+  100, so a long-lived worker began failing after ~100 requests (seen as one fallback in a 40-fetch run,
+  and it would dominate a Q=1000 grid cell). The worker calls
+  `crewai.events.event_context.restore_event_scope(())` at the top of every request.

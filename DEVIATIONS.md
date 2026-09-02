@@ -448,3 +448,19 @@
     is a process-wide `ContextVar` whose `push_event_scope` raises at depth 100, so a persistent worker
     started failing after ~100 requests. The worker resets it per request with
     `crewai.events.event_context.restore_event_scope(())`.
+- 2026-09-02 (llm backend, MEASURED calibration, `scripts/calibrate_families.py`, 20 probes/cell,
+  first 8 families of the K=16 list, tool=none both arms):
+    Qwen2.5-0.5B-Instruct   unhandicapped 0.14   handicapped 0.11
+    Qwen2.5-7B-Instruct     unhandicapped 0.46   handicapped 0.33
+  The ladder therefore does produce spread (0.14 -> 0.46 across two rungs) and the handicap sign is
+  correct on every family measured. But SPEC §3 wants `specialist` specialty families at 0.70-0.95,
+  and only gcd (0.85) and syllogism (0.80) reach that for the 7B; `basic_arithmetic` (0.25) and
+  `leg_counting` (0.00) sit far below. Inspecting responses confirms this is genuine model error,
+  not an extraction or verifier bug (gold answers rescore 1). The 14B/gemma-9b rungs and the tools
+  will lift it; whether the population clears `skill_excess_ratio_family >= 1.5` must be settled by
+  a real `python -m rte.backends.llm --measure` run before the grid.
+- 2026-09-02 (llm backend, MEASURED tools, Qwen2.5-7B, 15 probes/cell): the `python` sandbox is a
+  real capability axis -- basic_arithmetic 0.47 -> 0.60, gcd 0.80 -> 0.93, leg_counting 0.00 -> 0.07.
+  The `calculator` tool is NOT: 0.40 / 0.73 / 0.07 on the same cells, at or below the no-tool arm,
+  because one arithmetic expression cannot carry a multi-step task and emitting it costs a turn.
+  Consider drawing tools from {python, none} rather than the spec's three-way set.
