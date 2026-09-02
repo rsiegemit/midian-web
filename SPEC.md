@@ -210,3 +210,48 @@ Order: world (all three backends) + ledger + base + tests on `bernoulli` → pop
 - `midian_llm_descent.py` — ablation of plain MIDIAN where each *leader* is an LLM shown its r children's summaries and asked to choose, instead of the arithmetic argmax. Same tree, same estimates. Tests whether an LLM in the loop adds or subtracts from the descent.
 
 **Compute plan (live grid).** n ∈ {100, 1,000} × β 4 × dist 3 × ~20 methods × 5 seeds × Q=1,000 paired tasks ≈ 2.4M routed generations *before* memoization; with the (agent, instance) cache the unique generations are the union of routed pairs — typically 5–15% of that. Build probes: n·K·b = 48K (n=1,000, K=16, b=3) per population, cached across methods. Small-model mixes on 4×H100 sustain tens of thousands of tokens/s; expect hours, not days. n=10⁴ live: build 480K probes at b=1 → 160K; run only `specialist` at β ∈ {0, 0.25}. No live runs above 10⁴; those points are `replay`/`bernoulli` and labeled.
+
+---
+
+## 6A. The popular frameworks as rivals (`rte/methods/frameworks/`) — run the real libraries
+
+The comparisons the paper leads with are the agent-management systems practitioners actually use, run **through their own libraries** against our vLLM endpoints, with their **own multi-agent selection primitive** deciding which agent gets the task. Versions pinned in `requirements-frameworks.txt`; all facts below verified 2026-09-02 against GitHub/PyPI/docs.
+
+**Inventory (stars / downloads-per-month where found):**
+
+| Rival file | Framework, package, version | Stars · DL/mo | License | Selection primitive (what it reads) |
+|---|---|---|---|---|
+| `fw_langgraph.py` | LangGraph `langgraph` 1.2.11 + `langgraph-supervisor` 0.0.31 | 40.9k · 64.5M | MIT | `create_supervisor(agents, model, prompt)` → `transfer_to_<name>` tools. **Descriptions are not injected by default** — put them in `prompt` (the docs' own pattern) |
+| `fw_crewai.py` | CrewAI `crewai` 1.15.18 | 58.0k · 27.2M | MIT | `Crew(process=Process.hierarchical, manager_llm=…)` → `DelegateWorkTool(coworker,…)`; manager sees **only `role` strings** → put the self-description in `role` |
+| `fw_autogen.py` | AutoGen `autogen-agentchat` 0.7.5 (maintenance mode) | 60.8k · 0.9M | MIT | `SelectorGroupChat(participants, selector_prompt, candidate_func, emit_team_events=True)`; roster = `name: description` |
+| `fw_magentic_one.py` | Magentic-One (in AutoGen) | — | MIT | `MagenticOneGroupChat` progress-ledger JSON `next_speaker` |
+| `fw_maf.py` | Microsoft Agent Framework `agent-framework` 1.16.0 (successor of AutoGen + Semantic Kernel) | 13.3k · 2.2M | MIT | `GroupChatBuilder(orchestrator_agent=…)` structured `AgentOrchestrationOutput.next_speaker`; `HandoffBuilder` (`handoff_to_<id>` tools with agent `description`) |
+| `fw_openai_agents.py` | OpenAI Agents SDK `openai-agents` 0.22.0 | 29.1k | MIT | triage `Agent(handoffs=[…])` → `transfer_to_<name>` with `handoff_description` |
+| `fw_google_adk.py` | Google ADK `google-adk` 2.8.0 | 21.4k · 19.7M | Apache-2.0 | `LlmAgent(sub_agents=[…])` auto-delegation → `transfer_to_agent(agent_name)`; roster = "Agent name / Agent description" |
+| `fw_llamaindex.py` | LlamaIndex `llama-index-core` 0.14.24 | 52.0k · 12.8M | MIT | `LLMSingleSelector.select([ToolMetadata(name, description)], task)` (pure selection) and `AgentWorkflow` `handoff(to_agent)` |
+| `fw_smolagents.py` | HF smolagents `smolagents` 1.26.0 | 29.1k | Apache-2.0 | `ToolCallingAgent(managed_agents=[…])`; roster = `def name(task): """description"""` |
+| `fw_camel_workforce.py` | CAMEL/OWL `camel-ai` 0.2.90 | 17.7k / 20.1k | Apache-2.0 | `Workforce` coordinator `ASSIGN_TASK_PROMPT` → JSON `assignee_id`; roster = `id:description:toolkits` |
+| appendix `fw_metagpt.py` | MetaGPT `metagpt` 0.8.2 (stale, Py<3.12) | 70.2k · 16k | MIT | `TeamLeader.publish_team_message(send_to)` — SOP-hardwired; report with caveat |
+| appendix `fw_agentscope.py` | AgentScope 2.0.7 | 30.4k | Apache-2.0 | no selection primitive — DIY structured-output router; report as such |
+| cite only | AWS Bedrock multi-agent (supervisor; hard limit 10 collaborators; Bedrock models only), Azure Foundry connected agents (classic; depth 2; Foundry models only) | — | — | not reproducible against vLLM — reference in text |
+
+Every one reads **names + self-descriptions** (and nothing else) to select ⇒ `needs = {"declared"}` for all. That is the point: these are the systems that will route to whoever describes themselves best.
+
+**Common scaling adapter (applied identically to all, and it is what their own docs prescribe):** frameworks enumerate agents in a prompt or a tool list; LangGraph's docs say enumeration is for "< 10 agents" and Bedrock hard-caps at 10. So at n ≥ 100: embed self-descriptions once; per task retrieve top-k (k=10) by description similarity; build the framework object over those k; let the framework's primitive select among them. Report k-sensitivity (k ∈ {5, 10, 20}) for two frameworks. The retrieval step reads descriptions too, so the information class is unchanged.
+
+**`fetch(task) -> agent_id` interception recipes** (selection only; kill the run after the pick; ledger charges one supervisor call + k descriptions):
+1. LangGraph — `create_supervisor(topk, model, prompt=roster)`; stream `updates`, return the first `transfer_to_*` tool-call name.
+2. CrewAI — hierarchical crew of top-k, one task; subscribe `ToolUsageStartedEvent`, return `tool_args["coworker"]`.
+3. AutoGen — `SelectorGroupChat(all, candidate_func=lambda _: topk_names, emit_team_events=True)`, `MaxMessageTermination(1)`; return `SelectSpeakerEvent.content[0]`. Magentic-One: parse `next_speaker` from the first ledger.
+4. MAF — `GroupChatBuilder(participants=topk, orchestrator_agent=…)`; return first `GroupChatRequestSentEvent.participant_name` (or `HandoffSentEvent.target`).
+5. OpenAI Agents SDK — triage agent with `handoff(a, is_enabled=lambda ctx,_: a.name in topk)`, `Runner.run(max_turns=1)`; return `to_agent.name` from `RunHooks.on_handoff`.
+6. Google ADK — router `LlmAgent(sub_agents=topk)`; return the first `event.actions.transfer_to_agent`.
+7. LlamaIndex — `LLMSingleSelector.select([ToolMetadata(...)]*k, task).ind` — no agent execution at all.
+8. smolagents — `ToolCallingAgent(managed_agents=topk, max_steps=1, step_callbacks=[cb])`; return `ActionStep.tool_calls[0].name`.
+9. CAMEL — `Workforce` with top-k workers; `WorkforceCallback.log_task_assigned(TaskAssignedEvent)` → `assignee_id`.
+
+Model endpoints: every framework accepts an OpenAI-compatible `base_url` (`OpenAIChatCompletionClient`, `ChatOpenAI`, `LLM(model="openai/…")`, `OpenAIProvider`, `LiteLlm(api_base)`, `OpenAILike`, `OpenAIModel(api_base)`, `ModelFactory(VLLM)`). Supervisor/manager model = Qwen2.5-7B-Instruct for all (fixed), so the *only* thing that differs between framework rivals is their selection primitive and prompt.
+
+**Comparative literature to cite:** MAFBench (arXiv:2602.03128, github CoDS-GCS/MAFBench) benchmarks these frameworks' orchestration overhead (framework choice alone changes latency >100×; pins autogen-agentchat 0.7.5, crewai, langgraph, openai-agents, agno); arXiv:2603.22651 compares sequential/parallel/hierarchical-supervisor patterns on 10k documents. **None of them test routing accuracy or description honesty** — that is our gap, stated in the intro.
+
+The algorithmic rivals in §6 stay in the experiment as *mechanism controls* (what a probe-based centralized router, a bandit, or a flat graph achieves) — but the paper's headline comparison table is the framework table above vs MIDIAN.
