@@ -53,7 +53,8 @@ def trimmed_by_reporter(rep: np.ndarray, delta: float, s: int):
     return per[..., t:per.shape[-1] - t].mean(-1)
 
 
-def peer_reported_estimates(view, b: int, cohorts: np.ndarray, delta: float, by_reporter: bool = False) -> np.ndarray:
+def peer_reported_estimates(view, b: int, cohorts: np.ndarray, delta: float, by_reporter: bool = False,
+                            observers: int | None = None) -> np.ndarray:
     """MIDIAN's level-0 estimates (SPEC §5): b probes per (agent, family), each outcome reported by
     every other member of the agent's cohort, aggregated by a trimmed mean. `cohorts` is int32[N, r]
     of agent ids with -1 padding, which (padding being contiguous) can only shorten the last cohort.
@@ -74,9 +75,12 @@ def peer_reported_estimates(view, b: int, cohorts: np.ndarray, delta: float, by_
             continue
         peers = np.array([[j for j in range(s) if j != m] for m in range(s)], np.int32)   # (s, s-1)
         if by_reporter:                                                                  # one report per PEER: its mean
-            per = view.report_many(ag[:, peers][:, :, None, :], ag[:, :, None, None],    # of the b outcomes it saw
-                                   out.reshape(C, s, K, 1, b).mean(-1)).reshape(C * s, K, s - 1)
-            est[ag.ravel()] = trimmed_by_reporter(per[..., None], delta, s)
+            k = min(observers or s - 1, s - 1)                                           # of the b outcomes it saw;
+            obs = ag[:, peers] if k == s - 1 else np.take_along_axis(                    # a random k of the peers
+                ag[:, peers], np.argsort(view.rng.random((C, s, s - 1)), 2)[:, :, :k], 2)
+            per = view.report_many(obs[:, :, None, :], ag[:, :, None, None],
+                                   out.reshape(C, s, K, 1, b).mean(-1)).reshape(C * s, K, k)
+            est[ag.ravel()] = trimmed_by_reporter(per[..., None], delta, k + 1)
             continue
         rep = view.report_many(ag[:, peers][:, :, None, :, None],                        # reporter j
                                ag[:, :, None, None, None],                               # about member m

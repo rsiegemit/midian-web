@@ -22,9 +22,11 @@ class Midian(Method):
     name = "midian"
     needs = frozenset({"probe", "reports"})
 
-    def __init__(self, r=10, delta=1 / 3, online=True, verify=False, **p):
-        super().__init__(r=r, delta=delta, online=online, verify=verify, **p)
+    def __init__(self, r=10, delta=1 / 3, online=True, verify=False, observers=None, b0=None, cached=False, **p):
+        super().__init__(r=r, delta=delta, online=online, verify=verify, observers=observers, b0=b0, cached=cached, **p)
         self.r, self.delta, self.online, self.verify = int(r), float(delta), bool(online), bool(verify)
+        self.observers = int(observers) if observers else self.r - 1          # peers observing each probe (V only)
+        self.b0, self.cached = b0, bool(cached)                               # level-0 probes per cell (V only); cache root picks
         self.cnt = {}
 
     def _cohorts(self, view):
@@ -57,21 +59,23 @@ class Midian(Method):
         """Verify at promotion: every candidate a child forwards is re-probed e times, observed and reported
         by the r-1 OTHER leaders of the node (trimmed as at level 0), and folded into its running estimate.
         cand int32[M,r,K] candidate agents (-1 empty), lead int32[M,r] the children's leaders."""
-        r, K = self.r, view.K
+        r, K, k = self.r, view.K, min(self.observers, self.r - 1)
         node, slot, fam = np.nonzero(cand >= 0)                                             # valid candidates only
         peers = np.array([[j for j in range(r) if j != m] for m in range(r)], np.int32)
         L = np.where(ch >= 0, lead, -1)
-        rep_of = L[node[:, None], peers[slot]]                                              # (V, r-1) sibling leaders
+        rep_of = L[node[:, None], peers[slot]]                                              # (V, r-1) sibling reporters
         bad = rep_of < 0                                                                    # short (padded) node: cycle
         if bad.any():
-            first = np.where(ch >= 0, lead, lead[:, :1])[node]                              # a valid leader per node
+            first = np.where(ch >= 0, lead, lead[:, :1])[node]                              # a valid reporter per node
             rep_of = np.where(bad, first[:, :1].repeat(r - 1, 1), rep_of)
+        if k < r - 1:                                                                       # a random k of the r-1 peers
+            rep_of = np.take_along_axis(rep_of, np.argsort(view.rng.random(rep_of.shape), 1)[:, :k], 1)
         agents = cand[node, slot, fam]
         for lo in range(0, len(agents), max(1, CHUNK_ELEMS // (r * e))):
             sl = slice(lo, lo + max(1, CHUNK_ELEMS // (r * e)))
             out = view.probe_many(agents[sl], fam[sl], e)                                    # (v, e)
             per = view.report_many(rep_of[sl], agents[sl][:, None], out.mean(-1)[:, None])           # one report per peer
-            m_new = trimmed_by_reporter(per[..., None], self.delta, r)
+            m_new = trimmed_by_reporter(per[..., None], self.delta, k + 1)
             a, f = agents[sl], fam[sl]
             self.est[a, f] = (self.est[a, f] * self.k[a, f] + m_new * e) / (self.k[a, f] + e)
             self.k[a, f] += e
@@ -82,10 +86,10 @@ class Midian(Method):
         ok = self.leaves >= 0
         self.leaf_of = np.empty(view.n, np.int32)
         self.leaf_of[self.leaves[ok]] = np.repeat(np.arange(len(self.leaves), dtype=np.int32), r)[ok.ravel()]
-        b0 = max(1, b - 1) if self.verify else b                          # level 0 keeps b-1; the rest buys promotions
+        b0 = (max(1, min(b, self.b0 or b - 1))) if self.verify else b     # level 0 keeps b0 (default b-1); the rest buys promotions
         C = sum((c >= 0).sum() for c in self.children[1:])                 # candidates re-verified over all upper levels
         e = int((b - b0) * view.n // C) if self.verify and C else 0        # probes per promoted candidate; exact budget
-        self.est = peer_reported_estimates(view, b0, self.leaves, self.delta, by_reporter=self.verify)
+        self.est = peer_reported_estimates(view, b0, self.leaves, self.delta, by_reporter=self.verify, observers=self.observers)
         self.k = np.full((view.n, K), float(b0), np.float32)
         self.w0 = max(1, (r - 1) * b - 2 * trim_k(self.delta, r, b))     # reports behind a build estimate
         self.summary, self.best = [], []
@@ -124,6 +128,9 @@ class Midian(Method):
         return int(self.best[l][node, f])
 
     def fetch(self, task):
+        if self.cached:                                                  # the root remembers its pick per family;
+            self.view.ledger.compare(1); self.view.ledger.message(2)     # one lookup, root -> agent
+            return int(self.cand[-1][0, task.family])
         f, node = int(task.family), 0
         for l in range(self.depth - 1, -1, -1):
             self.view.ledger.hop(1)
@@ -144,5 +151,7 @@ class Midian(Method):
             v = self._values(l, node, f)
             self.best[l][node, f] = s = int(v.argmax())
             self.summary[l][node, f] = v[s]
+            if self.cached:
+                self.cand[l][node, f] = (self.children[l][node, s] if l == 0 else self.cand[l - 1][self.children[l][node, s], f])
             if l + 1 < self.depth:
                 node = int(self.parent[l][node])
