@@ -206,10 +206,17 @@
 - 2026-09-02 both graph walks take exactly `depth` steps and pay for a self-loop rather than breaking early, so
   per-fetch hops / comparisons / messages are exact constants (referral: 4 / 40 / 80; gossip: 6 / 60 / 120) and
   `scripts/check_methods.py` can assert them.
-- 2026-09-02 `gossip_reputation_greedy` names its estimate table `_est`, not `est`, so that
-  `scripts/check_methods.py`'s exact-estimate argmax check skips it: it is a greedy-walk method, not an argmax method,
-  and is not expected to return the global argmax even with exact estimates. `flat_nsw_router` keeps `est` and does
-  pass that check at 1.00.
+- 2026-09-02 `scripts/check_methods.py`'s exact-estimate argmax check does not apply to any reports-based method
+  (gossip here, and MIDIAN). It mocks `probe_many` to return S as fractions, but the reports path then runs them through
+  `World.report_many`, whose first line is `outcomes.astype(np.int8)`: verified, reports of [0.83, 0.6, 1.0, 0.2] come
+  back as [0, 0, 1, 0], so every estimate below 1.0 truncates to 0 and the check measures truncation, not routing. It is
+  reported as 0.09 for gossip, which is an artifact. Gossip is a greedy walk, not an argmax, so the check would not apply
+  to it even with a working mock. `flat_nsw_router` takes no reports and does pass at 1.00.
+- 2026-09-02 `flat_nsw_router` built its index with M and ef_construction transposed after the simplification pass
+  (`init_index(n, efc, M, ...)`; hnswlib's positional order is `(max_elements, M, ef_construction, random_seed)`), so it
+  ran at M=200 instead of the SPEC's M=16, with hnswlib silently clamping ef_construction up to M. Fixed by passing
+  keyword arguments. Measured effect: n=1e5 build 141 s at M=200 versus 55 s at M=16, and roughly 12x the per-element
+  memory, which is the likely origin of SPEC's "tens of GB at 1e7" estimate.
 - 2026-09-02 (llm backend env): vLLM 0.22.1 requires `llguidance>=1.7.0,<1.8.0`, whose published
   Linux wheels are `manylinux_2_31` while these nodes run glibc 2.28 (Rocky 8.10). pip therefore
   falls back to the sdist and compiles it from Rust, bootstrapping a ~1.5 GB toolchain into
@@ -221,8 +228,9 @@
   it was the only path by which MIDIAN could read the declared channel, no grid used it, and its padding layout broke the
   estimator's one-short-cohort assumption. Plain MIDIAN never reads D, full stop.
 - 2026-09-02: `check_methods.py`'s exact-estimate argmax check applies to argmax-type routers only; `gossip_reputation_greedy`
-  (greedy walk of depth 6 on a 10-neighbour overlay from a random start) is not one and scores ~0.1 on it by design. `flat_nsw_router`
-  (ef=50) trails `flat_probe_argmax` at n=1000 (0.70 vs 0.81 on bernoulli specialist): approximate NN search misses — a property of the rival.
+  (greedy walk of depth 6 on a 10-neighbour overlay from a random start) is not one and scores ~0.1 on it by design.
+  (An earlier note here blamed `flat_nsw_router`'s 0.70 at n=1000 on approximate search; it was a swapped hnswlib argument
+  order in the lead's rewrite, caught by the decentral agent. Fixed: 0.85, exact-estimate hit rate 1.00.)
 - 2026-09-02 `flat_nsw_router` single-seed numbers are dominated by tie-breaking, MEASURED not argued. At n=1e3, K=16,
   b=3, specialist, ~116 agents tie at the maximum estimate in every family. Holding the estimates fixed and varying only
   hnswlib's index random_seed over 6 values, success ranges 0.698-0.888 and misroute_to_liar ranges 0.046-0.398
@@ -273,3 +281,100 @@
     than in the prompt; (b) `_fill` now resolves `$ref`/`allOf` and recurses into nested objects,
     inheriting "agent-ish"-ness from the enclosing field, because Magentic-One's `LedgerEntry` schema
     nests every answer as `{reason, answer}`. Flat-schema behaviour is unchanged.
+- 2026-09-02: framework rivals rows 1-4, simplification pass and two follow-ups.
+  - Shared worker boilerplate moved to `rte/methods/frameworks/workers/_wk.py` (`openai_kwargs(req)`,
+    `run_async(coro)`, `sanitize(names)`); it imports no framework and has no side effects.
+  - `scripts/mock_openai_server.py`: when a request carries tools, the mock now prefers the tool that names
+    the first agent mentioned in the request, falling back to the previous "first tool that names any agent"
+    rule. Without this the mock's documented policy ("the first agent named in the prompt/tools") did not
+    hold for LangGraph, whose `create_supervisor` builds handoff tools from a `set` and so presents them in
+    Python hash order; the pick was a valid candidate but an arbitrary one, and no test could assert which.
+    With it, all four rivals return candidate 0 of the retrieved top-k and `tests/test_fw_a.py` asserts that
+    identity rather than mere membership.
+- 2026-09-02 (runner/analysis, ownership): `rte/run.py`, `rte/analyze.py`, `configs/grid.yaml` and
+  `scripts/run_grid.sbatch` were written concurrently by two agents. The converged on-disk versions
+  are the other agent's, with the runner-agent additions folded in (total-communication columns,
+  build-probe budget warning, atomic column-ordered `rows.csv`, `imap_unordered` so parallel runs
+  log progress as units finish, and `method_specs` dropping `requires_llm` methods off non-llm
+  backends so a bernoulli mirror of a framework grid skips them instead of failing all ten).
+- 2026-09-02 (sbatch): the two scripts collapsed into one `scripts/run_grid.sbatch`; the 1e6-1e7
+  bigmem points are a documented override in its header
+  (`sbatch -p bigmem -c 48 --mem 700G --export=ALL,RTE_WORKERS=4 scripts/run_grid.sbatch bernoulli_scale`)
+  rather than a second near-identical file (zero-duplication directive).
+- 2026-09-02 (bernoulli_scale): the runner brief asked for a warn-and-fall-back when
+  `backend_kwargs.calibrate_from` is missing. The converged `cells()` instead ASSERTS the file
+  exists, so an uncalibrated 1e6-1e7 point can never be produced by accident. That is the stricter
+  reading and it is what is on disk; flagged to the lead because it departs from the brief.
+- 2026-09-02 (grids): the frameworks ride `live_core_n100` and the dedicated `fw_live_n100` /
+  `fw_live_n1000` / `fw_k_sensitivity` grids (self_described only, 3 seeds, Q=300) rather than
+  `live_f1_n1000`. Each framework fetch is a real supervisor generation, so putting ten of them in
+  the full F1 grid would be ~2.4M supervisor calls. Flagged to the lead as a scope decision.
+- 2026-09-02 (CSV): rows now carry `total_comm_per_task` = (probes+reports+messages+tasks)/Q and
+  `build_total_comm`, per the message-accounting directive; F3 and the new F3b plot them against n
+  with fitted log-log exponents.
+- 2026-09-02 (tests): the exact-estimate mock returns `rint(100*S)` as int8, not a fraction. The
+  report channel casts outcomes to int8, so a fractional mock would truncate to zero and MIDIAN's
+  peer-reported estimates could not carry it. 100*S is deterministic, monotone in S and int8-safe.
+- 2026-09-02 (tests): `fw_echo` is the one `requires_llm=True` class the generic test still runs;
+  it is the bridge protocol check and never reaches the endpoint, so it is built with a dummy
+  `base_url`. It is excluded from every grid.
+- 2026-09-02 (cluster, affects every agent): `fcntl.flock` BLOCKS FOREVER on the /n/netscratch
+  mount that holds `$RTE_DATA`. Verified: an flock on a freshly created file under $RTE_DATA never
+  returns, while the identical call on $HOME or /tmp returns instantly; sqlite is unaffected
+  because it uses POSIX fcntl record locks, which do work there. Consequences: (a) any
+  `huggingface_hub` download into `$HF_HOME` wedges, since it takes an flock per file --
+  `scripts/complete_snapshots.py` fetches missing files over plain HTTP into the cache layout
+  instead; (b) `scripts/_register_endpoint.py` is lock-free (one file per served model under
+  `$RTE_DATA/endpoints.d/`, atomic `os.replace`, `endpoints.json` regenerated as a merged view).
+  Nothing in this project may use flock/filelock on $RTE_DATA.
+- 2026-09-02 (llm backend): model snapshots are downloaded COMPLETE (only duplicate weight formats
+  are ignored), not filtered by `allow_patterns`. vLLM calls `snapshot_download(repo,
+  local_files_only=True)` with no patterns and refuses to boot on a partial snapshot -- for these
+  seven repos the missing files were .gitattributes / LICENSE / README.md, under 9 MiB total.
+- 2026-09-02 (framework rivals B, `fw_maf`): SPEC §6A pins `agent-framework 1.16.0`, but that
+  meta-package is unresolvable on linux-x86_64 -- its `[all]` extra pulls `agent-framework-hyperlight`,
+  which requires `hyperlight-sandbox-backend-wasm`, and that has no distribution for this platform
+  (pip: `ResolutionImpossible`). Installed instead the sub-packages the selection primitive needs:
+  `agent-framework-core==1.16.0`, `agent-framework-openai==1.14.1`, `agent-framework-orchestrations==1.1.1`.
+  The latter two are on separate version lines and 1.16.0 does not exist for either (newest on PyPI are
+  1.14.1 and 1.1.1). `GroupChatBuilder`, `HandoffBuilder` and `OpenAIChatCompletionClient` all come from
+  these, so the recipe is unchanged.
+- 2026-09-02 (framework rivals, affects every fw_* venv): `~/.local/lib/python3.12/site-packages` is on
+  `sys.path` of every conda prefix under `$RTE_DATA/env`, and it holds numpy 1.26.4, boto3, pytorch-lightning
+  and a `google` namespace package that shadows `google.adk` / `google.genai`. Worse, pip treated those as
+  already-satisfied dependencies: `fw_llamaindex` ended up with NO numpy of its own. Fix in two places --
+  `scripts/fw_envs/*.sh` export `PYTHONNOUSERSITE=1` before pip, and each worker strips `/.local/lib/` from
+  `sys.path` before importing its framework (`_bridge.Bridge._start` does not set PYTHONNOUSERSITE and is
+  not modified here). `numpy` is now an explicit pin in `requirements-frameworks/llamaindex.txt`.
+- 2026-09-02 (framework rivals B, `scripts/mock_openai_server.py`): three generic extensions, needed to test
+  MAF / LlamaIndex without a GPU. (a) `"choice"` in the no-tools JSON answer is now `1`, not `0`:
+  LlamaIndex's `SelectionOutputParser` reads it 1-based (`index = choice - 1`), so 0 selected index -1. The
+  0-based `"index": 0` key is untouched. (b) A structured-output branch: when the request carries
+  `response_format` with a JSON schema, the reply is a minimal instance of that schema and nothing else --
+  MAF's `AgentOrchestrationOutput` sets `extra: "forbid"` and rejects the kitchen-sink JSON. (c) An SSE
+  branch for `"stream": true` requests, because MAF's handoff path streams its agent runs; without it the
+  client parsed an empty stream and no tool call ever arrived. Also `request_queue_size = 512` on the server:
+  runs we abort at the pick leave connections queued, and the default backlog of 5 fills up and makes every
+  later call fail with "Connection error". Unrelated: line 51 referenced a removed local `text` and raised
+  NameError on every no-tools POST; fixed to read the messages.
+- 2026-09-02 (framework rivals B): `mode` reaches the worker through the `FW_MODE` environment variable,
+  set in `FrameworkMethod.build` by `fw_maf` / `fw_llamaindex` and inherited by the subprocess
+  (`_bridge.Bridge._start` copies `os.environ`). The frozen request schema in `_bridge.py` has no field for
+  per-method options and was not extended. Consequence: two framework methods with different modes must not
+  be built in one process before either issues its first request.
+- 2026-09-02 (serving): the `gpu_test` partition allocates A100 MIG slices, so SLURM sets
+  `CUDA_VISIBLE_DEVICES` to a MIG UUID; vLLM 0.22.1 calls `int()` on it and dies with
+  `ValueError: invalid literal for int() with base 10: 'MIG-adfbd773-...'`
+  (vllm/platforms/cuda.py via registry.py:951, smoke job 43857516). `scripts/serve_smoke.sbatch`
+  therefore runs on `kempner_h100` with one whole GPU instead of the spec's `gpu_test`.
+- 2026-09-02 (serving): vLLM 0.22.1's FlashInfer top-k/top-p sampler JIT-compiles with ninja on
+  first use, inside the memory-profiling dummy run, and that build FAILS on these nodes -- taking
+  the engine down after the weights have already loaded (smoke job 43858361,
+  CalledProcessError from flashinfer/jit/cpp_ext.py). Both serve scripts set
+  `VLLM_USE_FLASHINFER_SAMPLER=0`; we decode greedily at temperature 0, so the FlashInfer sampler
+  is not doing anything for us. They also set FLASHINFER_CACHE_DIR and a HOME shim under $RTE_DATA
+  so no library writes build trees into the near-full home quota.
+- 2026-09-02 (serving): both serve scripts pass `--generation-config vllm`, which ignores each
+  repo's own generation_config.json. Qwen2.5 ships `repetition_penalty=1.1` and a temperature
+  there; without this flag the models on the ladder would be sampled under different rules, which
+  is a confound in a benchmark that exists to compare them. Requests set temperature 0 and seed 0.
