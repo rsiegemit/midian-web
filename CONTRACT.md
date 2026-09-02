@@ -78,3 +78,28 @@ A backend may change n (e.g. rounding); World re-reads backend.n/K.
   Reasoning Gym is ONE such adapter in `rte/backends/families.py`; adding a new source = one new adapter, nothing else changes;
   (d) backends — already the 6-member protocol.
 - Read like a paper appendix: a reader should be able to see the whole algorithm of any method on one screen.
+
+## Message accounting (lead directive, 2026-09-02) — every method, build AND fetch
+`messages` counts every inter-agent coordination message needed to decide a route, charged by the method via
+`view.ledger.message(k)` (the `bus` need is now only sugar over the same counter; methods may call `ledger.message`
+directly without declaring `bus`). Rules, applied identically to all methods:
+- A query to one agent and its answer = 2 messages. Reading a centrally held table = 0.
+- EXCLUDED (counted by their own counters): probes (`probes`), peer reports (`reports`), and the final dispatch of the task
+  to the chosen agent (`tasks`; identical for every method). Analysis reports both `messages` alone and
+  total communication = probes + reports + messages + tasks.
+- Build: collecting declarations from n agents into a registry = n messages (every `needs ⊇ {"declared"}` method charges this
+  once in build). Structure construction charges what it sends: MIDIAN = (r−1) member→leader messages per cohort at level 0
+  plus 1 leader→parent message per node at each upper level (O(n) total); graphs = edges × messages exchanged.
+- Fetch: MIDIAN = 2 per level (request down + answer up) = 2·⌈log_r n⌉; centralized table lookups (flat argmax, bandits,
+  sequential halving, verify_on_claim's ranking) = 0 (+ probes if they probe at fetch); CNP = 2n; cascade = hops×2 (forward + the
+  taker's accept... use 1 per forward if that is how the primitive works — state it); cluster_head = 2 (ask head) + 2 (ask member);
+  referral/gossip = 2 per neighbor consulted per hop; frameworks = k (descriptions read by the supervisor) + 2 (supervisor call).
+- `tests/test_each_method.py` asserts per-fetch `messages` equals the method's documented formula for at least one method per
+  class (midian: exactly 2·depth per fetch; cnp: 2n), and that build messages are recorded in the CSV (`build_messages`).
+
+## Correctness checks (lead directive, 2026-09-02)
+Before any commit the lead runs, and every author runs on their own files: (1) the full test suite; (2) for each method a
+property check on the bernoulli world at n=100 and n=1000: valid agent ids, build probes ≤ budget, exact ledger accounting
+against the documented formula (probes, reports, messages, hops, comparisons), success ≥ random's on `specialist` at β=0
+(a router that loses to random is a bug until explained), and — where the method is an argmax over exact estimates — that it
+returns the true argmax when estimates are made exact (mock `probe_many` to return S). Findings go in the report, not under the rug.
