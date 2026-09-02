@@ -200,14 +200,13 @@ def complete_batch(model: str, batch: Sequence[Sequence[dict]], keys: Sequence[s
         mem, shard = _memo()
         answer = {k: mem[k] for k in keys if k in mem}
         todo = {k: i for i, k in enumerate(keys) if k not in mem}
-    _bump("hits", sum(1 for k in keys if k not in todo))
-    _bump("misses", len(todo))                    # misses == unique generations, not positions
-
     if todo:
         with _LOCK:                               # another job may have generated these since we started
             _refresh()
             answer.update({k: mem[k] for k in todo if k in mem})
             todo = {k: i for k, i in todo.items() if k not in mem}
+    _bump("hits", sum(1 for k in keys if k not in todo))
+    _bump("misses", len(todo))                    # misses == unique generations, not positions
     if todo:
         with ThreadPoolExecutor(max_workers=max(1, min(concurrency, len(todo)))) as ex:
             texts = list(ex.map(lambda i: _generate(model, batch[i], max_tokens), todo.values()))
