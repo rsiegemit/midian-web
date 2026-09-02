@@ -47,7 +47,7 @@ export XDG_CACHE_HOME="$RTE_DATA/cache/xdg"
 # (CalledProcessError from flashinfer/jit/cpp_ext.py, smoke job 43858361) and takes the whole
 # engine down after the weights have already loaded. We decode greedily at temperature 0, so the
 # FlashInfer sampler buys us nothing -- turn it off and use vLLM's torch path.
-# `--generation-config vllm` ignores each repo's generation_config.json. Qwen2.5 ships
+# `--generation-config vllm --enable-auto-tool-choice --tool-call-parser hermes` ignores each repo's generation_config.json. Qwen2.5 ships
 # repetition_penalty=1.1 and its own temperature there; letting per-model defaults through
 # would mean the ladder's models are sampled under different rules, a confound in a
 # benchmark whose whole point is comparing them. The client sets temperature 0 / seed 0.
@@ -82,7 +82,7 @@ trap cleanup EXIT TERM INT
     --served-model-name "$MODEL" \
     --host 0.0.0.0 --port "$PORT" \
     --dtype bfloat16 \
-    --generation-config vllm \
+    --generation-config vllm --enable-auto-tool-choice --tool-call-parser hermes \
     --max-model-len "${RTE_MAX_MODEL_LEN:-4096}" \
     --gpu-memory-utilization 0.60 \
     --max-num-seqs 64 \

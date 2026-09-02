@@ -132,7 +132,7 @@ PYEOF
       --gpu-memory-utilization "$UTIL" \
       --max-num-seqs "$NSEQ" \
       --enable-prefix-caching \
-      ${RTE_VLLM_EXTRA_ARGS:-} \
+      --enable-auto-tool-choice --tool-call-parser hermes ${RTE_VLLM_EXTRA_ARGS:-} \
       > "$JOBLOG/$SLUG.log" 2>&1 &
   PIDS+=($!)
 
