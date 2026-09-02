@@ -74,37 +74,6 @@ def peer_reported_estimates(view, b: int, cohorts: np.ndarray, delta: float) -> 
         est[ag.ravel()] = rep[:, :, t:rep.shape[2] - t].mean(-1)                         # sort, then slice
     return est
 
-
-def one_observer_reports(view, b: int, pick):
-    """Peer-reported estimation for the decentralized methods: probe every agent b times per family
-    (n*K*b probes, the whole build budget) and have exactly ONE peer observe and report each outcome,
-    so a lying peer corrupts its own picture of the network. `pick(agents, f) -> (reporters[n, b], tag)`
-    chooses the observer; `tag` is handed back untouched. Yields (f, agents, reporters, tag, reported)
-    once per family, with the whole family reported in one batch."""
-    ag = np.arange(view.n)
-    for f in range(view.K):
-        out = np.concatenate([view.probe_many(ag[lo:lo + CHUNK], f, b)
-                              for lo in range(0, view.n, CHUNK)])
-        obs, tag = pick(ag, f)
-        yield f, ag, obs, tag, view.report_many(obs, ag[:, None], out)
-
-
-def greedy_walk(view, start: int, depth: int, step) -> int:
-    """One decentralized route: from `start`, `depth` times, ask this node's neighbours for their
-    scores (`step(cur) -> (neighbour ids, scores)`), move to the best, and return the best agent seen.
-    Charges 1 hop, len(neighbours) comparisons and 2 messages per neighbour consulted (ask + answer).
-    The walk always takes `depth` steps -- a self-loop is still paid for -- so the cost is exact."""
-    cur, best, best_s = int(start), int(start), -np.inf
-    for _ in range(depth):
-        nb, sc = step(cur)
-        view.bus.send_many(2 * len(nb)); view.ledger.compare(len(nb)); view.ledger.hop(1)
-        i = int(np.argmax(sc))
-        if sc[i] > best_s:
-            best, best_s = int(nb[i]), float(sc[i])
-        cur = int(nb[i])
-    return best
-
-
 def observed_reports(view, f: int, b: int, observers):
     """Decentralized estimation: probe every agent b times on family f; each outcome is reported by ONE peer chosen by
     `observers(agents, b) -> int[m, b]`. Yields (agents, reporters, reported) per chunk. n*b probes and n*b reports."""

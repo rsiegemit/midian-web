@@ -20,7 +20,8 @@ class FlatNSWRouter(Method):
         self.view = view
         self.est = (probe_successes(view, budget.b) / budget.b).astype(np.float32)
         self.index = hnswlib.Index("ip", view.K)
-        self.index.init_index(view.n, self.efc, self.M, random_seed=int(view.rng.integers(2 ** 31 - 1)))
+        self.index.init_index(view.n, M=self.M, ef_construction=self.efc,   # keyword: positional order is M first
+                              random_seed=int(view.rng.integers(2 ** 31 - 1)))
         self.index.set_num_threads(1)
         for lo in range(0, view.n, CHUNK):
             self.index.add_items(self.est[lo:lo + CHUNK], np.arange(lo, min(view.n, lo + CHUNK)))

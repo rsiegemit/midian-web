@@ -81,7 +81,7 @@ grids:
   # cheap multi-n twin of bernoulli_scale: exercises F2/F3/F3b and the cost-exponent fits on CPU
   # in minutes, so the message-accounting figures are verified before the fleet is up.
   bernoulli_cost_smoke:
-    {n: [100, 1000, 10000], beta: [0.25], Q: 500, seeds: 1-3, methods: *cost_curve}
+    {n: [100, 1000, 10000], dist: [specialist], beta: [0.25], Q: 500, seeds: 1-3, methods: *cost_curve}
 
   bernoulli_scale:
     K: [64]
