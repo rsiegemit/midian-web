@@ -37,7 +37,7 @@ def all_methods(backend):
 
 def method_specs(block):
     ms = block["methods"]
-    ms = all_methods(block["backend"]) if ms == "all" else ms
+    ms = all_methods(block["backend"]) if ms == "all" else [x for m in ms for x in (m if isinstance(m, list) else [m])]
     ms = [{"name": m, "params": {}} if isinstance(m, str) else {"name": m["name"], "params": m.get("params") or {}} for m in ms]
     drop = set(block.get("exclude") or [])           # LLM-only methods are dropped off the llm backend too, so a
     llm = block["backend"] == "llm"                   # bernoulli mirror of a framework grid skips them, not fails them
@@ -63,10 +63,8 @@ def cells(blk):
         c = dict(zip(CELL, combo)); c.update(n=int(c["n"]), K=int(c["K"]), b=int(c["b"]), Q=int(c["Q"]), beta=float(c["beta"]))
         c["backend_kwargs"] = {k: (os.path.expandvars(str(v).replace("$RTE_DATA", RTE_DATA)) if isinstance(v, str) else v)
                                for k, v in (blk.get("backend_kwargs") or {}).items()}
-        if not os.path.exists(str(c["backend_kwargs"].get("calibrate_from", ""))):
-            if c["backend_kwargs"].pop("calibrate_from", None):
-                log(f"  [WARNING] calibrate_from is missing -- sampling dist={c['dist']!r} instead. "
-                    f"These points are NOT calibrated to a measured S; label them so.")
+        cal = c["backend_kwargs"].get("calibrate_from")
+        assert not cal or os.path.exists(cal), f"calibrate_from={cal} missing: measure the live S first (bernoulli_scale must be calibrated)"
         yield c
 
 
