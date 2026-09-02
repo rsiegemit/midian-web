@@ -10,7 +10,7 @@ import numpy as np, yaml
 from .budget import Budget
 from .methods import load_method
 from .world import World
-import rte.methods, rte.methods.frameworks
+import rte.methods
 
 RTE_DATA = os.environ.get("RTE_DATA", "/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte")
 CELL = ("backend", "n", "K", "dist", "beta", "liar_select", "collude", "declared_source", "lie_mode", "demand", "b", "Q")
@@ -29,9 +29,9 @@ def seeds(spec):
 
 
 def all_methods(backend):
-    """Every method file (frameworks included, fw_echo excluded); LLM-only classes only on the llm backend."""
-    names = [m.name for pkg in (rte.methods, rte.methods.frameworks) for m in pkgutil.iter_modules(pkg.__path__)
-             if not m.ispkg and not m.name.startswith("_") and m.name not in ("base", "fw_echo")]
+    """Every algorithmic method file (frameworks are listed explicitly in their own grids: one supervisor call per task);
+    LLM-only classes only on the llm backend."""
+    names = [m.name for m in pkgutil.iter_modules(rte.methods.__path__) if not m.ispkg and not m.name.startswith("_") and m.name != "base"]
     return [n for n in names if backend == "llm" or not getattr(load_method(n), "requires_llm", False)]
 
 
