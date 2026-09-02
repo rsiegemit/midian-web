@@ -1,56 +1,34 @@
-"""flat_probe_argmax.py -- the key control for MIDIAN.
-
-Probe every agent `b` times per family in build (same probe budget as MIDIAN's
-level 0), estimate skill as the mean, then argmax per family at fetch. No
-hierarchy, no report channel: O(n) comparisons per task by default, or O(1)
-via a cached argmax (`cached=True`) recomputed only on `observe` when
-`online=True`.
-"""
-from __future__ import annotations
-
+"""The key control: MIDIAN's probes, no hierarchy, no report channel. est = mean of b probes; argmax per family.
+`cached=True` precomputes the argmax (O(1) per fetch, recomputed on observe if online)."""
 import numpy as np
-
 from .base import Method
-
-CHUNK = 1_000_000
+from ._est import probe_successes
 
 
 class FlatProbeArgmax(Method):
     name = "flat_probe_argmax"
     needs = frozenset({"probe"})
 
-    def __init__(self, **params):
-        super().__init__(**params)
-        self.cached = bool(params.get("cached", False))
-        self.online = bool(params.get("online", False))
+    def __init__(self, cached=False, online=False, **p):
+        super().__init__(cached=cached, online=online, **p)
+        self.cached, self.online = cached, online
 
-    def build(self, view, budget) -> None:
+    def build(self, view, budget):
         self.view = view
-        n, K, b = view.n, view.K, budget.b
-        self.counts = np.full((n, K), b, dtype=np.int64)
-        self.est = np.zeros((n, K), dtype=np.float64)
-        for f in range(K):
-            for lo in range(0, n, CHUNK):
-                hi = min(n, lo + CHUNK)
-                agents = np.arange(lo, hi)
-                outs = view.probe_many(agents, np.full(hi - lo, f), b)
-                self.est[lo:hi, f] = outs.mean(axis=1)
-        if self.cached:
-            self._argmax = np.argmax(self.est, axis=0)          # [K]
+        self.cnt = np.full((view.n, view.K), budget.b, np.int64)
+        self.est = probe_successes(view, budget.b) / budget.b
+        self.best = np.argmax(self.est, axis=0)
 
-    def fetch(self, task) -> int:
-        f = task.family
+    def fetch(self, task):
         if self.cached:
             self.view.ledger.compare(1)
-            return int(self._argmax[f])
+            return int(self.best[task.family])
         self.view.ledger.compare(self.view.n)
-        return int(np.argmax(self.est[:, f]))
+        return int(np.argmax(self.est[:, task.family]))
 
-    def observe(self, task, agent: int, outcome: int) -> None:
-        if not self.online:
-            return
-        f = task.family
-        self.counts[agent, f] += 1
-        self.est[agent, f] += (outcome - self.est[agent, f]) / self.counts[agent, f]
-        if self.cached:
-            self._argmax[f] = int(np.argmax(self.est[:, f]))
+    def observe(self, task, agent, outcome):
+        if self.online:
+            f = task.family
+            self.cnt[agent, f] += 1
+            self.est[agent, f] += (outcome - self.est[agent, f]) / self.cnt[agent, f]
+            self.best[f] = np.argmax(self.est[:, f])

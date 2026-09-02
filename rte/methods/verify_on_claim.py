@@ -1,20 +1,7 @@
-"""verify_on_claim.py -- rank agents by declared skill D[:, f]; probe the top
-unverdicted candidate k=3 times; accept if the probed mean >= D[a,f] - 0.15,
-else reject and try the next (max 5 fresh verifications per fetch). Verdicts
-are cached per (agent, family) so a later fetch of the same family spends no
-probes on already-verdicted agents. "The most dangerous baseline": liars who
-inflate D get probed and rejected, but only after burning verification budget.
-
-Cost model: the declared-order scan is O(n) comparisons the first time a
-family is ranked (D is static so the order never changes); every later
-fetch of that family reuses the cached order for O(1) comparisons. This
-documents the "compare(1) after the first ranking per family is cached"
-option named in SPEC.md.
-"""
-from __future__ import annotations
-
+"""Rank by declared D[:, f]; probe the top unverdicted candidate k times; accept if mean >= D - margin, else reject and
+try the next (max_tries fresh verifications per fetch). Verdicts cached per (agent, family). The most dangerous baseline:
+verification budget drains on liars. Ranking is O(n) once per family, then cached (compare(1))."""
 import numpy as np
-
 from .base import Method
 
 
@@ -22,54 +9,29 @@ class VerifyOnClaim(Method):
     name = "verify_on_claim"
     needs = frozenset({"declared", "probe"})
 
-    def __init__(self, **params):
-        super().__init__(**params)
-        self.k = int(params.get("k", 3))
-        self.max_tries = int(params.get("max_tries", 5))
-        self.margin = float(params.get("margin", 0.15))
+    def __init__(self, k=3, max_tries=5, margin=0.15, **p):
+        super().__init__(k=k, max_tries=max_tries, margin=margin, **p)
+        self.k, self.max_tries, self.margin = k, max_tries, margin
 
-    def build(self, view, budget) -> None:
-        self.view = view
-        self.D = view.declared
-        self._order_cache: dict[int, np.ndarray] = {}
-        self._verdict: dict[tuple[int, int], tuple[bool, float]] = {}
+    def build(self, view, budget):
+        self.view, self.D = view, view.declared
+        self.order, self.verdict = {}, {}                   # family -> ranked agents ; (a, f) -> (accepted, mean)
 
-    def _order(self, f: int) -> np.ndarray:
-        order = self._order_cache.get(f)
-        if order is None:
-            order = np.argsort(-self.D[:, f], kind="stable")
-            self._order_cache[f] = order
-            self.view.ledger.compare(self.view.n)
+    def fetch(self, task):
+        f = task.family
+        if f not in self.order:
+            self.order[f] = np.argsort(-self.D[:, f], kind="stable"); self.view.ledger.compare(self.view.n)
         else:
             self.view.ledger.compare(1)
-        return order
-
-    def fetch(self, task) -> int:
-        f = task.family
-        order = self._order(f)
-        tries = 0
-        best_agent, best_mean = None, -1.0
-        last = None
-        for a in order:
-            a = int(a)
-            key = (a, f)
-            verdict = self._verdict.get(key)
-            if verdict is None:
-                if tries >= self.max_tries:
+        tries, best = 0, (-1.0, int(self.order[f][0]))
+        for a in map(int, self.order[f]):
+            if (a, f) not in self.verdict:
+                if tries == self.max_tries:
                     break
-                outs = self.view.probe_many(np.array([a]), np.array([f]), self.k)
-                mean = float(outs.mean())
-                accepted = mean >= self.D[a, f] - self.margin
-                verdict = (accepted, mean)
-                self._verdict[key] = verdict
-                tries += 1
-            accepted, mean = verdict
-            last = a
-            if accepted:
+                m = self.view.probe_many([a], f, self.k).mean()
+                self.verdict[a, f] = (m >= self.D[a, f] - self.margin, m); tries += 1
+            ok, m = self.verdict[a, f]
+            if ok:
                 return a
-            if mean > best_mean:
-                best_mean, best_agent = mean, a
-        return best_agent if best_agent is not None else last
-
-    def observe(self, task, agent: int, outcome: int) -> None:
-        return None
+            best = max(best, (m, a))
+        return best[1]
