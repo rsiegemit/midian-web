@@ -103,7 +103,7 @@ db = load("budget_sweep"); ax = axes[0]
 keep_b = db.pivot_table(index=["dist", "seed", "b"], columns="m", values="success").dropna().index
 db = db.set_index(["dist", "seed", "b"]).loc[keep_b].reset_index()    # paired cells only
 for m, lab, c in [("oracle", "oracle", GRY), ("sequential_halving", "seq. halving (trusted)", "#2c3e50"), ("midian{V}", "MIDIAN-V r=10", ORG), ("midian", "MIDIAN", RED), ("flat_probe_argmax", "flat probe argmax", BLU),
-                  ("warm_start_bandit", "warm-start bandit", "#27ae60"), ("declared_argmax", "declared argmax", "#7f8c8d"), ("ucb_per_family", "UCB", "#8e44ad")]:
+                  ("warm_start_bandit", "warm-start bandit", "#27ae60"), ("declared_argmax", "declared argmax", "#16a085"), ("ucb_per_family", "UCB", "#8e44ad")]:
     line(ax, db[db.m == m].groupby("b").success, label=lab, color=c, lw=2.5 if m == "midian" else 1.2)
 ax.set_xscale("log"); ax.set_xticks([1, 3, 10]); ax.set_xticklabels(["1", "3", "10"]); ax.set_xlabel("probe budget b per (agent, family)"); ax.set_ylabel("success (n=1000, β=0.25, 3 shapes x 5 seeds)")
 ax.set_title("F4: success vs build budget"); ax.grid(alpha=.3); ax.legend(fontsize=8, loc="lower right")
