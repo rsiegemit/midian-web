@@ -113,7 +113,11 @@ def fig(cv, agg):
     show = ["zero_router", "knn", "mlp", "probe_family_b5", "probe_family_b20", "probe_family_b50", "probe_family_b20_oraclefamily", "knn_b20"]
     f, ax = plt.subplots(figsize=(7.5, 5))
     for r in show:
-        g = cv[cv.router == r].groupby("lam" if r != "zero_router" else "cost")[["cost", "perf"]].mean().sort_values("cost")
+        sel = cv.router == r; key = (cv.lam if r != "zero_router" else cv.cost.round(9))[sel]
+        g = cv[sel].groupby(key.to_numpy())[["cost", "perf"]].mean().sort_values("cost")
+        if r == "zero_router":                                     # single models as points, their non-decreasing hull as the line
+            ax.scatter(g.cost, g.perf, s=12, color="#7f8c8d", zorder=3, label="single models")
+            ax.plot(g.cost, np.maximum.accumulate(g.perf), color="#7f8c8d", ls="--", lw=1.0, label=f"{r} = hull (AIQ {agg.loc[r, 'aiq']:.3f})"); continue
         ax.plot(g.cost, g.perf, marker="o", ms=3, lw=1.4 if "probe" in r else 1.0, label=f"{r} (AIQ {agg.loc[r, 'aiq']:.3f})")
     o = cv[cv.router == "oracle"][["cost", "perf"]].mean(); ax.plot(o.cost, o.perf, "k*", ms=12, label="oracle (cheapest correct)")
     ax.set_xscale("log"); ax.set_xlabel("mean $ per prompt (test)"); ax.set_ylabel("mean performance (test)"); ax.grid(alpha=.3); ax.legend(fontsize=7)
@@ -122,4 +126,8 @@ def fig(cv, agg):
 
 
 if __name__ == "__main__":
-    main()
+    if "--fig" in sys.argv:                                        # redraw from the saved csvs
+        df, cv = pd.read_csv(f"{OUT}/aiq_rows.csv"), pd.read_csv(f"{OUT}/curves.csv")
+        fig(cv, df.groupby("router").agg(aiq=("aiq", "mean")))
+    else:
+        main()
