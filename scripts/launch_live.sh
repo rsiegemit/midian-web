@@ -15,7 +15,7 @@ cfg = yaml.safe_load(open('configs/grid.yaml')); print(' '.join(sorted({s['name'
     [ -n "${RTE_ONLY:-}" ] && [[ " $RTE_ONLY " != *" $m "* ]] && continue
     while read -r only seed; do
       [ "$only" = - ] && only=; [ "$seed" = - ] && seed=
-      sbatch --parsable $DEP ${RTE_PARTITION:+-p $RTE_PARTITION} --job-name="rte_${grid}__${m}" -c 2 --mem=24G --time=2-00:00:00 --export=ALL,RTE_PYTHON="$PY",RTE_WORKERS=1 \
+      sbatch --parsable $DEP ${RTE_PARTITION:+-p $RTE_PARTITION} --job-name="rte_${grid}__${m}" -c ${RTE_CPUS:-2} --mem=${RTE_MEM:-24G} --time=2-00:00:00 --export=ALL,RTE_PYTHON="$PY",RTE_WORKERS=1 \
         scripts/run_grid.sbatch "$grid" --methods "$m" ${only:+--only $only} ${seed:+--seeds $seed} ${RTE_RUN_ARGS:-} | sed "s/$/  $grid $m $only $seed/"
     done < <("$PY" -c "
 import sys; sys.path.insert(0,'.'); import yaml

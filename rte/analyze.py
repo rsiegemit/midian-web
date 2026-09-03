@@ -17,7 +17,7 @@ CELL_COLS = tuple(getattr(_run, "CELL_FIELDS", None) or getattr(_run, "CELL", No
     "backend n K dist beta liar_select collude declared_source lie_mode demand b Q".split()))
 REF, FLOOR, B_BOOT = "midian", "WITHIN_FLOOR", 2000
 FLAT, FLAT_ON = "flat_probe_argmax_frozen", "flat_probe_argmax_online"
-ALIAS = {"flat_probe_argmax": FLAT, "flat_probe_argmax[online=True]": FLAT_ON,        # one name per arm everywhere
+ALIAS = {"flat_probe_argmax": FLAT, "flat_probe_argmax[online=True]": FLAT_ON, "knn_router[online=True]": "knn_router_online",        # one name per arm everywhere
          "midian[cached=True,verify=True]": "midian_v", "midian[cached=True,r=5,verify=True]": "midian_v_r5",
          "sequential_halving[peer_reported=True]": "sequential_halving_peer", "midian[stratify=True]": "midian_stratified",
          "sequential_halving[churn_mode=rebuild,peer_reported=True]": "sequential_halving_peer_rebuild",

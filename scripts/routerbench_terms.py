@@ -38,7 +38,7 @@ def midian_tree_pick(score, r=R_MIDIAN):
     """Plain MIDIAN's pick over n agents with scores (n,): cohorts of r by index, best per cohort promoted, until one."""
     idx = np.arange(len(score))
     while len(idx) > 1:
-        idx = np.array([idx[c][np.argmax(score[idx[c]])] for c in np.array_split(idx, max(1, int(np.ceil(len(idx) / r))))])
+        idx = np.array([c[np.argmax(score[c])] for c in np.array_split(idx, max(1, int(np.ceil(len(idx) / r))))])
     return int(idx[0])
 
 
@@ -66,7 +66,7 @@ def main():
     e = embed(prompts) if "--embed" in sys.argv or not os.path.exists(EMB) else np.load(EMB)
     fams = np.unique(fam); F = {f: i for i, f in enumerate(fams)}; fi = np.array([F[f] for f in fam])
     rows, curves = [], []
-    for seed, (tr, te) in enumerate(StratifiedShuffleSplit(SEEDS, test_size=TEST, random_state=0).split(e, fam)):
+    for seed, (tr, te) in enumerate(StratifiedShuffleSplit(n_splits=SEEDS, test_size=TEST, random_state=0).split(e, fam)):
         rng = np.random.default_rng(seed)
         price = cost[tr].mean(0)                                   # each model's price = its mean train cost (known ahead)
         c_lo, c_hi = price.min(), price.max()
@@ -83,16 +83,16 @@ def main():
         # zero router: single models and their hull
         add("zero_router", np.c_[C.mean(0), P.mean(0)], extra=0, hull=True)
         # RouterBench's predictive routers, full training split
-        add("knn", KNeighborsRegressor(KNN_K).fit(e[tr], perf[tr]).predict(e[te]))
-        add("mlp", MLPRegressor((128,), max_iter=200, random_state=seed).fit(e[tr], perf[tr]).predict(e[te]))
+        add("knn", KNeighborsRegressor(n_neighbors=KNN_K).fit(e[tr], perf[tr]).predict(e[te]))
+        add("mlp", MLPRegressor(hidden_layer_sizes=(128,), max_iter=200, random_state=seed).fit(e[tr], perf[tr]).predict(e[te]))
         # probe-family router: b probes per family from the train split
         for b in B_PROBES:
             probe = np.concatenate([rng.choice(tr[fi[tr] == k], size=min(b, (fi[tr] == k).sum()), replace=False) for k in range(len(fams))])
             est = np.stack([perf[probe][fi[probe] == k].mean(0) for k in range(len(fams))])     # (F, M) per-family accuracy
-            fam_pred = KNeighborsClassifier(FAM_K).fit(e[probe], fi[probe]).predict(e[te])
+            fam_pred = KNeighborsClassifier(n_neighbors=FAM_K).fit(e[probe], fi[probe]).predict(e[te])
             add(f"probe_family_b{b}", est[fam_pred], extra=len(probe) * len(M))
             add(f"probe_family_b{b}_oraclefamily", est[fi[te]], extra=len(probe) * len(M))
-            add(f"knn_b{b}", KNeighborsRegressor(min(KNN_K, len(probe))).fit(e[probe], perf[probe]).predict(e[te]), extra=len(probe) * len(M))   # same labels, their router
+            add(f"knn_b{b}", KNeighborsRegressor(n_neighbors=min(KNN_K, len(probe))).fit(e[probe], perf[probe]).predict(e[te]), extra=len(probe) * len(M))   # same labels, their router
             if b == 20:                                            # T3-3: MIDIAN's max-tree == argmax on the same scores
                 sc = est[fam_pred] - LAMBDAS[10] * price[None, :]
                 assert all(midian_tree_pick(s) == int(np.argmax(s)) for s in sc[:2000]), "MIDIAN tree pick != argmax"

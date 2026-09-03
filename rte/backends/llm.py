@@ -251,7 +251,10 @@ class LLMBackend:
         return [families.describe(f) for f in self.families]
 
     def task_text(self, task) -> str:
-        return families.question(self.families[int(task.family)], int(task.instance))
+        return self.text(task.family, task.instance)
+
+    def text(self, f: int, inst: int) -> str:
+        return families.question(self.families[int(f)], int(inst))
 
     def stats(self) -> dict:
         from .. import llm_client

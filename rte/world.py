@@ -203,6 +203,14 @@ class View:
         self._require("probe")
         return self._w.probe_at(agents, families, k)
 
+    def probe_text(self, agents, families, reps: int = 1):
+        """probe_many plus the instance seed of every probe: (outcomes, inst); `text(f, inst)` gives the prompt sent."""
+        self._require("probe")
+        return self._w._probe(np.asarray(agents), np.asarray(families), int(reps))
+
+    def text(self, f: int, inst: int) -> str:
+        return self._w.text(f, inst)
+
     def report_channel(self, j: int, a: int, outcome: int) -> int:
         """Peer j reports the outcome it observed for agent a. May be corrupted if j lies."""
         self._require("reports")
@@ -295,15 +303,24 @@ class World:
     def probe(self, a: int, f: int) -> int:
         return int(self.probe_many(np.array([a]), np.array([f]), 1)[0, 0])
 
-    def probe_many(self, agents: np.ndarray, families: np.ndarray, reps: int) -> np.ndarray:
+    def _probe(self, agents: np.ndarray, families: np.ndarray, reps: int):
         """The k-th probe of (agent, family) is the same fresh instance for EVERY method (index-seeded), so methods that
-        probe the same cells share generations through the memo, and no method's build depends on the run order."""
+        probe the same cells share generations through the memo, and no method's build depends on the run order.
+        Returns (outcomes, instance seeds), both of shape agents.shape + (reps,)."""
         agents, families = np.broadcast_arrays(np.asarray(agents, np.int64), np.asarray(families, np.int64))
         self.ledger.probe(agents.size * reps)
         k = self._probe_idx[agents, families].astype(np.int64)[..., None] + np.arange(reps)
         self._probe_idx[agents, families] += reps; self.seen_epoch[agents] = self.epoch[agents]
         inst = probe_seed(self._probe_salt, agents[..., None], families[..., None], k)
-        return self.backend.execute_many(np.broadcast_to(agents[..., None], inst.shape), np.broadcast_to(families[..., None], inst.shape), inst)
+        return self.backend.execute_many(np.broadcast_to(agents[..., None], inst.shape), np.broadcast_to(families[..., None], inst.shape), inst), inst
+
+    def probe_many(self, agents: np.ndarray, families: np.ndarray, reps: int) -> np.ndarray:
+        return self._probe(agents, families, reps)[0]
+
+    def text(self, f: int, inst: int) -> str:
+        """The prompt text of instance `inst` of family f (what a prober or router actually sent); synthetic on backends without text."""
+        fn = getattr(self.backend, "text", None)
+        return fn(int(f), int(inst)) if fn else f"A task of family {self.families[int(f)]} (instance {int(inst)})."
 
     # ---- reports: the only channel decentralized methods learn through
     def _lie_report(self, j: int, a: int, outcome: int, observed_mean_of: dict) -> int:
