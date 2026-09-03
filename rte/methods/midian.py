@@ -61,7 +61,10 @@ class Midian(Method):
         agents, step = cand[node, slot, fam], max(1, CHUNK_ELEMS // (r * e))
         for lo in range(0, len(agents), step):
             a, f = agents[lo:lo + step], fam[lo:lo + step]
-            m_new, _ = peer_estimate(view, a, f, e, rep_of[lo:lo + step], self.delta)
+            ex = getattr(self, "excluded", None)                    # audited variants (midian_va) mask caught liars
+            if ex is not None:
+                ex = ex[rep_of[lo:lo + step]]; ex &= ~ex.all(-1, keepdims=True)
+            m_new, _ = peer_estimate(view, a, f, e, rep_of[lo:lo + step], self.delta, exclude=ex)
             self.est[a, f] = (self.est[a, f] * self.k[a, f] + m_new * e) / (self.k[a, f] + e); self.k[a, f] += e
 
     def _level0(self, view, cohorts, b, outcomes=None):

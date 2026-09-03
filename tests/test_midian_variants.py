@@ -70,3 +70,16 @@ def test_online_audit_charges_reports_and_can_exclude():
     for t in w.tasks(50):
         a = m.fetch(t); m.observe(t, a, w.execute(a, t))
     assert w.ledger.reports > 0
+
+
+def test_midian_va_costs_like_v():
+    """VA = V + audits: build probes within 1.05x of midian_v on the same world, fetch charges 1 comparison + 2 messages."""
+    from rte.methods.midian_v import MidianV
+    from rte.methods.midian_va import MidianVA
+    out = {}
+    for cls in (MidianV, MidianVA):
+        w = World(n=200, K=8, dist="specialist", beta=0.25, seed=3, backend="bernoulli"); m = cls()
+        v = w.view(m.needs); m.build(v, Budget(3)); out[cls.name] = dict(w.ledger.snapshot())
+        w.ledger.reset(); t = w.tasks(20)[0]; a = m.fetch(t); assert 0 <= a < w.n
+        assert w.ledger.snapshot()["comparisons"] == 1 and w.ledger.snapshot()["messages"] == 2
+    assert out["midian_va"]["probes"] <= 1.05 * out["midian_v"]["probes"] + 1

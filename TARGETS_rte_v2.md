@@ -20,6 +20,11 @@ as measured.
   replaces UCB/Thompson in the headline; expected between flat_probe_argmax_online and warm_start_bandit at β = 0,
   flat in β.
 
+- **V2-11 MIDIAN-VA** (`midian_va` = MIDIAN-V's verified promotion + cached root pick with MIDIAN-A's report audits; added
+  2026-09-03 15:00 before any run): (i) ≥ max(MIDIAN-V, MIDIAN-A) − 0.01 at every β on the self-described channel;
+  (ii) at β = 0.5 collude low-skill-first within 0.02 of MIDIAN-A (i.e. audits repair V's exposure); (iii) build probes ≤ 1.05× V,
+  per-task cost = V's (1 comparison, 2 messages).
+
 ## Phase 2 grids
 - **V2-6 churn_n1000** (10% / 30% of agents replaced every 200 tasks): MIDIAN within 0.03 of its no-churn success at
   10% churn with repair probes ≤ 3% of build per event; halving-stale loses ≥ 0.05 at 30%; halving-rebuild matches

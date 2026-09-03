@@ -101,7 +101,7 @@ grids:
                      methods: [midian, midian_sh, midian_a, midian_v, {name: flat_probe_argmax, params: {online: true}}, {name: sequential_halving, params: {peer_reported: true}},
                                verify_on_claim, warm_start_bandit, linucb_honest, *frameworks, random]}                        # 2.2 (replaces the b=1/programmatic 10k row)
   midian_v_replication: {backend: llm, n: [100, 1000], dist: [specialist, heavy_tail, bimodal], beta: [0, 0.25, 0.5], declared_source: [programmatic, self_described],
-                     seeds: 11-20, methods: [midian, midian_v, {name: flat_probe_argmax, params: {online: true}}, {name: sequential_halving, params: {peer_reported: true}}]}   # 2.3: 10 FRESH seeds
+                     seeds: 11-20, methods: [midian, midian_v, midian_va, {name: flat_probe_argmax, params: {online: true}}, {name: sequential_halving, params: {peer_reported: true}}]}   # 2.3: 10 FRESH seeds
   budget_b10_shapes: {backend: llm, n: [1000], dist: [bimodal, heavy_tail], beta: [0.25], b: [10], declared_source: [programmatic, self_described], seeds: 1-3, Q: 300,
                      methods: [midian, midian_v, {name: flat_probe_argmax, params: {online: true}}, sequential_halving, {name: sequential_halving, params: {peer_reported: true}}, fw_langgraph, fw_autogen, random]}   # 2.4
   internals_v2:     {backend: llm, n: [1000], dist: [specialist], beta: [0.5], collude: [true, false], liar_select: [random, low_skill_first], declared_source: [self_described],
@@ -119,7 +119,7 @@ grids:
                      methods: [midian, midian_sh, midian_a, midian_v, {name: sequential_halving, params: {peer_reported: true, churn_mode: rebuild}},
                                {name: sequential_halving, params: {peer_reported: true, churn_mode: stale}}, {name: flat_probe_argmax, params: {online: true}},
                                warm_start_bandit, linucb_honest, fw_langgraph, fw_autogen]}                                    # 2.1 (V2-6)
-  variants_f1:      {<<: *live, declared_source: [self_described], seeds: 1-10, methods: [midian, midian_sh, midian_a, midian_sha, midian_v, linucb_honest, {name: sequential_halving, params: {peer_reported: true}}, {name: flat_probe_argmax, params: {online: true}}]}   # Phase 1 variants on the F1 cells (V2-1..3, V2-5)
+  variants_f1:      {<<: *live, declared_source: [self_described], seeds: 1-10, methods: [midian, midian_sh, midian_a, midian_sha, midian_v, midian_va, linucb_honest, {name: sequential_halving, params: {peer_reported: true}}, {name: flat_probe_argmax, params: {online: true}}]}   # Phase 1 variants on the F1 cells (V2-1..3, V2-5)
 
   # ---- bernoulli twins of every live grid: exercise the pipeline before the fleet is up (never headline numbers)
   bernoulli_mirror_live_core_n100:   {mirror_of: live_core_n100,   backend: bernoulli, seeds: 1-10, Q: 2000}
