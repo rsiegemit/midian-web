@@ -21,40 +21,59 @@ def rows(*grids):
     df = df[(df.declared_source == "self_described") & (df.n == 1000)]; df["m"] = df.method + df.params.str.replace("{}", "")
     return df.groupby("m")[["build_probes", "probes_per_task", "tasks_per_task", "wall_clock_per_task"]].mean()
 
-def table(Q=1000, dist="specialist", watts=700):
+def table(dist="specialist", watts=700):
     c = rows("live_f1_n1000", "variants_f1", "fw_live_n1000"); base = c.loc["fw_autogen", "wall_clock_per_task"]
+    skip = ("oracle", "random", "gossip_reputation_greedy", "referral_network", "thompson_per_family", "ucb_per_family", "trueskill_per_family", "midian_llm_descent",
+            "cluster_head_router", "cnp_self_bid", "declared_softmax", "disrouter_cascade", "route_to_k_majority")
     out = []
     for m, r in c.iterrows():
-        if m in ("oracle", "random") or m.startswith("midian{") or m.startswith("flat_nsw") or m in ("gossip_reputation_greedy", "referral_network", "thompson_per_family", "ucb_per_family", "trueskill_per_family", "midian_llm_descent", "cluster_head_router", "cnp_self_bid", "declared_softmax", "disrouter_cascade", "route_to_k_majority"): continue
-        sup_calls = (r.wall_clock_per_task / base) if (m.startswith("fw_") or m == "llm_supervisor") else 0.0   # call-equivalents (latency ratio to the one-call AutoGen)
+        if m in skip or m.startswith("midian{") or m.startswith("flat_nsw"): continue
+        sup_calls = (r.wall_clock_per_task / base) if (m.startswith("fw_") or m == "llm_supervisor") else 0.0   # call-equivalents (latency ratio to one-call AutoGen)
         sup_scale = P["Qwen/Qwen2.5-14B-Instruct"] / 7.0 if "14B" in m else 1.0
-        build = r.build_probes * probe_cost[dist]; per_task = r.probes_per_task * probe_cost[dist] + sup_calls * SUP * sup_scale
-        exec_ = r.tasks_per_task * probe_cost[dist]                                        # the routed task itself, common to every method
-        out.append(dict(method=m, build_gpu_s=build, route_gpu_s_per_task=per_task, exec_gpu_s_per_task=exec_, sup_call_equiv=sup_calls,
-                        **{f"gpu_s_per_1k_tasks_Q{q}": (build / q + per_task) * 1000 for q in (300, 1000, 10000)}))
-    t = pd.DataFrame(out).set_index("method"); t["Wh_per_1k_tasks_Q1000"] = t.gpu_s_per_1k_tasks_Q1000 * watts / 3600
-    t["breakeven_Q_vs_autogen"] = np.where(t.route_gpu_s_per_task < SUP, t.build_gpu_s / np.maximum(SUP - t.route_gpu_s_per_task, 1e-12), np.inf)
-    return t.sort_values("gpu_s_per_1k_tasks_Q1000")
+        out.append(dict(method=m, build_gpu_s=r.build_probes * probe_cost[dist], per_task_gpu_s=r.probes_per_task * probe_cost[dist] + sup_calls * SUP * sup_scale,
+                        exec_gpu_s_per_task=r.tasks_per_task * probe_cost[dist], sup_call_equiv=sup_calls))
+    t = pd.DataFrame(out).set_index("method")
+    for T in (1_000, 10_000, 100_000): t[f"cum_gpu_s_t{T}"] = t.build_gpu_s + T * t.per_task_gpu_s
+    t["cum_Wh_t10000"] = t.cum_gpu_s_t10000 * watts / 3600
+    return t.sort_values("cum_gpu_s_t10000")
+
+def crossing(t, a, b):
+    """Tasks after which method a (higher build, lower slope) becomes cheaper than b; inf if never."""
+    db, ds = t.loc[a, "build_gpu_s"] - t.loc[b, "build_gpu_s"], t.loc[b, "per_task_gpu_s"] - t.loc[a, "per_task_gpu_s"]
+    return db / ds if ds > 0 and db > 0 else (0.0 if db <= 0 else float("inf"))
 
 if __name__ == "__main__":
     t = table(); pd.set_option("display.width", 250)
+    fws = [m for m in t.index if m.startswith("fw_")]; mids = ["midian", "midian_a", "midian_v"]
     md = ["# Runtime and energy — ESTIMATE (*)", "", __doc__.strip(), "",
-          f"Per-call GPU-seconds: 7B supervisor call {SUP:.4f}; expected probe/execution call by population shape: " + ", ".join(f"{d} {v:.5f}" for d, v in probe_cost.items()) + " (specialist mixes all 7 models uniformly; heavy_tail 90% 0.5-1.5B; bimodal 80% 0.5B / 20% 7B).",
-          "Framework supervisor cost = measured latency ratio to AutoGen (one call) x the 7B call cost; the 14B Magentic-One arm is scaled by 14/7. CPU-side routing (tree descent, TF-IDF) is microseconds per task and omitted.", "",
-          "| method | build GPU-s | route GPU-s/task | task-execution GPU-s/task (common) | supervisor call-equiv/task | GPU-s per 1k tasks @Q=300 | @Q=1000 | @Q=10000 | Wh per 1k tasks @Q=1000 (700 W) | Wh (400 W) | break-even Q vs AutoGen |", "|---|---|---|---|---|---|---|---|---|---|---|"]
+          f"Per-call GPU-seconds: 7B supervisor call {SUP:.4f}; expected probe/execution call by population shape: " + ", ".join(f"{d} {v:.5f}" for d, v in probe_cost.items())
+          + " (specialist mixes all 7 models uniformly; heavy_tail 90% 0.5-1.5B; bimodal 80% 0.5B / 20% 7B).",
+          "Framework supervisor cost = measured latency ratio to AutoGen (one call) x the 7B call cost; the 14B Magentic-One arm is scaled by 14/7. CPU-side routing (tree descent, TF-IDF) is microseconds per task and omitted. "
+          "The routed task's own execution (0.0058 GPU-s per task on specialist) is common to every method and excluded.", "",
+          "CUMULATIVE LLM compute after t routed tasks = build + t x per-task (n=1000 specialist). Probe-based methods pay their build up front and then ~0 per task; frameworks pay 0 up front and a supervisor call per task, so the crossing of the two lines is the break-even.", "",
+          "| method | build GPU-s | per-task GPU-s | cumulative GPU-s @ t=1k | @ 10k | @ 100k | cumulative Wh @ 10k (700 W) | (400 W) |", "|---|---|---|---|---|---|---|---|"]
     for m, r in t.iterrows():
-        md.append(f"| {m} | {r.build_gpu_s:,.0f} | {r.route_gpu_s_per_task:.4f} | {r.exec_gpu_s_per_task:.4f} | {r.sup_call_equiv:.1f} | {r.gpu_s_per_1k_tasks_Q300:,.0f} | {r.gpu_s_per_1k_tasks_Q1000:,.0f} | {r.gpu_s_per_1k_tasks_Q10000:,.0f} | {r.Wh_per_1k_tasks_Q1000:,.1f} | {r.Wh_per_1k_tasks_Q1000*400/700:,.1f} | {('%.0f' % r.breakeven_Q_vs_autogen) if np.isfinite(r.breakeven_Q_vs_autogen) else 'never'} |")
+        md.append(f"| {m} | {r.build_gpu_s:,.0f} | {r.per_task_gpu_s:.4f} | {r.cum_gpu_s_t1000:,.0f} | {r.cum_gpu_s_t10000:,.0f} | {r.cum_gpu_s_t100000:,.0f} | {r.cum_Wh_t10000:,.1f} | {r.cum_Wh_t10000*400/700:,.1f} |")
+    md += ["", "**Crossing points (tasks routed before the probe-based method's cumulative cost drops below the framework's):**", "", "| | " + " | ".join(m.replace("fw_", "") for m in fws) + " |", "|---|" + "---|" * len(fws)]
+    for a in mids: md.append(f"| {a} | " + " | ".join(f"{crossing(t, a, b):,.0f}" for b in fws) + " |")
     md += ["", "MIDIAN's 48,000-probe build by population shape (GPU-s): " + ", ".join(f"{d} {48000 * v:,.0f}" for d, v in probe_cost.items())
-           + f"; one AutoGen supervisor call = {SUP:.4f} GPU-s, so on specialist the build equals ~{48000 * probe_cost['specialist'] / SUP:,.0f} one-call framework tasks.",
-           "Reading: at Q = 1,000 every probe-based method spends ~9x a one-call framework's GPU-seconds (the build dominates); at Q = 10,000 they are level "
-           "with AutoGen and ~10-30x cheaper than the multi-call frameworks; MIDIAN-A's audits add 5%; MIDIAN-V and halving are the cheapest builds (fewer probes)."]
+           + "; the crossings scale with it (heavy_tail and bimodal cross ~3x sooner).",
+           "Reading: against a one-call framework (AutoGen) MIDIAN breaks even after ~9,400 tasks on specialist (~2,900 on heavy_tail), MIDIAN-A after ~9,900; against the multi-call frameworks (CrewAI, LlamaIndex, CAMEL) after 1,000-1,600 tasks; against Magentic-One after ~570 (7B) / ~340 (14B arm). Before the crossing the framework is cheaper; after it, the probe-based methods' cost is flat while every framework's keeps growing linearly."]
     open(os.path.dirname(__file__) + "/../RESULTS_energy.md", "w").write("\n".join(md) + "\n")
-    Qs = np.logspace(2, 5, 25); fig, axes = plt.subplots(1, 2, figsize=(14, 5.5))
-    for m, r in t.iterrows():
-        y = (r.build_gpu_s / Qs + r.route_gpu_s_per_task) * 1000; lw = 2.5 if m in ("midian", "midian_a", "midian_v") else 1.2
-        axes[0].plot(Qs, y, label=m, lw=lw); axes[1].plot(Qs, y * 700 / 3600, lw=lw)
-    for ax, yl in zip(axes, ["GPU-seconds per 1,000 routed tasks", "Wh per 1,000 routed tasks (700 W per H100)"]):
-        ax.set_xscale("log"); ax.set_yscale("log"); ax.set_xlabel("Q = tasks routed over the build's lifetime"); ax.set_ylabel(yl); ax.grid(alpha=.3, which="both")
-    h, l = axes[0].get_legend_handles_labels(); fig.legend(h, l, loc="center left", bbox_to_anchor=(1.0, 0.5), fontsize=7, title="declared_argmax: 0 LLM calls (off the log axis)", title_fontsize=7)
-    fig.suptitle("H10*  Estimated LLM compute per 1,000 tasks (build amortised over Q); n=1000 specialist population; the routed task's own execution excluded")
-    plt.tight_layout(); plt.savefig(os.path.dirname(__file__) + "/../figures/H10_runtime_energy.png", dpi=300, bbox_inches="tight"); print(t.round(4).to_string())
+    T = np.logspace(2, 5, 300); fig, axes = plt.subplots(1, 2, figsize=(15, 6))
+    show = ["midian", "midian_a", "midian_v", 'sequential_halving{"peer_reported":true}', 'flat_probe_argmax{"online":true}', "linucb_honest", "verify_on_claim", "llm_supervisor"] + fws
+    style = {"midian": ("#c0392b", 3.0), "midian_a": ("#e74c3c", 2.2), "midian_v": ("#e67e22", 2.2), "fw_autogen": ("#2980b9", 2.0), "fw_magentic_one": ("#8e44ad", 2.0)}
+    for m in show:
+        r = t.loc[m]; col, lw = style.get(m, (None, 1.0)); y = r.build_gpu_s + T * r.per_task_gpu_s
+        axes[0].plot(T, y, label=m, color=col, lw=lw, ls="-" if not m.startswith("fw_") or m in style else "--"); axes[1].plot(T, y * 700 / 3600, color=col, lw=lw, ls="-" if not m.startswith("fw_") or m in style else "--")
+    for i, b in enumerate(("fw_magentic_one", "fw_crewai", "fw_langgraph", "fw_autogen")):           # MIDIAN's break-even points
+        x = crossing(t, "midian", b); y = t.loc["midian", "build_gpu_s"]
+        axes[0].plot([x], [y], "kx", ms=10, mew=2); axes[0].annotate(f"{b.replace('fw_', '')}: {x:,.0f} tasks", (x, y), textcoords="offset points", xytext=(4, -14 - 11 * i), fontsize=8)
+    for ax, yl in zip(axes, ["cumulative GPU-seconds", "cumulative Wh (700 W per H100)"]):
+        ax.set_xscale("log"); ax.set_yscale("log"); ax.set_xlabel("tasks routed so far (t)"); ax.set_ylabel(yl); ax.grid(alpha=.3, which="both")
+    axes[0].set_title("cumulative LLM compute (x = MIDIAN's break-even vs a framework)"); axes[1].set_title("same, in Wh")
+    h, l = axes[0].get_legend_handles_labels(); fig.legend(h, l, loc="center left", bbox_to_anchor=(1.0, 0.5), fontsize=7, title="flat lines = probe-based (build up front, ~0 per task);\nmidian_sh/sha, flat frozen, warm-start coincide with midian/midian_a", title_fontsize=7)
+    fig.suptitle("H10*  Cumulative LLM compute vs tasks routed, n=1000 specialist: probe methods pay 48k probes up front then ~0/task; frameworks pay one or more 7B supervisor calls per task.\n"
+                 "Estimate: GPU-s per call = params x (A*prompt + 5A*gen tokens), A from a saturated 7B replica (34 req/s); 700 W per H100; the routed task's own execution excluded.", fontsize=9)
+    plt.tight_layout(); plt.savefig(os.path.dirname(__file__) + "/../figures/H10_runtime_energy.png", dpi=300, bbox_inches="tight")
+    print(t.round(4).to_string()); print({a: {b: round(crossing(t, a, b)) for b in fws} for a in mids})
