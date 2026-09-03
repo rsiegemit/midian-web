@@ -32,7 +32,7 @@ echo "[fleet] host=$HOSTNAME_FQ job=${SLURM_JOB_ID:-manual} logs=$JOBLOG"
 nvidia-smi --query-gpu=index,name,memory.total --format=csv
 "$PY" -c 'import vllm, sys; print("vllm", vllm.__version__, "on python", sys.version.split()[0])'
 
-"$PY" "$REPO/scripts/_register_endpoint.py" clear
+[ -z "${RTE_AS_REPLICA:-}" ] && [ -n "${RTE_CLEAR_REGISTRY:-}" ] && "$PY" "$REPO/scripts/_register_endpoint.py" clear   # never wipe other servers' entries by default
 PIDS=()
 cleanup() {
   echo "[fleet] cleanup: deregistering endpoints and killing servers"
