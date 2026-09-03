@@ -47,6 +47,12 @@ Profiling (17:30): with 100% memo hits a probe still cost 10-15 ms because every
 tool runs are now memoised in the shared memo (`llm_client.memo_call`, commit 230f132) and `_refresh` skips unchanged shards by stat.
 Shard jobs with >=2 units left were restarted to pick this up. Memo load on a compute node: ~107 s for 37M rows.
 
+
+**2026-09-02 22:00 — live programme complete; RESULTS_rte.md written.** All live grids closed except 5 budget_sweep rows
+(halving b=10) and Magentic-One seeds 4-5 on the fw grids (24 shards running). Remaining: wait for those, rerun
+`rte.analyze --grid budget_sweep fw_live_n100 fw_live_n1000`, refresh the §1/§7 numbers in RESULTS_rte.md if they move,
+`python -m rte.llm_client compact`, `scancel` replicas + fleet (43867113). Learning-curve script: `$RTE_DATA/scratch/curve.py`.
+
 ## 3. Method variants in the grids (all paired on the same streams)
 midian (v1, pre-registered), midian(online=false), midian(r=5), midian(verify,cached) = MIDIAN-V, midian(verify,cached,r=5),
 midian_internals adds r∈{5,10,20}×δ∈{0,1/3} and V at r∈{5,10,20}; sequential_halving and sequential_halving(peer_reported);
