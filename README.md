@@ -280,3 +280,8 @@ NFS, replica herding, memo sharding, tool-run memoisation) are in `STATUS.md` an
 - Plain MIDIAN charges one report per probe per peer as the spec reads; MIDIAN-V and peer-reported halving charge one
   per peer (its mean), so their report counts are ~3× lower for the same information.
 - Wall-clock columns mix cache hits and misses; use the counters for cost claims.
+- The benchmark supplies what probing needs and most deployments lack: a cheap probe whose outcome is checkable on the
+  task distribution. Flat probe argmax is an offline eval with a lookup table; MIDIAN's additions (log-cost routing, no
+  trusted observer, lying reporters) pay off only at scale with untrusted parties. RESULTS_rte_v2.md §11 spells this
+  out; TARGETS_rte_v3.md / RESULTS_rte_v3.md run our arms on RouterBench's own protocol and against RouteLLM's released
+  routers.

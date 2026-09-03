@@ -605,6 +605,25 @@ starts at −0.05 and stays; MIDIAN with updates off never moves (−0.12); fram
   before the fix). Churn rows predate the matching repair charge (K·r·depth comparisons, K·depth messages per arrival).
   §6b's energy/latency tables carry their own accounting and are not restated here.
 
+- **Why the probe-based arms look this good, and where that stops (added 2026-09-03 after review).** The benchmark
+  supplies the one thing probing needs and most deployments lack: a cheap probe whose outcome is checkable on the same
+  distribution as the tasks. Four consequences. (a) Every probe here is a free, exact bit of skill (programmatic ground
+  truth, memoised); with a judge model in the loop the judge's error is the estimate's floor and each probe is a paid
+  call. (b) True skill is defined per family signature, so family is the whole story and a family-level scan is a
+  sufficient statistic; real difficulty varies more within a family than across agents, which is why learned routers
+  condition on the prompt, not on the agent. (c) n = 1000 anonymous, stationary strangers is a marketplace that does not
+  exist yet; a typical deployment has 5–20 agents the developer wrote, whose self-descriptions are honest because the
+  developer wrote them — there declared_argmax *is* the oracle and every probe is wasted budget. (d) The frameworks are
+  orchestration plumbing whose supervisor picks a worker from a self-description by default; beating them on selection
+  says more about that default than about the frameworks, and the gap is zero on bimodal populations (§1). Flat probe
+  argmax is an offline eval with a lookup table, which every serious team already runs; RouterBench, RouteLLM, Martian
+  and Not Diamond are learned routers over exactly that kind of labelled-outcome data. What is not standard practice is
+  what MIDIAN adds on top — O(log n) route cost, no trusted central observer, robustness to reporters who lie — and it
+  pays off only at scale with untrusted parties. Untested here: non-verifiable outcomes with a judge, continuous drift
+  (churn is block-wise), within-family task heterogeneity, and n = 10–50 where the build is not amortised.
+  RESULTS_rte_v3.md (in progress) meets the two obvious follow-ups: our arms on RouterBench's own protocol and metric
+  against its own routers, and against real released routers (RouteLLM) on their model pair and their metrics.
+
 ## 12. Deviations as the as-run protocol (summary of DEVIATIONS.md; every bullet is dated there)
 
 v1: NVIDIA/CUDA fleet, Gemma-2 for the non-Qwen half; six families swapped for separable ones (final K = 16); python
