@@ -104,3 +104,5 @@ flat_probe_argmax and (online); frameworks fw_* and fw_*(retrieval=midian, r∈{
    F1 by class with CIs, paired deltas + WITHIN_FLOOR, targets PASS/MISS with numbers, cost exponents, the b=3 tie caveat, the
    shared-S statistics caveat (seed CI excludes S measurement noise: ±0.035/±0.065 per cell), all DEVIATIONS summarized.
 3. Cleanup: `python -m rte.llm_client compact` (merge memo shards) after the last job; scancel replicas; keep the fleet until done.
+
+**2026-09-03 05:57 — finish_v2 (unattended): all v2 grids closed; analyses, targets_v2 merge (results/v2_targets) and figures regenerated. Next: fill RESULTS_rte_v2.md TODO(grid) markers from the summaries.**
