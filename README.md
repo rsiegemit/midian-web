@@ -203,16 +203,19 @@ makes re-runs of finished units nearly free.
 `RESULTS_rte.md` is the write-up: the framework headline with CIs and fallback rates, the frameworks given MIDIAN's
 shortlist, every rival by β and by population shape, the MIDIAN-vs-halving control, the internals ablation, budget
 and scale, cost exponents and break-even, the learning curve, target verdicts, replay, caveats and deviations.
-Per-grid machine summaries are `$RTE_DATA/results/<grid>/summary.md`. The seven synthesis figures are in [`figures/`](figures/)
-(regenerate with `scripts/extra_figs.py`):
+Per-grid machine summaries are `$RTE_DATA/results/<grid>/summary.md`. The figures are in [`figures/`](figures/) (regenerate with `scripts/extra_figs.py`; seed-bootstrap error bars within cells, 300 dpi):
 
-- **A** frameworks vs MIDIAN at n = 100 and n = 1000 (paired, 95% CI) — `figures/A_headline_frameworks_vs_midian.png`
-- **B** what each framework gains from MIDIAN's verified shortlist
-- **C** MIDIAN vs sequential halving by β and liar selection
-- **D** learning over the task stream
-- **E** all 27 rivals vs β, one panel per class
-- **F** cost vs n, 10² to 10⁷
-- **G** budget sweep and the MIDIAN internals ablation
+- **H1** headline by population shape, frameworks as a min–max band with fallback rates
+- **H2** legibility: Spearman(self-description, true skill) vs framework − MIDIAN
+- **H3** consistency vs robustness: success at β=0 vs β=0.5 with colluding low-skill liars
+- **H4** cost–quality Pareto with break-even Q
+- **H5** cost scaling 10² to 10⁷, plus supervisor latency
+- **H6** MIDIAN, MIDIAN-V, MIDIAN-SH, MIDIAN-A vs sequential halving by β and liar selection; replay twin below
+- **H7** frameworks given MIDIAN's verified shortlist
+- **H8** budget sweep by declaration channel
+- **H9** churn: success and cumulative probes across churn events
+- **H10** runtime and energy estimate (GPU-seconds and Wh per 1,000 tasks)
+- appendix: internals, learning curve, k-sensitivity, replay mirror, fallback table, UCB/Thompson; the 2026-09-02 figures A–G are kept under `figures/v1/`
 
 In one paragraph: the frameworks' only signal is self-description, which overclaims by +0.27 and correlates 0.36 with
 true skill, so they sit at 0.5 regardless of β and fall to 0.4 on specialist populations; handing them MIDIAN's

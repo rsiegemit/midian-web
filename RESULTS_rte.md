@@ -320,7 +320,7 @@ launches sharded jobs against the fleet (`scripts/serve_fleet.sbatch`, replicas 
 `python -m rte.analyze --grid <g>` rewrites a grid's summary and figures; `scripts/check_methods.py` and `pytest`
 (152 tests) verify ledger formulas and method correctness. Data, memo and rows: `$RTE_DATA` on netscratch.
 
-Figures: the seven synthesis figures A–G in the repo under `figures/` (also `$RTE_DATA/results/extra_figs/` (`results/rte_figures_core.zip`; regenerate with
+Figures (v1, 2026-09-02 data, 5 seeds, pooled error bars): the seven synthesis figures A–G, now under `figures/v1/` (also `$RTE_DATA/results/extra_figs/` (`results/rte_figures_core.zip`; regenerate with
 `scripts/extra_figs.py`): A headline frameworks vs MIDIAN, B verified-shortlist lift, C MIDIAN vs halving by β × liar selection,
 D learning curve, E every rival vs β by class, F cost scaling 10²–10⁷, G budget sweep + MIDIAN internals. The analyzer's per-grid
 F1–F7 (46 files, `results/rte_figures.zip`) are the machine-generated originals behind them.
