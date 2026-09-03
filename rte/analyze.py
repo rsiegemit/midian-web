@@ -440,6 +440,7 @@ def by_method(df, extra=()):
     g = df.groupby(["group", "label"])
     cols = [c for c in ("success_late", *STATS, "regret", "misroute_to_liar", *extra) if c in df.columns]
     return (g.success.apply(lambda s: pd.Series(dict(zip(("success", "lo", "hi"), boot(s))))).unstack()
+            .join(g.success.std().rename("sd_units")).join(g.size().rename("units"))       # variance across (cell, seed) units
             .join(g[cols].mean()).sort_values("success", ascending=False).reset_index())
 def roll_up(cmp_):
     """Per rival, across cells: mean paired delta, its CI, sign-test p and how often MIDIAN wins."""
