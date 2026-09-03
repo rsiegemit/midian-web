@@ -21,7 +21,7 @@ def line(ax, s, **kw):
     ax.errorbar(s.mean().index, s.mean().values, yerr=1.96 * s.sem().values, marker="o", ms=4, **kw)
 
 
-NICE = {"midian": "MIDIAN (pre-registered)", "midian{V}": "MIDIAN-V r=10", "midian{r:5,V}": "MIDIAN-V r=5", "midian{r:5}": "MIDIAN r=5",
+NICE = {"midian": "MIDIAN", "midian{V}": "MIDIAN-V r=10", "midian{r:5,V}": "MIDIAN-V r=5", "midian{r:5}": "MIDIAN r=5",
         "flat_probe_argmax": "flat probe argmax", "declared_argmax": "declared argmax", "llm_supervisor": "LLM supervisor", "oracle": "oracle", "random": "random"}
 fw = lambda m: m.replace("fw_", "").replace("_", " ")
 
@@ -57,7 +57,7 @@ fig, axes = plt.subplots(1, 2, figsize=(12, 4.5), sharey=True)
 for ax, ls in zip(axes, ["random", "low_skill_first"]):
     sub = w.xs(ls, level="liar_select")
     for m, c, lab in [("oracle", GRY, "oracle"), ("sequential_halving", "#2c3e50", "halving, trusted observer"), ("sequential_halving{peer}", "#8e44ad", "halving, peer-reported (fair control)"),
-                      ("midian{V}", ORG, "MIDIAN-V r=10"), ("midian{r:5,V}", YEL, "MIDIAN-V r=5"), ("midian", RED, "MIDIAN (pre-registered)"), ("flat_probe_argmax", BLU, "flat probe argmax")]:
+                      ("midian{V}", ORG, "MIDIAN-V r=10"), ("midian{r:5,V}", YEL, "MIDIAN-V r=5"), ("midian", RED, "MIDIAN"), ("flat_probe_argmax", BLU, "flat probe argmax")]:
         line(ax, sub[m].groupby(level="beta"), label=lab, color=c)
     ax.set_title(f"MIDIAN vs halving, liars = {ls}"); ax.set_xlabel("β (liar fraction)"); ax.grid(alpha=.3)
 axes[0].set_ylabel("success (n=1000, 3 shapes x 2 channels x 5 seeds)"); axes[1].legend(fontsize=8); plt.tight_layout(); plt.savefig(f"{O}/C_midian_vs_halving_beta_liars.png", dpi=150); plt.close()
@@ -68,17 +68,17 @@ CLASSES = {"declared-channel rivals": ["declared_argmax", "declared_softmax", "c
 fig, axes = plt.subplots(1, 4, figsize=(20, 5), sharey=True)
 for ax, (title, ms) in zip(axes, CLASSES.items()):
     for m, c in (("oracle", GRY), ("random", "#ccc")): g = w[m].groupby(level="beta").mean(); ax.plot(g.index, g.values, color=c, ls=":", label=m)
-    line(ax, w["midian"].groupby(level="beta"), label="MIDIAN (pre-registered)", lw=2.5, color=RED, zorder=10)
+    line(ax, w["midian"].groupby(level="beta"), label="MIDIAN", lw=2.5, color=RED, zorder=10)
     for m in ms: line(ax, w[m].groupby(level="beta"), label=m, lw=1.2)
     ax.set_title(title); ax.set_xlabel("β (liar fraction)"); ax.grid(alpha=.3); ax.legend(fontsize=7, loc="lower left")
-axes[0].set_ylabel("success (live_f1_n1000: 48 cells x 5 seeds)"); plt.suptitle("F1: every rival vs liar fraction, n=1000 (pre-registered MIDIAN in red in every panel)")
+axes[0].set_ylabel("success (live_f1_n1000: 48 cells x 5 seeds)"); plt.suptitle("F1: every rival vs liar fraction, n=1000 (MIDIAN in red in every panel)")
 plt.tight_layout(); plt.savefig(f"{O}/E_all_rivals_vs_beta_by_class.png", dpi=150); plt.close()
 
 # D: learning curve (per-task outcomes from $RTE_DATA/scratch/curve.py)
 runs = [json.load(open(f)) for f in sorted(glob.glob(R.replace("/results", "") + "/scratch/curve_*.json"))]
 if runs:
     B = 50; fig, ax = plt.subplots(figsize=(9, 5))
-    for m, lab, c in [("oracle", "oracle", GRY), ('midian{"cached":true,"verify":true}', "MIDIAN-V r=10", ORG), ("midian{}", "MIDIAN (pre-registered)", RED), ('midian{"online":false}', "MIDIAN, updates off", "#e74c3c"),
+    for m, lab, c in [("oracle", "oracle", GRY), ('midian{"cached":true,"verify":true}', "MIDIAN-V r=10", ORG), ("midian{}", "MIDIAN", RED), ('midian{"online":false}', "MIDIAN, updates off", "#e74c3c"),
                       ('flat_probe_argmax{"online":true}', "flat probe, online", BLU), ("warm_start_bandit{}", "warm-start bandit", "#27ae60"), ("llm_supervisor{}", "LLM supervisor", "#7f8c8d")]:
         arr = np.array([r[m] for r in runs], float).reshape(len(runs), -1, B).mean(axis=(0, 2)); ax.plot(np.arange(len(arr)) * B + B / 2, arr, marker=".", label=lab, color=c, ls="--" if "off" in lab else "-")
     ax.set_xlabel("task index (blocks of 50)"); ax.set_ylabel(f"success ({len(runs)} live cells, n=1000, β=0.25)"); ax.set_title("Learning over the stream"); ax.grid(alpha=.3); ax.legend(fontsize=8)
@@ -100,16 +100,18 @@ plt.tight_layout(); plt.savefig(f"{O}/F_cost_scaling.png", dpi=150); plt.close()
 # G: budget sweep + internals
 fig, axes = plt.subplots(1, 2, figsize=(16, 5.5), gridspec_kw={"width_ratios": [1, 1.25]})
 db = load("budget_sweep"); ax = axes[0]
+keep_b = db.pivot_table(index=["dist", "seed", "b"], columns="m", values="success").dropna().index
+db = db.set_index(["dist", "seed", "b"]).loc[keep_b].reset_index()    # paired cells only
 for m, lab, c in [("oracle", "oracle", GRY), ("sequential_halving", "seq. halving (trusted)", "#2c3e50"), ("midian{V}", "MIDIAN-V r=10", ORG), ("midian", "MIDIAN", RED), ("flat_probe_argmax", "flat probe argmax", BLU),
                   ("warm_start_bandit", "warm-start bandit", "#27ae60"), ("declared_argmax", "declared argmax", "#7f8c8d"), ("ucb_per_family", "UCB", "#8e44ad")]:
     line(ax, db[db.m == m].groupby("b").success, label=lab, color=c, lw=2.5 if m == "midian" else 1.2)
 ax.set_xscale("log"); ax.set_xticks([1, 3, 10]); ax.set_xticklabels(["1", "3", "10"]); ax.set_xlabel("probe budget b per (agent, family)"); ax.set_ylabel("success (n=1000, β=0.25, 3 shapes x 5 seeds)")
 ax.set_title("F4: success vs build budget"); ax.grid(alpha=.3); ax.legend(fontsize=8, loc="lower right")
 di = load("midian_internals"); di = di[di.collude == True]; ax = axes[1]
-for m, lab, c in [("midian{delta:0.3333333333333333,r:5}", "MIDIAN r=5 δ=1/3", "#e74c3c"), ("midian{delta:0.3333333333333333,r:10}", "MIDIAN r=10 δ=1/3 (pre-reg.)", RED), ("midian{delta:0.3333333333333333,r:20}", "MIDIAN r=20 δ=1/3", "#7b241c"),
+for m, lab, c in [("midian{delta:0.3333333333333333,r:5}", "MIDIAN r=5 δ=1/3", "#e74c3c"), ("midian{delta:0.3333333333333333,r:10}", "MIDIAN r=10 δ=1/3", RED), ("midian{delta:0.3333333333333333,r:20}", "MIDIAN r=20 δ=1/3", "#7b241c"),
                   ("midian{delta:0.0,r:10}", "MIDIAN r=10 δ=0 (no trim)", ORG), ("midian{r:5,V}", "MIDIAN-V r=5", YEL), ("midian{r:10,V}", "MIDIAN-V r=10", "#f39c12"), ("midian{r:20,V}", "MIDIAN-V r=20", "#b9770e"),
                   ("flat_probe_argmax", "flat probe argmax", BLU), ("oracle", "oracle", GRY)]:
-    line(ax, di[di.m == m].groupby("beta").success, label=lab, color=c, lw=2.5 if "pre-reg" in lab else 1.2)
+    line(ax, di[di.m == m].groupby("beta").success, label=lab, color=c, lw=2.5 if lab == "MIDIAN r=10 δ=1/3" else 1.2)
 ax.set_xlabel("β (colluding liars)"); ax.set_title("F7: MIDIAN internals (n=1000 specialist): cohort r, trim δ, verification"); ax.grid(alpha=.3); ax.legend(fontsize=8, loc="center left", bbox_to_anchor=(1.01, 0.5))
 plt.tight_layout(); plt.savefig(f"{O}/G_budget_and_internals.png", dpi=150, bbox_inches="tight"); plt.close()
 print("wrote", sorted(os.listdir(O)))

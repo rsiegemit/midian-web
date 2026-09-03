@@ -14,7 +14,7 @@ declarations by +0.4 and, when colluding, report 1 for fellow liars and 0 for th
 per (agent, family) at build; Q = 1000 routed tasks per unit (300 on the framework grids). Seeds: 5 on the algorithmic
 grids, 3 on the framework grids (5 for the MIDIAN variants and oracle/flat/declared, see caveats). Intervals are 95%
 percentile bootstrap over units; "wins" are paired sign counts. Completed grids: live_core_n100, live_f1_n1000,
-live_extra_n1000, live_n10k, budget_sweep (670/675 rows; the last 5 are sequential-halving b=10 units), midian_internals,
+live_extra_n1000, live_n10k, budget_sweep (673/675 rows; the last 2 are sequential-halving b=10 units on bimodal), midian_internals,
 fw_live_n100, fw_live_n1000, fw_live_n100_verified, fw_live_n1000_verified, fw_k_sensitivity, fw_appendix, replay
 twins of the two live sweeps, replay_scale, bernoulli_scale.
 
@@ -33,7 +33,7 @@ supervisor picks one. Paired on identical cells (3 shapes × 4 β × seeds), Q =
 | oracle (best agent by true S) | 0.729 [0.693, 0.763] | 0.733 [0.694, 0.770] | +0.080 | 39/39 |
 | MIDIAN-V r=5 (labeled variant) | 0.646 [0.611, 0.678] | 0.669 [0.625, 0.712] | +0.017 | 30/39 |
 | MIDIAN-V r=10 (labeled variant) | 0.646 [0.615, 0.676] | 0.664 [0.626, 0.703] | +0.012 | 21/37 |
-| **MIDIAN (pre-registered)** | 0.639 [0.609, 0.668] | 0.653 [0.620, 0.685] | 0 | — |
+| **MIDIAN** | 0.639 [0.609, 0.668] | 0.653 [0.620, 0.685] | 0 | — |
 | flat probe argmax (same 48k probes, no tree) | 0.596 [0.577, 0.615] | 0.621 [0.583, 0.657] | −0.031 | 16/39 |
 | declared argmax | 0.567 [0.550, 0.584] | 0.567 [0.551, 0.583] | −0.086 | 9/39 |
 | llm_supervisor (one call over top-20) | 0.557 [0.543, 0.570] | 0.552 [0.534, 0.569] | −0.100 | 15/39 |
@@ -110,7 +110,7 @@ Success by β; classes per SPEC §6. Full CIs, per-cell deltas and `WITHIN_FLOOR
 | verified, central | verify_on_claim | 0.687 | 0.658 | 0.643 | 0.650 | 0 | 17 |
 | midian | MIDIAN-V r=10 | 0.681 | 0.685 | 0.677 | 0.575 | 2 | 1 |
 | verified, central | flat_probe_argmax (online) | 0.666 | 0.666 | 0.667 | 0.667 | 0 | 1000 |
-| midian | **MIDIAN (pre-registered)** | 0.666 | 0.663 | 0.646 | 0.595 | 6 | 30 |
+| midian | **MIDIAN** | 0.666 | 0.663 | 0.646 | 0.595 | 6 | 30 |
 | midian | MIDIAN r=5 | 0.664 | 0.660 | 0.639 | 0.564 | 10 | 25 |
 | declared | cluster_head_router | 0.661 | 0.602 | 0.592 | 0.587 | 4 | 110 |
 | declared | route_to_k_majority | 0.659 | 0.600 | 0.590 | 0.583 | 0 | 1000 |
@@ -164,7 +164,7 @@ by 0.04 at β ≤ 0.25 and plain MIDIAN leads by +0.10 at β=0.5.
 | variant | β=0.1 | β=0.25 | β=0.5 collude | β=0.5 no collude | build reports | msgs / comps per task |
 |---|---|---|---|---|---|---|
 | flat_probe_argmax | 0.745 | 0.745 | 0.745 | 0.745 | 0 | 0 / 1000 |
-| MIDIAN r=10 δ=1/3 (pre-registered) | 0.790 | 0.789 | 0.743 | 0.788 | 432k | 6 / 30 |
+| MIDIAN r=10 δ=1/3 | 0.790 | 0.789 | 0.743 | 0.788 | 432k | 6 / 30 |
 | MIDIAN r=10 δ=0 (no trimming) | 0.789 | 0.789 | 0.778 | 0.788 | 432k | 6 / 30 |
 | MIDIAN r=5 δ=1/3 | 0.792 | 0.791 | 0.728 | 0.789 | 192k | 10 / 25 |
 | MIDIAN r=20 δ=1/3 | 0.782 | 0.785 | 0.765 | 0.784 | 912k | 6 / 60 |
@@ -210,7 +210,7 @@ framework (16,000 at b=1; 5,000–8,000 against the multi-call Magentic-One / CA
 | method | b=1 | b=3 | b=10 | | n=10k b=1, β=0 | β=0.25 |
 |---|---|---|---|---|---|---|
 | oracle | 0.723 | 0.723 | 0.723 | | 0.862 | 0.862 |
-| sequential_halving (trusted) | 0.479 | 0.722 | 0.798 | | 0.583 | 0.583 |
+| sequential_halving (trusted) | 0.479 | 0.722 | 0.724 | | 0.583 | 0.583 |
 | MIDIAN-V r=10 | 0.593 | 0.675 | 0.698 | | 0.679 | 0.679 |
 | MIDIAN | 0.585 | 0.650 | 0.702 | | 0.684 | 0.683 |
 | flat probe argmax | 0.481 | 0.620 | 0.695 | | 0.580 | 0.580 |
@@ -222,8 +222,8 @@ At b=1 the tree is the best probe-only method (+0.10 over flat and halving: one 
 on), but any method that also reads the *programmatic* declaration channel (declared_argmax, warm-start bandit,
 verify_on_claim) beats every probe-only method at b=1 and at n=10k, because that channel is S + N(0, 0.05) for honest
 agents and 75% of agents are honest. This is a property of the synthetic declaration channel, not of the LLMs: with
-the agents' real self-descriptions declared_argmax falls to 0.55 (§3). Halving needs b ≥ 3 to pay off and then
-dominates at b=10 (0.798).
+the agents' real self-descriptions declared_argmax falls to 0.55 (§3). Halving needs b ≥ 3 to pay off, and from b=3 on it sits on the oracle (paired delta −0.001 at b=3, +0.001
+at b=10): no method beats the oracle on paired cells; an unpaired mean can only appear to when rows are missing.
 
 ## 8. Learning over the stream
 
@@ -282,7 +282,7 @@ same as live. replay_scale (n = 10⁴…10⁶) and bernoulli_scale (10²…10⁷
   columns are ~3× lower for the same information (DEVIATIONS 2026-09-02 MIDIAN-V bullet).
 - **Wall-clock columns** mix cache-hit and cache-miss runs (the LLM memo, and since 17:30 the python-tool memo);
   use counts (probes, messages, comparisons) for cost claims, wall-clock only for the frameworks' supervisor calls.
-- **budget_sweep** is missing 5 of 675 rows (sequential_halving b=10 on bimodal) at write time.
+- **budget_sweep** is missing 2 of 675 rows (sequential_halving b=10 on bimodal) at write time; all budget numbers are on paired cells.
 
 ## 12. Deviations from SPEC.md (summary; all 100+ dated bullets in DEVIATIONS.md)
 
