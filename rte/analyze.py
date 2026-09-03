@@ -19,7 +19,10 @@ REF, FLOOR, B_BOOT = "midian", "WITHIN_FLOOR", 2000
 FLAT, FLAT_ON = "flat_probe_argmax_frozen", "flat_probe_argmax_online"
 ALIAS = {"flat_probe_argmax": FLAT, "flat_probe_argmax[online=True]": FLAT_ON,        # one name per arm everywhere
          "midian[cached=True,verify=True]": "midian_v", "midian[cached=True,r=5,verify=True]": "midian_v_r5",
-         "sequential_halving[peer_reported=True]": "sequential_halving_peer"}
+         "sequential_halving[peer_reported=True]": "sequential_halving_peer", "midian[stratify=True]": "midian_stratified",
+         "sequential_halving[churn_mode=rebuild,peer_reported=True]": "sequential_halving_peer_rebuild",
+         "sequential_halving[churn_mode=stale,peer_reported=True]": "sequential_halving_peer_stale"}
+STATS = ("success_strict", "fallback_rate")               # framework accountings carried inside method_stats (0.2)
 MARK = {"llm": "o", "replay": "s", "bernoulli": "^"}       # marker shape = backend, on every figure
 COST = ["comparisons_per_task", "hops_per_task", "messages_per_task", "total_comm_per_task"]   # no wall-clock: memo-mixed
 BUILD = ["build_probes", "build_reports", "build_messages", "build_total_comm"]
@@ -55,8 +58,14 @@ def load(grids):
         if os.path.exists(f"{d}/rows.csv"): frames.append(pd.read_csv(f"{d}/rows.csv"))
         else: log(f"[analyze] no rows for grid {g!r} at {d}")
     if not frames: raise SystemExit(f"no rows found for grids {grids}")
-    df = pd.concat(frames, ignore_index=True)
+    return prepare(pd.concat(frames, ignore_index=True))
+def prepare(df):
+    """Label, group, method_stats -> columns, churn fraction, total-communication columns when absent."""
     df["params"] = df.params.fillna("{}")
+    stats = [json.loads(x) if isinstance(x, str) and x.startswith("{") else {} for x in df.get("method_stats", pd.Series([""] * len(df)))]
+    for c in STATS: df[c] = [d.get(c, np.nan) for d in stats]
+    ch = df.get("churn", pd.Series([""] * len(df))).fillna("")
+    df["churn_frac"] = [json.loads(str(x).replace("'", '"'))["frac"] if str(x).startswith("{") else 0.0 for x in ch]
     short = lambda p: ",".join(f"{k}={v:.3g}" if isinstance(v, float) else f"{k}={v}"
                                for k, v in sorted(json.loads(p).items()))
     df["label"] = [ALIAS.get(l, l) for l in (m if p == "{}" else f"{m}[{short(p)}]" for m, p in zip(df.method, df.params))]
@@ -315,6 +324,109 @@ def targets(df, fits):
                     "name": fn.__doc__, "detail": detail})
     return out
 
+# ------------------------------------------------------------------ pre-registered targets, v2 (TARGETS_rte_v2.md)
+SELF = lambda df: df[df.declared_source == "self_described"]
+def delta(df, a, b, metric="success"):
+    """Mean paired (a - b) and pair count over (cell, seed); (nan, 0) without overlap."""
+    d = pair(df, a, b, metric)
+    return (float((d[a] - d[b]).mean()), len(d)) if not d.empty else (np.nan, 0)
+def envelope(df):
+    """Mean over cells of plain MIDIAN's seed envelope (max-min success across seeds)."""
+    m = df[df.label == REF]
+    return float(m.groupby(cells(m)).success.agg(lambda v: v.max() - v.min()).mean()) if len(m) else np.nan
+def _v1(df, fits):
+    """V2-1 MIDIAN-SH: within 0.02 of halving_peer at beta<=0.25 (self-described, every shape); >= MIDIAN-0.02 at beta=0.5 collude low-skill; per-task cost = MIDIAN's"""
+    s = SELF(df); lo = s[s.beta <= 0.25]
+    by = {d: delta(g, "midian_sh", "sequential_halving_peer")[0] for d, g in lo.groupby("dist")}
+    hi = s[np.isclose(s.beta, .5) & (s.collude == True) & (s.liar_select == "low_skill_first")]   # noqa: E712
+    x, n = delta(hi, "midian_sh", REF)
+    cost = {c: (float(df[df.label == "midian_sh"][c].mean()), float(df[df.label == REF][c].mean())) for c in ("comparisons_per_task", "messages_per_task")}
+    if not by or not n: return None, "needs variants_f1 rows for midian_sh and sequential_halving_peer"
+    ok = all(abs(v) <= 0.02 for v in by.values()) and x >= -0.02 and all(abs(a - b) < 1e-9 for a, b in cost.values())
+    return ok, f"vs halving_peer at beta<=0.25 by shape: {fmt(by)}; vs MIDIAN at beta=0.5/collude/low-skill: {x:+.3f} ({n} pairs); per-task (SH, MIDIAN): " + ", ".join(f"{c} {a:.3g}/{b:.3g}" for c, (a, b) in cost.items()), max(by.values(), key=abs)
+def _v2(df, fits):
+    """V2-2 MIDIAN-A: beta=0.5-collude loss vs beta=0 <= 0.02 on specialist; unchanged within 0.01 at beta<=0.25; build probes <= 1.05x"""
+    a = df[(df.label == "midian_a") & (df.dist == "specialist") & (df.collude == True)]   # noqa: E712
+    if a.empty: return None, "needs midian_a rows on specialist"
+    loss = float(a[np.isclose(a.beta, 0)].success.mean() - a[np.isclose(a.beta, .5)].success.mean())
+    x, n = delta(df[df.beta <= 0.25], "midian_a", REF)
+    ratio = float(df[df.label == "midian_a"].build_probes.mean() / df[df.label == REF].build_probes.mean())
+    if not np.isfinite(loss) or not n: return None, "needs midian_a at beta=0 and beta=0.5 (collude) on specialist and at beta<=0.25 paired with midian"
+    return bool(loss <= 0.02 and abs(x) <= 0.01 and ratio <= 1.05), f"specialist loss beta 0->0.5 = {loss:+.3f}; vs MIDIAN at beta<=0.25 {x:+.3f} ({n} pairs); build probes {ratio:.3f}x", x
+def _v3(df, fits):
+    """V2-3 MIDIAN-SH+A >= max(MIDIAN-SH, MIDIAN-A) - 0.01 at every beta"""
+    piv = df[df.label.isin(["midian_sha", "midian_sh", "midian_a"])].pivot_table(index="beta", columns="label", values="success")
+    if piv.shape[1] < 3: return None, "needs midian_sh, midian_a and midian_sha rows"
+    gap = piv.midian_sha - piv[["midian_sh", "midian_a"]].max(axis=1)
+    return bool((gap >= -0.01).all()), "SH+A - max(SH, A) by beta: " + ", ".join(f"{b}: {v:+.3f}" for b, v in gap.items())
+def _v4(df, fits):
+    """V2-4 stratified cohorts vs random (no directional expectation; reported as measured)"""
+    d = pair(df, "midian_stratified", REF)
+    if d.empty: return None, "needs grid stratify"
+    by = (d.midian_stratified - d[REF]).groupby(level=["dist", "beta"]).mean()
+    return "REPORTED", "stratified - random by (shape, beta): " + ", ".join(f"{k} {v:+.3f}" for k, v in by.items())
+def _v5(df, fits):
+    """V2-5 LinUCB-honest between flat_online and warm_start_bandit at beta=0; flat in beta (|beta=0.5 - beta=0| <= 0.03)"""
+    b0 = df[np.isclose(df.beta, 0)]
+    lo, hi = delta(b0, "linucb_honest", FLAT_ON)[0], delta(b0, "warm_start_bandit", "linucb_honest")[0]
+    l = df[df.label == "linucb_honest"]
+    if l.empty or not np.isfinite(lo): return None, "needs linucb_honest rows at beta=0 with flat_probe_argmax_online"
+    flat = float(l[np.isclose(l.beta, .5)].success.mean() - l[np.isclose(l.beta, 0)].success.mean())
+    return bool(lo >= 0 and hi >= 0 and abs(flat) <= 0.03), f"linucb - flat_online {lo:+.3f}; warm_start - linucb {hi:+.3f}; beta 0.5 - 0: {flat:+.3f}"
+def _v6(df, fits):
+    """V2-6 churn: MIDIAN within 0.03 of no-churn at 10% with repair <= 3% of build; halving-stale loses >= 0.05 at 30%; halving-rebuild matches at >= 10x MIDIAN's repair"""
+    c, base = df[df.churn_frac > 0], df[(df.churn_frac == 0) & (df.declared_source == "self_described")]
+    if c.empty or base.empty: return None, "needs churn_n1000 rows and a no-churn baseline (live_f1_n1000 / variants_f1, self-described)"
+    keys = ["dist", "beta", "seed"]
+    def drop(label, frac):                                  # no-churn success - churned success, paired on (shape, beta, seed)
+        a = c[(c.label == label) & np.isclose(c.churn_frac, frac)].groupby(keys).success.mean()
+        b = base[base.label == label].groupby(keys).success.mean()
+        j = pd.concat([a, b], axis=1, join="inner"); return float((j.iloc[:, 1] - j.iloc[:, 0]).mean()) if len(j) else np.nan
+    rep = lambda label: float((c[c.label == label].repair_probes_per_event / c[c.label == label].build_probes).mean())
+    m10, stale30, reb30 = drop(REF, .1), drop("sequential_halving_peer_stale", .3), drop("sequential_halving_peer_rebuild", .3)
+    rm, rh = rep(REF), rep("sequential_halving_peer_rebuild")
+    ok = m10 <= 0.03 and rm <= 0.03 and stale30 >= 0.05 and reb30 <= 0.03 and rh >= 10 * rm
+    return (bool(ok) if np.isfinite([m10, rm, stale30, reb30, rh]).all() else None,
+            f"MIDIAN loss at 10% {m10:+.3f}, repair {100*rm:.2f}% of build/event; halving-stale loss at 30% {stale30:+.3f}; halving-rebuild loss at 30% {reb30:+.3f}, repair {rh/rm if rm else np.nan:.1f}x MIDIAN's")
+def _v7(df, fits):
+    """V2-7 n=10k, b=3, self-described: MIDIAN >= flat_online - 0.02; frameworks below flat_online on specialist by >= 0.10"""
+    d = df[(df.n == 10000) & (df.b == 3)]
+    x, n = delta(d, REF, FLAT_ON)
+    fw = d[d.group == "framework"].success.mean() - d[d.label == FLAT_ON].success.mean() if (d.group == "framework").any() else np.nan
+    if not n: return None, "needs live_n10k_v2 rows"
+    return bool(x >= -0.02 and fw <= -0.10), f"MIDIAN - flat_online {x:+.3f} ({n} pairs); frameworks - flat_online {fw:+.3f}", x
+def _v8(df, fits):
+    """V2-8 replication (seeds 11-20): MIDIAN-V - MIDIAN = +0.02 +- 0.02 at beta<=0.25; beta=0.5 collude exposure reported"""
+    r = df[df.seed >= 11]
+    x, n = delta(r[r.beta <= 0.25], "midian_v", REF); y, _ = delta(r[np.isclose(r.beta, .5)], "midian_v", REF)
+    if not n: return None, "needs midian_v_replication rows"
+    return bool(0.0 <= x <= 0.04), f"midian_v - midian at beta<=0.25 {x:+.3f} ({n} pairs); at beta=0.5 {y:+.3f} (as measured)", x - 0.02
+def _v9(df, fits):
+    """V2-9 b=10: bimodal framework gap within +-0.02 of MIDIAN; heavy_tail MIDIAN >= frameworks + 0.03"""
+    d = df[df.b == 10]
+    if d.empty or not (d.group == "framework").any(): return None, "needs budget_b10_shapes rows"
+    g = {s: float(x[x.group == "framework"].success.mean() - x[x.label == REF].success.mean()) for s, x in d.groupby("dist")}
+    ok = abs(g.get("bimodal", np.nan)) <= 0.02 and g.get("heavy_tail", np.nan) <= -0.03
+    return (bool(ok) if all(k in g for k in ("bimodal", "heavy_tail")) else None), "frameworks - MIDIAN at b=10: " + fmt(g)
+def _v10(df, fits):
+    """V2-10 internals at beta=0.5 collude: trimming (delta=1/3 vs 0) hurts plain MIDIAN by >= 0.02, not MIDIAN-A (|d| <= 0.02)"""
+    d = df[np.isclose(df.beta, .5) & (df.collude == True) & df.method.isin([REF, "midian_a"])].copy()   # noqa: E712
+    par = d.params.map(json.loads); d["r"], d["delta"] = [p.get("r") for p in par], [p.get("delta") for p in par]
+    d = d[(d.r == 10) & d.delta.notna()]
+    if d.method.nunique() < 2 or d.delta.nunique() < 2: return None, "needs internals_v2 rows (r=10, both deltas, midian and midian_a)"
+    t = d.pivot_table(index="method", columns="delta", values="success"); sep = t[t.columns.max()] - t[t.columns.min()]
+    return bool(sep[REF] <= -0.02 and abs(sep["midian_a"]) <= 0.02), f"delta=1/3 - delta=0 at r=10: MIDIAN {sep[REF]:+.3f}, MIDIAN-A {sep['midian_a']:+.3f}"
+def targets_v2(df, fits):
+    """The ten expectations of TARGETS_rte_v2.md: HIT / MISS / WITHIN_FLOOR / REPORTED / NO DATA, with the numbers."""
+    out, env = [], envelope(df)
+    for i, fn in enumerate((_v1, _v2, _v3, _v4, _v5, _v6, _v7, _v8, _v9, _v10), 1):
+        try: ok, detail, *key = fn(df, fits)                # key = the decisive paired delta, when the target is one
+        except (KeyError, ValueError, IndexError, TypeError) as e: ok, detail, key = None, f"no data ({type(e).__name__}: {e})", []
+        v = ("NO DATA" if ok is None else ok if isinstance(ok, str) else "HIT" if ok else
+             FLOOR if key and np.isfinite(env) and abs(key[0]) <= env else "MISS")
+        out.append({"target": f"V2-{i}", "verdict": v, "name": fn.__doc__, "detail": detail + (f"  [MIDIAN seed envelope {env:.3f}]" if np.isfinite(env) else "")})
+    return out
+
 # ------------------------------------------------------------------ report
 def md(df, f="{:.4f}"):
     if df is None or df.empty: return "_(no rows)_\n"
@@ -324,9 +436,9 @@ def md(df, f="{:.4f}"):
     head = "| " + " | ".join(map(str, d.columns)) + " |\n| " + " | ".join("---" for _ in d.columns) + " |\n"
     return head + "\n".join("| " + " | ".join(map(str, r)) + " |" for r in d.itertuples(index=False)) + "\n"
 def by_method(df, extra=()):
-    """Mean +- bootstrap CI of success per method, grouped by method class, costs beside it."""
+    """Mean +- bootstrap CI of success per method, grouped by method class, framework accountings and costs beside it."""
     g = df.groupby(["group", "label"])
-    cols = [c for c in ("success_late", "regret", "misroute_to_liar", *extra) if c in df.columns]
+    cols = [c for c in ("success_late", *STATS, "regret", "misroute_to_liar", *extra) if c in df.columns]
     return (g.success.apply(lambda s: pd.Series(dict(zip(("success", "lo", "hi"), boot(s))))).unstack()
             .join(g[cols].mean()).sort_values("success", ascending=False).reset_index())
 def roll_up(cmp_):
@@ -337,6 +449,15 @@ def roll_up(cmp_):
         delta_hi=("delta_hi", "mean"), delta_min=("delta_mean", "min"), delta_max=("delta_mean", "max"),
         midian_better=n("midian_better"), rival_better=n("rival_better"), within_floor=n(FLOOR),
         min_sign_p=("sign_p", "min")).sort_values("delta_mean").reset_index()
+def strict(df):
+    """(0.2) Frameworks under the strict accounting (a task the framework did not delegate scores 0), paired vs MIDIAN."""
+    f = df[(df.group == "framework") & df.success_strict.notna()]
+    if f.empty: return []
+    d = pd.concat([f.assign(success=f.success_strict), df[df.label == REF]]); c = paired(d)
+    if c.empty: return []
+    return sec("Frameworks, STRICT accounting (no fallback credit), paired vs MIDIAN", md(roll_up(c)),
+               "Lenient (headline) routes the fallback pick and scores it; strict scores every non-delegated task 0. "
+               "`fallback_rate` = 1 - picks/tasks under either accounting.")
 UPPER = "programmatic = upper bound (S + N(0,0.05)): an honest declaration no live agent produces"
 def sec(t, table, *prose, level=2):
     return ["", f"{'#' * level} {t}", "", *prose, *([""] if prose else []), table]
@@ -365,7 +486,7 @@ def latency(df):
     q.columns = ["q25_s", "median_s", "q75_s"]
     return sec("Frameworks' supervisor latency per task (seconds; cache-consistent, under shared-fleet load)", md(q.reset_index(), "{:.2f}"),
                "Every other wall-clock column is omitted: memo hits and misses are mixed and say nothing about cost.")
-def summary(out, grids, df, agg, cmp_, fits, tgts, figs):
+def summary(out, grids, df, agg, cmp_, fits, tgts, tgts2, figs):
     L = [f"# RTE results -- {', '.join(grids)}", "",
          f"{len(df)} rows | {df.label.nunique()} methods | "
          f"{df.groupby(cells(df), dropna=False).ngroups} cells | seeds {sorted(map(int, df.seed.unique()))}",
@@ -374,11 +495,14 @@ def summary(out, grids, df, agg, cmp_, fits, tgts, figs):
          f"seed. `{FLOOR}` means the delta does not exceed MIDIAN's own seed envelope in that cell.",
          *sec("Pre-registered targets (TARGETS_rte.md)",
               md(pd.DataFrame(tgts)[["target", "verdict", "name", "detail"]])),
+         *sec("Pre-registered targets, v2 (TARGETS_rte_v2.md)",
+              md(pd.DataFrame(tgts2)[["target", "verdict", "name", "detail"]])),
          *sec("HEADLINE: frameworks vs MIDIAN, by method class (SPEC 6A)",
               md(by_method(df, COST + BUILD), "{:.4g}"),
               "Frameworks are the systems practitioners deploy, run through their own libraries; every",
-              "one reads names and self-descriptions only. The other groups are SPEC 6 mechanism controls."),
-         "", "## Success by method, per declaration channel", *by_channel(df, cmp_), *latency(df)]
+              "one reads names and self-descriptions only. `fallback_rate` / `success_strict` (0.2) are the framework",
+              "accountings; the other groups are SPEC 6 mechanism controls."),
+         *strict(df), "", "## Success by method, per declaration channel", *by_channel(df, cmp_), *latency(df)]
     if not cmp_.empty:
         L += sec("MIDIAN vs every rival, paired by seed", md(roll_up(cmp_)))
         L += ["", "### Per-cell detail", "", md(cmp_.drop(columns="ref"))]
@@ -404,13 +528,13 @@ def main(argv=None):
         warnings.simplefilter("ignore")
         figs, fits = figures(df, f"{out}/figs")
     agg, cmp_ = aggregate(df, a.metric), paired(df[df.method != "oracle"], a.metric)
-    tgts = targets(df, fits)
-    log("\n=== pre-registered targets ===")
-    for t in tgts: log(f"  [{t['verdict']:>7}] {t['target']}. {t['name']}\n            {t['detail']}")
+    tgts, tgts2 = targets(df, fits), targets_v2(df, fits)
+    log("\n=== pre-registered targets (v1, v2) ===")
+    for t in tgts + tgts2: log(f"  [{t['verdict']:>12}] {t['target']}. {t['name']}\n                 {t['detail']}")
     agg.to_csv(f"{out}/aggregate.csv", index=False)
     cmp_.to_csv(f"{out}/paired_vs_midian.csv", index=False)
     if not fits.empty: fits.to_csv(f"{out}/cost_exponents.csv", index=False)
-    log(f"\n[analyze] wrote {summary(out, grids, df, agg, cmp_, fits, tgts, figs)}")
+    log(f"\n[analyze] wrote {summary(out, grids, df, agg, cmp_, fits, tgts, tgts2, figs)}")
 
 if __name__ == "__main__":
     main()
