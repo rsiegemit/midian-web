@@ -55,6 +55,12 @@ Shard jobs with >=2 units left were restarted to pick this up. Memo load on a co
 `rte.analyze --grid budget_sweep fw_live_n100 fw_live_n1000`, refresh the §1/§7 numbers in RESULTS_rte.md if they move,
 `python -m rte.llm_client compact`, keep the fleet and replicas UP (user request 2026-09-02 22:10) for follow-ups. Learning-curve script: `$RTE_DATA/scratch/curve.py`.
 
+**2026-09-03 — v2 work order started.** TARGETS_rte_v2.md pre-registered (commit 625f8a3). Five parallel forks: fw-fixes (0.2),
+analysis (0.1/0.5/0.6), midian-core (0.3/0.7/1.5 + Midian.churn), variants (1.1–1.3, 1.6), churn (2.1 infrastructure).
+Grid blocks for 0.4 (fw grids 5 seeds / Q=1000), 1.4 midian_r20, 1.5 stratify, 2.2 live_n10k_v2, 2.3 midian_v_replication
+(seeds 11-20), 2.4 budget_b10_shapes, 2.5 internals_v2, variants_f1 are in configs/grid.yaml; churn_n1000 block pending the
+churn fork's API. Nothing launches before the variant files exist and tests are green.
+
 ## 3. Method variants in the grids (all paired on the same streams)
 midian (v1, pre-registered), midian(online=false), midian(r=5), midian(verify,cached) = MIDIAN-V, midian(verify,cached,r=5),
 midian_internals adds r∈{5,10,20}×δ∈{0,1/3} and V at r∈{5,10,20}; sequential_halving and sequential_halving(peer_reported);

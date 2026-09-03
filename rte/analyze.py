@@ -16,9 +16,12 @@ RTE_DATA, consolidate = _run.RTE_DATA, _run.consolidate
 CELL_COLS = tuple(getattr(_run, "CELL_FIELDS", None) or getattr(_run, "CELL", None) or (
     "backend n K dist beta liar_select collude declared_source lie_mode demand b Q".split()))
 REF, FLOOR, B_BOOT = "midian", "WITHIN_FLOOR", 2000
+FLAT, FLAT_ON = "flat_probe_argmax_frozen", "flat_probe_argmax_online"
+ALIAS = {"flat_probe_argmax": FLAT, "flat_probe_argmax[online=True]": FLAT_ON,        # one name per arm everywhere
+         "midian[cached=True,verify=True]": "midian_v", "midian[cached=True,r=5,verify=True]": "midian_v_r5",
+         "sequential_halving[peer_reported=True]": "sequential_halving_peer"}
 MARK = {"llm": "o", "replay": "s", "bernoulli": "^"}       # marker shape = backend, on every figure
-COST = ["comparisons_per_task", "hops_per_task", "messages_per_task", "total_comm_per_task",
-        "wall_clock_per_task"]
+COST = ["comparisons_per_task", "hops_per_task", "messages_per_task", "total_comm_per_task"]   # no wall-clock: memo-mixed
 BUILD = ["build_probes", "build_reports", "build_messages", "build_total_comm"]
 log = lambda m: print(m, file=sys.stderr, flush=True)
 cells = lambda df: [c for c in CELL_COLS if c in df.columns]
@@ -36,6 +39,13 @@ def group_of(name):
     except Exception: return "unknown"                     # optional dep or LLM-only file
     if not needs & {"probe", "reports"}: return "declared"
     return "verified_decentral" if needs & {"reports", "bus"} else "verified_central"
+def reads_declared(name):
+    """True for every method whose `needs` include the declared channel (frameworks read self-descriptions)."""
+    if name.startswith("fw_"): return True
+    try:
+        from .methods import load_method
+        return "declared" in load_method(name).needs
+    except Exception: return False
 def load(grids):
     """Rows of every grid, plus label, group, and the total-communication columns when absent."""
     frames = []
@@ -49,7 +59,7 @@ def load(grids):
     df["params"] = df.params.fillna("{}")
     short = lambda p: ",".join(f"{k}={v:.3g}" if isinstance(v, float) else f"{k}={v}"
                                for k, v in sorted(json.loads(p).items()))
-    df["label"] = [m if p == "{}" else f"{m}[{short(p)}]" for m, p in zip(df.method, df.params)]
+    df["label"] = [ALIAS.get(l, l) for l in (m if p == "{}" else f"{m}[{short(p)}]" for m, p in zip(df.method, df.params))]
     df["group"] = df.method.map(group_of)
     per = ["probes_per_task", "reports_per_task", "messages_per_task", "tasks_per_task"]
     for c in per + BUILD[:3]:                              # pre-rewrite CSVs lack some counters
@@ -230,18 +240,23 @@ def _t1(df, fits):
 def _t2(df, fits):
     """MIDIAN == flat_probe_argmax within 0.02 at beta=0; comparisons ~ r log_r n vs flat ~ n"""
     parts, ok = [], []
-    d = pair(df[np.isclose(df.beta, 0)], REF, "flat_probe_argmax")
+    b0 = df[np.isclose(df.beta, 0)]
+    for flat in (FLAT, FLAT_ON):
+        d = pair(b0, REF, flat)
+        if d.empty: continue
+        x = float((d[REF] - d[flat]).mean())
+        if flat == FLAT: ok.append(abs(x) <= 0.02)          # the pre-registered comparison is against the frozen scan
+        parts.append(f"midian - {flat} = {x:+.4f} over {len(d)} (cell, seed) pairs")
+    d = pair(b0, "midian[online=False]", FLAT)
     if not d.empty:
-        x = float((d[REF] - d.flat_probe_argmax).mean()); ok.append(abs(x) <= 0.02)
-        parts.append(f"paired mean delta {x:+.4f} over {len(d)} (cell, seed) pairs. NOTE: MIDIAN's default is "
-                     f"online=True and flat_probe_argmax is frozen after build, so this compares an online method "
-                     f"with an offline one -- rerun with midian params {{online: false}} to test the max-tree claim.")
+        parts.append(f"midian[online=False] - {FLAT} = {float((d['midian[online=False]'] - d[FLAT]).mean()):+.4f} "
+                     f"(the max-tree alone, both frozen after build)")
     f = fits[fits.metric == "comparisons_per_task"].set_index("label") if not fits.empty else pd.DataFrame()
-    if {REF, "flat_probe_argmax"} <= set(f.index):
-        m, s = f.loc[REF], f.loc["flat_probe_argmax"]
+    if {REF, FLAT} <= set(f.index):
+        m, s = f.loc[REF], f.loc[FLAT]
         ok.append(bool(m.exponent < 0.4 and s.exponent > 0.8))
         parts.append(f"comparisons: MIDIAN k={m.exponent:.2f} [{m.exp_lo:.2f},{m.exp_hi:.2f}]; "
-                     f"flat_probe_argmax k={s.exponent:.2f} [{s.exp_lo:.2f},{s.exp_hi:.2f}]")
+                     f"{FLAT} k={s.exponent:.2f} [{s.exp_lo:.2f},{s.exp_hi:.2f}]")
     return (all(ok) if ok else None), "; ".join(parts) or "needs beta=0 rows and >=2 values of n"
 def _t3(df, fits):
     """trimming helps only where beta*r exceeds the trim"""
@@ -268,11 +283,11 @@ def _t4(df, fits):
 def _t5(df, fits):
     """sequential_halving ~= flat_probe_argmax; bandits learn past MIDIAN at b=1"""
     parts, ok, miss = [], [], []
-    d = pair(df, "sequential_halving", "flat_probe_argmax")
-    if d.empty: miss.append("sequential_halving/flat_probe_argmax rows")
+    d = pair(df, "sequential_halving", FLAT)
+    if d.empty: miss.append(f"sequential_halving/{FLAT} rows")
     else:
-        x = float((d.sequential_halving - d.flat_probe_argmax).mean()); ok.append(abs(x) <= 0.03)
-        parts.append(f"sequential_halving - flat_probe_argmax = {x:+.3f}")
+        x = float((d.sequential_halving - d[FLAT]).mean()); ok.append(abs(x) <= 0.03)
+        parts.append(f"sequential_halving - {FLAT} = {x:+.3f}")
     for bandit in ("ucb_per_family", "thompson_per_family"):
         d = pair(df[df.b == 1], bandit, REF, "success_late")
         if d.empty: continue
@@ -322,6 +337,38 @@ def roll_up(cmp_):
         delta_hi=("delta_hi", "mean"), delta_min=("delta_mean", "min"), delta_max=("delta_mean", "max"),
         midian_better=n("midian_better"), rival_better=n("rival_better"), within_floor=n(FLOOR),
         min_sign_p=("sign_p", "min")).sort_values("delta_mean").reset_index()
+UPPER = "programmatic = upper bound (S + N(0,0.05)): an honest declaration no live agent produces"
+def by_channel(df, cmp_):
+    """(0.1) Declared-channel readers reported per declaration channel (never pooled) when both channels exist:
+    success x beta and x dist per channel, plus the paired-vs-MIDIAN roll-up per channel. Probe-only methods once."""
+    sec = lambda t, table, *prose: ["", f"### {t}", "", *prose, *([""] if prose else []), table]
+    dec = df.method.map(reads_declared)
+    piv = lambda d, col: md(d.pivot_table(index=["group", "label"], columns=col, values="success").reset_index())
+    if df.declared_source.nunique() < 2:
+        return sec("Success by method x beta", piv(df, "beta"),
+                   f"single declaration channel: {df.declared_source.iloc[0]}"
+                   + (f" ({UPPER})" if df.declared_source.iloc[0] == "programmatic" else ""))
+    L = []
+    for ch in ("self_described", "programmatic"):
+        d = df[dec & (df.declared_source == ch)]
+        if d.empty: continue
+        cap = f"declaration = {ch}" + (f"; {UPPER}" if ch == "programmatic" else " (the live channel: agents' own self-descriptions)")
+        L += sec(f"Declared-channel readers, success x beta [{ch}]", piv(d, "beta"), cap)
+        L += sec(f"Declared-channel readers, success x dist [{ch}]", piv(d, "dist"), cap)
+        c = cmp_[cmp_.rival.isin(d.label.unique()) & (cmp_.declared_source == ch)] if not cmp_.empty else cmp_
+        if not c.empty: L += sec(f"MIDIAN vs declared-channel readers, paired by seed [{ch}]", md(roll_up(c)), cap)
+    L += sec("Probe-only methods, success x beta (identical across channels)", piv(df[~dec], "beta"))
+    return L
+def latency(df):
+    """(0.6) The one wall-clock table: frameworks' supervisor call per task. Their clients call vLLM directly and are
+    never memoised, so these are cache-consistent; they are latencies under shared-fleet load, not compute costs."""
+    f = df[(df.group == "framework") & (df.wall_clock_per_task > 0)] if "wall_clock_per_task" in df else pd.DataFrame()
+    if f.empty: return []
+    q = f.groupby(["label", "n"]).wall_clock_per_task.quantile([.25, .5, .75]).unstack()
+    q.columns = ["q25_s", "median_s", "q75_s"]
+    return ["", "## Frameworks' supervisor latency per task (seconds; cache-consistent, under shared-fleet load)", "",
+            "Every other wall-clock column is omitted: memo hits and misses are mixed and say nothing about cost.", "",
+            md(q.reset_index(), "{:.2f}")]
 def summary(out, grids, df, agg, cmp_, fits, tgts, figs):
     sec = lambda t, table, *prose: ["", f"## {t}", "", *prose, *([""] if prose else []), table]
     L = [f"# RTE results -- {', '.join(grids)}", "",
@@ -336,8 +383,7 @@ def summary(out, grids, df, agg, cmp_, fits, tgts, figs):
               md(by_method(df, COST + BUILD), "{:.4g}"),
               "Frameworks are the systems practitioners deploy, run through their own libraries; every",
               "one reads names and self-descriptions only. The other groups are SPEC 6 mechanism controls."),
-         *sec("Success by method x beta",
-              md(df.pivot_table(index=["group", "label"], columns="beta", values="success").reset_index()))]
+         "", "## Success by method, per declaration channel", *by_channel(df, cmp_), *latency(df)]
     if not cmp_.empty:
         L += sec("MIDIAN vs every rival, paired by seed", md(roll_up(cmp_)))
         L += ["", "### Per-cell detail", "", md(cmp_.drop(columns="ref"))]
