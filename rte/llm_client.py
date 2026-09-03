@@ -169,10 +169,10 @@ def _generate(model: str, messages: Sequence[dict], max_tokens: int) -> str:
                 _clients.pop(model)                               # re-pick: replicas may have joined since
             if model not in _clients:
                 eps = endpoints()
-                if model not in eps:
+                urls = [u for k, u in eps.items() if k == model or k.startswith(model + "#")]   # replicas: "<model>#<job>"
+                if not urls:                                      # a model served only by replicas is still served
                     raise NoEndpointsError(f"model {model!r} not served; have {sorted(eps)}")
                 from openai import OpenAI
-                urls = [u for k, u in eps.items() if k == model or k.startswith(model + "#")]   # replicas: "<model>#<job>"
                 # latency-aware: usually the endpoint with the lowest recent latency, sometimes a random one (explore)
                 url = random.choice(urls) if random.random() < 0.2 else min(urls, key=lambda u: _lat.get(u, 0.0))
                 _clients[model] = (OpenAI(base_url=url, api_key="EMPTY", timeout=600.0, max_retries=0), time.time())
