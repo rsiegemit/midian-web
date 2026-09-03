@@ -201,10 +201,10 @@ makes re-runs of finished units nearly free.
 `RESULTS_rte.md` is the write-up: the framework headline with CIs and fallback rates, the frameworks given MIDIAN's
 shortlist, every rival by β and by population shape, the MIDIAN-vs-halving control, the internals ablation, budget
 and scale, cost exponents and break-even, the learning curve, target verdicts, replay, caveats and deviations.
-Per-grid machine summaries are `$RTE_DATA/results/<grid>/summary.md`. The seven synthesis figures
-(`scripts/extra_figs.py`) are:
+Per-grid machine summaries are `$RTE_DATA/results/<grid>/summary.md`. The seven synthesis figures are in [`figures/`](figures/)
+(regenerate with `scripts/extra_figs.py`):
 
-- **A** frameworks vs MIDIAN at n = 100 and n = 1000 (paired, 95% CI)
+- **A** frameworks vs MIDIAN at n = 100 and n = 1000 (paired, 95% CI) — `figures/A_headline_frameworks_vs_midian.png`
 - **B** what each framework gains from MIDIAN's verified shortlist
 - **C** MIDIAN vs sequential halving by β and liar selection
 - **D** learning over the task stream
