@@ -1,6 +1,6 @@
 # RESULTS_rte.md — RTE: plain MIDIAN vs self-contained rivals and ten real agent frameworks
 
-Written 2026-09-02 22:00 from the completed live programme (see STATUS.md for the run log, DEVIATIONS.md for every
+Written 2026-09-02 (final numbers 23:30) from the completed live programme (see STATUS.md for the run log, DEVIATIONS.md for every
 departure from SPEC.md, TARGETS_rte.md for the pre-registered expectations). Per-grid machine summaries with
 bootstrap CIs, per-cell paired deltas and figures F1–F6 are under `$RTE_DATA/results/<grid>/summary.md`
 (`combined_scale/summary.md/summary.md` holds the cross-n cost-exponent fits). Every number below is a mean over
@@ -14,7 +14,7 @@ declarations by +0.4 and, when colluding, report 1 for fellow liars and 0 for th
 per (agent, family) at build; Q = 1000 routed tasks per unit (300 on the framework grids). Seeds: 5 on the algorithmic
 grids, 3 on the framework grids (5 for the MIDIAN variants and oracle/flat/declared, see caveats). Intervals are 95%
 percentile bootstrap over units; "wins" are paired sign counts. Completed grids: live_core_n100, live_f1_n1000,
-live_extra_n1000, live_n10k, budget_sweep (673/675 rows; the last 2 are sequential-halving b=10 units on bimodal), midian_internals,
+live_extra_n1000, live_n10k, budget_sweep, midian_internals,
 fw_live_n100, fw_live_n1000, fw_live_n100_verified, fw_live_n1000_verified, fw_k_sensitivity, fw_appendix, replay
 twins of the two live sweeps, replay_scale, bernoulli_scale.
 
@@ -221,17 +221,16 @@ framework (16,000 at b=1; 5,000–8,000 against the multi-call Magentic-One / CA
 
 | method | b=1 | b=3 | b=10 | | n=10k b=1, β=0 | β=0.25 |
 |---|---|---|---|---|---|---|
-| oracle | 0.723 | 0.723 | 0.732 | | 0.862 | 0.862 |
-| sequential_halving (trusted) | 0.479 | 0.722 | 0.733 | | 0.583 | 0.583 |
-| MIDIAN-V r=10 | 0.593 | 0.675 | 0.710 | | 0.679 | 0.679 |
-| MIDIAN | 0.585 | 0.650 | 0.712 | | 0.684 | 0.683 |
-| flat probe argmax | 0.481 | 0.620 | 0.703 | | 0.580 | 0.580 |
-| warm_start_bandit | 0.676 | 0.684 | 0.713 | | 0.847 | 0.807 |
-| declared_argmax | 0.673 | 0.673 | 0.679 | | 0.853 | 0.767 |
+| oracle | 0.723 | 0.723 | 0.723 | | 0.862 | 0.862 |
+| sequential_halving (trusted) | 0.479 | 0.722 | 0.723 | | 0.583 | 0.583 |
+| MIDIAN-V r=10 | 0.593 | 0.675 | 0.698 | | 0.679 | 0.679 |
+| MIDIAN | 0.585 | 0.650 | 0.702 | | 0.684 | 0.683 |
+| flat probe argmax | 0.481 | 0.620 | 0.695 | | 0.580 | 0.580 |
+| warm_start_bandit | 0.676 | 0.684 | 0.704 | | 0.847 | 0.807 |
+| declared_argmax | 0.673 | 0.673 | 0.673 | | 0.853 | 0.767 |
 | ucb / thompson (late quarter) | 0.449 / 0.477 | 0.572 / 0.606 | 0.671 / 0.679 | | 0.581 / 0.573 | 0.581 / 0.566 |
 
-(budget_sweep on the 44 (shape, seed, b) cells every listed method has completed; the oracle's b=10 value differs
-from b=1 only because two bimodal b=10 cells are still running and are excluded for every method alike.)
+(budget_sweep, all 45 (shape, seed, b) cells, paired.)
 
 At b=1 the tree is the best probe-only method (+0.10 over flat and halving: one probe per cell is too thin to halve
 on), but any method that also reads the *programmatic* declaration channel (declared_argmax, warm-start bandit,
@@ -291,14 +290,13 @@ same as live. replay_scale (n = 10⁴…10⁶) and bernoulli_scale (10²…10⁷
   population draw and stream variation only. The binomial error of S itself (200 probes; 60 on the ≥9B rungs) is
   ±0.035 / ±0.065 per cell at p = 0.5 and is a common offset, not part of the intervals.
 - **Frameworks.** Fallback rates in §1 (CrewAI mostly measures the fallback). Framework grids use Q = 300 and 3 seeds
-  (MIDIAN variants, oracle, flat, declared, supervisor have 5; Magentic-One seeds 4–5 pending at write time).
+  (MIDIAN variants, oracle, flat, declared, supervisor have 5; all 60 cells complete).
   Wall-clock per task for frameworks includes the supervisor call against a shared, sometimes saturated fleet.
 - **Reports accounting.** Plain MIDIAN charges one report per (peer, member, family, probe) as the spec reads;
   MIDIAN-V and peer-reported halving charge one per (peer, member, family) — the peer's mean — so their report
   columns are ~3× lower for the same information (DEVIATIONS 2026-09-02 MIDIAN-V bullet).
 - **Wall-clock columns** mix cache-hit and cache-miss runs (the LLM memo, and since 17:30 the python-tool memo);
   use counts (probes, messages, comparisons) for cost claims, wall-clock only for the frameworks' supervisor calls.
-- **budget_sweep** is missing 2 of 675 rows (sequential_halving b=10 on bimodal) at write time; all budget numbers are on paired cells.
 
 ## 12. Deviations from SPEC.md (summary; all 100+ dated bullets in DEVIATIONS.md)
 
