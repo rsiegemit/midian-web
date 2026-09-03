@@ -72,7 +72,7 @@ watch_health() {
   local model="$1" port="$2" host="$3" tries="${4:-90}"
   for _ in $(seq 1 "$tries"); do
     if curl -sf --max-time 5 "http://127.0.0.1:$port/health" >/dev/null 2>&1; then
-      "$PY" "$REPO/scripts/_register_endpoint.py" add "$model" "http://$host:$port/v1"
+      "$PY" "$REPO/scripts/_register_endpoint.py" add "$model${RTE_AS_REPLICA:+#${SLURM_JOB_ID:-manual}}" "http://$host:$port/v1"   # RTE_AS_REPLICA=1: a 2nd fleet registers as replicas
       echo "[serve] HEALTHY $model -> http://$host:$port/v1"
       return 0
     fi
