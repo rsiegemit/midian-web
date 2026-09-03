@@ -68,3 +68,32 @@ identical cells.
   45.5 ms at n = 100 / 1k / 10k plus 3.5 ms to embed the task (O(n·K·b·d) per task; MIDIAN's fetch is 6 ms at n = 1000
   and O(r·log n)); mlp_router fit 72 s at n = 1000 (48k × 1,384, 30 epochs), fetch 2.5 ms + embedding. Expectation
   **T3-10**: per-task latency of the learned routers exceeds MIDIAN-V's (2 ms) at every n and grows linearly in n.
+
+**D. SOTA routing benchmarks at MIDIAN's scale (added 2026-09-03 19:00, before any run).** Research pass (2025–2026):
+RouterEval (Huang et al., EMNLP 2025 Findings; 8,500 LLMs, 12 datasets, candidate pools of 10 / 100 / 1,000 real
+LLMs — the only benchmark whose pools reach our n), LLMRouterBench (Li et al. 2026; 33 models, 21 datasets, 10 routers:
+RouterDC, EmbedLLM, MODEL-SAT, Avengers, HybridLLM, FrugalGPT, RouteLLM, GraphRouter, Avengers-Pro, OpenRouter; finding:
+"many routing methods exhibit similar performance … several recent approaches, including commercial routers, fail to
+reliably outperform a simple baseline"), the LLMRouter library (ulab-uiuc; 16 routers incl. GraphRouter, RouterDC, MF,
+Elo, HybridLLM, AutoMix), EmbedLLM (ICLR 2025; 112 models), RouterArena (ICLR 2026), and the June-2026 "market for
+lemons" trust-layer paper (conceptual; the only work framing lying capability advertisements, no learnable rival).
+- **D1 — RouterEval on its own terms** (`scripts/routereval_terms.py`): their hard setting, all 12 datasets × m ∈ {10,
+  100, 1000} × 3 pool configs, their metrics (μ, V_B, V_R), their baselines re-implemented from their router/ scripts
+  (PRKnn k = 5, C-RoBERTa-cluster K = 3, LinearR, MLPR — sklearn batch 32 instead of batch 1, stated —, random, oracle).
+  Our arm: probe-family router with unsupervised KMeans families (K = 3, 16) and, on mmlu, the subject in the prompt.
+  - **T3-11.** At m = 1000, probe_cluster16_b10 (10 probes × 16 families × m labels = 1.4% of their train labels) is
+    within 0.02 μ of PRKnn averaged over the 12 datasets, and probe_cluster16_b30 within 0.01.
+  - **T3-12.** probe_cluster3_b30 ≥ C-RoBERTa-cluster − 0.01 at every m (same partition; the label budget is the only
+    difference).
+  - **T3-13.** Model-level scaling: at m = 1000 PRKnn and the probe routers beat the best single model by ≥ 0.02 on
+    mmlu (subjects) and by < 0.02 on the single-task datasets (arc, gsm8k, hellaswag, winogrande, ifeval, truthfulqa).
+  - **T3-14.** MIDIAN's max-tree == argmax on every pool (check).
+- **D2 — MIDIAN and every rival with liars on RouterEval's real 1,000-LLM pools** (`rte/backends/routereval.py`, grid
+  `routereval_mmlu`): our World over their score matrix (agents = the pool's real LLMs, families = MMLU subjects,
+  probes = index-seeded train prompts, tasks = test prompts), reporters and liars as in v1/v2. Expectation **T3-15**:
+  the v2 ordering reproduces on real LLM outcomes — MIDIAN-A / VA flat in β, MIDIAN-V best at β = 0, peer halving
+  best at β ≤ 0.25 and collapsing under low-skill-first collusion, learned routers (knn_router) = flat and immune.
+- **D3 — LLMRouter's SOTA routers** (GraphRouter, RouterDC, MF, Elo, HybridLLM, KNN, MLP, SVM) via the released
+  library, trained on RouterBench (part A protocol) and RouterEval pools; reported on their terms next to our arms.
+  Expectation **T3-16** (from LLMRouterBench's own finding): none beats the probe-family table by more than 0.02 μ
+  at m = 1000; RouterDC / GraphRouter are within 0.02 of PRKnn.
