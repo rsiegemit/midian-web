@@ -8,6 +8,7 @@ REQ_PER_S_7B, SUP_TOK = 34.0, (1900, 65)                          # measured: sa
 A = (1 / REQ_PER_S_7B) / (7.0 * (SUP_TOK[0] + 5 * SUP_TOK[1])); B = 5 * A
 WATTS = {"700 W (H100 TDP)": 700, "400 W (typical draw)": 400}
 J_MSG, J_CMP, RTT, T_CMP, PROBE_LAT = 1e-3, 1e-8, 1e-3, 1e-8, 0.3    # J per message, J per comparison, s per hop, s per comparison, s per route-time probe call
+DEPTH = 3                                                             # MIDIAN tree depth at n=1000, r=10: the observe-time update sends 1 message per level, OFF the critical path
 LADDER = yaml.safe_load(open(os.path.dirname(__file__) + "/../configs/models.yaml"))["models"]; P = {m["id"]: m["params_b"] for m in LADDER}
 PROBE_TOK = {"Qwen/Qwen2.5-0.5B-Instruct": (96, 12), "Qwen/Qwen2.5-1.5B-Instruct": (101, 66), "google/gemma-2-2b-it": (115, 15),   # measured per-server lifetime means
              "Qwen/Qwen2.5-3B-Instruct": (294, 86), "Qwen/Qwen2.5-7B-Instruct": (294, 86), "google/gemma-2-9b-it": (158, 33), "Qwen/Qwen2.5-14B-Instruct": (294, 86)}  # 7B/14B: 3B proxy (tool-enabled)
@@ -18,8 +19,10 @@ probe_cost = {d: sum(w * call(m, PROBE_TOK[m]) for m, w in mix.items()) for d, m
 SUP = call("Qwen/Qwen2.5-7B-Instruct", SUP_TOK)
 
 def rows(*grids):
-    df = pd.concat([pd.DataFrame([json.load(open(f)) for f in glob.glob(f"{R}/{g}/rows.d/*.json")]) for g in grids])
-    df = df[(df.declared_source == "self_described") & (df.n == 1000)]; df["m"] = df.method + df.params.str.replace("{}", "")
+    """Per-method means over the n=1000 self-described cells, read through rte.analyze.load so legacy rows get MIDIAN's
+    observe-time recompute charged (commit 3415f03: r comparisons + 1 message per level per task)."""
+    from rte.analyze import load
+    df = load(list(grids)); df = df[(df.declared_source == "self_described") & (df.n == 1000)]; df["m"] = df.method + df.params.str.replace("{}", "")
     return df.groupby("m")[["build_probes", "probes_per_task", "tasks_per_task", "wall_clock_per_task", "build_messages", "messages_per_task", "build_comparisons", "comparisons_per_task", "hops_per_task"]].mean()
 
 def table(dist="specialist", watts=700):
@@ -46,7 +49,8 @@ def table(dist="specialist", watts=700):
     # (b) critical-path latency per task: sequential message hops at 1 ms RTT (MIDIAN's 2 per level; frameworks 2 + the supervisor call at its
     #     measured median latency under shared-fleet load; probes at route time ~0.3 s each), comparisons at 10 ns (flat: 1,000 -> 10 us)
     is_fw = t.index.str.startswith("fw_") | (t.index == "llm_supervisor")
-    t["latency_s"] = np.where(is_fw, 2 * RTT + t.sup_latency, t.msgs_per_task * RTT) + t.cmp_per_task * T_CMP + t.probes_per_task * PROBE_LAT
+    crit_msgs = np.where(t.index.str.startswith("midian"), t.msgs_per_task - DEPTH, t.msgs_per_task)     # fetch hops only: the update propagation is off the critical path
+    t["latency_s"] = np.where(is_fw, 2 * RTT + t.sup_latency, crit_msgs * RTT) + t.cmp_per_task * T_CMP + t.probes_per_task * PROBE_LAT
     return t.sort_values("cum_gpu_s_t10000")
 
 def crossing(t, a, b, build="build_gpu_s", slope="per_task_gpu_s"):
@@ -68,22 +72,22 @@ if __name__ == "__main__":
         md.append(f"| {m} | {r.build_gpu_s:,.0f} | {r.per_task_gpu_s:.4f} | {r.cum_gpu_s_t1000:,.0f} | {r.cum_gpu_s_t10000:,.0f} | {r.cum_gpu_s_t100000:,.0f} | {r.cum_Wh_t10000:,.1f} | {r.cum_Wh_t10000*400/700:,.1f} | {r.cum_msgs_t10000:,.0f} ({r.build_msgs:,.0f} + {r.msgs_per_task:.0f}/task) | {r.cum_cmp_t10000:,.0f} ({r.build_cmp:,.0f} + {r.cmp_per_task:.0f}/task) |")
     md += ["", "**Crossing points (tasks routed before the probe-based method's cumulative cost drops below the framework's):**", "", "| | " + " | ".join(m.replace("fw_", "") for m in fws) + " |", "|---|" + "---|" * len(fws)]
     for a in mids: md.append(f"| {a} | " + " | ".join(f"{crossing(t, a, b):,.0f}" for b in fws) + " |")
-    md += ["", "In MESSAGES the crossing is immediate: MIDIAN 1,010 + 6t vs a framework 1,000 + 12t crosses at t = " + f"{crossing(t, 'midian', 'fw_autogen', 'build_msgs', 'msgs_per_task'):.0f}; MIDIAN-V (1,010 + 2t) at t = {crossing(t, 'midian_v', 'fw_autogen', 'build_msgs', 'msgs_per_task'):.0f}. "
-           "In COMPARISONS MIDIAN pays 30 per task vs a framework's 10 (MIDIAN-V 1, halving 1, flat 1,000), so MIDIAN never undercuts a framework on comparisons while MIDIAN-V does from the first task. "
+    md += ["", "In MESSAGES (fetch 2 per level + observe-time update 1 per level, commit 3415f03) the crossing is immediate: MIDIAN 1,010 + 9t vs a framework 1,000 + 12t crosses at t = " + f"{crossing(t, 'midian', 'fw_autogen', 'build_msgs', 'msgs_per_task'):.0f}; MIDIAN-V (1,010 + 5t) at t = {crossing(t, 'midian_v', 'fw_autogen', 'build_msgs', 'msgs_per_task'):.0f}. "
+           "In COMPARISONS MIDIAN pays 60 per task (30 descent + 30 observe-time update) vs a framework's 10 (MIDIAN-V 31 = 1 cached pick + 30 update; halving 1; flat 1,000), so no MIDIAN variant undercuts a framework on comparisons; MIDIAN-V's saving over MIDIAN is the descent, not the update. "
            "Per task, MIDIAN's cost is communication (messages and comparisons), not LLM compute: it makes no LLM call at route time."]
     md += ["", "MIDIAN's 48,000-probe build by population shape (GPU-s): " + ", ".join(f"{d} {48000 * v:,.0f}" for d, v in probe_cost.items())
            + "; the crossings scale with it (heavy_tail and bimodal cross ~3x sooner).",
            "Reading: against a one-call framework (AutoGen) MIDIAN breaks even after ~9,400 tasks on specialist (~2,900 on heavy_tail), MIDIAN-A after ~9,900; against the multi-call frameworks (CrewAI, LlamaIndex, CAMEL) after 1,000-1,600 tasks; against Magentic-One after ~570 (7B) / ~340 (14B arm). Before the crossing the framework is cheaper; after it, the probe-based methods' cost is flat while every framework's keeps growing linearly."]
     md += ["", "## Combined currencies (*)", "",
            f"(a) ENERGY, joules per event: LLM call = GPU-s x 700 W (a 7B supervisor call = {SUP*700:.1f} J; a specialist probe = {probe_cost['specialist']*700:.2f} J); message = one RPC handled in ~100 us on a ~10 W core = {J_MSG:g} J (pessimistic column: {10*J_MSG:g} J); comparison = one float compare = {J_CMP:g} J.",
-           f"(b) LATENCY on the critical path per task: each sequential message hop = {RTT*1e3:.0f} ms RTT (MIDIAN: 2 per tree level = its messages/task; MIDIAN-V 2 ms; frameworks and llm_supervisor: 2 hops + the supervisor call at its measured median latency under shared-fleet load); comparisons {T_CMP*1e9:.0f} ns each (flat's 1,000 = 10 us); a route-time probe call (verify_on_claim) {PROBE_LAT:.1f} s.", "",
+           f"(b) LATENCY on the critical path per task: each sequential message hop = {RTT*1e3:.0f} ms RTT (MIDIAN: the 2·depth = 6 fetch hops; the observe-time update propagation (1 message per level) is off the critical path and excluded; MIDIAN-V 2 ms; frameworks and llm_supervisor: 2 hops + the supervisor call at its measured median latency under shared-fleet load); comparisons {T_CMP*1e9:.0f} ns each (flat's 1,000 = 10 us); a route-time probe call (verify_on_claim) {PROBE_LAT:.1f} s.", "",
            "| method | J/task at t=10k (build amortised) | J/task, pessimistic messages | of which LLM J/task | messages J/task | comparisons J/task | latency s/task |", "|---|---|---|---|---|---|---|"]
     for m, r in t.sort_values("J_per_task_t10000").iterrows():
         md.append(f"| {m} | {r.J_per_task_t10000:,.3f} | {r.J_per_task_t10000_pess:,.3f} | {(r.build_gpu_s/1e4 + r.per_task_gpu_s)*700:,.3f} | {(r.build_msgs/1e4 + r.msgs_per_task)*J_MSG:.4f} | {(r.build_cmp/1e4 + r.cmp_per_task)*J_CMP:.2e} | {r.latency_s:.4f} |")
     md += ["", "Crossings in joules (tasks after which the probe-based method's cumulative energy falls below the framework's): " + "; ".join(
            f"{a}: " + ", ".join(f"{b.replace('fw_', '')} {crossing(t, a, b, 'build_J', 'per_task_J'):,.0f}" for b in fws) for a in mids) + ".",
            "Under any sane weighting the LLM call dominates energy by 3-5 orders of magnitude (20.6 J per supervisor call vs 6e-3 J for MIDIAN's six messages and 3e-7 J for its thirty comparisons per task), so the joule crossings equal the GPU-second crossings to the task; "
-           "messages dominate MIDIAN's latency (6 ms vs 0.3 us of comparisons) while the supervisor call dominates every framework's (0.5-18 s)."]
+           "messages dominate MIDIAN's latency (6 ms of fetch hops vs 0.6 us of comparisons) while the supervisor call dominates every framework's (0.5-19 s)."]
     open(os.path.dirname(__file__) + "/../RESULTS_energy.md", "w").write("\n".join(md) + "\n")
     T = np.logspace(2, 5, 300); fig, axes = plt.subplots(2, 2, figsize=(15, 11)); axes = axes.ravel()
     show = ["midian", "midian_a", "midian_v", 'sequential_halving{"peer_reported":true}', 'flat_probe_argmax{"online":true}', "linucb_honest", "verify_on_claim", "llm_supervisor"] + fws
@@ -102,7 +106,7 @@ if __name__ == "__main__":
     for i, a_ in enumerate(("midian", "midian_v")):                                                 # messages: MIDIAN vs a framework crosses almost at once
         x = max(crossing(t, a_, "fw_autogen", "build_msgs", "msgs_per_task"), T[0]); y = t.loc[a_, "build_msgs"] + x * t.loc[a_, "msgs_per_task"]
         axes[2].plot([x], [y], "kx", ms=10, mew=2); axes[2].annotate(f"{a_} vs any framework: t={crossing(t, a_, 'fw_autogen', 'build_msgs', 'msgs_per_task'):.0f}", (x, y), textcoords="offset points", xytext=(8, 14 + 16 * i), fontsize=8)
-    axes[0].set_title("LLM compute (x = MIDIAN's break-even vs a framework)"); axes[1].set_title("energy"); axes[2].set_title("messages: frameworks 1,000+12t, MIDIAN 1,010+6t, MIDIAN-V 1,010+2t\n(flat, halving, LinUCB send none)", fontsize=10); axes[2].set_ylim(bottom=5e2); axes[3].set_title("comparisons per task: flat 1,000, MIDIAN 30, frameworks 10,\nMIDIAN-V and halving 1", fontsize=10)
+    axes[0].set_title("LLM compute (x = MIDIAN's break-even vs a framework)"); axes[1].set_title("energy"); axes[2].set_title("messages: frameworks 1,000+12t, MIDIAN 1,010+9t, MIDIAN-V 1,010+5t\n(2 per level to fetch + 1 per level to update; flat, halving, LinUCB send none)", fontsize=10); axes[2].set_ylim(bottom=5e2); axes[3].set_title("comparisons per task: flat 1,000, MIDIAN 60 (30 descent + 30 update), MIDIAN-V 31,\nframeworks 10, halving 1", fontsize=10)
     h, l = axes[0].get_legend_handles_labels(); fig.legend(h, l, loc="center left", bbox_to_anchor=(1.0, 0.5), fontsize=7, title="dashed = frameworks;\nmidian_sh/sha, flat frozen, warm-start coincide with midian/midian_a", title_fontsize=7)
     fig.suptitle("H10*  Cumulative cost vs tasks routed, n=1000 specialist, self-described channel. LLM compute is an estimate: GPU-s per call = params x (A*prompt + 5A*gen tokens),\n"
                  "A from a saturated 7B replica (34 req/s); 700 W per H100; the routed task's own execution excluded. Messages and comparisons are exact ledger counts from the rows.", fontsize=9)
