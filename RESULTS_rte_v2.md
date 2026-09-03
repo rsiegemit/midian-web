@@ -10,6 +10,24 @@ programme, re-analysed with the v2 analyzer: per-channel tables, one name per ar
 `TARGETS_rte.md` (frozen), v2 `TARGETS_rte_v2.md` (committed before any v2 launch). Plain MIDIAN's parameters never
 changed; every mechanism added after the first run is a labeled variant.
 
+## Figure guide (`figures/`; every error bar is a 95% bootstrap over seeds within a cell, stated in each caption)
+
+| figure | what it shows | read it with |
+|---|---|---|
+| H1 `H1_headline_by_shape.png` | The headline: success by population shape at n=1000 on the live self-described channel — oracle, MIDIAN-V, MIDIAN, flat online as bars, the ten frameworks as a min–max band with each one's fallback rate annotated. Specialist is where frameworks collapse; bimodal is where they sit on the oracle. | §1 |
+| H2 `H2_legibility.png` | Why: x = Spearman(self-description, true skill) per shape (and declared-argmax success as a second x), y = framework − MIDIAN. Not monotone: the specialist failure is retrieval, not ranking. | §2 |
+| H3 `H3_consistency_robustness.png` | Every method as a point: success at β=0 (x) vs at β=0.5 with colluding low-skill liars (y). Top-right is good; the diagonal is "immune to lying". | §3, §4 |
+| H4 `H4_cost_quality_breakeven.png` | Cost–quality Pareto: total cost (build + Q·per-task) at Q ∈ {10², 10³, 10⁴, 10⁵} vs success, per currency (messages, comparisons, LLM calls); break-even Q marked. | §6 |
+| H5 `H5_cost_scaling.png` | Cost vs n from 10² to 10⁷ on the calibrated bernoulli world (comparisons, messages, build probes), plus the frameworks' measured supervisor latency under shared-fleet load. | §6 |
+| H6 `H6_midian_vs_halving.png` | MIDIAN, MIDIAN-V, MIDIAN-SH, MIDIAN-A, MIDIAN-SH+A vs sequential halving (trusted and peer-reported) by β and liar selection; second row = RouterBench replay twin. MIDIAN-A's flat line is the robustness result; SH and peer halving collapse at β=0.5 low-skill. | §4 |
+| H7 `H7_shortlist_lift.png` | Each framework with its own TF-IDF shortlist vs with MIDIAN-V's verified cohort (r=10, r=5); reference line = MIDIAN-V alone. (Provisional until the verified grids close.) | §1b |
+| H8 `H8_budget_by_channel.png` | Success vs probe budget b ∈ {1, 3, 10}, split by declaration channel (programmatic = upper bound). | §7 |
+| H9 `H9_churn.png` | Success per 100-task block and cumulative probes across churn events (10% / 30% of agents replaced every 200 tasks): MIDIAN's local repair vs halving-rebuild vs halving-stale vs flat online. | §5 |
+| H10 `H10_runtime_energy.png` | Cumulative GPU-seconds and Wh vs tasks routed: probe-based methods start at their build cost and stay flat, frameworks start at zero and grow per task; the crossings are the energy break-even points. Estimate: counts × per-call cost measured on the fleet. | §6b |
+| appendix `A_*.png` | internals_v2 (r × δ × collude × liar, MIDIAN vs MIDIAN-A), learning curve (success − oracle per 100 tasks), framework k-sensitivity, replay mirror, fallback table, UCB/Thompson. | Appendices |
+
+The 2026-09-02 figures A–G (5 seeds, pooled error bars) are kept under `figures/v1/` for the v1 write-up only.
+
 ## Methods, as run (from DEVIATIONS.md, not SPEC.md)
 
 - **World.** n agents, K = 16 Reasoning Gym families, true skill S[a, f] never visible to a method. Live backend:
