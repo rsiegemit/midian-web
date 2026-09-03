@@ -350,7 +350,7 @@ def _v2(df, fits):
     if a.empty: return None, "needs midian_a rows on specialist"
     loss = float(a[np.isclose(a.beta, 0)].success.mean() - a[np.isclose(a.beta, .5)].success.mean())
     x, n = delta(df[df.beta <= 0.25], "midian_a", REF)
-    ratio = float(df[df.label == "midian_a"].build_probes.mean() / df[df.label == REF].build_probes.mean())
+    d = pair(df, "midian_a", REF, "build_probes"); ratio = float((d["midian_a"] / d[REF]).mean()) if not d.empty else float("nan")   # same cells only
     if not np.isfinite(loss) or not n: return None, "needs midian_a at beta=0 and beta=0.5 (collude) on specialist and at beta<=0.25 paired with midian"
     return bool(loss <= 0.02 and abs(x) <= 0.01 and ratio <= 1.05), f"specialist loss beta 0->0.5 = {loss:+.3f}; vs MIDIAN at beta<=0.25 {x:+.3f} ({n} pairs); build probes {ratio:.3f}x", x
 def _v3(df, fits):
