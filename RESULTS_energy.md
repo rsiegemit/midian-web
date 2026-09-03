@@ -24,28 +24,28 @@ CUMULATIVE LLM compute after t routed tasks = build + t x per-task (n=1000 speci
 | warm_start_bandit | 277 | 0.0000 | 277 | 277 | 277 | 53.9 | 30.8 | 1,000 (1,000 + 0/task) | 10,000,000 (0 + 1000/task) |
 | midian | 277 | 0.0000 | 277 | 277 | 277 | 53.9 | 30.8 | 91,010 (1,010 + 9/task) | 600,000 (0 + 60/task) |
 | midian_sh | 277 | 0.0000 | 277 | 277 | 277 | 53.9 | 30.8 | 91,010 (1,010 + 9/task) | 600,000 (0 + 60/task) |
-| midian_va | 285 | 0.0000 | 285 | 285 | 285 | 55.4 | 31.7 | 51,615 (1,010 + 5/task) | 316,047 (0 + 32/task) |
+| midian_va | 285 | 0.0000 | 285 | 285 | 285 | 55.4 | 31.7 | 51,638 (1,010 + 5/task) | 316,280 (0 + 32/task) |
 | midian_a | 291 | 0.0000 | 291 | 291 | 291 | 56.5 | 32.3 | 91,010 (1,010 + 9/task) | 600,000 (0 + 60/task) |
 | midian_sha | 291 | 0.0000 | 291 | 291 | 291 | 56.5 | 32.3 | 91,010 (1,010 + 9/task) | 600,000 (0 + 60/task) |
 | fw_autogen | 0 | 0.0294 | 29 | 294 | 2,941 | 57.2 | 32.7 | 121,000 (1,000 + 12/task) | 100,000 (0 + 10/task) |
 | fw_maf | 0 | 0.0611 | 61 | 611 | 6,112 | 118.8 | 67.9 | 121,000 (1,000 + 12/task) | 100,000 (0 + 10/task) |
 | fw_google_adk | 0 | 0.0737 | 74 | 737 | 7,373 | 143.4 | 81.9 | 121,000 (1,000 + 12/task) | 100,000 (0 + 10/task) |
-| fw_smolagents | 0 | 0.0744 | 74 | 744 | 7,444 | 144.7 | 82.7 | 121,000 (1,000 + 12/task) | 100,000 (0 + 10/task) |
+| fw_smolagents | 0 | 0.0760 | 76 | 760 | 7,605 | 147.9 | 84.5 | 121,000 (1,000 + 12/task) | 100,000 (0 + 10/task) |
 | fw_openai_agents | 0 | 0.0824 | 82 | 824 | 8,238 | 160.2 | 91.5 | 121,000 (1,000 + 12/task) | 100,000 (0 + 10/task) |
 | fw_langgraph | 0 | 0.0835 | 84 | 835 | 8,354 | 162.4 | 92.8 | 121,000 (1,000 + 12/task) | 100,000 (0 + 10/task) |
-| fw_crewai | 0 | 0.1721 | 172 | 1,721 | 17,214 | 334.7 | 191.3 | 121,000 (1,000 + 12/task) | 100,000 (0 + 10/task) |
-| fw_llamaindex | 0 | 0.2058 | 206 | 2,058 | 20,585 | 400.3 | 228.7 | 121,000 (1,000 + 12/task) | 100,000 (0 + 10/task) |
-| fw_camel_workforce | 0 | 0.2561 | 256 | 2,561 | 25,613 | 498.0 | 284.6 | 121,000 (1,000 + 12/task) | 100,000 (0 + 10/task) |
-| fw_magentic_one | 0 | 0.5050 | 505 | 5,050 | 50,499 | 981.9 | 561.1 | 121,000 (1,000 + 12/task) | 100,000 (0 + 10/task) |
-| fw_magentic_one{"supervisor":"Qwen/Qwen2.5-14B-Instruct"} | 0 | 0.8020 | 802 | 8,020 | 80,201 | 1,559.5 | 891.1 | 121,000 (1,000 + 12/task) | 100,000 (0 + 10/task) |
+| fw_crewai | 0 | 0.1836 | 184 | 1,836 | 18,364 | 357.1 | 204.0 | 121,000 (1,000 + 12/task) | 100,000 (0 + 10/task) |
+| fw_llamaindex | 0 | 0.2202 | 220 | 2,202 | 22,022 | 428.2 | 244.7 | 121,000 (1,000 + 12/task) | 100,000 (0 + 10/task) |
+| fw_camel_workforce | 0 | 0.2691 | 269 | 2,691 | 26,915 | 523.3 | 299.1 | 121,000 (1,000 + 12/task) | 100,000 (0 + 10/task) |
+| fw_magentic_one | 0 | 0.5114 | 511 | 5,114 | 51,144 | 994.5 | 568.3 | 121,000 (1,000 + 12/task) | 100,000 (0 + 10/task) |
+| fw_magentic_one{"supervisor":"Qwen/Qwen2.5-14B-Instruct"} | 0 | 0.8023 | 802 | 8,023 | 80,234 | 1,560.1 | 891.5 | 121,000 (1,000 + 12/task) | 100,000 (0 + 10/task) |
 
 **Crossing points (tasks routed before the probe-based method's cumulative cost drops below the framework's):**
 
 | | autogen | maf | google_adk | smolagents | openai_agents | langgraph | crewai | llamaindex | camel_workforce | magentic_one | magentic_one{"supervisor":"Qwen/Qwen2.5-14B-Instruct"} |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| midian | 9,416 | 4,531 | 3,756 | 3,720 | 3,362 | 3,315 | 1,609 | 1,345 | 1,081 | 548 | 345 |
-| midian_a | 9,884 | 4,756 | 3,943 | 3,905 | 3,528 | 3,480 | 1,689 | 1,412 | 1,135 | 576 | 362 |
-| midian_v | 9,385 | 4,516 | 3,744 | 3,708 | 3,350 | 3,304 | 1,603 | 1,341 | 1,078 | 547 | 344 |
+| midian | 9,416 | 4,531 | 3,756 | 3,642 | 3,362 | 3,315 | 1,508 | 1,258 | 1,029 | 542 | 345 |
+| midian_a | 9,884 | 4,756 | 3,943 | 3,822 | 3,528 | 3,480 | 1,583 | 1,320 | 1,080 | 568 | 362 |
+| midian_v | 9,385 | 4,516 | 3,744 | 3,630 | 3,350 | 3,304 | 1,503 | 1,253 | 1,026 | 540 | 344 |
 
 In MESSAGES (fetch 2 per level + observe-time update 1 per level, commit 3415f03) the crossing is immediate: MIDIAN 1,010 + 9t vs a framework 1,000 + 12t crosses at t = 3; MIDIAN-V (1,010 + 5t) at t = 1. In COMPARISONS MIDIAN pays 60 per task (30 descent + 30 observe-time update) vs a framework's 10 (MIDIAN-V 31 = 1 cached pick + 30 update; halving 1; flat 1,000), so no MIDIAN variant undercuts a framework on comparisons; MIDIAN-V's saving over MIDIAN is the descent, not the update. Per task, MIDIAN's cost is communication (messages and comparisons), not LLM compute: it makes no LLM call at route time.
 
@@ -71,20 +71,20 @@ Reading: against a one-call framework (AutoGen) MIDIAN breaks even after ~9,400 
 | warm_start_bandit | 19.386 | 19.387 | 19.386 | 0.0001 | 1.00e-05 | 0.0000 |
 | midian | 19.395 | 19.477 | 19.386 | 0.0091 | 6.00e-07 | 0.0060 |
 | midian_sh | 19.395 | 19.477 | 19.386 | 0.0091 | 6.00e-07 | 0.0060 |
-| midian_va | 19.964 | 20.011 | 19.959 | 0.0052 | 3.16e-07 | 0.0021 |
+| midian_va | 19.965 | 20.011 | 19.960 | 0.0052 | 3.16e-07 | 0.0021 |
 | midian_a | 20.357 | 20.439 | 20.348 | 0.0091 | 6.00e-07 | 0.0060 |
 | midian_sha | 20.357 | 20.439 | 20.348 | 0.0091 | 6.00e-07 | 0.0060 |
 | fw_autogen | 20.600 | 20.709 | 20.588 | 0.0121 | 1.00e-07 | 1.1132 |
 | fw_maf | 42.797 | 42.906 | 42.785 | 0.0121 | 1.00e-07 | 2.3111 |
 | fw_google_adk | 51.624 | 51.733 | 51.612 | 0.0121 | 1.00e-07 | 2.7875 |
-| fw_smolagents | 52.122 | 52.231 | 52.110 | 0.0121 | 1.00e-07 | 2.8144 |
+| fw_smolagents | 53.247 | 53.355 | 53.234 | 0.0121 | 1.00e-07 | 2.8751 |
 | fw_openai_agents | 57.682 | 57.790 | 57.669 | 0.0121 | 1.00e-07 | 3.1144 |
 | fw_langgraph | 58.490 | 58.598 | 58.477 | 0.0121 | 1.00e-07 | 3.1580 |
-| fw_crewai | 120.514 | 120.622 | 120.501 | 0.0121 | 1.00e-07 | 6.5055 |
-| fw_llamaindex | 144.105 | 144.214 | 144.093 | 0.0121 | 1.00e-07 | 7.7787 |
-| fw_camel_workforce | 179.303 | 179.412 | 179.291 | 0.0121 | 1.00e-07 | 9.6784 |
-| fw_magentic_one | 353.506 | 353.615 | 353.494 | 0.0121 | 1.00e-07 | 19.0802 |
-| fw_magentic_one{"supervisor":"Qwen/Qwen2.5-14B-Instruct"} | 561.422 | 561.531 | 561.410 | 0.0121 | 1.00e-07 | 15.1517 |
+| fw_crewai | 128.558 | 128.666 | 128.545 | 0.0121 | 1.00e-07 | 6.9396 |
+| fw_llamaindex | 154.168 | 154.277 | 154.156 | 0.0121 | 1.00e-07 | 8.3218 |
+| fw_camel_workforce | 188.417 | 188.526 | 188.405 | 0.0121 | 1.00e-07 | 10.1703 |
+| fw_magentic_one | 358.017 | 358.126 | 358.005 | 0.0121 | 1.00e-07 | 19.3236 |
+| fw_magentic_one{"supervisor":"Qwen/Qwen2.5-14B-Instruct"} | 561.653 | 561.762 | 561.641 | 0.0121 | 1.00e-07 | 15.1580 |
 
-Crossings in joules (tasks after which the probe-based method's cumulative energy falls below the framework's): midian: autogen 9,415, maf 4,531, google_adk 3,756, smolagents 3,720, openai_agents 3,361, langgraph 3,315, crewai 1,609, llamaindex 1,345, camel_workforce 1,081, magentic_one 548, magentic_one{"supervisor":"Qwen/Qwen2.5-14B-Instruct"} 345; midian_a: autogen 9,882, maf 4,756, google_adk 3,942, smolagents 3,905, openai_agents 3,528, langgraph 3,480, crewai 1,689, llamaindex 1,412, camel_workforce 1,135, magentic_one 576, magentic_one{"supervisor":"Qwen/Qwen2.5-14B-Instruct"} 362; midian_v: autogen 9,382, maf 4,515, google_adk 3,743, smolagents 3,707, openai_agents 3,350, langgraph 3,304, crewai 1,603, llamaindex 1,341, camel_workforce 1,078, magentic_one 547, magentic_one{"supervisor":"Qwen/Qwen2.5-14B-Instruct"} 344.
+Crossings in joules (tasks after which the probe-based method's cumulative energy falls below the framework's): midian: autogen 9,415, maf 4,531, google_adk 3,756, smolagents 3,641, openai_agents 3,361, langgraph 3,315, crewai 1,508, llamaindex 1,258, camel_workforce 1,029, magentic_one 542, magentic_one{"supervisor":"Qwen/Qwen2.5-14B-Instruct"} 345; midian_a: autogen 9,882, maf 4,756, google_adk 3,942, smolagents 3,822, openai_agents 3,528, langgraph 3,480, crewai 1,583, llamaindex 1,320, camel_workforce 1,080, magentic_one 568, magentic_one{"supervisor":"Qwen/Qwen2.5-14B-Instruct"} 362; midian_v: autogen 9,382, maf 4,515, google_adk 3,743, smolagents 3,629, openai_agents 3,350, langgraph 3,304, crewai 1,503, llamaindex 1,253, camel_workforce 1,026, magentic_one 540, magentic_one{"supervisor":"Qwen/Qwen2.5-14B-Instruct"} 344.
 Under any sane weighting the LLM call dominates energy by 3-5 orders of magnitude (20.6 J per supervisor call vs 6e-3 J for MIDIAN's six messages and 3e-7 J for its thirty comparisons per task), so the joule crossings equal the GPU-second crossings to the task; messages dominate MIDIAN's latency (6 ms of fetch hops vs 0.6 us of comparisons) while the supervisor call dominates every framework's (0.5-19 s).

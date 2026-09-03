@@ -12,7 +12,7 @@ RED, ORG, YEL, BLU, GRN, PUR, GRY, DRK = "#c0392b", "#e67e22", "#f1c40f", "#3498
 HAL, HALP = "sequential_halving", "sequential_halving_peer"
 HAL_RB, HAL_ST = "sequential_halving[churn_mode=rebuild,peer_reported=True]", "sequential_halving[churn_mode=stale,peer_reported=True]"
 MAG14 = "fw_magentic_one[supervisor=Qwen/Qwen2.5-14B-Instruct]"
-COLOR = {"oracle": GRY, "midian": RED, "midian_v": ORG, "midian_v_r5": YEL, "midian_sh": "#d35400", "midian_a": "#7b241c", "midian_sha": "#e74c3c",
+COLOR = {"oracle": GRY, "midian": RED, "midian_v": ORG, "midian_v_r5": YEL, "midian_sh": "#d35400", "midian_a": "#7b241c", "midian_sha": "#e74c3c", "midian_va": "#2ecc71",
          FLAT: "#7f8c8d", FLAT_ON: BLU, HAL: DRK, HALP: PUR, HAL_RB: PUR, HAL_ST: "#bb8fce", "warm_start_bandit": GRN, "linucb_honest": "#16a085",
          "declared_argmax": "#5d6d7e", "llm_supervisor": "#34495e", "fw_autogen": "#2980b9", "fw_magentic_one": "#1f618d", MAG14: "#5dade2", "random": "#ccc"}
 CLASS_COLOR = {"framework": "#2980b9", "midian": RED, "ceiling": GRY, "floor": "#ccc", "declared": "#5d6d7e", "verified_central": GRN, "verified_decentral": PUR}
@@ -181,13 +181,13 @@ def H5():
 def H6():
     """MIDIAN vs halving by beta x liar selection, self-described, with the Phase-1 variants; second row = replay twin."""
     live = selfdesc(rows("live_f1_n1000", "variants_f1")); rep = rows("replay_mirror_live_f1_n1000")
-    arms = ["oracle", HAL, HALP, "midian_v", "midian", "midian_sh", "midian_a", "midian_sha", FLAT_ON]
+    arms = ["oracle", HAL, HALP, "midian_v", "midian", "midian_sh", "midian_a", "midian_sha", "midian_va", FLAT_ON]
     fig, axes = plt.subplots(2, 2, figsize=(13, 9), sharey="row")
     for r_, (df, name) in enumerate([(live, "live LLM population, self-described channel"), (rep, "RouterBench replay twin")]):
         w = piv(df, ("dist", "beta", "liar_select", "seed")) if len(df) else pd.DataFrame()
         for ax, ls in zip(axes[r_], ["random", "low_skill_first"]):
             for l in need(w, arms, "H6"):
-                sub = w[l].xs(ls, level="liar_select"); line(ax, sub.groupby(level="beta"), l, lw=2.5 if l == "midian" else 1.2)
+                sub = w[l].xs(ls, level="liar_select"); line(ax, sub.groupby(level="beta"), l, lw=2.5 if l == "midian" else 1.8 if l == "midian_va" else 1.2)
             ax.set_title(f"{name}, liars = {ls}"); ax.set_xlabel("β (liar fraction)"); ax.grid(alpha=.3)
         axes[r_][0].set_ylabel("success (n=1000)")
     axes[0][1].legend(fontsize=7); fig.suptitle("H6  MIDIAN and its variants vs sequential halving"); save(fig, "H6_midian_vs_halving")

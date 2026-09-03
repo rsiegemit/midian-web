@@ -1,9 +1,11 @@
 # RESULTS_rte_v2.md — RTE after the v2 work order (DRAFT, 2026-09-03)
 
-Status: v2 grids complete except fw_live_n100 / fw_live_n1000 (10 seeds, Q=1000, fixed adapters) and the two
-_verified grids, which were still running at 13:30 on 2026-09-03; §1, §2's framework axis and Appendix E are filled PROVISIONALLY from the ~90%-complete framework grids and marked
-\*; the verified-shortlist section (fw_live_n100_verified 64%, fw_live_n1000_verified 42%) and the n = 10k halving row
-stay `TODO`. Every number without a `TODO(grid)` mark is final and comes from completed grids (the 2026-09-02
+Status (16:40, 2026-09-03): every MIDIAN-side grid is complete (variants_f1 incl. MIDIAN-VA, internals_v2, midian_r20,
+stratify, budget_b10_shapes, live_f1_core_s6_10); midian_v_replication, churn_n1000 and live_n10k_v2 lack only
+sequential-halving rows (35 / 11 / 5, running). fw_live_n100 / fw_live_n1000 (10 seeds, Q=1000, fixed adapters) are at
+94%, the two _verified grids at 84% / 67%, the two low-skill-first framework grids at 80%: §1, §2's framework axis and
+Appendix E are filled PROVISIONALLY from those and marked \*; the verified-shortlist section (§1b) and the n = 10k
+halving row stay `TODO`. Every number without a `TODO(grid)` mark is final and comes from completed grids (the 2026-09-02
 programme, re-analysed with the v2 analyzer: per-channel tables, one name per arm, reports per probe, no wall-clock).
 `TODO(grid)` marks a v2 grid that was launched on 2026-09-03 and has not finished; `rte.analyze` fills its section
 (`python -m rte.analyze --grid <g> --grids ...` prints the v1 and v2 target verdicts). Pre-registrations: v1
@@ -19,7 +21,7 @@ changed; every mechanism added after the first run is a labeled variant.
 | H3 `H3_consistency_robustness.png` | Every method as a point: success at β=0 (x) vs at β=0.5 with colluding low-skill liars (y). Top-right is good; the diagonal is "immune to lying". | §3, §4 |
 | H4 `H4_cost_quality_breakeven.png` | Cost–quality Pareto: total cost (build + Q·per-task) at Q ∈ {10², 10³, 10⁴, 10⁵} vs success, per currency (messages, comparisons, LLM calls); break-even Q marked. | §6 |
 | H5 `H5_cost_scaling.png` | Cost vs n from 10² to 10⁷ on the calibrated bernoulli world (comparisons, messages, build probes), plus the frameworks' measured supervisor latency under shared-fleet load. | §6 |
-| H6 `H6_midian_vs_halving.png` | MIDIAN, MIDIAN-V, MIDIAN-SH, MIDIAN-A, MIDIAN-SH+A vs sequential halving (trusted and peer-reported) by β and liar selection; second row = RouterBench replay twin. MIDIAN-A's flat line is the robustness result; SH and peer halving collapse at β=0.5 low-skill. | §4 |
+| H6 `H6_midian_vs_halving.png` | MIDIAN, MIDIAN-V, MIDIAN-SH, MIDIAN-A, MIDIAN-SH+A, MIDIAN-VA vs sequential halving (trusted and peer-reported) by β and liar selection; second row = RouterBench replay twin. MIDIAN-A's flat line is the robustness result; SH and peer halving collapse at β=0.5 low-skill. | §4 |
 | H7 `H7_shortlist_lift.png` | Each framework with its own TF-IDF shortlist vs with MIDIAN-V's verified cohort (r=10, r=5); reference line = MIDIAN-V alone. (Provisional until the verified grids close.) | §1b |
 | H8 `H8_budget_by_channel.png` | Success vs probe budget b ∈ {1, 3, 10}, split by declaration channel (programmatic = upper bound). | §7 |
 | H9 `H9_churn.png` | Success per 100-task block and cumulative probes across churn events (10% / 30% of agents replaced every 200 tasks): MIDIAN's local repair vs halving-rebuild vs halving-stale vs flat online. | §5 |
@@ -266,6 +268,33 @@ Pre-registered: **V2-1 MISS** (both halves), **V2-2 HIT**, **V2-3 MISS** by −0
 elsewhere; inside MIDIAN's 0.070 seed envelope), **V2-5 MISS** (LinUCB is 0.025 below flat_online, not between it and
 warm-start; it is flat in β, +0.000).
 
+**MIDIAN-VA (`midian_va` = V's verified promotion and cached root pick + A's 5% report audits with reporter exclusion;
+same 240 variants_f1 units, self-described).** VA is the best MIDIAN variant on average and the only one that is both
+above V at β ≤ 0.25's level and flat under collusion — but it is not ≥ V everywhere:
+
+| success | β=0 | β=0.1 | β=0.25 | β=0.5 all | β=0.5 random liars | β=0.5 low-skill liars | mean | sd (units) |
+|---|---|---|---|---|---|---|---|---|
+| midian_va | 0.684 | 0.671 | 0.667 | 0.680 | 0.680 | 0.679 | 0.675 | 0.107 |
+| midian_v | 0.684 | 0.684 | 0.676 | 0.569 | 0.608 | 0.531 | 0.653 | 0.130 |
+| midian_a | 0.668 | 0.668 | 0.667 | 0.667 | 0.668 | 0.666 | 0.667 | 0.099 |
+| midian | 0.668 | 0.664 | 0.648 | 0.598 | 0.627 | 0.569 | 0.645 | 0.109 |
+
+Paired (mean [95% CI over the 60 (cell, seed) pairs per β]): VA − V **+0.000** / **−0.013** [−0.017, −0.010] / **−0.009**
+[−0.014, −0.004] / **+0.110** [+0.089, +0.134] at β = 0 / 0.1 / 0.25 / 0.5 (+0.148 at β = 0.5 low-skill-first); VA − A
++0.016 / +0.003 / −0.000 / +0.013 (+0.014 [+0.005, +0.023] at β = 0.5 low-skill-first, 30 pairs); VA − MIDIAN +0.031
+[+0.025, +0.036] over all 240 pairs (+0.016 / +0.007 / +0.019 / +0.082); VA − halving_peer −0.039 / −0.051 / −0.051 /
++0.140 (+0.278 at β = 0.5 low-skill-first). By shape (all β): bimodal 0.545 / heavy_tail 0.679 / specialist 0.802 vs V's
+0.521 / 0.648 / 0.791 and A's 0.552 / 0.660 / 0.790. So the audits repair V's collusion exposure completely (VA at β = 0.5
+is 0.68 where V is 0.57 and 0.53 under low-skill liars), and at β = 0 VA equals V exactly (no reporter is ever struck).
+At β = 0.1 and 0.25 VA gives back 0.009–0.013 of V's edge: with liars present the audits strike reporters, and a struck
+reporter's probes are also removed from V's verified promotion (`_verify(..., exclude)`), which shrinks the verification
+set — a mechanism hypothesis from the code path, not a measured decomposition. Costs (variants_f1 aggregate): build
+probes 49,420 = **1.033× V** (audits are probes), reports 430,560 = V's, per task 31.6 comparisons / 5.06 messages vs V's
+31 / 5 (the online audits add 2%), hops 0 = V's. Energy and latency therefore sit on V's curve (§6b: 285 GPU-s build,
+20.0 J/task). **V2-11 WITHIN_FLOOR**: (i) fails at β = 0.1 by 0.003 beyond the 0.01 tolerance (−0.013; and −0.017 at
+β = 0.25 in the replication-merged evaluation, whose halving rows are still landing), inside MIDIAN's 0.074 seed
+envelope; (ii) HIT (+0.014 vs A at β = 0.5 low-skill-first); (iii) HIT (1.033× probes, per-task cost V's + 2%).
+
 **MIDIAN-V replication on ten fresh seeds (midian_v_replication: seeds 11–20, n ∈ {100, 1000}, 3 shapes, β ∈ {0, 0.25,
 0.5}, both channels; 360 units per arm).** This is the confirmatory run for the post-hoc variant, under its definition of
 record in `midian_v.py`: reports are charged and aggregated per probe (the 2026-09-02 rows aggregated per-peer means, a
@@ -375,7 +404,7 @@ CUMULATIVE LLM compute after t routed tasks = build + t x per-task (n=1000 speci
 | warm_start_bandit | 277 | 0.0000 | 277 | 277 | 277 | 53.9 | 30.8 | 1,000 (1,000 + 0/task) | 10,000,000 (0 + 1000/task) |
 | midian | 277 | 0.0000 | 277 | 277 | 277 | 53.9 | 30.8 | 91,010 (1,010 + 9/task) | 600,000 (0 + 60/task) |
 | midian_sh | 277 | 0.0000 | 277 | 277 | 277 | 53.9 | 30.8 | 91,010 (1,010 + 9/task) | 600,000 (0 + 60/task) |
-| midian_va | 285 | 0.0000 | 285 | 285 | 285 | 55.4 | 31.7 | 51,615 (1,010 + 5/task) | 316,047 (0 + 32/task) |
+| midian_va | 285 | 0.0000 | 285 | 285 | 285 | 55.4 | 31.7 | 51,638 (1,010 + 5/task) | 316,280 (0 + 32/task) |
 | midian_a | 291 | 0.0000 | 291 | 291 | 291 | 56.5 | 32.3 | 91,010 (1,010 + 9/task) | 600,000 (0 + 60/task) |
 | midian_sha | 291 | 0.0000 | 291 | 291 | 291 | 56.5 | 32.3 | 91,010 (1,010 + 9/task) | 600,000 (0 + 60/task) |
 | fw_autogen | 0 | 0.0294 | 29 | 294 | 2,941 | 57.2 | 32.7 | 121,000 (1,000 + 12/task) | 100,000 (0 + 10/task) |
@@ -422,7 +451,7 @@ Reading: against a one-call framework (AutoGen) MIDIAN breaks even after ~9,400 
 | warm_start_bandit | 19.386 | 19.387 | 19.386 | 0.0001 | 1.00e-05 | 0.0000 |
 | midian | 19.395 | 19.477 | 19.386 | 0.0091 | 6.00e-07 | 0.0060 |
 | midian_sh | 19.395 | 19.477 | 19.386 | 0.0091 | 6.00e-07 | 0.0060 |
-| midian_va | 19.964 | 20.011 | 19.959 | 0.0052 | 3.16e-07 | 0.0021 |
+| midian_va | 19.965 | 20.011 | 19.960 | 0.0052 | 3.16e-07 | 0.0021 |
 | midian_a | 20.357 | 20.439 | 20.348 | 0.0091 | 6.00e-07 | 0.0060 |
 | midian_sha | 20.357 | 20.439 | 20.348 | 0.0091 | 6.00e-07 | 0.0060 |
 | fw_autogen | 20.600 | 20.709 | 20.588 | 0.0121 | 1.00e-07 | 1.1132 |
@@ -465,10 +494,11 @@ the bimodal gap disappears and heavy_tail opens up:
 
 | shape | oracle | sequential_halving (trusted) | sequential_halving_peer | midian_v | midian | flat_probe_argmax_online | LangGraph / AutoGen |
 |---|---|---|---|---|---|---|---|
-| bimodal | 0.568 | 0.568 | 0.562 (n=4) | 0.563 | 0.566 | 0.567 | 0.568 / 0.568 |
-| heavy_tail | 0.739 | 0.741 | 0.758 | 0.722 | 0.701 | 0.712 | 0.604 / 0.604 |
+| bimodal | 0.568 | 0.568 | 0.569 | 0.563 | 0.566 | 0.567 | 0.568 / 0.568 |
+| heavy_tail | 0.739 | 0.741 | 0.738 | 0.722 | 0.701 | 0.712 | 0.604 / 0.604 |
 
-Paired, frameworks − MIDIAN: bimodal **+0.002**, heavy_tail **−0.097** (2/8 cells); halving − MIDIAN +0.040 on heavy_tail.
+Paired, frameworks − MIDIAN: bimodal **+0.002**, heavy_tail **−0.097** [−0.112, −0.081] (6 pairs each); trusted halving − MIDIAN
++0.040 and peer halving − MIDIAN +0.037 on heavy_tail (all 108 rows in).
 With ten probes per cell every probe method sits on the oracle on bimodal, i.e. the v1 −0.04 was the 4-valued estimate,
 not the tree. **V2-9 HIT.** (LangGraph and AutoGen give identical numbers here because with the same shortlist both
 supervisors pick the same agent on these tasks.)
@@ -509,7 +539,7 @@ The two peer-reported-halving units at n = 10k were still running at write time 
 | 5 | halving ≈ flat at equal budget; bandits' late success ≥ MIDIAN's at b=1 | MISS | halving − flat +0.103; ucb/thompson late −0.138 / −0.110 vs MIDIAN at b=1 | adaptive allocation is worth 0.10 with 4-valued estimates; 16k arms cannot be explored in 1,000 tasks |
 | 6 | argmax-vs-floor gap largest under heavy_tail, smallest under iid_uniform | MISS | heavy_tail 0.175 ≈ specialist 0.173 > bimodal 0.140; iid_uniform 0.166 ≈ correlated 0.163 | the gap tracks how much the population's skill is family-specific, not its tail |
 
-**v2 (TARGETS_rte_v2.md), ten** (`rte.analyze … --out results/v2_targets`; paired on `label`, plain MIDIAN only;
+**v2 (TARGETS_rte_v2.md), eleven** (`rte.analyze … --out results/v2_targets`; paired on `label`, plain MIDIAN only;
 WITHIN_FLOOR = decisive delta inside MIDIAN's mean seed envelope, 0.070 at n = 1000):
 
 | # | expectation | verdict | numbers |
@@ -524,9 +554,12 @@ WITHIN_FLOOR = decisive delta inside MIDIAN's mean seed envelope, 0.070 at n = 1
 | V2-8 | replication, fresh seeds 11–20: midian_v − midian = +0.02 ± 0.02 at β ≤ 0.25 | **HIT** | +0.021 (240 pairs; n=1000: +0.021 / +0.029 at β = 0 / 0.25, n=100: +0.007 / +0.026); at β=0.5 collude −0.008 (n=1000 −0.017, n=100 0.000) |
 | V2-9 | b=10 closes the bimodal framework gap to ±0.02; heavy_tail MIDIAN ≥ fw + 0.03 | **HIT** | bimodal +0.002; heavy_tail −0.097 |
 | V2-10 | trimming hurts plain MIDIAN ≥ 0.02 under collusion, not MIDIAN-A | **HIT** | r=10: MIDIAN −0.038 (δ=1/3 − δ=0, collude), MIDIAN-A −0.000 |
+| V2-11 | MIDIAN-VA ≥ max(V, A) − 0.01 at every β; within 0.02 of A at β=0.5 low-skill collude; build probes ≤ 1.05× V, per-task cost V's | **MISS** (within floor) | VA − max(V, A): +0.000 / −0.013 / −0.009 / +0.001 at β = 0 / 0.1 / 0.25 / 0.5 on variants_f1 (−0.010 / −0.013 / −0.017 / +0.001 merged with the 98%-complete replication grid); VA − A at β=0.5 low-skill +0.014 (30 pairs); 1.033× probes; 31.6 / 5.06 per task vs V's 31 / 5 |
 
-Six hits, three misses (SH does not help; SH+A adds nothing over A; a history-only LinUCB is below a flat scan), one
-split (churn: quality as predicted, repair-cost arithmetic wrong in the pre-registration), one reported.
+Six hits, four misses (SH does not help; SH+A adds nothing over A; a history-only LinUCB is below a flat scan; VA gives
+back ~0.01 of V's edge at β = 0.1–0.25 while repairing its collusion collapse — the two within-floor misses, V2-3 and
+V2-11, are 0.003–0.007 beyond a 0.01 tolerance and inside MIDIAN's own seed envelope), one split (churn: quality as
+predicted, repair-cost arithmetic wrong in the pre-registration), one reported.
 
 ## 9. Replay (RouterBench real outcomes, K = 64, n = 1000, 10 seeds; programmatic channel only — replay has no
 self-description)

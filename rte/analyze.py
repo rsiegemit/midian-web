@@ -423,10 +423,21 @@ def _v10(df, fits):
     if d.method.nunique() < 2 or d.delta.nunique() < 2: return None, "needs internals_v2 rows (r=10, both deltas, midian and midian_a)"
     t = d.pivot_table(index="method", columns="delta", values="success"); sep = t[t.columns.max()] - t[t.columns.min()]
     return bool(sep[REF] <= -0.02 and abs(sep["midian_a"]) <= 0.02), f"delta=1/3 - delta=0 at r=10: MIDIAN {sep[REF]:+.3f}, MIDIAN-A {sep['midian_a']:+.3f}"
+def _v11(df, fits):
+    """V2-11 MIDIAN-VA >= max(MIDIAN-V, MIDIAN-A) - 0.01 at every beta; within 0.02 of MIDIAN-A at beta=0.5 collude low-skill-first; build probes <= 1.05x V"""
+    s = df[df.label.isin(["midian_va", "midian_v", "midian_a"])]
+    piv = s.pivot_table(index="beta", columns="label", values="success")
+    if piv.shape[1] < 3: return None, "needs midian_v, midian_a and midian_va rows"
+    gap = piv.midian_va - piv[["midian_v", "midian_a"]].max(axis=1)
+    hi = s[np.isclose(s.beta, .5) & (s.collude == True) & (s.liar_select == "low_skill_first")]   # noqa: E712
+    x, n = delta(hi, "midian_va", "midian_a")
+    d = pair(df, "midian_va", "midian_v", "build_probes"); ratio = float((d["midian_va"] / d["midian_v"]).mean()) if not d.empty else float("nan")
+    ok = bool((gap >= -0.01).all() and x >= -0.02 and ratio <= 1.05 + 1e-9)
+    return ok, "VA - max(V, A) by beta: " + ", ".join(f"{b}: {v:+.3f}" for b, v in gap.items()) + f"; VA - A at beta=0.5 low-skill {x:+.3f} ({n} pairs); build probes {ratio:.3f}x V", float(gap.min())
 def targets_v2(df, fits):
-    """The ten expectations of TARGETS_rte_v2.md: HIT / MISS / WITHIN_FLOOR / REPORTED / NO DATA, with the numbers."""
+    """The eleven expectations of TARGETS_rte_v2.md: HIT / MISS / WITHIN_FLOOR / REPORTED / NO DATA, with the numbers."""
     out, env = [], envelope(df)
-    for i, fn in enumerate((_v1, _v2, _v3, _v4, _v5, _v6, _v7, _v8, _v9, _v10), 1):
+    for i, fn in enumerate((_v1, _v2, _v3, _v4, _v5, _v6, _v7, _v8, _v9, _v10, _v11), 1):
         try: ok, detail, *key = fn(df, fits)                # key = the decisive paired delta, when the target is one
         except (KeyError, ValueError, IndexError, TypeError) as e: ok, detail, key = None, f"no data ({type(e).__name__}: {e})", []
         v = ("NO DATA" if ok is None else ok if isinstance(ok, str) else "HIT" if ok else
