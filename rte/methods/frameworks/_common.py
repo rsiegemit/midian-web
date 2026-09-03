@@ -111,7 +111,7 @@ class FrameworkMethod(Method):
         self.view.ledger.compare(len(cand)); self.view.ledger.hop(1)
         self.view.ledger.message(len(cand) + 2)             # k descriptions read + supervisor request/reply
         payload = [{"name": self.names[a], "description": self.desc[a]} for a in cand]
-        resp = self.bridge.select(self._task_text(task), payload, self.supervisor, self.base_url, params=self.params)
+        resp = self.bridge.select(self._task_text(task), payload, self.supervisor, self._base_url or _endpoint(self.supervisor), params=self.params)   # re-pick per call: replicas that join mid-run get used
         choice = resp.get("choice")
         self._picked = choice in self._name2id and self._name2id[choice] in set(int(a) for a in cand)
         if self._picked:
