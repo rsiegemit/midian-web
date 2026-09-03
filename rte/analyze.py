@@ -214,14 +214,14 @@ def figures(df, fd):
 def pair(df, a, b, metric="success"):
     """Methods `a` and `b` paired on (cell, seed); empty when either is missing from `df`."""
     if df.empty: return pd.DataFrame()
-    piv = df.pivot_table(index=cells(df) + ["seed"], columns="method", values=metric)
+    piv = df.pivot_table(index=cells(df) + ["seed"], columns="label", values=metric)   # label = method + params: plain MIDIAN only
     return piv[[a, b]].dropna() if {a, b} <= set(piv.columns) else pd.DataFrame()
 def _t1(df, fits):
     """declared/framework lose >=0.25 from beta 0->0.5, probe-only move <=0.03"""
     b0, b5 = df[np.isclose(df.beta, 0)], df[np.isclose(df.beta, 0.5)]
     if b0.empty or b5.empty: return None, "needs beta=0 and beta=0.5"
-    drop = (b0.groupby("method").success.mean() - b5.groupby("method").success.mean()).dropna()
-    grp = df.drop_duplicates("method").set_index("method").group
+    drop = (b0.groupby("label").success.mean() - b5.groupby("label").success.mean()).dropna()
+    grp = df.drop_duplicates("label").set_index("label").group
     dec = {m: v for m, v in drop.items() if grp.get(m) in ("declared", "framework")}
     prb = {m: v for m, v in drop.items() if grp.get(m) in ("verified_central", "verified_decentral", "midian")}
     return (bool(dec) and bool(prb) and all(v >= 0.25 for v in dec.values())

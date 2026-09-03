@@ -28,39 +28,51 @@ handoffs, Google ADK sub-agent delegation, LlamaIndex router, smolagents managed
 same common scaling adapter: hashed TF-IDF over the agents' self-descriptions selects the top k = 10, the framework's
 supervisor picks one. Paired on identical cells (3 shapes × 4 β × seeds), Q = 300.
 
-| method | n=100 success [95% CI] | n=1000 success [95% CI] | Δ vs MIDIAN, n=1000 (paired) | wins |
+| method | n=100 success [95% CI] | n=1000 success [95% CI] | Δ vs MIDIAN, n=1000 (paired) | cells rival > MIDIAN |
 |---|---|---|---|---|
-| oracle (best agent by true S) | 0.729 [0.693, 0.763] | 0.733 [0.694, 0.770] | +0.080 | 39/39 |
-| MIDIAN-V r=5 (labeled variant) | 0.646 [0.611, 0.678] | 0.669 [0.625, 0.712] | +0.017 | 30/39 |
-| MIDIAN-V r=10 (labeled variant) | 0.646 [0.615, 0.676] | 0.664 [0.626, 0.703] | +0.012 | 21/37 |
-| **MIDIAN** | 0.639 [0.609, 0.668] | 0.653 [0.620, 0.685] | 0 | — |
-| flat probe argmax (same 48k probes, no tree) | 0.596 [0.577, 0.615] | 0.621 [0.583, 0.657] | −0.031 | 16/39 |
-| declared argmax | 0.567 [0.550, 0.584] | 0.567 [0.551, 0.583] | −0.086 | 9/39 |
-| llm_supervisor (one call over top-20) | 0.557 [0.543, 0.570] | 0.552 [0.534, 0.569] | −0.100 | 15/39 |
-| Magentic-One | 0.538 [0.519, 0.554] | 0.531 [0.506, 0.556] | −0.122 | 15/38 |
-| Google ADK | 0.506 [0.483, 0.528] | 0.528 [0.504, 0.553] | −0.124 | 16/39 |
-| CrewAI | 0.520 [0.497, 0.540] | 0.524 [0.497, 0.549] | −0.129 | 15/39 |
-| smolagents | 0.508 [0.486, 0.529] | 0.509 [0.477, 0.541] | −0.144 | 15/39 |
-| AutoGen | 0.500 [0.476, 0.523] | 0.508 [0.476, 0.540] | −0.145 | 15/38 |
-| LangGraph | 0.499 [0.473, 0.524] | 0.508 [0.475, 0.541] | −0.145 | 15/38 |
-| LlamaIndex | 0.496 [0.472, 0.519] | 0.508 [0.475, 0.540] | −0.144 | 15/38 |
-| MAF | 0.505 [0.475, 0.533] | 0.504 [0.470, 0.537] | −0.149 | 16/39 |
-| OpenAI Agents SDK | 0.492 [0.467, 0.517] | 0.503 [0.469, 0.537] | −0.150 | 16/39 |
-| CAMEL Workforce | 0.499 [0.472, 0.524] | 0.492 [0.455, 0.530] | −0.160 | 15/38 |
-| random | 0.312 [0.286, 0.335] | 0.315 [0.286, 0.345] | −0.338 | 0/39 |
+| oracle (best agent by true S) | 0.711 [0.683, 0.739] | 0.719 [0.689, 0.748] | +0.081 | 60/60 |
+| MIDIAN-V r=10 (labeled variant) | 0.623 [0.597, 0.648] | 0.659 [0.630, 0.689] | +0.022 | 37/56 |
+| MIDIAN-V r=5 (labeled variant) | 0.630 [0.603, 0.656] | 0.656 [0.623, 0.688] | +0.019 | 45/60 |
+| **MIDIAN** | 0.626 [0.603, 0.648] | 0.637 [0.613, 0.663] | 0 | — |
+| MIDIAN r=5 | 0.618 [0.594, 0.642] | 0.628 [0.601, 0.655] | −0.009 | 22/57 |
+| flat probe argmax (same 48k probes, no tree) | 0.572 [0.552, 0.591] | 0.612 [0.583, 0.640] | −0.025 | 24/59 |
+| declared argmax | 0.560 [0.545, 0.575] | 0.562 [0.549, 0.574] | −0.076 | 13/60 |
+| llm_supervisor (one call over top-20) | 0.555 [0.545, 0.564] | 0.562 [0.546, 0.577] | −0.076 | 28/60 |
+| Magentic-One | 0.546 [0.532, 0.559] | 0.541 [0.521, 0.562] | −0.096 | 28/59 |
+| Google ADK | 0.518 [0.501, 0.535] | 0.536 [0.514, 0.557] | −0.102 | 29/60 |
+| CrewAI | 0.536 [0.519, 0.552] | 0.535 [0.512, 0.558] | −0.102 | 28/60 |
+| smolagents | 0.522 [0.505, 0.538] | 0.523 [0.496, 0.549] | −0.114 | 28/60 |
+| LangGraph | 0.506 [0.486, 0.524] | 0.521 [0.494, 0.548] | −0.116 | 28/59 |
+| AutoGen | 0.511 [0.493, 0.529] | 0.520 [0.493, 0.546] | −0.118 | 28/59 |
+| LlamaIndex | 0.512 [0.494, 0.529] | 0.519 [0.491, 0.547] | −0.118 | 28/59 |
+| OpenAI Agents SDK | 0.506 [0.488, 0.525] | 0.519 [0.491, 0.546] | −0.119 | 29/60 |
+| MAF | 0.517 [0.496, 0.537] | 0.518 [0.489, 0.546] | −0.120 | 29/60 |
+| CAMEL Workforce | 0.514 [0.495, 0.532] | 0.510 [0.479, 0.540] | −0.127 | 28/59 |
+| random | 0.307 [0.289, 0.326] | 0.313 [0.291, 0.336] | −0.325 | 0/60 |
 
-(The table uses the 39–41 cells where every listed method has finished at 5 seeds; Magentic-One seeds 4–5 are still
-running, so its own CI rests on 3 seeds. On the 36 cells with seeds 1–3 every framework has all rows and the
-picture is identical: frameworks 0.51–0.54, MIDIAN 0.68, MIDIAN-V 0.72 at n=1000.)
+All 60 cells (3 shapes × 4 β × 5 seeds) have every listed method. The average hides a split that the per-shape
+breakdown (figure A, right panel) makes plain:
 
-Three things the table says. (i) All ten frameworks land in a 0.49–0.54 band at both scales, below the one-call LLM
-supervisor and below a flat probe scan, and they lose to pre-registered MIDIAN by 0.12–0.16 at n=1000. Their wins
-cluster on the *bimodal* population (a 20% big-model-with-tools minority), where every method is near the oracle's
-0.57 ceiling. (ii) They are flat in β (±0.02 from β=0 to β=0.5): their only signal is the agents' self-descriptions,
-which overclaim by +0.27 and correlate 0.36 with S, so lying about a channel they were barely using changes nothing.
-On the *specialist* population (3 strong families per agent) the frameworks fall to 0.38–0.43 versus 0.77 for MIDIAN.
-(iii) Per task a framework spends 12 messages, 10 comparisons and one or more supervisor LLM calls (0.6–8.2 s wall);
-MIDIAN spends 6 messages and 30 comparisons with no LLM call, MIDIAN-V 2 messages and 1 comparison (§6).
+| n=1000, by shape | oracle | MIDIAN-V | MIDIAN | flat probe | frameworks (mean) | cells framework > MIDIAN |
+|---|---|---|---|---|---|---|
+| specialist (3 strong families per agent) | 0.857 | 0.789 | 0.751 | 0.751 | 0.390 | 0 / 200 |
+| heavy_tail (1 in 10 is a big model) | 0.733 | 0.664 | 0.634 | 0.592 | 0.617 | 83 / 200 |
+| bimodal (20% big-with-tools, 80% small) | 0.566 | 0.525 | 0.527 | 0.493 | 0.566 | 200 / 200 |
+
+(n=100: specialist 0.834 / 0.725 / 0.726 / 0.653 / 0.447, frameworks win 0/200; heavy_tail 0.733 / 0.626 / 0.623 /
+0.537 / 0.550, 12/200; bimodal 0.566 / 0.517 / 0.529 / 0.524 / 0.559, 188/200.)
+
+Three things the tables say. (i) Where skill is *legible from a description*, the frameworks are as good as it gets:
+on the bimodal population the question is only "is this one of the 20% big models with a tool?", the agents'
+self-descriptions answer it, and every framework sits on the oracle (0.566) while MIDIAN's 3-probe estimates trail by
+0.04. On heavy_tail the two are close. (ii) Where skill is *family-specific*, descriptions fail and the frameworks
+collapse: on the specialist population they score 0.39 against 0.75 for MIDIAN and 0.79 for MIDIAN-V, losing every
+one of 200 cells by 0.28–0.36. Averaged over shapes that is −0.10 to −0.13 per framework. (iii) The frameworks are
+flat in β (±0.02): self-descriptions overclaim by +0.27 and correlate 0.36 with S, so lying about a channel that
+carries little family-level signal changes nothing. Per task a framework spends 12 messages, 10 comparisons and one
+or more supervisor LLM calls (0.6–8.2 s wall); MIDIAN spends 6 messages and 30 comparisons with no LLM call,
+MIDIAN-V 2 messages and 1 comparison (§6). At n=100 MIDIAN-V and plain MIDIAN are indistinguishable (Δ −0.003 and
++0.004); verification pays only once cohorts are deep enough to promote through.
 
 **Fallbacks.** When a framework's supervisor returns no valid agent name the adapter falls back to declared-argmax
 over its own shortlist and counts it (`method_stats`). Rates: CrewAI 79–84% of tasks (its hierarchical manager
@@ -153,7 +165,7 @@ each round) but learns outcomes only through the same trimmed peer-report channe
 | wins / non-tied cells | 0/60 | 0/60 | 0/60 | 26/58 |
 
 Plain MIDIAN: −0.056 / −0.060 / −0.072 at β ≤ 0.25 (0/60 each, sign-test p ≈ 2e-18) and +0.049 at β=0.5 (32/60,
-p = 0.7). At β=0.5 with low-skill liars: MIDIAN 0.60, MIDIAN-V 0.53, peer halving 0.41. Trusted-observer halving sits
+p = 0.7). At β=0.5 with low-skill liars: MIDIAN 0.57, MIDIAN-V 0.53, peer halving 0.41. Trusted-observer halving sits
 exactly on the oracle (0.722 vs 0.723) at every β, so halving's edge at β ≤ 0.25 is adaptive allocation, not
 information MIDIAN lacks; its collapse at β=0.5 is early elimination on poisoned reports, which the tree's
 per-cohort trimming survives. On RouterBench replay (real outcomes, K=64) the same pattern holds: peer halving leads
@@ -209,21 +221,24 @@ framework (16,000 at b=1; 5,000–8,000 against the multi-call Magentic-One / CA
 
 | method | b=1 | b=3 | b=10 | | n=10k b=1, β=0 | β=0.25 |
 |---|---|---|---|---|---|---|
-| oracle | 0.723 | 0.723 | 0.723 | | 0.862 | 0.862 |
-| sequential_halving (trusted) | 0.479 | 0.722 | 0.724 | | 0.583 | 0.583 |
-| MIDIAN-V r=10 | 0.593 | 0.675 | 0.698 | | 0.679 | 0.679 |
-| MIDIAN | 0.585 | 0.650 | 0.702 | | 0.684 | 0.683 |
-| flat probe argmax | 0.481 | 0.620 | 0.695 | | 0.580 | 0.580 |
-| warm_start_bandit | 0.676 | 0.684 | 0.704 | | 0.847 | 0.807 |
-| declared_argmax | 0.673 | 0.673 | 0.673 | | 0.853 | 0.767 |
-| ucb / thompson (late) | 0.449 / 0.477 | 0.572 / 0.606 | 0.671 / 0.679 | | 0.581 / 0.573 | 0.581 / 0.566 |
+| oracle | 0.723 | 0.723 | 0.732 | | 0.862 | 0.862 |
+| sequential_halving (trusted) | 0.479 | 0.722 | 0.733 | | 0.583 | 0.583 |
+| MIDIAN-V r=10 | 0.593 | 0.675 | 0.710 | | 0.679 | 0.679 |
+| MIDIAN | 0.585 | 0.650 | 0.712 | | 0.684 | 0.683 |
+| flat probe argmax | 0.481 | 0.620 | 0.703 | | 0.580 | 0.580 |
+| warm_start_bandit | 0.676 | 0.684 | 0.713 | | 0.847 | 0.807 |
+| declared_argmax | 0.673 | 0.673 | 0.679 | | 0.853 | 0.767 |
+| ucb / thompson (late quarter) | 0.449 / 0.477 | 0.572 / 0.606 | 0.671 / 0.679 | | 0.581 / 0.573 | 0.581 / 0.566 |
+
+(budget_sweep on the 44 (shape, seed, b) cells every listed method has completed; the oracle's b=10 value differs
+from b=1 only because two bimodal b=10 cells are still running and are excluded for every method alike.)
 
 At b=1 the tree is the best probe-only method (+0.10 over flat and halving: one probe per cell is too thin to halve
 on), but any method that also reads the *programmatic* declaration channel (declared_argmax, warm-start bandit,
 verify_on_claim) beats every probe-only method at b=1 and at n=10k, because that channel is S + N(0, 0.05) for honest
 agents and 75% of agents are honest. This is a property of the synthetic declaration channel, not of the LLMs: with
 the agents' real self-descriptions declared_argmax falls to 0.55 (§3). Halving needs b ≥ 3 to pay off, and from b=3 on it sits on the oracle (paired delta −0.001 at b=3, +0.001
-at b=10): no method beats the oracle on paired cells; an unpaired mean can only appear to when rows are missing.
+at b=10). No method beats the oracle on paired cells; an unpaired mean can only appear to when rows are missing.
 
 ## 8. Learning over the stream
 
@@ -248,13 +263,14 @@ online updates learn. Frameworks gain 0.00–0.015 from early to late (fw grids,
 | # | target | verdict | evidence (live_f1_n1000 unless stated) |
 |---|---|---|---|
 | 1 | declared methods lose ≥0.25 from β=0→0.5; MIDIAN and probe-only move ≤0.03 | **MISS** (both halves) | declared lose 0.07–0.12 (declared_argmax −0.074, softmax −0.124, disrouter −0.112; llm_supervisor −0.013); frameworks move ≤0.012; probe-only flat/bandits move ≤0.006 but MIDIAN loses 0.071 (0.104 at n=100) under collusion at β=0.5 |
-| 2 | MIDIAN = flat_probe_argmax within 0.02 at β=0; comparisons r·log_r n vs n | **PASS** at n=1000 (+0.019 paired, 60 pairs), **MISS** at n=100 (+0.080) and n=10k (+0.032); exponents 0.14 vs 1.00 PASS | the online path update, not the tree, makes the difference: MIDIAN with updates off is −0.009 from frozen flat |
-| 3 | trimming separates from δ=0 only where β·r exceeds the trim (β > 0.3) | **MISS** | midian_internals: δ=1/3 − δ=0 = −0.001 / −0.003 / −0.018 at β = 0.1 / 0.25 / 0.5 with collusion; the separation is in the *predicted* regime but in the wrong direction |
+| 2 | MIDIAN = flat_probe_argmax within 0.02 at β=0; comparisons r·log_r n vs n | **MISS** on the equality as stated: MIDIAN is +0.044 above flat at n=1000 (60 pairs), +0.072 at n=100, +0.104 at n=10k; **PASS** for the max-tree itself (updates off: −0.009) and for the exponents (0.14 vs 1.00) | the online path update, not the tree, is the difference; the analyzer's earlier +0.019 had averaged MIDIAN's variants together (fixed) |
+| 3 | trimming separates from δ=0 only where β·r exceeds the trim (β > 0.3) | **MISS** | midian_internals, r=10 with collusion: δ=1/3 − δ=0 = +0.004 / −0.004 / −0.036 at β = 0.1 / 0.25 / 0.5 (averaged over r: −0.001 / −0.003 / −0.018); the separation is in the *predicted* regime but in the wrong direction |
 | 4 | verify_on_claim within 0.03 of oracle at β ≤ 0.1, loses ≥0.10 by β=0.5 | **MISS** | gap 0.050 at β ≤ 0.1; loses 0.037 (0.687→0.650), not 0.10 (0.023 on extra) |
-| 5 | sequential_halving ≈ flat at equal budget; bandits' late success ≥ MIDIAN's at b=1 | **MISS** (both halves) | halving − flat = +0.057 (f1), +0.087 (extra), +0.048 (budget), −0.046 (n=10k); b=1 late success ucb − MIDIAN = −0.135, thompson −0.107 (budget_sweep), −0.086 / −0.107 (n=10k) |
+| 5 | sequential_halving ≈ flat at equal budget; bandits' late success ≥ MIDIAN's at b=1 | **MISS** (both halves) | halving − flat paired = +0.103 (f1), +0.148 (extra), +0.003 (n=10k, b=1); b=1 late-quarter success ucb − MIDIAN = −0.138, thompson −0.110 (budget_sweep), −0.086 / −0.107 (n=10k) |
 | 6 | argmax-vs-floor gap largest under heavy_tail, smallest under iid_uniform | **MISS** (partial) | gaps: heavy_tail 0.175 ≈ specialist 0.173 > bimodal 0.140 (f1); iid_uniform 0.166 ≈ correlated 0.163 (extra) — heavy_tail is largest but iid_uniform is not smallest |
 
-Six pre-registered expectations, one pass (T2 at the pre-registered n=1000, plus its scaling half), five misses.
+Six pre-registered expectations: five misses, and T2 split (its equality half missed because online MIDIAN
+beats flat by 0.04, its max-tree and scaling halves passed).
 No parameter of plain MIDIAN was changed after the first run; every improvement is a labeled variant.
 
 ## 10. Replay backend (RouterBench real outcomes, K=64 real categories, n=1000, 10 seeds, CPU)

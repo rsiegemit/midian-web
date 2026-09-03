@@ -8,12 +8,14 @@ LlamaIndex, smolagents, CAMEL), along three axes: population size n (10² to 10�
 skill structure. Every method is charged for every probe, report, message, hop and comparison it makes, so the
 comparison is success *and* cost.
 
-The headline result (live LLM population, n = 1000, paired cells, 95% CI): pre-registered MIDIAN routes correctly
-0.65 of the time and MIDIAN-V 0.66–0.67, versus 0.49–0.54 for every one of the ten frameworks, 0.62 for a flat probe
-scan, 0.55 for a one-call LLM supervisor and 0.73 for the oracle. MIDIAN-V does it with 2 messages and 1 comparison
+The headline result (live LLM population, n = 1000, paired cells, 95% CI): MIDIAN routes correctly 0.64 of the
+time and MIDIAN-V 0.66, versus 0.51–0.54 for every one of the ten frameworks, 0.61 for a flat probe scan, 0.56 for a
+one-call LLM supervisor and 0.72 for the oracle. The average hides a split: on populations where skill is legible from
+a self-description (a minority of big tool-using models) the frameworks sit on the oracle, and on populations where
+skill is family-specific they collapse to 0.39 against MIDIAN's 0.75. MIDIAN-V does it with 2 messages and 1 comparison
 per task; a framework spends 12 messages, 10 comparisons and at least one supervisor LLM call. Full results, the
-honest control that beats MIDIAN (adaptive sequential halving) and the six pre-registered targets (one pass, five
-misses) are in [`RESULTS_rte.md`](RESULTS_rte.md).
+honest control that beats MIDIAN (adaptive sequential halving) and the six pre-registered targets (five misses and one split
+verdict) are in [`RESULTS_rte.md`](RESULTS_rte.md).
 
 ---
 
