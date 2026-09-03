@@ -10,7 +10,7 @@ programme, re-analysed with the v2 analyzer: per-channel tables, one name per ar
 `TARGETS_rte.md` (frozen), v2 `TARGETS_rte_v2.md` (committed before any v2 launch). Plain MIDIAN's parameters never
 changed; every mechanism added after the first run is a labeled variant.
 
-## Figure guide (`figures/`; every error bar is a 95% bootstrap over seeds within a cell, stated in each caption)
+## Figure guide (`figures/`; every error bar is a 95% bootstrap over seeds within a cell, stated in each caption; per-task message and comparison axes include MIDIAN's observe-time path update, commit 3415f03)
 
 | figure | what it shows | read it with |
 |---|---|---|
@@ -59,6 +59,13 @@ The 2026-09-02 figures A–G (5 seeds, pooled error bars) are kept under `figure
 - **Pairing and statistics.** A cell fixes (shape, β, liar selection, channel, …); within a cell and seed every method
   sees the same agents, liars and task stream. Deltas are paired by seed; intervals are 95% percentile bootstrap;
   `WITHIN_FLOOR` = a delta inside plain MIDIAN's own seed envelope in that cell (0.044 on average at n = 1000).
+
+Per-task costs include the observe-time path update (commit 3415f03: after every routed task MIDIAN recomputes the
+chosen agent's path, r comparisons and one child→parent message per level, for plain and cached variants alike; the
+analyzer adds it to rows written before the fix). MIDIAN-V's saving over MIDIAN is the descent (1 vs 30 comparisons,
+2 vs 6 messages), not the update (30 comparisons, 3 messages, common to both): at n = 1000, r = 10 (depth 3) plain
+MIDIAN is 60 comparisons / 9 messages per task, MIDIAN-V and MIDIAN-VA 31 / 5, MIDIAN-A 60 / 9, MIDIAN r = 5 (depth 5)
+50 / 15, MIDIAN-V r = 5 26 / 7; at n = 10,000 (depth 4) 80 / 12 and 41 / 6; r = 20 120 / 9 and 61 / 5.
 
 Arms, one name each: `midian` (plain, r = 10, δ = 1/3, online), `midian_v` / `midian_v_r5` (verified promotion,
 cached root pick; post-hoc 2026-09-02, definition in `rte/methods/midian_v.py`), `midian_sh` (successive halving
@@ -253,7 +260,7 @@ found, but the cohort was random. midian_sh − midian: +0.002 / +0.006 / −0.0
 (0/30 at low-skill collusion, −0.143): early elimination on poisoned reports. midian_sha − midian_a: +0.003 / +0.002 /
 +0.003 / −0.004 — the audits repair SH's collapse (+0.189 over SH at β = 0.5) but SH adds nothing on top of A.
 midian_v − midian +0.009 [+0.003, +0.015] here (+0.016 / +0.020 / +0.028 at β ≤ 0.25, −0.029 at β = 0.5). Costs are
-unchanged for SH (48,000 probes, 432,000 reports, 6 messages and 30 comparisons per task, exponent n^0.14 by
+unchanged for SH (48,000 probes, 432,000 reports, 9 messages and 60 comparisons per task — 6 / 30 for the descent plus 3 / 30 for the observe-time path update — exponent n^0.14 by
 construction) and 1.050× build probes for A / SH+A (50,382; audits are probes; online audits are reports).
 Pre-registered: **V2-1 MISS** (both halves), **V2-2 HIT**, **V2-3 MISS** by −0.015 at β = 0 only (−0.000 / −0.008 / −0.004
 elsewhere; inside MIDIAN's 0.070 seed envelope), **V2-5 MISS** (LinUCB is 0.025 below flat_online, not between it and
@@ -301,7 +308,8 @@ dips ≤ 0.03 after an event and is back within the next block; midian_v, whose 
 churn, loses 0.06 and does not recover; linucb and the frameworks degrade monotonically at 30% (0.60 → 0.37 and 0.52 →
 0.39 over the stream) because their statistics/descriptions refer to agents that no longer exist. MIDIAN's repair is the
 work-order formula exactly (K·b probes, K·b·(r−1) reports, (r−1)+depth messages per arrival: 4,800 / 43,200 / 1,200 per
-event at 10%). **V2-6**: quality half HIT (−0.008 at 10%, within 0.03; halving-stale loses 0.13 at 30%, ≥ 0.05);
+event at 10%; runs after commit 3415f03 also charge the path recompute per arrival, K·r·depth = 480 comparisons and K·depth = 48
+messages, which these rows predate). **V2-6**: quality half HIT (−0.008 at 10%, within 0.03; halving-stale loses 0.13 at 30%, ≥ 0.05);
 cost half MISS as written — repair is 10% of build per event at 10% churn, not ≤ 3% (the 3% was mis-derived: re-probing
 10% of agents at full b is 10% of the build by definition), and halving-rebuild's repair is 9.4× MIDIAN's, not ≥ 10×.
 Figure H9 shows success and cumulative probes vs task index.
@@ -312,25 +320,27 @@ Per task and at build, n = 1000, reports per probe in every arm:
 
 | method | build probes | build reports | build msgs | msgs/task | comps/task | LLM calls/task |
 |---|---|---|---|---|---|---|
-| midian | 48,000 | 432,000 | 1,010 | 6 | 30 | 0 |
-| midian_v | 47,840 | 430,560 | 1,010 | 2 | 1 | 0 |
-| midian_v_r5 | 48,000 | 192,000 | 1,050 | 2 | 1 | 0 |
-| midian_a | 50,382 (1.050×) | 432,000 (+ online audits as reports) | 1,010 | 6 | 30 | 0 |
+| midian | 48,000 | 432,000 | 1,010 | 9 (6 descent + 3 update) | 60 (30 + 30) | 0 |
+| midian_v | 47,840 | 430,560 | 1,010 | 5 (2 + 3) | 31 (1 + 30) | 0 |
+| midian_v_r5 | 48,000 | 192,000 | 1,050 | 7 (2 + 5) | 26 (1 + 25) | 0 |
+| midian_a | 50,382 (1.050×) | 432,000 (+ online audits as reports) | 1,010 | 9 | 60 | 0 |
 | flat_probe_argmax (either) | 48,000 | 0 | 0 | 0 | 1,000 | 0 |
 | sequential_halving_peer | 44,928 | 404,352 | 0 | 0 | 1 | 0 |
 | declared_argmax | 0 | 0 | 1,000 | 0 | 1,000 | 0 |
 | llm_supervisor | 0 | 0 | 1,000 | 22 | 20 | 1 |
 | any framework (own selection) | 0 | 0 | 1,000 | 12 | 10 | ≥ 1 |
-| framework + midian_v shortlist | 47,840 | 430,560 | 2,010 | 14 | 11 | ≥ 1 |
+| framework + midian_v shortlist | 47,840 | 430,560 | 2,010 | 17 | 41 | ≥ 1 |
 
 Exponents over n = 10² … 10⁷ (bernoulli calibrated to the measured S; replay 10⁴ … 10⁶; live 10² … 10⁴): MIDIAN
-per-task comparisons/messages/hops = r·⌈log_r n⌉ (fitted n^0.14 [0.13, 0.15] on the mixed set, n^0.11 on bernoulli
+per-task comparisons = r·⌈log_r n⌉ for the descent plus the same for the path update, messages 3·⌈log_r n⌉ (fitted n^0.14 [0.13, 0.15] on the mixed set, n^0.11 on bernoulli
 alone); midian_v per-task n^0; flat / declared / CNP comparisons n^1.00; build probes n^1.03 for every probe-based
 method (n·K·b), n^0.94 for midian_v; MIDIAN build reports n^1.03.
 
-Break-even against a framework = build cost / per-task saving. Messages and comparisons: after the first task.
-Messages + reports: (432,000 + 1,010 − 1,000) / (12 − 2 − 0) ≈ **43,000 tasks** for midian_v with per-probe reports
-(was 15,900 under per-peer reports), ≈ 19,000 for midian_v_r5. LLM calls: ≈ 48,000 tasks at b = 3 against a one-call
+Break-even against a framework = build cost / per-task saving. Messages: after the first task (1,010 vs 1,000 at build, then
+5 vs 12 per task for midian_v, 9 vs 12 for midian). Comparisons: **never** — with the path update charged, midian_v spends 31
+and midian 60 comparisons per task against a framework's 10 (its shortlist scan); the frameworks' cost is the LLM call, not
+the comparisons. Messages + reports: (432,000 + 1,010 − 1,000) / (12 − 5) ≈ **61,700 tasks** for midian_v with per-probe
+reports (43,000 before the update was charged; 15,900 under per-peer reports), ≈ 38,400 for midian_v_r5. LLM calls: ≈ 48,000 tasks at b = 3 against a one-call
 framework (16,000 at b = 1; 5,000–8,000 against Magentic-One / CAMEL, which make several calls per task).
 Figure H4 plots build + Q·per-task cost against success at Q ∈ {10², 10³, 10⁴, 10⁵} with the break-even Q marked (the framework points refresh when fw_live_* closes).
 
@@ -340,7 +350,7 @@ LlamaIndex 3.1, CAMEL 4.5, Magentic-One 6.8.
 
 ## 6b. Runtime, energy and combined cost (estimate*)
 
-From `scripts/energy.py` (counts × per-call GPU-seconds measured on the live fleet); cumulative cost vs tasks routed in GPU-s, Wh, messages, comparisons, and two combined currencies (joules, critical-path latency) with stated per-event weights. Figures H10, H11.
+From `scripts/energy.py` (counts × per-call GPU-seconds measured on the live fleet; per-task counts include the observe-time path update); cumulative cost vs tasks routed in GPU-s, Wh, messages, comparisons, plus joules and critical-path latency with stated per-event weights. Figures H10, H11.
 Runtime/energy ESTIMATE (*) per method from LLM-call counts x measured per-call GPU cost.  python scripts/energy.py
 Wall-clock in the rows is not used for probe methods (memo hits). Model: GPU-seconds per call = params_b * (A*prompt_tok + B*gen_tok),
 B = 5A (decode is ~5x prefill per token on H100/vLLM), A calibrated so a 7B supervisor call (1,900 prompt + 65 gen tokens) costs
@@ -358,24 +368,25 @@ CUMULATIVE LLM compute after t routed tasks = build + t x per-task (n=1000 speci
 | llm_supervisor | 0 | 0.0138 | 14 | 138 | 1,376 | 26.8 | 15.3 | 221,000 (1,000 + 22/task) | 200,000 (0 + 20/task) |
 | sequential_halving | 259 | 0.0000 | 259 | 259 | 259 | 50.4 | 28.8 | 0 (0 + 0/task) | 10,000 (0 + 1/task) |
 | sequential_halving{"peer_reported":true} | 259 | 0.0000 | 259 | 259 | 259 | 50.4 | 28.8 | 0 (0 + 0/task) | 10,000 (0 + 1/task) |
-| midian_v | 276 | 0.0000 | 276 | 276 | 276 | 53.7 | 30.7 | 21,010 (1,010 + 2/task) | 10,000 (0 + 1/task) |
+| midian_v | 276 | 0.0000 | 276 | 276 | 276 | 53.7 | 30.7 | 51,010 (1,010 + 5/task) | 310,000 (0 + 31/task) |
 | flat_probe_argmax{"online":true} | 277 | 0.0000 | 277 | 277 | 277 | 53.9 | 30.8 | 0 (0 + 0/task) | 10,000,000 (0 + 1000/task) |
 | flat_probe_argmax | 277 | 0.0000 | 277 | 277 | 277 | 53.9 | 30.8 | 0 (0 + 0/task) | 10,000,000 (0 + 1000/task) |
 | linucb_honest | 277 | 0.0000 | 277 | 277 | 277 | 53.9 | 30.8 | 0 (0 + 0/task) | 10,000,000 (0 + 1000/task) |
 | warm_start_bandit | 277 | 0.0000 | 277 | 277 | 277 | 53.9 | 30.8 | 1,000 (1,000 + 0/task) | 10,000,000 (0 + 1000/task) |
-| midian | 277 | 0.0000 | 277 | 277 | 277 | 53.9 | 30.8 | 61,010 (1,010 + 6/task) | 300,000 (0 + 30/task) |
-| midian_sh | 277 | 0.0000 | 277 | 277 | 277 | 53.9 | 30.8 | 61,010 (1,010 + 6/task) | 300,000 (0 + 30/task) |
-| midian_sha | 291 | 0.0000 | 291 | 291 | 291 | 56.5 | 32.3 | 61,010 (1,010 + 6/task) | 300,000 (0 + 30/task) |
-| midian_a | 291 | 0.0000 | 291 | 291 | 291 | 56.5 | 32.3 | 61,010 (1,010 + 6/task) | 300,000 (0 + 30/task) |
+| midian | 277 | 0.0000 | 277 | 277 | 277 | 53.9 | 30.8 | 91,010 (1,010 + 9/task) | 600,000 (0 + 60/task) |
+| midian_sh | 277 | 0.0000 | 277 | 277 | 277 | 53.9 | 30.8 | 91,010 (1,010 + 9/task) | 600,000 (0 + 60/task) |
+| midian_va | 285 | 0.0000 | 285 | 285 | 285 | 55.4 | 31.7 | 51,615 (1,010 + 5/task) | 316,047 (0 + 32/task) |
+| midian_a | 291 | 0.0000 | 291 | 291 | 291 | 56.5 | 32.3 | 91,010 (1,010 + 9/task) | 600,000 (0 + 60/task) |
+| midian_sha | 291 | 0.0000 | 291 | 291 | 291 | 56.5 | 32.3 | 91,010 (1,010 + 9/task) | 600,000 (0 + 60/task) |
 | fw_autogen | 0 | 0.0294 | 29 | 294 | 2,941 | 57.2 | 32.7 | 121,000 (1,000 + 12/task) | 100,000 (0 + 10/task) |
 | fw_maf | 0 | 0.0611 | 61 | 611 | 6,112 | 118.8 | 67.9 | 121,000 (1,000 + 12/task) | 100,000 (0 + 10/task) |
-| fw_google_adk | 0 | 0.0729 | 73 | 729 | 7,286 | 141.7 | 81.0 | 121,000 (1,000 + 12/task) | 100,000 (0 + 10/task) |
-| fw_smolagents | 0 | 0.0736 | 74 | 736 | 7,362 | 143.1 | 81.8 | 121,000 (1,000 + 12/task) | 100,000 (0 + 10/task) |
+| fw_google_adk | 0 | 0.0737 | 74 | 737 | 7,373 | 143.4 | 81.9 | 121,000 (1,000 + 12/task) | 100,000 (0 + 10/task) |
+| fw_smolagents | 0 | 0.0744 | 74 | 744 | 7,444 | 144.7 | 82.7 | 121,000 (1,000 + 12/task) | 100,000 (0 + 10/task) |
 | fw_openai_agents | 0 | 0.0824 | 82 | 824 | 8,238 | 160.2 | 91.5 | 121,000 (1,000 + 12/task) | 100,000 (0 + 10/task) |
 | fw_langgraph | 0 | 0.0835 | 84 | 835 | 8,354 | 162.4 | 92.8 | 121,000 (1,000 + 12/task) | 100,000 (0 + 10/task) |
-| fw_crewai | 0 | 0.1702 | 170 | 1,702 | 17,025 | 331.0 | 189.2 | 121,000 (1,000 + 12/task) | 100,000 (0 + 10/task) |
-| fw_llamaindex | 0 | 0.2088 | 209 | 2,088 | 20,879 | 406.0 | 232.0 | 121,000 (1,000 + 12/task) | 100,000 (0 + 10/task) |
-| fw_camel_workforce | 0 | 0.2678 | 268 | 2,678 | 26,783 | 520.8 | 297.6 | 121,000 (1,000 + 12/task) | 100,000 (0 + 10/task) |
+| fw_crewai | 0 | 0.1721 | 172 | 1,721 | 17,214 | 334.7 | 191.3 | 121,000 (1,000 + 12/task) | 100,000 (0 + 10/task) |
+| fw_llamaindex | 0 | 0.2058 | 206 | 2,058 | 20,585 | 400.3 | 228.7 | 121,000 (1,000 + 12/task) | 100,000 (0 + 10/task) |
+| fw_camel_workforce | 0 | 0.2561 | 256 | 2,561 | 25,613 | 498.0 | 284.6 | 121,000 (1,000 + 12/task) | 100,000 (0 + 10/task) |
 | fw_magentic_one | 0 | 0.5050 | 505 | 5,050 | 50,499 | 981.9 | 561.1 | 121,000 (1,000 + 12/task) | 100,000 (0 + 10/task) |
 | fw_magentic_one{"supervisor":"Qwen/Qwen2.5-14B-Instruct"} | 0 | 0.8020 | 802 | 8,020 | 80,201 | 1,559.5 | 891.1 | 121,000 (1,000 + 12/task) | 100,000 (0 + 10/task) |
 
@@ -383,11 +394,11 @@ CUMULATIVE LLM compute after t routed tasks = build + t x per-task (n=1000 speci
 
 | | autogen | maf | google_adk | smolagents | openai_agents | langgraph | crewai | llamaindex | camel_workforce | magentic_one | magentic_one{"supervisor":"Qwen/Qwen2.5-14B-Instruct"} |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| midian | 9,416 | 4,531 | 3,801 | 3,762 | 3,362 | 3,315 | 1,627 | 1,326 | 1,034 | 548 | 345 |
-| midian_a | 9,884 | 4,756 | 3,990 | 3,949 | 3,528 | 3,480 | 1,707 | 1,392 | 1,085 | 576 | 362 |
-| midian_v | 9,385 | 4,516 | 3,788 | 3,749 | 3,350 | 3,304 | 1,621 | 1,322 | 1,031 | 547 | 344 |
+| midian | 9,416 | 4,531 | 3,756 | 3,720 | 3,362 | 3,315 | 1,609 | 1,345 | 1,081 | 548 | 345 |
+| midian_a | 9,884 | 4,756 | 3,943 | 3,905 | 3,528 | 3,480 | 1,689 | 1,412 | 1,135 | 576 | 362 |
+| midian_v | 9,385 | 4,516 | 3,744 | 3,708 | 3,350 | 3,304 | 1,603 | 1,341 | 1,078 | 547 | 344 |
 
-In MESSAGES the crossing is immediate: MIDIAN 1,010 + 6t vs a framework 1,000 + 12t crosses at t = 2; MIDIAN-V (1,010 + 2t) at t = 1. In COMPARISONS MIDIAN pays 30 per task vs a framework's 10 (MIDIAN-V 1, halving 1, flat 1,000), so MIDIAN never undercuts a framework on comparisons while MIDIAN-V does from the first task. Per task, MIDIAN's cost is communication (messages and comparisons), not LLM compute: it makes no LLM call at route time.
+In MESSAGES (fetch 2 per level + observe-time update 1 per level, commit 3415f03) the crossing is immediate: MIDIAN 1,010 + 9t vs a framework 1,000 + 12t crosses at t = 3; MIDIAN-V (1,010 + 5t) at t = 1. In COMPARISONS MIDIAN pays 60 per task (30 descent + 30 observe-time update) vs a framework's 10 (MIDIAN-V 31 = 1 cached pick + 30 update; halving 1; flat 1,000), so no MIDIAN variant undercuts a framework on comparisons; MIDIAN-V's saving over MIDIAN is the descent, not the update. Per task, MIDIAN's cost is communication (messages and comparisons), not LLM compute: it makes no LLM call at route time.
 
 MIDIAN's 48,000-probe build by population shape (GPU-s): specialist 277, heavy_tail 84, bimodal 98; the crossings scale with it (heavy_tail and bimodal cross ~3x sooner).
 Reading: against a one-call framework (AutoGen) MIDIAN breaks even after ~9,400 tasks on specialist (~2,900 on heavy_tail), MIDIAN-A after ~9,900; against the multi-call frameworks (CrewAI, LlamaIndex, CAMEL) after 1,000-1,600 tasks; against Magentic-One after ~570 (7B) / ~340 (14B arm). Before the crossing the framework is cheaper; after it, the probe-based methods' cost is flat while every framework's keeps growing linearly.
@@ -395,7 +406,7 @@ Reading: against a one-call framework (AutoGen) MIDIAN breaks even after ~9,400 
 ## Combined currencies (*)
 
 (a) ENERGY, joules per event: LLM call = GPU-s x 700 W (a 7B supervisor call = 20.6 J; a specialist probe = 4.04 J); message = one RPC handled in ~100 us on a ~10 W core = 0.001 J (pessimistic column: 0.01 J); comparison = one float compare = 1e-08 J.
-(b) LATENCY on the critical path per task: each sequential message hop = 1 ms RTT (MIDIAN: 2 per tree level = its messages/task; MIDIAN-V 2 ms; frameworks and llm_supervisor: 2 hops + the supervisor call at its measured median latency under shared-fleet load); comparisons 10 ns each (flat's 1,000 = 10 us); a route-time probe call (verify_on_claim) 0.3 s.
+(b) LATENCY on the critical path per task: each sequential message hop = 1 ms RTT (MIDIAN: the 2·depth = 6 fetch hops; the observe-time update propagation (1 message per level) is off the critical path and excluded; MIDIAN-V 2 ms; frameworks and llm_supervisor: 2 hops + the supervisor call at its measured median latency under shared-fleet load); comparisons 10 ns each (flat's 1,000 = 10 us); a route-time probe call (verify_on_claim) 0.3 s.
 
 | method | J/task at t=10k (build amortised) | J/task, pessimistic messages | of which LLM J/task | messages J/task | comparisons J/task | latency s/task |
 |---|---|---|---|---|---|---|
@@ -404,29 +415,30 @@ Reading: against a one-call framework (AutoGen) MIDIAN breaks even after ~9,400 
 | llm_supervisor | 9.653 | 9.852 | 9.631 | 0.0221 | 2.00e-07 | 0.5218 |
 | sequential_halving | 18.146 | 18.146 | 18.146 | 0.0000 | 1.00e-08 | 0.0000 |
 | sequential_halving{"peer_reported":true} | 18.146 | 18.146 | 18.146 | 0.0000 | 1.00e-08 | 0.0000 |
-| midian_v | 19.324 | 19.343 | 19.322 | 0.0021 | 1.00e-08 | 0.0020 |
+| midian_v | 19.327 | 19.373 | 19.322 | 0.0051 | 3.10e-07 | 0.0020 |
 | flat_probe_argmax{"online":true} | 19.386 | 19.386 | 19.386 | 0.0000 | 1.00e-05 | 0.0000 |
 | flat_probe_argmax | 19.386 | 19.386 | 19.386 | 0.0000 | 1.00e-05 | 0.0000 |
 | linucb_honest | 19.386 | 19.386 | 19.386 | 0.0000 | 1.00e-05 | 0.0000 |
 | warm_start_bandit | 19.386 | 19.387 | 19.386 | 0.0001 | 1.00e-05 | 0.0000 |
-| midian | 19.392 | 19.447 | 19.386 | 0.0061 | 3.00e-07 | 0.0060 |
-| midian_sh | 19.392 | 19.447 | 19.386 | 0.0061 | 3.00e-07 | 0.0060 |
-| midian_sha | 20.354 | 20.409 | 20.348 | 0.0061 | 3.00e-07 | 0.0060 |
-| midian_a | 20.354 | 20.409 | 20.348 | 0.0061 | 3.00e-07 | 0.0060 |
+| midian | 19.395 | 19.477 | 19.386 | 0.0091 | 6.00e-07 | 0.0060 |
+| midian_sh | 19.395 | 19.477 | 19.386 | 0.0091 | 6.00e-07 | 0.0060 |
+| midian_va | 19.964 | 20.011 | 19.959 | 0.0052 | 3.16e-07 | 0.0021 |
+| midian_a | 20.357 | 20.439 | 20.348 | 0.0091 | 6.00e-07 | 0.0060 |
+| midian_sha | 20.357 | 20.439 | 20.348 | 0.0091 | 6.00e-07 | 0.0060 |
 | fw_autogen | 20.600 | 20.709 | 20.588 | 0.0121 | 1.00e-07 | 1.1132 |
 | fw_maf | 42.797 | 42.906 | 42.785 | 0.0121 | 1.00e-07 | 2.3111 |
-| fw_google_adk | 51.016 | 51.125 | 51.004 | 0.0121 | 1.00e-07 | 2.7547 |
-| fw_smolagents | 51.545 | 51.654 | 51.533 | 0.0121 | 1.00e-07 | 2.7832 |
+| fw_google_adk | 51.624 | 51.733 | 51.612 | 0.0121 | 1.00e-07 | 2.7875 |
+| fw_smolagents | 52.122 | 52.231 | 52.110 | 0.0121 | 1.00e-07 | 2.8144 |
 | fw_openai_agents | 57.682 | 57.790 | 57.669 | 0.0121 | 1.00e-07 | 3.1144 |
 | fw_langgraph | 58.490 | 58.598 | 58.477 | 0.0121 | 1.00e-07 | 3.1580 |
-| fw_crewai | 119.185 | 119.294 | 119.173 | 0.0121 | 1.00e-07 | 6.4338 |
-| fw_llamaindex | 146.168 | 146.277 | 146.156 | 0.0121 | 1.00e-07 | 7.8901 |
-| fw_camel_workforce | 187.491 | 187.600 | 187.479 | 0.0121 | 1.00e-07 | 10.1203 |
+| fw_crewai | 120.514 | 120.622 | 120.501 | 0.0121 | 1.00e-07 | 6.5055 |
+| fw_llamaindex | 144.105 | 144.214 | 144.093 | 0.0121 | 1.00e-07 | 7.7787 |
+| fw_camel_workforce | 179.303 | 179.412 | 179.291 | 0.0121 | 1.00e-07 | 9.6784 |
 | fw_magentic_one | 353.506 | 353.615 | 353.494 | 0.0121 | 1.00e-07 | 19.0802 |
 | fw_magentic_one{"supervisor":"Qwen/Qwen2.5-14B-Instruct"} | 561.422 | 561.531 | 561.410 | 0.0121 | 1.00e-07 | 15.1517 |
 
-Crossings in joules (tasks after which the probe-based method's cumulative energy falls below the framework's): midian: autogen 9,413, maf 4,530, google_adk 3,801, smolagents 3,761, openai_agents 3,361, langgraph 3,315, crewai 1,627, llamaindex 1,326, camel_workforce 1,034, magentic_one 548, magentic_one{"supervisor":"Qwen/Qwen2.5-14B-Instruct"} 345; midian_a: autogen 9,881, maf 4,755, google_adk 3,989, smolagents 3,948, openai_agents 3,528, langgraph 3,479, crewai 1,707, llamaindex 1,392, camel_workforce 1,085, magentic_one 576, magentic_one{"supervisor":"Qwen/Qwen2.5-14B-Instruct"} 362; midian_v: autogen 9,380, maf 4,515, google_adk 3,788, smolagents 3,749, openai_agents 3,350, langgraph 3,304, crewai 1,621, llamaindex 1,322, camel_workforce 1,031, magentic_one 547, magentic_one{"supervisor":"Qwen/Qwen2.5-14B-Instruct"} 344.
-Under any sane weighting the LLM call dominates energy by 3-5 orders of magnitude (20.6 J per supervisor call vs 6e-3 J for MIDIAN's six messages and 3e-7 J for its thirty comparisons per task), so the joule crossings equal the GPU-second crossings to the task; messages dominate MIDIAN's latency (6 ms vs 0.3 us of comparisons) while the supervisor call dominates every framework's (0.5-18 s).
+Crossings in joules (tasks after which the probe-based method's cumulative energy falls below the framework's): midian: autogen 9,415, maf 4,531, google_adk 3,756, smolagents 3,720, openai_agents 3,361, langgraph 3,315, crewai 1,609, llamaindex 1,345, camel_workforce 1,081, magentic_one 548, magentic_one{"supervisor":"Qwen/Qwen2.5-14B-Instruct"} 345; midian_a: autogen 9,882, maf 4,756, google_adk 3,942, smolagents 3,905, openai_agents 3,528, langgraph 3,480, crewai 1,689, llamaindex 1,412, camel_workforce 1,135, magentic_one 576, magentic_one{"supervisor":"Qwen/Qwen2.5-14B-Instruct"} 362; midian_v: autogen 9,382, maf 4,515, google_adk 3,743, smolagents 3,707, openai_agents 3,350, langgraph 3,304, crewai 1,603, llamaindex 1,341, camel_workforce 1,078, magentic_one 547, magentic_one{"supervisor":"Qwen/Qwen2.5-14B-Instruct"} 344.
+Under any sane weighting the LLM call dominates energy by 3-5 orders of magnitude (20.6 J per supervisor call vs 6e-3 J for MIDIAN's six messages and 3e-7 J for its thirty comparisons per task), so the joule crossings equal the GPU-second crossings to the task; messages dominate MIDIAN's latency (6 ms of fetch hops vs 0.6 us of comparisons) while the supervisor call dominates every framework's (0.5-19 s).
 
 ## 7. Budget, by channel (H8)
 
@@ -467,10 +479,10 @@ supervisors pick the same agent on these tasks.)
 | arm | β=0 | β=0.25 | build probes | reports | msgs / comps per task |
 |---|---|---|---|---|---|
 | oracle | 0.859 | 0.859 | | | |
-| midian_v | 0.813 | 0.806 | 479,840 | 4,318,560 | 2 / 1 |
-| midian_sh | 0.794 | 0.772 | 480,000 | 4,320,000 | 8 / 40 |
-| midian | 0.786 | 0.790 | 480,000 | 4,320,000 | 8 / 40 |
-| midian_a | 0.784 | 0.786 | 503,806 | 4,320,000 | 8 / 40 |
+| midian_v | 0.813 | 0.806 | 479,840 | 4,318,560 | 6 / 41 |
+| midian_sh | 0.794 | 0.772 | 480,000 | 4,320,000 | 12 / 80 |
+| midian | 0.786 | 0.790 | 480,000 | 4,320,000 | 12 / 80 |
+| midian_a | 0.784 | 0.786 | 503,806 | 4,320,000 | 12 / 80 |
 | flat_probe_argmax_online | 0.774 | 0.774 | 480,000 | 0 | 0 / 10,000 |
 | warm_start_bandit | 0.749 | 0.803 | 480,000 | 0 | 0 / 10,000 |
 | verify_on_claim | 0.724 | 0.709 | 0 | 0 | 0 / 534 |
@@ -547,6 +559,12 @@ starts at −0.05 and stays; MIDIAN with updates off never moves (−0.12); fram
 - **Wall-clock**: only the supervisor-latency table; everything else mixes memo hits and misses.
 - **Bernoulli sanity numbers** in §4 are 2-seed smoke tests on the synthetic backend, not evidence for any target.
 
+- **Per-task cost accounting was corrected on 2026-09-03 (commit 3415f03).** MIDIAN's observe-time path recompute (r
+  comparisons and one message per level per routed task) had never been charged; every per-task message/comparison
+  figure in this document includes it (plain 60 / 9, MIDIAN-V 31 / 5 at n = 1000; the analyzer adds it to rows written
+  before the fix). Churn rows predate the matching repair charge (K·r·depth comparisons, K·depth messages per arrival).
+  §6b's energy/latency tables carry their own accounting and are not restated here.
+
 ## 12. Deviations as the as-run protocol (summary of DEVIATIONS.md; every bullet is dated there)
 
 v1: NVIDIA/CUDA fleet, Gemma-2 for the non-Qwen half; six families swapped for separable ones (final K = 16); python
@@ -571,13 +589,13 @@ See `RESULTS_channel_tables.md` (generated) for the full β × shape tables per 
 | variant | β=0.1 | β=0.25 | β=0.5 collude | β=0.5 no collude | build reports | msgs / comps per task |
 |---|---|---|---|---|---|---|
 | flat_probe_argmax_frozen | 0.745 | 0.745 | 0.745 | 0.745 | 0 | 0 / 1000 |
-| midian r=10 δ=1/3 | 0.790 | 0.789 | 0.743 | 0.788 | 432k | 6 / 30 |
-| midian r=10 δ=0 | 0.789 | 0.789 | 0.778 | 0.788 | 432k | 6 / 30 |
-| midian r=5 δ=1/3 | 0.792 | 0.791 | 0.728 | 0.789 | 192k | 10 / 25 |
-| midian r=20 δ=1/3 | 0.782 | 0.785 | 0.765 | 0.784 | 912k | 6 / 60 |
-| midian_v r=5 | 0.822 | 0.821 | 0.730 | 0.820 | 192k (per probe) | 2 / 1 |
-| midian_v r=10 | 0.816 | 0.816 | 0.749 | 0.816 | 431k (per probe) | 2 / 1 |
-| midian_v r=20 | 0.785 | 0.786 | 0.764 | 0.785 | 863k (per probe) | 2 / 1 |
+| midian r=10 δ=1/3 | 0.790 | 0.789 | 0.743 | 0.788 | 432k | 9 / 60 |
+| midian r=10 δ=0 | 0.789 | 0.789 | 0.778 | 0.788 | 432k | 9 / 60 |
+| midian r=5 δ=1/3 | 0.792 | 0.791 | 0.728 | 0.789 | 192k | 15 / 50 |
+| midian r=20 δ=1/3 | 0.782 | 0.785 | 0.765 | 0.784 | 912k | 9 / 120 |
+| midian_v r=5 | 0.822 | 0.821 | 0.730 | 0.820 | 192k (per probe) | 7 / 26 |
+| midian_v r=10 | 0.816 | 0.816 | 0.749 | 0.816 | 431k (per probe) | 5 / 31 |
+| midian_v r=20 | 0.785 | 0.786 | 0.764 | 0.785 | 863k (per probe) | 5 / 61 |
 | oracle | 0.861 | | | | | |
 
 **internals_v2 (β = 0.5, specialist, self-described, 5 seeds; r × δ × collude × liar selection; plain MIDIAN vs MIDIAN-A):**
@@ -601,7 +619,7 @@ no-collusion value — the audits remove the colluders before aggregation. At r 
 
 **midian_r20 (all shapes, both channels, β ∈ {0.25, 0.5}, 5 seeds):** midian r=20 vs r=10: −0.013 at β = 0.25, +0.023 at
 β = 0.5 (+0.005 overall, 26/58); midian_v r=20 vs midian r=10: −0.000 / +0.015 (+0.008, 34/60). Cost: r=20 doubles
-build reports (912,000) and per-task comparisons (60) for plain, 898,016 reports and 1 comparison for midian_v. Larger
+build reports (912,000) and per-task comparisons (120) for plain, 898,016 reports and 61 comparisons for midian_v. Larger
 cohorts buy collusion robustness at β = 0.5 and nothing below it.
 
 ## Appendix C — UCB / Thompson (16k arms, Q = 1,000, under-explored by construction)
