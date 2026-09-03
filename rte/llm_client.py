@@ -30,7 +30,7 @@ ENDPOINTS_PATH = Path(os.environ.get("RTE_ENDPOINTS", RTE_DATA / "endpoints.json
 ENDPOINT_DIR = Path(os.environ.get("RTE_ENDPOINT_DIR", ENDPOINTS_PATH.parent / "endpoints.d"))
 CACHE_DIR = Path(os.environ.get("RTE_LLM_CACHE", RTE_DATA / "cache"))
 NOLOCK = os.environ.get("RTE_LLM_CACHE_NOLOCK", "1") == "1"
-MAX_RETRIES = int(os.environ.get("RTE_LLM_RETRIES", "5"))
+MAX_RETRIES = int(os.environ.get("RTE_LLM_RETRIES", "20"))   # ~8 min of capped backoff: survives a registry restore or replica restart
 
 _STATS = {"hits": 0, "misses": 0, "generations": 0, "errors": 0, "retries": 0}
 _LOCK = threading.Lock()
