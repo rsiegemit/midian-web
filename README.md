@@ -89,7 +89,7 @@ updated and its path recomputed. Build costs O(n) probes and reports and O(n) me
 *verified*: candidates promoted to a parent node are re-probed, budget-exactly (level 0 spends b−1 per cell and the
 saved probes go to the promoted candidates), by reporters drawn from sibling subtrees, and the verified value is
 written back. The root's pick per family is cached, so a route costs 1 comparison and 2 messages. `r=5` halves the
-reports again. Other knobs (`observers`, `b0`, `top`, `stratify`) are documented in the file.
+reports again. Other knobs (`observers`, `b0`, `top`) are documented in the file; the spec's `stratify` option is not implemented (DEVIATIONS.md).
 
 **Self-contained rivals** (SPEC §6), grouped by what they read:
 
