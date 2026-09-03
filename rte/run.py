@@ -81,7 +81,9 @@ COMM = ("probes", "reports", "messages", "tasks")      # total communication = t
 
 def metrics(outcomes, liar, build, run, Q, wall_build, wall_route, wall_total):
     late = min(500, max(1, Q // 4)); s = float(np.mean(outcomes))
+    blocks = np.asarray(outcomes, float)[:Q // 100 * 100].reshape(-1, 100).mean(1) if Q >= 100 else np.array([s])
     return {"success": s, "success_late": float(np.mean(outcomes[-late:])), "n_late": late,
+            "success_by_block": [round(float(x), 4) for x in blocks],        # per 100 tasks (learning / churn curves)
             "misroute_to_liar": float(np.mean(liar)),
             **{f"build_{k}": v for k, v in build.items() if k != "tasks"},
             "build_total_comm": sum(build[k] for k in COMM),
