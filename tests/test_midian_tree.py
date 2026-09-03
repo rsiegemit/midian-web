@@ -227,7 +227,8 @@ def test_churn_repairs_only_the_arrived_agents():
     w, M, v, _ = _build("midian", 200, seed=2)
     arrived = np.array([3, 50, 77]); before = M.est.copy(); s0 = w.ledger.snapshot()
     M.churn(arrived, arrived); d = w.ledger.diff(s0)
-    assert d["probes"] == 3 * 16 * 3 and d["reports"] == 3 * 16 * 3 * 9 and d["messages"] == 3 * (9 + M.depth)
+    assert d["probes"] == 3 * 16 * 3 and d["reports"] == 3 * 16 * 3 * 9
+    assert d["messages"] == 3 * (9 + M.depth + 16 * M.depth) and d["comparisons"] == 3 * 16 * M.r * M.depth   # + path recompute (K families, all levels)
     untouched = np.setdiff1d(np.arange(200), arrived)
     assert np.array_equal(M.est[untouched], before[untouched])
     for l in range(M.depth):                                               # tree still consistent after the repair

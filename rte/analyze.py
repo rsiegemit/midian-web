@@ -70,6 +70,13 @@ def prepare(df):
                                for k, v in sorted(json.loads(p).items()))
     df["label"] = [ALIAS.get(l, l) for l in (m if p == "{}" else f"{m}[{short(p)}]" for m, p in zip(df.method, df.params))]
     df["group"] = df.method.map(group_of)
+    legacy = (df.method.str.startswith("midian") & ~df.method.isin(["midian_llm_descent"]) & np.array([d.get("observe_charged") is None for d in stats])
+              & ~df.params.str.contains('"online": ?false', regex=True)).to_numpy()
+    if legacy.any():                                          # observe-time path recompute was uncharged before 2026-09-03 15:20: r*depth comparisons + depth messages per task
+        r = np.array([json.loads(p).get("r", 10) for p in df.params]); depth = np.ceil(np.log(df.n.to_numpy()) / np.log(r)).astype(int)
+        df.loc[legacy, "comparisons_per_task"] = df.loc[legacy, "comparisons_per_task"].to_numpy() + (r * depth)[legacy]
+        df.loc[legacy, "messages_per_task"] = df.loc[legacy, "messages_per_task"].to_numpy() + depth[legacy]
+        if "total_comm_per_task" in df: df.loc[legacy, "total_comm_per_task"] = df.loc[legacy, "total_comm_per_task"].to_numpy() + depth[legacy]
     per = ["probes_per_task", "reports_per_task", "messages_per_task", "tasks_per_task"]
     for c in per + BUILD[:3]:                              # pre-rewrite CSVs lack some counters
         if c not in df: df[c] = 0.0

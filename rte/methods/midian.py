@@ -21,7 +21,7 @@ class Midian(Method):
         self.r, self.delta, self.online, self.verify, self.stratify = int(r), float(delta), bool(online), bool(verify), bool(stratify)
         self.observers = int(observers) if observers else self.r - 1          # peers observing each verification probe (V)
         self.b0, self.cached, self.top = b0, bool(cached), int(top)          # V: level-0 probes per cell; cached root pick; forwarded per family
-        self.cnt = {}
+        self.cnt = {}; self.stats = {"observe_charged": 1}                  # rows before 2026-09-03 15:20 lack observe-time charges (analyzer adds them)
 
     def _cohorts(self, view, key=None):
         """Cohorts of r (-1 pads the last). With key[n]: the last cohort is q random agents, the rest take one random
@@ -127,7 +127,8 @@ class Midian(Method):
 
     def _recompute(self, node, f):
         """Recompute best/summary (and cached candidates) for families `f` (int array) on the path from leaf `node` up."""
-        for l in range(self.depth):
+        for l in range(self.depth):                                     # observe-time cost: r comparisons + 1 message (child->parent update) per level per family
+            self.view.ledger.compare(self.r * len(f)); self.view.ledger.message(len(f))
             v = self._values(l, node, f); s = v.argmax(0)                                            # (r, |f|)
             self.best[l][node, f] = s; self.summary[l][node, f] = v[s, np.arange(len(f))]
             if self.cached:

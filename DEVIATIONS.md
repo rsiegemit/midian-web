@@ -705,3 +705,9 @@
 - 2026-09-03 (simplification pass, byte-identical): `scripts/equivalence.py` fingerprints picks, ledgers and tree arrays for every
   MIDIAN variant before and after a refactor; 0/96 mismatches for the pass that brought midian.py to 150 lines and made
   midian_sh.py call `_est.peer_estimate` round by round.
+- 2026-09-03 15:20 (accounting, found by the user's question "is 1 comparison / 2 messages real?"): MIDIAN's observe-time path
+  recompute (r comparisons and one child->parent update per level, per observed task) was not charged to the ledger, for plain and
+  cached MIDIAN alike, so per-task columns showed fetch-time cost only (plain 30/6, cached 1/2 at n=1000). Now charged in
+  `Midian._recompute`; rows written before this (no `observe_charged` stat) get r*ceil(log_r n) comparisons and ceil(log_r n)
+  messages per task added in `analyze.prepare()`. Honest per-task cost at n=1000, r=10: plain MIDIAN 60 comparisons / 9 messages,
+  MIDIAN-V 31 / 5 (its saving is the descent, not the update); churn repairs charge K*r per level. Picks are unchanged.
