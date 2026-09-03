@@ -112,6 +112,8 @@ grids:
   live_f1_core_s6_10: {<<: *live, seeds: 6-10, methods: [midian, {name: midian, params: {r: 5}}, midian_v, {name: midian_v, params: {r: 5}}, random, declared_argmax,
                        flat_probe_argmax, {name: flat_probe_argmax, params: {online: true}}, sequential_halving, {name: sequential_halving, params: {peer_reported: true}},
                        warm_start_bandit, verify_on_claim, llm_supervisor]}   # headline arms of live_f1_n1000 on 5 more seeds (variance); merge with --grids
+  fw_live_n1000_lowskill: {mirror_of: fw_live_n1000, beta: [0.5], liar_select: [low_skill_first]}   # the regime where the report channel matters most; frameworks + paired arms
+  fw_live_n100_lowskill:  {mirror_of: fw_live_n100,  beta: [0.5], liar_select: [low_skill_first]}
   churn_n1000:      {backend: llm, n: [1000], dist: [specialist, heavy_tail], beta: [0, 0.25], declared_source: [self_described], seeds: 1-5, Q: 1000,
                      blocks: [{churn: {frac: 0.1, every: 200}}, {churn: {frac: 0.3, every: 200}}],
                      methods: [midian, midian_sh, midian_a, midian_v, {name: sequential_halving, params: {peer_reported: true, churn_mode: rebuild}},
