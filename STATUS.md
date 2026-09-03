@@ -66,6 +66,21 @@ midian_v_replication (360 units), internals_v2 (20), variants_f1 (120), midian_r
 live_n10k_v2 (6), budget_b10_shapes (12). Monitor as before; new code paths run live for the first time (midian_a probe_at,
 churn redraw on the llm backend) so scan .err logs early. Then Phase 3 figures (H1-H9) and RESULTS_rte_v2.md.
 
+
+**2026-09-03 01:45 — v2 HANDOFF (user going offline).** Running: ~2,300 CPU shard jobs (sapphire + shared) against the fleet
+(43867113, 8 replicas incl. new 7B 44125204; fleet ends 2026-09-04 05:02 — v2 grids should close before that; if not, relaunch
+`scripts/serve_fleet.sbatch` and re-run `launch_live.sh` for the grids with missing rows: it skips finished rows). Unattended
+finisher `scripts/finish_v2.sh` (job 44125767, partition shared) waits for the last rte_ job, then runs rte.analyze on every v2
+grid, the targets_v2 merge into results/v2_targets, scripts/extra_figs.py, copies figures/, and commits+pushes. Extra-seed
+grids (fw grids seeds 6-10, variants_f1 seeds 6-10, live_f1_core_s6_10) are in the same queue. Background helpers in the
+session scratchpad are all detached (nohup) and may be gone; nothing depends on them.
+To resume in a new session: read this file, then (1) check `squeue -u $USER | grep rte_`, scan logs for Tracebacks (ignore
+analyze.py-only tracebacks from old jobs), (2) for grids with rows missing, `RTE_GRIDS=<g> RTE_SHARD=dist,beta [RTE_SEED_SHARD=1]
+RTE_PARTITION=shared scripts/launch_live.sh`, (3) after finish_v2 ran: fill every TODO(grid) in RESULTS_rte_v2.md from
+results/<grid>/summary.md and results/v2_targets/summary.md, refresh README numbers, commit by explicit paths (author rsiegemit,
+no Claude trailers), push to origin main. Known: MIDIAN-V v2 definition = per-probe reports (DEVIATIONS 2026-09-03); CrewAI
+2026-09-02 rows were a corrupted-store artefact (archived as rows_v1_Q300.d).
+
 ## 3. Method variants in the grids (all paired on the same streams)
 midian (v1, pre-registered), midian(online=false), midian(r=5), midian(verify,cached) = MIDIAN-V, midian(verify,cached,r=5),
 midian_internals adds r∈{5,10,20}×δ∈{0,1/3} and V at r∈{5,10,20}; sequential_halving and sequential_halving(peer_reported);
