@@ -5,7 +5,7 @@
 set -uo pipefail
 RTE_DATA="${RTE_DATA:-/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte}"; PY="$RTE_DATA/env/rte/bin/python"; REPO="$(dirname "$0")/.."
 for f in "$1"/*.json; do
-  key=$("$PY" -c "import json,sys; d=json.load(open(sys.argv[1])); print(next(iter(d)))" "$f"); url=$("$PY" -c "import json,sys; d=json.load(open(sys.argv[1])); print(next(iter(d.values())))" "$f")
+  key=$("$PY" -c "import json,sys; print(json.load(open(sys.argv[1]))['model'])" "$f"); url=$("$PY" -c "import json,sys; print(json.load(open(sys.argv[1]))['url'])" "$f")
   job=${key#*#}; [ "$job" = "$key" ] && job="${2:-}"
   [ -n "$job" ] && squeue -h -j "$job" -o %T 2>/dev/null | grep -q RUNNING && "$PY" "$REPO/scripts/_register_endpoint.py" add "$key" "$url" && echo "restored $key"
 done

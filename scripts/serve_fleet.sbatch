@@ -36,7 +36,7 @@ nvidia-smi --query-gpu=index,name,memory.total --format=csv
 PIDS=()
 cleanup() {
   echo "[fleet] cleanup: deregistering endpoints and killing servers"
-  for m in "${MODELS[@]:-}"; do "$PY" "$REPO/scripts/_register_endpoint.py" remove "$m${RTE_AS_REPLICA:+#${SLURM_JOB_ID:-manual}}" >/dev/null 2>&1 || true; done   # only OUR keys, never a global clear
+  for k in "${KEYS[@]:-}"; do "$PY" "$REPO/scripts/_register_endpoint.py" remove "$k" >/dev/null 2>&1 || true; done   # only OUR keys, never a global clear
   for p in "${PIDS[@]}"; do kill "$p" 2>/dev/null; done
   sleep 5
   for p in "${PIDS[@]}"; do kill -9 "$p" 2>/dev/null; done
@@ -44,8 +44,10 @@ cleanup() {
 trap cleanup EXIT TERM INT
 
 # configs/models.yaml -> "id gpu port gpu_share", largest first.
+KEYS=()
 while read -r MODEL GPU PORT UTIL; do
   [ -z "$MODEL" ] && continue
+  KEYS+=("$MODEL${RTE_AS_REPLICA:+#${SLURM_JOB_ID:-manual}}")
   if ! snapshot_ok "$MODEL"; then
     echo "[fleet] SKIP $MODEL (no complete snapshot in \$HF_HOME; run scripts/01_download_weights.py)"
     continue
