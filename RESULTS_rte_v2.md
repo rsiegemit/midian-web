@@ -1,7 +1,9 @@
 # RESULTS_rte_v2.md — RTE after the v2 work order (DRAFT, 2026-09-03)
 
 Status: v2 grids complete except fw_live_n100 / fw_live_n1000 (10 seeds, Q=1000, fixed adapters) and the two
-_verified grids, which were still running at 13:30 on 2026-09-03; their sections carry `TODO(fw_live_*)` / `TODO(verified)`. Every number without a `TODO(grid)` mark is final and comes from completed grids (the 2026-09-02
+_verified grids, which were still running at 13:30 on 2026-09-03; §1, §2's framework axis and Appendix E are filled PROVISIONALLY from the ~90%-complete framework grids and marked
+\*; the verified-shortlist section (fw_live_n100_verified 64%, fw_live_n1000_verified 42%) and the n = 10k halving row
+stay `TODO`. Every number without a `TODO(grid)` mark is final and comes from completed grids (the 2026-09-02
 programme, re-analysed with the v2 analyzer: per-channel tables, one name per arm, reports per probe, no wall-clock).
 `TODO(grid)` marks a v2 grid that was launched on 2026-09-03 and has not finished; `rte.analyze` fills its section
 (`python -m rte.analyze --grid <g> --grids ...` prints the v1 and v2 target verdicts). Pre-registrations: v1
@@ -49,46 +51,68 @@ inside cohorts), `midian_a` (5% audits, exclusion at two strikes), `midian_sha` 
 
 ## 1. Headline: the ten frameworks vs MIDIAN (H1)
 
-Self-described channel, n = 1000, all 60 cells (3 shapes × 4 β × 5 seeds), Q = 1000 tasks.
-**TODO(fw_live_n1000, fw_live_n100)** — the 2026-09-03 rerun on the fixed adapters (private CrewAI store, delegating
-manager, Magentic-One robust ledger + 14B arm, ADK transfer capture) at 5 seeds / Q = 1000. Until it closes, the
-2026-09-02 numbers (Q = 300; CrewAI's rows invalid, see §11) are:
+Self-described channel, 10 seeds, Q = 1000 tasks, the fixed adapters (private CrewAI store and delegating manager,
+Magentic-One robust ledger with a labeled 14B-orchestrator arm, ADK transfer capture). **All numbers in this section
+are provisional (\*): fw_live_n100 is 2153/2400 rows (89.7%), fw_live_n1000 2156/2400 (89.8%)** — every MIDIAN /
+flat / declared / supervisor / oracle row is complete on all 120 cells; the missing rows are framework cells, mostly
+seeds 6–10 (Magentic-One 65 / 71 rows missing, CAMEL 63 / 59, LlamaIndex 40 / 46, CrewAI 39 / 32, ADK 13 / 6, OpenAI
+11 / 11, LangGraph 9 / 10, AutoGen 5 / 7, smolagents 2 / 2 at n = 100 / 1000). Paired deltas use only the cells a
+framework has finished; the `n` column is its cell count.
 
-| method | n=100 | n=1000 [95% CI] | Δ vs MIDIAN (paired) | cells rival > MIDIAN | fallback rate |
-|---|---|---|---|---|---|
-| oracle | 0.711 | 0.719 [0.689, 0.748] | +0.081 | 60/60 | — |
-| midian_v | 0.623 | 0.659 [0.630, 0.689] | +0.022 | 37/56 | — |
-| midian_v_r5 | 0.630 | 0.656 [0.623, 0.688] | +0.019 | 45/60 | — |
-| **midian** | 0.626 | 0.637 [0.613, 0.663] | 0 | — | — |
-| flat_probe_argmax_frozen | 0.572 | 0.612 [0.583, 0.640] | −0.025 | 24/59 | — |
-| declared_argmax | 0.560 | 0.562 [0.549, 0.574] | −0.076 | 13/60 | — |
-| llm_supervisor | 0.555 | 0.562 [0.546, 0.577] | −0.076 | 28/60 | — |
-| Magentic-One | 0.546 | 0.541 [0.521, 0.562] | −0.096 | 28/59 | 52% (2026-09-02 adapter) |
-| Google ADK | 0.518 | 0.536 [0.514, 0.557] | −0.102 | 29/60 | 21% |
-| CrewAI | 0.536 | 0.535 [0.512, 0.558] | −0.102 | 28/60 | 84% (invalid rows) |
-| smolagents | 0.522 | 0.523 [0.496, 0.549] | −0.114 | 28/60 | 0% |
-| LangGraph | 0.506 | 0.521 [0.494, 0.548] | −0.116 | 28/59 | 6% |
-| AutoGen | 0.511 | 0.520 [0.493, 0.546] | −0.118 | 28/59 | 0% |
-| LlamaIndex | 0.512 | 0.519 [0.491, 0.547] | −0.118 | 28/59 | 0% |
-| OpenAI Agents SDK | 0.506 | 0.519 [0.491, 0.546] | −0.119 | 29/60 | 5% |
-| MAF | 0.517 | 0.518 [0.489, 0.546] | −0.120 | 29/60 | 2% |
-| CAMEL Workforce | 0.514 | 0.510 [0.479, 0.540] | −0.127 | 28/59 | 0% |
-| random | 0.307 | 0.313 [0.291, 0.336] | −0.325 | 0/60 | — |
-
-The average hides the split that decides the paper (figure H1):
-
-| n=1000, by shape | oracle | midian_v | midian | flat (frozen) | frameworks (mean) | cells framework > MIDIAN |
+| method | n=100 [95% CI]\* | n=1000 [95% CI]\* | n | Δ vs MIDIAN, n=1000 (cells won)\* | strict success\* | fallback rate\* (failure / fallback) |
 |---|---|---|---|---|---|---|
-| specialist (3 strong families per agent) | 0.857 | 0.789 | 0.751 | 0.751 | **0.390** | 0 / 200 |
-| heavy_tail (1 in 10 is a big model) | 0.733 | 0.664 | 0.634 | 0.592 | 0.617 | 83 / 200 |
-| bimodal (20% big-with-tools, 80% small) | 0.566 | 0.525 | 0.527 | 0.493 | **0.566** | 200 / 200 |
+| oracle | 0.716 [0.696, 0.736] | 0.723 [0.702, 0.744] | 120 | +0.069 (120/120) | — | — |
+| midian_v_r5 | 0.651 [0.632, 0.669] | 0.665 [0.644, 0.685] | 120 | +0.011 (84/119) | — | — |
+| midian_v | 0.642 [0.623, 0.661] | 0.663 [0.642, 0.684] | 120 | +0.009 (79/118) | — | — |
+| **midian** | 0.639 [0.621, 0.657] | 0.654 [0.636, 0.672] | 120 | 0 | — | — |
+| midian r=5 | 0.636 [0.618, 0.653] | 0.642 [0.624, 0.660] | 120 | −0.012 (40/116) | — | — |
+| flat_probe_argmax_frozen | 0.588 [0.572, 0.604] | 0.612 [0.594, 0.629] | 120 | −0.042 (35/118) | — | — |
+| declared_argmax | 0.570 [0.561, 0.579] | 0.575 [0.567, 0.584] | 120 | −0.079 (27/120) | — | — |
+| llm_supervisor | 0.568 [0.561, 0.575] | 0.568 [0.557, 0.578] | 120 | −0.086 (53/120) | — | 0% |
+| Magentic-One (7B orchestrator) | 0.553 [0.544, 0.561] | 0.550 [0.534, 0.567] | 86 | −0.107 (35/86) | 0.153 | 64.5% (36.9 / 27.6) |
+| Magentic-One, **14B orchestrator** (asymmetric arm) | 0.549 [0.540, 0.557] | 0.546 [0.525, 0.565] | 83 | −0.108 (35/83) | 0.203 | 60.6% (1.6 / 59.1) |
+| Google ADK | 0.539 [0.529, 0.548] | 0.544 [0.527, 0.560] | 114 | −0.109 (50/114) | 0.380 | 28.8% (10.6 / 18.2) |
+| LangGraph | 0.531 [0.521, 0.541] | 0.533 [0.514, 0.552] | 110 | −0.118 (49/110) | 0.422 | 19.9% (0 / 19.9) |
+| AutoGen | 0.529 [0.519, 0.539] | 0.531 [0.511, 0.549] | 113 | −0.122 (50/113) | 0.497 | 6.4% (0 / 6.4) |
+| LlamaIndex | 0.522 [0.510, 0.534] | 0.528 [0.503, 0.553] | 74 | −0.126 (31/74) | 0.476 | 9.4% (0 / 9.4) |
+| smolagents | 0.529 [0.518, 0.539] | 0.527 [0.506, 0.547] | 118 | −0.126 (52/118) | 0.463 | 6.7% (0 / 0.4; rest bad names) |
+| CrewAI (fixed) | 0.527 [0.514, 0.540] | 0.525 [0.502, 0.547] | 88 | −0.136 (36/88) | 0.497 | 5.3% (0 / 5.3) |
+| MAF | 0.530 [0.520, 0.540] | 0.524 [0.503, 0.544] | 120 | −0.130 (53/120) | 0.501 | 2.8% (0 / 2.8) |
+| OpenAI Agents SDK | 0.527 [0.517, 0.537] | 0.523 [0.501, 0.543] | 109 | −0.134 (47/109) | 0.433 | 16.3% (0 / 16.3) |
+| CAMEL Workforce | 0.519 [0.502, 0.534] | 0.516 [0.487, 0.543] | 61 | −0.133 (27/61) | 0.465 | 9.2% (0 / 9.2) |
+| random | 0.315 [0.301, 0.330] | 0.314 [0.299, 0.330] | 120 | −0.340 (0/120) | — | — |
 
-Where skill is legible from a description (bimodal: "is this one of the 20% big models with a tool?") every
-framework sits on the oracle and beats MIDIAN in all 200 cells; where skill is family-specific (specialist) the
-frameworks collapse to 0.39 against 0.75 and lose all 200. Frameworks are flat in β (±0.02): self-descriptions
-overclaim by +0.27 and correlate 0.36 with S, so lying about that channel changes little.
-**TODO(fw_live_*)**: strict-accounting column (`success_strict`), `fallback_rate` for all ten on the fixed adapters,
-and the 14B Magentic-One arm.
+\* provisional: fw_live_n100 89.7% and fw_live_n1000 89.8% complete at 13:40 on 2026-09-03; missing cells listed above.
+Strict success scores every task the framework did not delegate (or named nobody) as 0; "failure" = the framework
+answered the task itself, "fallback" = it returned no usable name and the adapter routed declared-argmax over its
+shortlist. With Q = 1000 the CrewAI rows are a measurement of CrewAI (5% fallback, none of it failures): the 2026-09-02
+84% was the corrupted shared store. Magentic-One's 37% failure rate is real (its orchestrator solves the task in the
+planning stage and declares it satisfied with no speaker); the 14B orchestrator converts almost all of those into
+fallbacks (1.6%) without changing lenient success (−0.006 vs the 7B, 10/26 cells) — so under strict accounting
+Magentic-One is the worst framework (0.15–0.20) and under lenient accounting the best (0.55).
+
+The average hides the split that decides the paper (figure H1; n = 1000, cells available)\*:
+
+| n=1000, by shape\* | oracle | midian_v | midian | flat (frozen) | frameworks mean (min–max) | cells framework > MIDIAN |
+|---|---|---|---|---|---|---|
+| specialist (3 strong families per agent) | 0.861 | 0.795 | 0.778 | 0.728 | **0.391** (0.367–0.444) | 0 / 335 |
+| heavy_tail (1 in 10 is a big model) | 0.734 | 0.666 | 0.643 | 0.586 | 0.629 (0.624–0.631) | 106 / 334 |
+| bimodal (20% big-with-tools, 80% small) | 0.573 | 0.528 | 0.540 | 0.521 | **0.573** (0.569–0.574) | 324 / 324 |
+
+(n = 100: specialist 0.845 / 0.765 / 0.762 / 0.694 / frameworks 0.471, 0 / 317; heavy_tail 0.729 / 0.628 / 0.627 /
+0.543 / 0.555, 22 / 329; bimodal 0.573 / 0.534 / 0.528 / 0.526 / 0.563, 283 / 340.) Where skill is legible from a
+description (bimodal: "is this one of the 20% big models with a tool?") every framework sits on the oracle and beats
+MIDIAN in every cell; where skill is family-specific (specialist) the frameworks collapse to 0.39 against 0.78 and lose
+every cell by 0.33–0.41; on heavy_tail they trail by 0.01. Frameworks are flat in β (±0.02, table columns by β in
+`results/fw_live_n1000/summary.md`): self-descriptions overclaim and carry little family-level signal, so lying about
+that channel changes little. At Q = 1000 and 10 seeds the picture is the 2026-09-02 one within 0.02 on every row.
+
+## 1b. Frameworks given MIDIAN's verified shortlist (H7)
+
+**TODO(verified)**: fw_live_n100_verified is 1619/2520 rows (64.2%) and fw_live_n1000_verified 1062/2520 (42.1%) at
+13:40 on 2026-09-03 (missing rows are seeds 2–10 of Magentic-One, CAMEL, CrewAI, LlamaIndex first); filled when ≥ 90%.
+The 2026-09-02 result (3 seeds, Q = 300, old adapters) was a lift of +0.04 to +0.12 for every framework with every one
+still below `midian_v` alone; figure H7 regenerates from the new rows.
 
 ## 2. Legibility (H2)
 
@@ -105,8 +129,9 @@ and the mean within-family rank correlation, from `scripts/legibility.py` (10 se
 
 Bimodal has only two skill levels, so the within-family ranking is perfect and a description-driven shortlist cannot miss;
 specialist has the highest overall correlation but the frameworks collapse there, because the TF-IDF shortlist has to
-match a task's text to the right *specialty* paragraph before the supervisor ever ranks anyone. The framework-delta axis
-is refilled from the 10-seed rerun when it closes (**TODO(fw_live_*)**, figure H2).
+match a task's text to the right *specialty* paragraph before the supervisor ever ranks anyone. The framework-delta axis (figure H2, provisional\*): frameworks − MIDIAN at n = 1000 is −0.388 on specialist, −0.012 on
+heavy_tail, +0.034 on bimodal (n = 100: −0.288 / −0.070 / +0.037) — monotone in *within-family* Spearman (0.573 → 0.464 → 1.000
+is not monotone, but bimodal's two-level skill makes any description-based shortlist exact), not in the overall correlation.
 
 ## 3. Every rival, by class, on the self-described channel (live_f1_n1000; programmatic in Appendix A)
 
@@ -293,6 +318,48 @@ Figure H4 plots build + Q·per-task cost against success at Q ∈ {10², 10³, 1
 Supervisor latency (the one wall-clock table; frameworks' calls are never memoised; under shared-fleet load), medians
 at n = 1000: AutoGen 0.7 s, CrewAI 0.6, Google ADK 1.0, OpenAI Agents 1.0, LangGraph 1.1, MAF 1.3, smolagents 1.6,
 LlamaIndex 3.1, CAMEL 4.5, Magentic-One 6.8.
+
+## 6b. Runtime and energy (estimate*)
+
+From `scripts/energy.py` (counts × per-call GPU-seconds measured on the live fleet); full method and assumptions below.
+Runtime/energy ESTIMATE (*) per method from LLM-call counts x measured per-call GPU cost.  python scripts/energy.py
+Wall-clock in the rows is not used for probe methods (memo hits). Model: GPU-seconds per call = params_b * (A*prompt_tok + B*gen_tok),
+B = 5A (decode is ~5x prefill per token on H100/vLLM), A calibrated so a 7B supervisor call (1,900 prompt + 65 gen tokens) costs
+1/34 GPU-s = the throughput measured on the saturated 1-GPU 7B replicas (2026-09-03, 4 samples, 32-36 req/s). Energy = GPU-s * W.
+
+Per-call GPU-seconds: 7B supervisor call 0.0294; expected probe/execution call by population shape: specialist 0.00577, heavy_tail 0.00176, bimodal 0.00203 (specialist mixes all 7 models uniformly; heavy_tail 90% 0.5-1.5B; bimodal 80% 0.5B / 20% 7B).
+Framework supervisor cost = measured latency ratio to AutoGen (one call) x the 7B call cost; the 14B Magentic-One arm is scaled by 14/7. CPU-side routing (tree descent, TF-IDF) is microseconds per task and omitted.
+
+| method | build GPU-s | route GPU-s/task | task-execution GPU-s/task (common) | supervisor call-equiv/task | GPU-s per 1k tasks @Q=300 | @Q=1000 | @Q=10000 | Wh per 1k tasks @Q=1000 (700 W) | Wh (400 W) | break-even Q vs AutoGen |
+|---|---|---|---|---|---|---|---|---|---|---|
+| declared_argmax | 0 | 0.0000 | 0.0058 | 0.0 | 0 | 0 | 0 | 0.0 | 0.0 | 0 |
+| verify_on_claim | 0 | 0.0101 | 0.0058 | 0.0 | 10 | 10 | 10 | 2.0 | 1.1 | 0 |
+| llm_supervisor | 0 | 0.0138 | 0.0058 | 0.5 | 14 | 14 | 14 | 2.7 | 1.5 | 0 |
+| fw_autogen | 0 | 0.0294 | 0.0058 | 1.0 | 29 | 29 | 29 | 5.7 | 3.3 | never |
+| fw_maf | 0 | 0.0611 | 0.0058 | 2.1 | 61 | 61 | 61 | 11.9 | 6.8 | never |
+| fw_google_adk | 0 | 0.0704 | 0.0058 | 2.4 | 70 | 70 | 70 | 13.7 | 7.8 | never |
+| fw_smolagents | 0 | 0.0736 | 0.0058 | 2.5 | 74 | 74 | 74 | 14.3 | 8.2 | never |
+| fw_openai_agents | 0 | 0.0796 | 0.0058 | 2.7 | 80 | 80 | 80 | 15.5 | 8.8 | never |
+| fw_langgraph | 0 | 0.0820 | 0.0058 | 2.8 | 82 | 82 | 82 | 15.9 | 9.1 | never |
+| fw_crewai | 0 | 0.1721 | 0.0058 | 5.9 | 172 | 172 | 172 | 33.5 | 19.1 | never |
+| fw_llamaindex | 0 | 0.2136 | 0.0058 | 7.3 | 214 | 214 | 214 | 41.5 | 23.7 | never |
+| sequential_halving | 259 | 0.0000 | 0.0058 | 0.0 | 864 | 259 | 26 | 50.4 | 28.8 | 8814 |
+| sequential_halving{"peer_reported":true} | 259 | 0.0000 | 0.0058 | 0.0 | 864 | 259 | 26 | 50.4 | 28.8 | 8814 |
+| fw_camel_workforce | 0 | 0.2611 | 0.0058 | 8.9 | 261 | 261 | 261 | 50.8 | 29.0 | never |
+| midian_v | 276 | 0.0000 | 0.0058 | 0.0 | 920 | 276 | 28 | 53.7 | 30.7 | 9385 |
+| flat_probe_argmax{"online":true} | 277 | 0.0000 | 0.0058 | 0.0 | 923 | 277 | 28 | 53.9 | 30.8 | 9416 |
+| midian_sh | 277 | 0.0000 | 0.0058 | 0.0 | 923 | 277 | 28 | 53.9 | 30.8 | 9416 |
+| midian | 277 | 0.0000 | 0.0058 | 0.0 | 923 | 277 | 28 | 53.9 | 30.8 | 9416 |
+| linucb_honest | 277 | 0.0000 | 0.0058 | 0.0 | 923 | 277 | 28 | 53.9 | 30.8 | 9416 |
+| flat_probe_argmax | 277 | 0.0000 | 0.0058 | 0.0 | 923 | 277 | 28 | 53.9 | 30.8 | 9416 |
+| warm_start_bandit | 277 | 0.0000 | 0.0058 | 0.0 | 923 | 277 | 28 | 53.9 | 30.8 | 9416 |
+| midian_sha | 291 | 0.0000 | 0.0058 | 0.0 | 969 | 291 | 29 | 56.5 | 32.3 | 9884 |
+| midian_a | 291 | 0.0000 | 0.0058 | 0.0 | 969 | 291 | 29 | 56.5 | 32.3 | 9884 |
+| fw_magentic_one | 0 | 0.4890 | 0.0058 | 16.6 | 489 | 489 | 489 | 95.1 | 54.3 | never |
+| fw_magentic_one{"supervisor":"Qwen/Qwen2.5-14B-Instruct"} | 0 | 0.8088 | 0.0058 | 13.7 | 809 | 809 | 809 | 157.3 | 89.9 | never |
+
+MIDIAN's 48,000-probe build by population shape (GPU-s): specialist 277, heavy_tail 84, bimodal 98; one AutoGen supervisor call = 0.0294 GPU-s, so on specialist the build equals ~9,416 one-call framework tasks.
+Reading: at Q = 1,000 every probe-based method spends ~9x a one-call framework's GPU-seconds (the build dominates); at Q = 10,000 they are level with AutoGen and ~10-30x cheaper than the multi-call frameworks; MIDIAN-A's audits add 5%; MIDIAN-V and halving are the cheapest builds (fewer probes).
 
 ## 7. Budget, by channel (H8)
 
@@ -484,5 +551,21 @@ vs random 0.405 vs MIDIAN 0.73; MetaGPT not run (no selection primitive to inter
 
 ## Appendix E — fallback table
 
-**TODO(fw_live_*)**: per framework and n, `picks / fallbacks / failures / bad_name`, `fallback_rate`, lenient vs
-strict success (from `method_stats`).
+Provisional\* (fw_live_n100 89.7%, fw_live_n1000 89.8% complete; means over finished cells; `fallback_rate` = 1 −
+picks / (picks + fallbacks + failures + bad_name), as the adapter reports it):
+
+| framework | n=100: fallback rate / failures / fallbacks | lenient → strict | n=1000: fallback rate / failures / fallbacks | lenient → strict |
+|---|---|---|---|---|
+| Magentic-One (7B) | 63.5% / 41.8% / 21.6% | 0.553 → 0.170 | 64.5% / 36.9% / 27.6% | 0.550 → 0.153 |
+| Magentic-One (14B orchestrator) | 60.7% / 1.9% / 58.7% | 0.549 → 0.209 | 60.6% / 1.6% / 59.1% | 0.546 → 0.203 |
+| Google ADK | 32.4% / 10.7% / 21.7% | 0.539 → 0.354 | 28.8% / 10.6% / 18.2% | 0.544 → 0.380 |
+| LangGraph | 14.0% / 0 / 14.0% | 0.531 → 0.452 | 19.9% / 0 / 19.9% | 0.533 → 0.422 |
+| OpenAI Agents SDK | 16.7% / 0 / 16.7% | 0.527 → 0.435 | 16.3% / 0 / 16.3% | 0.523 → 0.433 |
+| CAMEL Workforce | 12.3% / 0 / 12.3% | 0.519 → 0.450 | 9.2% / 0 / 9.2% | 0.516 → 0.465 |
+| LlamaIndex | 12.1% / 0 / 12.1% | 0.522 → 0.454 | 9.4% / 0 / 9.4% | 0.528 → 0.476 |
+| CrewAI (fixed) | 9.5% / 2.2% / 7.3% | 0.527 → 0.477 | 5.3% / 0 / 5.3% | 0.525 → 0.497 |
+| AutoGen | 8.5% / 0 / 8.5% | 0.529 → 0.481 | 6.4% / 0 / 6.4% | 0.531 → 0.497 |
+| smolagents | 7.4% / 0 / 1.2% (6% bad names) | 0.529 → 0.462 | 6.7% / 0 / 0.4% (6% bad names) | 0.527 → 0.463 |
+| MAF | 6.2% / 0 / 6.2% | 0.530 → 0.485 | 2.8% / 0 / 2.8% | 0.524 → 0.501 |
+
+\* provisional; the 2026-09-02 CrewAI rows (79–84%, all "fallbacks") were the corrupted shared task store, not CrewAI.

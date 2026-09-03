@@ -37,12 +37,22 @@ def stat(df, key):
 
 
 def ci(x, B=2000):
-    rng = np.random.default_rng(0); x = np.asarray(x, float); x = x[np.isfinite(x)]
+    """95% bootstrap CI of the mean. If `x` is indexed by seed (cells x seeds), resample SEEDS: each seed's mean over the
+    fixed cells is the unit, so the bar is sampling error over seeds, not the between-shape spread of the pooled cells."""
+    rng = np.random.default_rng(0)
+    if isinstance(x, pd.Series) and "seed" in (x.index.names or []):
+        x = x.dropna(); per_seed = x.groupby(level="seed").mean().to_numpy()
+        return np.percentile([per_seed[rng.integers(0, len(per_seed), len(per_seed))].mean() for _ in range(B)], [2.5, 97.5]) if len(per_seed) else (np.nan, np.nan)
+    x = np.asarray(x, float); x = x[np.isfinite(x)]
     return np.percentile([rng.choice(x, len(x)).mean() for _ in range(B)], [2.5, 97.5]) if len(x) else (np.nan, np.nan)
 
 
 def line(ax, s, label, **kw):
-    ax.errorbar(s.mean().index, s.mean().values, yerr=1.96 * s.sem().fillna(0).values, label=label, color=col(label) if "color" not in kw else kw.pop("color"), **STYLE, **kw)
+    """Curve of the mean per x with 95% seed-bootstrap CIs (see ci): `s` is a SeriesGroupBy over the x level."""
+    xs, ys, lo, hi = [], [], [], []
+    for k, g in s:
+        c = ci(g); xs.append(k); ys.append(g.mean()); lo.append(g.mean() - c[0]); hi.append(c[1] - g.mean())
+    ax.errorbar(xs, ys, yerr=[np.nan_to_num(lo), np.nan_to_num(hi)], label=label, color=col(label) if "color" not in kw else kw.pop("color"), **STYLE, **kw)
 
 
 def need(w, labels, fig):
@@ -52,6 +62,8 @@ def need(w, labels, fig):
 
 
 def save(fig, name):
+    fig.text(0.5, -0.005, "Error bars: 95% bootstrap CI over seeds within fixed (shape, β, liar-selection) cells (mean of per-cell means); "
+             "paired-delta bars are the CI of the delta over seeds.", ha="center", va="top", fontsize=7, color="#555")
     fig.savefig(f"{O}/{name}.png", dpi=300, bbox_inches="tight"); plt.close(fig); print(f"[{name}] written")
 
 
