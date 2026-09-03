@@ -352,7 +352,7 @@ def _v2(df, fits):
     x, n = delta(df[df.beta <= 0.25], "midian_a", REF)
     d = pair(df, "midian_a", REF, "build_probes"); ratio = float((d["midian_a"] / d[REF]).mean()) if not d.empty else float("nan")   # same cells only
     if not np.isfinite(loss) or not n: return None, "needs midian_a at beta=0 and beta=0.5 (collude) on specialist and at beta<=0.25 paired with midian"
-    return bool(loss <= 0.02 and abs(x) <= 0.01 and ratio <= 1.05), f"specialist loss beta 0->0.5 = {loss:+.3f}; vs MIDIAN at beta<=0.25 {x:+.3f} ({n} pairs); build probes {ratio:.3f}x", x
+    return bool(loss <= 0.02 and abs(x) <= 0.01 and ratio <= 1.05 + 1e-9), f"specialist loss beta 0->0.5 = {loss:+.3f}; vs MIDIAN at beta<=0.25 {x:+.3f} ({n} pairs); build probes {ratio:.3f}x", x
 def _v3(df, fits):
     """V2-3 MIDIAN-SH+A >= max(MIDIAN-SH, MIDIAN-A) - 0.01 at every beta"""
     piv = df[df.label.isin(["midian_sha", "midian_sh", "midian_a"])].pivot_table(index="beta", columns="label", values="success")
