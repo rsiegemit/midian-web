@@ -106,3 +106,5 @@ flat_probe_argmax and (online); frameworks fw_* and fw_*(retrieval=midian, r∈{
 3. Cleanup: `python -m rte.llm_client compact` (merge memo shards) after the last job; scancel replicas; keep the fleet until done.
 
 **2026-09-03 05:57 — finish_v2 (unattended): RAN PREMATURELY at 05:57 (its squeue poll failed once; grids were NOT closed — corrected in fdaae8f, resubmitted as job 44175864); analyses, targets_v2 merge (results/v2_targets) and figures regenerated. Next: fill RESULTS_rte_v2.md TODO(grid) markers from the summaries.**
+
+**2026-09-03 11:30 — finish_v2 (unattended): all v2 grids closed (3 consecutive empty polls); analyses, targets_v2 merge (results/v2_targets) and figures regenerated. Next: fill RESULTS_rte_v2.md TODO(grid) markers from the summaries.**
