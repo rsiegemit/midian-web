@@ -21,7 +21,7 @@ changed; every mechanism added after the first run is a labeled variant.
 | H3 `H3_consistency_robustness.png` | Every method as a point: success at β=0 (x) vs at β=0.5 with colluding low-skill liars (y). Top-right is good; the diagonal is "immune to lying". | §3, §4 |
 | H4 `H4_cost_quality_breakeven.png` | Cost–quality Pareto: total cost (build + Q·per-task) at Q ∈ {10², 10³, 10⁴, 10⁵} vs success, per currency (messages, comparisons, LLM calls); break-even Q marked. | §6 |
 | H5 `H5_cost_scaling.png` | Cost vs n from 10² to 10⁷ on the calibrated bernoulli world (comparisons, messages, build probes), plus the frameworks' measured supervisor latency under shared-fleet load. | §6 |
-| H6 `H6_midian_vs_halving.png` | MIDIAN, MIDIAN-V, MIDIAN-SH, MIDIAN-A, MIDIAN-SH+A, MIDIAN-VA vs sequential halving (trusted and peer-reported) by β and liar selection; second row = RouterBench replay twin. MIDIAN-A's flat line is the robustness result; SH and peer halving collapse at β=0.5 low-skill. | §4 |
+| H6 `H6_midian_vs_halving.png` | MIDIAN, MIDIAN-V, MIDIAN-SH, MIDIAN-A, MIDIAN-SH+A, MIDIAN-VA vs sequential halving (trusted and peer-reported) by β and liar selection; second row = RouterBench replay twin. Read as MIDIAN → +A (flat in β) → +VA (same, half the per-task cost); V alone is the most exposed line at β=0.5; SH and peer halving collapse at β=0.5 low-skill. | §4 |
 | H7 `H7_shortlist_lift.png` | Each framework with its own TF-IDF shortlist vs with MIDIAN-V's verified cohort (r=10, r=5); reference line = MIDIAN-V alone. (Provisional until the verified grids close.) | §1b |
 | H8 `H8_budget_by_channel.png` | Success vs probe budget b ∈ {1, 3, 10}, split by declaration channel (programmatic = upper bound). | §7 |
 | H9 `H9_churn.png` | Success per 100-task block and cumulative probes across churn events (10% / 30% of agents replaced every 200 tasks): MIDIAN's local repair vs halving-rebuild vs halving-stale vs flat online. | §5 |
@@ -221,9 +221,15 @@ The v2 variants on the same cells (variants_f1, self-described, 10 seeds, 240 un
 0.648 / 0.474, `linucb_honest` 0.642 / 0.641 / 0.642 / 0.642 (below flat_probe_argmax_online 0.667 at every β, −0.025
 paired, 19/239 cells); UCB/Thompson are in Appendix C ("16k arms, Q = 1,000, under-explored by construction").
 
-## 4. MIDIAN vs sequential halving, including SH and A (H6)
+## 4. MIDIAN → MIDIAN-A → MIDIAN-VA, against sequential halving (H6)
 
-`sequential_halving_peer` spends MIDIAN's budget adaptively but learns only through MIDIAN's trimmed report channel.
+Two mechanisms were added to plain MIDIAN as labeled variants: **A** (5% instance audits of reports, two strikes exclude a
+reporter) and **V** (verified promotion + cached root pick). The order in which they are added is the story: audits
+first is monotone at every β, verification first is not. All deltas below are paired on identical (cell, seed) units of
+variants_f1 (3 shapes × 4 β × 2 liar selections × 10 seeds = 240 units, n = 1000, self-described channel, 60 pairs per β;
+mean [95% bootstrap CI over pairs]).
+
+**Step 0 — plain MIDIAN against halving.** `sequential_halving_peer` spends MIDIAN's budget adaptively but learns only through MIDIAN's trimmed report channel.
 240 paired units (live_f1_n1000, both channels; the halving arms do not read declarations).
 
 | midian_v − sequential_halving_peer | β=0 | β=0.1 | β=0.25 | β=0.5 |
@@ -236,13 +242,46 @@ Plain MIDIAN: −0.056 / −0.060 / −0.072 at β ≤ 0.25 (0/60, p ≈ 2e-18) 
 β = 0.5 with low-skill liars: MIDIAN 0.57, midian_v 0.53, halving_peer 0.41. Trusted-observer halving sits on the
 oracle at every β (−0.001 … 0.000), so its edge is adaptive allocation, not information. On RouterBench replay the
 ordering is the same: peer halving +0.04 at β ≤ 0.25, plain MIDIAN +0.10 at β = 0.5.
-**SH, A and SH+A on the same cells (variants_f1: 3 shapes × 4 β × 2 liar selections × 10 seeds = 240 paired units,
-self-described).** Audits are what buy robustness; in-cohort halving buys nothing at β ≤ 0.25 and loses badly under
-collusion.
+
+**Step 1 — audits (MIDIAN-A).** midian_a − midian by β = 0 / 0.1 / 0.25 / 0.5: **+0.000 / +0.004 / +0.019 / +0.069**
+(+0.023 [+0.018, +0.028] overall, 175/214 non-tied cells); at β = 0.5 with colluding low-skill-first liars +0.097, 30/30
+cells, and +0.127 over peer halving. The audits exclude the colluding reporters (at n = 1000 ≈ 99% of liars and no
+honest reporter, bernoulli check) and the estimate stops moving with β: MIDIAN-A is 0.668 / 0.668 / 0.667 / 0.667. Cost:
+1.050× build probes (50,382; audits are probes; online audits are reports), per-task cost unchanged (60 comparisons,
+9 messages). Nothing is given up anywhere. **V2-2 HIT.**
+
+**Step 2 — verification on top (MIDIAN-VA).** midian_va − midian_a by β: **+0.016 / +0.003 / −0.000 / +0.013** (+0.008
+[+0.005, +0.011] overall; +0.014 [+0.005, +0.023] at β = 0.5 low-skill-first, 30 pairs). Again nothing is given up, and
+the per-task cost halves: 31.6 comparisons and 5.06 messages per task instead of 60 and 9 (the descent is one
+comparison at a verified, cached root; the observe-time path update is the same 30 / 3), build probes 0.98× A's
+(49,420), reports 430,560, hops 0. VA is the best MIDIAN variant on average (0.675 vs A 0.667, V 0.653, plain 0.645),
+above V and A on every shape (bimodal 0.545 / heavy_tail 0.679 / specialist 0.802 vs V's 0.521 / 0.648 / 0.791 and A's
+0.552 / 0.660 / 0.790), and flat under collusion (0.680 at β = 0.5, 0.679 with low-skill-first liars). Energy and
+latency sit on V's curve (§6b: 285 GPU-s build, 20.0 J/task). vs plain MIDIAN: +0.031 [+0.025, +0.036] over all 240
+pairs (+0.016 / +0.007 / +0.019 / +0.082); vs peer halving −0.039 / −0.051 / −0.051 / +0.140 (+0.278 at β = 0.5
+low-skill-first).
+
+**Why not verification first.** midian_v − midian: +0.016 / +0.020 / +0.028 at β ≤ 0.25 and **−0.029** at β = 0.5
+(−0.038 with low-skill-first liars: V is 0.531 where plain MIDIAN is 0.569 and peer halving 0.402). V is cheaper and
+better while liars are few and worse than plain MIDIAN once they coordinate, because the verified promotion trusts the
+same corrupted reports. Adding audits then repairs it — midian_va − midian_v **+0.000 / −0.013** [−0.017, −0.010] /
+**−0.009** [−0.014, −0.004] / **+0.110** [+0.089, +0.134] (+0.148 at β = 0.5 low-skill-first) — but gives back 0.009–0.013
+of V's low-β edge. Told in this order the second step is a regression fix. The honest reading of both orders together:
+once audits are in place, V's accuracy edge is mostly absorbed (VA − A is +0.003 / −0.000 at β = 0.1 / 0.25); what
+verification reliably buys on top of a robust estimator is the halved per-task cost, plus +0.016 at β = 0 and +0.013 at
+β = 0.5. At β = 0 VA equals V exactly (no reporter is ever struck). Where VA is below V (β = 0.1, 0.25) the code-path
+hypothesis — not a measured decomposition — is that a struck reporter's probes are also removed from V's verified
+promotion (`_verify(..., exclude)`), which shrinks the verification set. **V2-11 WITHIN_FLOOR**: (i) VA ≥ max(V, A) − 0.01
+fails at β = 0.1 by 0.003 beyond the tolerance (−0.013; −0.017 at β = 0.25 in the replication-merged evaluation, whose
+halving rows are still landing), inside MIDIAN's 0.074 seed envelope; (ii) HIT (+0.014 vs A at β = 0.5
+low-skill-first); (iii) HIT (1.033× V's build probes, per-task cost V's + 2%).
+
+**All variants on the same 240 units, with the negative results (SH, SH+A, LinUCB).**
 
 | success | β=0 | β=0.1 | β=0.25 | β=0.5 all | β=0.5 random liars | β=0.5 low-skill liars | sd (units) |
 |---|---|---|---|---|---|---|---|
 | oracle | 0.723 | 0.723 | 0.723 | 0.723 | 0.723 | 0.723 | 0.118 |
+| midian_va | 0.684 | 0.671 | 0.667 | 0.680 | 0.680 | 0.679 | 0.107 |
 | sequential_halving_peer | 0.722 | 0.722 | 0.718 | 0.540 | 0.678 | 0.402 | 0.165 |
 | midian_sha (SH+A) | 0.670 | 0.670 | 0.670 | 0.663 | 0.663 | 0.663 | 0.098 |
 | midian_a | 0.668 | 0.668 | 0.667 | 0.667 | 0.668 | 0.666 | 0.099 |
@@ -252,48 +291,16 @@ collusion.
 | midian_sh | 0.670 | 0.670 | 0.648 | 0.474 | 0.522 | 0.426 | 0.137 |
 | linucb_honest | 0.642 | 0.641 | 0.642 | 0.642 | 0.642 | 0.642 | 0.078 |
 
-Paired deltas (mean [95% CI], cells won / non-tied): midian_a − midian **+0.023** [+0.018, +0.028], 175/214, entirely
-from β = 0.25 (+0.019) and β = 0.5 (+0.069); at β = 0.5 with colluding low-skill liars midian_a beats plain MIDIAN in
-30/30 cells (+0.097) and peer halving by +0.127 — the audits exclude the colluding reporters (at n = 1000 ≈ 99% of liars
-and no honest reporter, bernoulli check) and the estimate stops moving with β. midian_sh − halving_peer **−0.060**
-[−0.068, −0.052], 18/240 (−0.052 / −0.052 / −0.070 at β ≤ 0.25, every shape: bimodal −0.035, heavy_tail −0.066,
+In-cohort successive halving (SH) buys nothing at β ≤ 0.25 and loses badly under collusion. midian_sh − halving_peer
+**−0.060** [−0.068, −0.052], 18/240 (−0.052 / −0.052 / −0.070 at β ≤ 0.25, every shape: bimodal −0.035, heavy_tail −0.066,
 specialist −0.076): halving inside a cohort of 10 cannot reproduce halving over 1,000 — the cohort's best member is
 found, but the cohort was random. midian_sh − midian: +0.002 / +0.006 / −0.000 at β ≤ 0.25 and **−0.124** at β = 0.5
 (0/30 at low-skill collusion, −0.143): early elimination on poisoned reports. midian_sha − midian_a: +0.003 / +0.002 /
-+0.003 / −0.004 — the audits repair SH's collapse (+0.189 over SH at β = 0.5) but SH adds nothing on top of A.
-midian_v − midian +0.009 [+0.003, +0.015] here (+0.016 / +0.020 / +0.028 at β ≤ 0.25, −0.029 at β = 0.5). Costs are
-unchanged for SH (48,000 probes, 432,000 reports, 9 messages and 60 comparisons per task — 6 / 30 for the descent plus 3 / 30 for the observe-time path update — exponent n^0.14 by
-construction) and 1.050× build probes for A / SH+A (50,382; audits are probes; online audits are reports).
-Pre-registered: **V2-1 MISS** (both halves), **V2-2 HIT**, **V2-3 MISS** by −0.015 at β = 0 only (−0.000 / −0.008 / −0.004
-elsewhere; inside MIDIAN's 0.070 seed envelope), **V2-5 MISS** (LinUCB is 0.025 below flat_online, not between it and
-warm-start; it is flat in β, +0.000).
-
-**MIDIAN-VA (`midian_va` = V's verified promotion and cached root pick + A's 5% report audits with reporter exclusion;
-same 240 variants_f1 units, self-described).** VA is the best MIDIAN variant on average and the only one that is both
-above V at β ≤ 0.25's level and flat under collusion — but it is not ≥ V everywhere:
-
-| success | β=0 | β=0.1 | β=0.25 | β=0.5 all | β=0.5 random liars | β=0.5 low-skill liars | mean | sd (units) |
-|---|---|---|---|---|---|---|---|---|
-| midian_va | 0.684 | 0.671 | 0.667 | 0.680 | 0.680 | 0.679 | 0.675 | 0.107 |
-| midian_v | 0.684 | 0.684 | 0.676 | 0.569 | 0.608 | 0.531 | 0.653 | 0.130 |
-| midian_a | 0.668 | 0.668 | 0.667 | 0.667 | 0.668 | 0.666 | 0.667 | 0.099 |
-| midian | 0.668 | 0.664 | 0.648 | 0.598 | 0.627 | 0.569 | 0.645 | 0.109 |
-
-Paired (mean [95% CI over the 60 (cell, seed) pairs per β]): VA − V **+0.000** / **−0.013** [−0.017, −0.010] / **−0.009**
-[−0.014, −0.004] / **+0.110** [+0.089, +0.134] at β = 0 / 0.1 / 0.25 / 0.5 (+0.148 at β = 0.5 low-skill-first); VA − A
-+0.016 / +0.003 / −0.000 / +0.013 (+0.014 [+0.005, +0.023] at β = 0.5 low-skill-first, 30 pairs); VA − MIDIAN +0.031
-[+0.025, +0.036] over all 240 pairs (+0.016 / +0.007 / +0.019 / +0.082); VA − halving_peer −0.039 / −0.051 / −0.051 /
-+0.140 (+0.278 at β = 0.5 low-skill-first). By shape (all β): bimodal 0.545 / heavy_tail 0.679 / specialist 0.802 vs V's
-0.521 / 0.648 / 0.791 and A's 0.552 / 0.660 / 0.790. So the audits repair V's collusion exposure completely (VA at β = 0.5
-is 0.68 where V is 0.57 and 0.53 under low-skill liars), and at β = 0 VA equals V exactly (no reporter is ever struck).
-At β = 0.1 and 0.25 VA gives back 0.009–0.013 of V's edge: with liars present the audits strike reporters, and a struck
-reporter's probes are also removed from V's verified promotion (`_verify(..., exclude)`), which shrinks the verification
-set — a mechanism hypothesis from the code path, not a measured decomposition. Costs (variants_f1 aggregate): build
-probes 49,420 = **1.033× V** (audits are probes), reports 430,560 = V's, per task 31.6 comparisons / 5.06 messages vs V's
-31 / 5 (the online audits add 2%), hops 0 = V's. Energy and latency therefore sit on V's curve (§6b: 285 GPU-s build,
-20.0 J/task). **V2-11 WITHIN_FLOOR**: (i) fails at β = 0.1 by 0.003 beyond the 0.01 tolerance (−0.013; and −0.017 at
-β = 0.25 in the replication-merged evaluation, whose halving rows are still landing), inside MIDIAN's 0.074 seed
-envelope; (ii) HIT (+0.014 vs A at β = 0.5 low-skill-first); (iii) HIT (1.033× probes, per-task cost V's + 2%).
++0.003 / −0.004 — the audits repair SH's collapse (+0.189 over SH at β = 0.5) but SH adds nothing on top of A. SH's
+costs are plain MIDIAN's (48,000 probes, 432,000 reports, 9 messages and 60 comparisons per task — 6 / 30 for the descent
+plus 3 / 30 for the observe-time path update — exponent n^0.14 by construction). Pre-registered: **V2-1 MISS** (both
+halves), **V2-3 MISS** by −0.015 at β = 0 only (−0.000 / −0.008 / −0.004 elsewhere; inside MIDIAN's 0.070 seed
+envelope), **V2-5 MISS** (LinUCB is 0.025 below flat_online, not between it and warm-start; it is flat in β, +0.000).
 
 **MIDIAN-V replication on ten fresh seeds (midian_v_replication: seeds 11–20, n ∈ {100, 1000}, 3 shapes, β ∈ {0, 0.25,
 0.5}, both channels; 360 units per arm).** This is the confirmatory run for the post-hoc variant, under its definition of

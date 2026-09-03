@@ -91,7 +91,15 @@ updated and its path recomputed. Build costs O(n) probes and reports and O(n) me
 *verified*: candidates promoted to a parent node are re-probed, budget-exactly (level 0 spends b−1 per cell and the
 saved probes go to the promoted candidates), by reporters drawn from sibling subtrees, and the verified value is
 written back. The root's pick per family is cached, so a route costs 1 comparison and 2 messages. `r=5` halves the
-reports again. Other knobs (`observers`, `b0`, `top`) are documented in the file; the spec's `stratify` option is not implemented (DEVIATIONS.md).
+reports again. Other knobs (`observers`, `b0`, `top`) are documented in the file; `stratify=True` (v2) draws cohorts
+stratified by declared family instead of at random.
+
+**MIDIAN-A** (`midian_a.py`, v2). Plain MIDIAN plus audits: 5% of instances are re-probed by the auditor, a reporter
+whose report disagrees with the audit twice is excluded from every later estimate, and audits continue online. Costs
+1.05× build probes, nothing per task. **MIDIAN-VA** (`midian_va.py`, v2) is MIDIAN-A with V's verified promotion and
+cached root pick: the excluded reporters are also removed from the verification. The recommended order of adding
+mechanisms is A then V — see RESULTS_rte_v2.md §4. `midian_sh.py` (successive halving inside cohorts), `midian_sha.py`,
+`stratify` and `linucb_honest.py` are the v2 negative controls.
 
 **Self-contained rivals** (SPEC §6), grouped by what they read:
 
@@ -210,7 +218,7 @@ Per-grid machine summaries are `$RTE_DATA/results/<grid>/summary.md`. The figure
 - **H3** consistency vs robustness: success at β=0 vs β=0.5 with colluding low-skill liars
 - **H4** cost–quality Pareto with break-even Q
 - **H5** cost scaling 10² to 10⁷, plus supervisor latency
-- **H6** MIDIAN, MIDIAN-V, MIDIAN-SH, MIDIAN-A vs sequential halving by β and liar selection; replay twin below
+- **H6** MIDIAN, MIDIAN-A, MIDIAN-VA (and V, SH, SH+A) vs sequential halving by β and liar selection; replay twin below
 - **H7** frameworks given MIDIAN's verified shortlist
 - **H8** budget sweep by declaration channel
 - **H9** churn: success and cumulative probes across churn events
@@ -222,8 +230,11 @@ true skill, so they sit at 0.5 regardless of β and fall to 0.4 on specialist po
 verified cohort lifts every one by 0.04–0.12. Among mechanisms that verify, adaptive sequential halving with a trusted
 observer sits on the oracle, and its peer-reported version still beats MIDIAN-V by 0.04 at β ≤ 0.25 in every cell,
 but collapses at β = 0.5 with low-skill liars (0.41) where MIDIAN holds 0.60: the tree's per-cohort trimming survives
-poisoned reports that early elimination does not. MIDIAN-V matches plain MIDIAN's robustness at β ≤ 0.25 with 1/3
-of the reports and 30× fewer comparisons per task, but is the most exposed variant at β = 0.5.
+poisoned reports that early elimination does not. Adding audits (MIDIAN-A) makes MIDIAN flat in β at 5% more probes
+(+0.07 at β = 0.5, +0.10 with low-skill liars, nothing lost at β ≤ 0.25); adding verification on top (MIDIAN-VA) loses
+nothing at any β and halves the per-task cost (31.6 comparisons and 5 messages instead of 60 and 9). Verification alone
+(MIDIAN-V) is +0.02 at β ≤ 0.25 but the most exposed variant at β = 0.5 (−0.03 vs plain), which is why the order is A
+then V. (RESULTS_rte_v2.md §4.)
 
 ## 8. Design principles and how to extend
 
