@@ -51,7 +51,7 @@ Shard jobs with >=2 units left were restarted to pick this up. Memo load on a co
 **2026-09-02 22:00 — live programme complete; RESULTS_rte.md written.** All live grids closed except 5 budget_sweep rows
 (halving b=10) and Magentic-One seeds 4-5 on the fw grids (24 shards running). Remaining: wait for those, rerun
 `rte.analyze --grid budget_sweep fw_live_n100 fw_live_n1000`, refresh the §1/§7 numbers in RESULTS_rte.md if they move,
-`python -m rte.llm_client compact`, `scancel` replicas + fleet (43867113). Learning-curve script: `$RTE_DATA/scratch/curve.py`.
+`python -m rte.llm_client compact`, keep the fleet and replicas UP (user request 2026-09-02 22:10) for follow-ups. Learning-curve script: `$RTE_DATA/scratch/curve.py`.
 
 ## 3. Method variants in the grids (all paired on the same streams)
 midian (v1, pre-registered), midian(online=false), midian(r=5), midian(verify,cached) = MIDIAN-V, midian(verify,cached,r=5),
