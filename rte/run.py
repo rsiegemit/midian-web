@@ -47,7 +47,7 @@ def method_specs(block):
 def blocks(cfg, grid):
     """Grid -> list of axis blocks: defaults < mirror_of source < grid < each `blocks:` entry."""
     g = dict(cfg["grids"][grid])
-    if "mirror_of" in g: g = {**cfg["grids"][g.pop("mirror_of")], **g}
+    while "mirror_of" in g: g = {**cfg["grids"][g.pop("mirror_of")], **g}      # mirrors may chain (n100 -> n1000 -> ...)
     base = {**cfg["defaults"], **{k: v for k, v in g.items() if k != "blocks"}}
     out = []
     for b in g.get("blocks") or [{}]:
