@@ -59,7 +59,12 @@ Shard jobs with >=2 units left were restarted to pick this up. Memo load on a co
 analysis (0.1/0.5/0.6), midian-core (0.3/0.7/1.5 + Midian.churn), variants (1.1–1.3, 1.6), churn (2.1 infrastructure).
 Grid blocks for 0.4 (fw grids 5 seeds / Q=1000), 1.4 midian_r20, 1.5 stratify, 2.2 live_n10k_v2, 2.3 midian_v_replication
 (seeds 11-20), 2.4 budget_b10_shapes, 2.5 internals_v2, variants_f1 are in configs/grid.yaml; churn_n1000 block pending the
-churn fork's API. Nothing launches before the variant files exist and tests are green.
+churn fork's API. All five forks landed (commits 160d55c, 5e40f9d; suite 371 passed, check_methods OK). LAUNCHED 2026-09-03: the ten
+frameworks (+14B Magentic-One arm) on fw_live_n100/n1000 at Q=1000, 5 seeds (336 jobs; old Q=300 rows archived as
+rows_v1_Q300.d); then, via the scratch launcher, the paired MIDIAN-side arms on the fw grids, both _verified grids,
+midian_v_replication (360 units), internals_v2 (20), variants_f1 (120), midian_r20 (60), stratify (20), churn_n1000 (40),
+live_n10k_v2 (6), budget_b10_shapes (12). Monitor as before; new code paths run live for the first time (midian_a probe_at,
+churn redraw on the llm backend) so scan .err logs early. Then Phase 3 figures (H1-H9) and RESULTS_rte_v2.md.
 
 ## 3. Method variants in the grids (all paired on the same streams)
 midian (v1, pre-registered), midian(online=false), midian(r=5), midian(verify,cached) = MIDIAN-V, midian(verify,cached,r=5),
