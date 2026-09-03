@@ -85,6 +85,10 @@ A backend may change n (e.g. rounding); World re-reads backend.n/K.
 `view.ledger.message(k)` (the `bus` need is now only sugar over the same counter; methods may call `ledger.message`
 directly without declaring `bus`). Rules, applied identically to all methods:
 - A query to one agent and its answer = 2 messages. Reading a centrally held table = 0.
+- Reports (v2 work order 0.3, 2026-09-03): ONE report per (reporter, member, family, probe) in every arm — plain MIDIAN,
+  MIDIAN-V (level 0 and verification), peer-reported halving, referral, gossip — so `reports` = probes × reporters-per-probe
+  (MIDIAN and MIDIAN-V at observers = r−1: exactly probes × (r−1)). `rte/methods/_est.py::peer_estimate` is the one place that
+  probes-then-reports for a batch of (agent, family) cells; `trimmed_by_reporter(rep, delta, s, exclude)` is the one aggregator.
 - EXCLUDED (counted by their own counters): probes (`probes`), peer reports (`reports`), and the final dispatch of the task
   to the chosen agent (`tasks`; identical for every method). Analysis reports both `messages` alone and
   total communication = probes + reports + messages + tasks.

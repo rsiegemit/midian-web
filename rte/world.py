@@ -198,6 +198,11 @@ class View:
         self._require("probe")
         return self._w.probe_many(np.asarray(agents), np.asarray(families), int(reps))
 
+    def probe_at(self, agents, families, k) -> np.ndarray:
+        """Re-run the k-th index-seeded instance of (agent, family): the SAME instance every method saw (audits)."""
+        self._require("probe")
+        return self._w.probe_at(agents, families, k)
+
     def report_channel(self, j: int, a: int, outcome: int) -> int:
         """Peer j reports the outcome it observed for agent a. May be corrupted if j lies."""
         self._require("reports")
@@ -348,6 +353,12 @@ class World:
             zero_pairs = np.empty(uk.size, dtype=bool); zero_pairs[order] = zero_sorted
             ro[idx[zero_pairs[inv]]] = 0
         return out
+
+    def probe_at(self, agents, families, k) -> np.ndarray:
+        """Same-instance re-probe (audits): charged as probes, probe index untouched, epoch marked seen."""
+        a, f, k = np.broadcast_arrays(np.asarray(agents, np.int64), np.asarray(families, np.int64), np.asarray(k, np.int64))
+        self.ledger.probe(a.size); self.seen_epoch[a] = self.epoch[a]
+        return self.backend.execute_many(a, f, probe_seed(self._probe_salt, a, f, k))
 
     def reset(self, tag: str = "") -> None:
         """Start a method: zero the ledger, forget reporters' observations, reset the probe index so a method's

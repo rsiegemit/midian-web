@@ -131,7 +131,7 @@ def test_method_contract(name, world):
     before = world.ledger.snapshot()
     _build(m, world.view(m.needs), name)
     build = world.ledger.diff(before)
-    cap = BUDGET.total_probes(world.n, world.K)
+    cap = BUDGET.total_probes(world.n, world.K) * (1 + getattr(m, "rate", 0))      # audited variants: + audit rate (v2 1.2)
     assert build["probes"] <= cap, f"{name}: build spent {build['probes']} probes, budget is {cap}"
     if "probe" not in m.needs:
         assert build["probes"] == 0, f"{name}: probed without declaring 'probe'"

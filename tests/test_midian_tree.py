@@ -7,6 +7,7 @@ import numpy as np
 import pytest
 
 from rte.budget import Budget
+from rte.methods import load_method
 from rte.methods.midian import Midian
 from rte.methods.random import RandomMethod
 from rte.world import Task, World
@@ -190,3 +191,46 @@ def test_llm_descent_follows_a_parseable_answer(monkeypatch):
             node = int(m.children[l][node, 1 if 1 in ok else ok[0]])
         assert a == node
     assert m.stats["fallbacks"] == 0
+
+
+# ---------------------------------------------------------------- v2 (2026-09-03): per-probe reports, stratify, churn, midian_v
+def _build(name, n, seed=1, beta=0.0, **kw):
+    w = World(n, 16, "specialist", beta, seed=seed); M = load_method(name)(**kw); v = w.view(M.needs)
+    s0 = w.ledger.snapshot(); M.build(v, Budget(3)); return w, M, v, w.ledger.diff(s0)
+
+
+@pytest.mark.parametrize("n", [100, 1000])
+def test_midian_v_reports_one_per_reporter_per_probe(n):
+    """0.3: every arm charges one report per (peer, member, family, probe): reports == probes * (r-1) for V too."""
+    _, _, _, d = _build("midian_v", n)
+    assert d["reports"] == d["probes"] * 9 and d["probes"] <= n * 16 * 3
+
+
+def test_midian_v_equals_midian_verify_cached():
+    wa, A, _, da = _build("midian_v", 300, seed=4, beta=0.25); wb, B_, _, db = _build("midian", 300, seed=4, beta=0.25, verify=True, cached=True)
+    assert da == db and [A.fetch(t) for t in wa.tasks(50)] == [B_.fetch(t) for t in wb.tasks(50)]
+
+
+def test_stratified_cohorts_take_one_member_per_stratum(monkeypatch):
+    """1.5: with exact probes the key is S.mean(1); every full cohort holds exactly one agent from each of the r deciles."""
+    w = World(100, 16, "specialist", 0.0, seed=3); M = load_method("midian")(stratify=True); v = w.view(M.needs)
+    monkeypatch.setattr("rte.methods.midian.probe_outcomes", lambda view, b: np.broadcast_to(w.S[:, :, None], (100, 16, b)).astype(np.float32))
+    s0 = w.ledger.snapshot(); M.build(v, Budget(3)); d = w.ledger.diff(s0)
+    assert d["probes"] == 0 and d["reports"] == 100 * 16 * 3 * 9            # (mocked probes; reports still charged)
+    rest = np.setdiff1d(np.arange(100), M.leaves[-1])                     # the last cohort is the random (short) one
+    stratum = np.empty(100, int); stratum[rest[np.argsort(w.S[rest].mean(1), kind="stable")]] = np.arange(90) // 9
+    for cohort in M.leaves[:-1]:
+        assert sorted(stratum[cohort]) == list(range(10))
+
+
+def test_churn_repairs_only_the_arrived_agents():
+    w, M, v, _ = _build("midian", 200, seed=2)
+    arrived = np.array([3, 50, 77]); before = M.est.copy(); s0 = w.ledger.snapshot()
+    M.churn(arrived, arrived); d = w.ledger.diff(s0)
+    assert d["probes"] == 3 * 16 * 3 and d["reports"] == 3 * 16 * 3 * 9 and d["messages"] == 3 * (9 + M.depth)
+    untouched = np.setdiff1d(np.arange(200), arrived)
+    assert np.array_equal(M.est[untouched], before[untouched])
+    for l in range(M.depth):                                               # tree still consistent after the repair
+        for node in range(len(M.children[l])):
+            for f in (0, 7):
+                vals = M._values(l, node, f); assert M.summary[l][node, f] == vals.max() and M.best[l][node, f] == vals.argmax()

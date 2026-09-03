@@ -9,6 +9,14 @@ from rte.budget import Budget
 from rte.methods import load_method
 
 K, B, Q = 16, 3, 400
+
+
+def vprobes(n, r=10):
+    """MIDIAN-V build probes: n*K*(B-1) at level 0 + e per forwarded candidate, e = floor(n / C), C = child slots above level 0."""
+    C, m = 0, math.ceil(n / r)
+    while m > 1:
+        C += m; m = math.ceil(m / r)
+    return n * K * (B - 1) + C * K * (n // C)
 # documented formulas: build -> dict, fetch -> dict (per task).  n = agents, r = 10 default
 EXPECT = {
     "flat_probe_argmax":   (lambda n: dict(probes=n*K*B, messages=0), lambda n: dict(comparisons=n, messages=0)),
@@ -19,6 +27,7 @@ EXPECT = {
     "verify_on_claim":     (lambda n: dict(probes=0, messages=n),    lambda n: dict(messages=0)),
     "trueskill_per_family":(lambda n: dict(messages=0),              lambda n: dict(comparisons=n, messages=0)),
     "midian":              (lambda n: dict(probes=n*K*B, reports=n*K*B*9), lambda n: dict(hops=math.ceil(math.log10(n)), comparisons=10*math.ceil(math.log10(n)), messages=2*math.ceil(math.log10(n)))),
+    "midian_v":            (lambda n: dict(probes=vprobes(n), reports=vprobes(n)*9), lambda n: dict(hops=0, comparisons=1, messages=2)),
     "cnp_self_bid":        (lambda n: dict(messages=n),              lambda n: dict(messages=2*n, comparisons=n)),
     "declared_argmax":     (lambda n: dict(messages=n),              lambda n: dict(comparisons=n, messages=0)),
     "random":              (lambda n: dict(),                        lambda n: dict(probes=0, messages=0)),
