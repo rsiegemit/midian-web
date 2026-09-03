@@ -102,6 +102,14 @@ verdict (targets_v2 merge: `--grid variants_f1 --grids stratify,internals_v2,liv
 churn_n1000,live_n10k_v2,budget_b10_shapes --out $RTE_DATA/results/v2_targets`); (4) n=10k halving row, churn/budget tails;
 (5) final pass: RESULTS_rte_v2 status line, README, `python -m rte.llm_client compact` (memo ~9 GB, shards accumulate), commit, push.
 
+**2026-09-03 15:45 — INCIDENT: alias-only models.** After the primary fleet retired (12:52) every model existed in endpoints.d only
+as fleet 2's alias `<model>#44175863`; `_generate` required the bare key, so any uncached call to a member model (0.5B–14B, gemma)
+raised "not served" and ~300 shard processes died 14:10–15:25 (all 144 midian_va shards, churn/budget/n10k tails, 138 fw units).
+Fixes: (a) bare entries written for all 7 models via `scripts/_register_endpoint.py add` (endpoints.d = 21; the 7 bare files are NOT
+owned by any fleet job — remove them by hand when fleet 2 exits); (b) `llm_client._generate` now accepts alias-only models
+(7f4ed20); (c) all 300 units resubmitted from `sacct SubmitLine` (resumable, holes only). ETAs pushed ~1.5 h: fw ~18:30,
+verified n100 ~18:00, verified n1000 ~20:00, lowskill ~17:30, midian_va ~17:00, n=10k halving ~2026-09-04 00:00.
+
 ## 3. Method variants in the grids (all paired on the same streams)
 midian (v1, pre-registered), midian(online=false), midian(r=5), midian(verify,cached) = MIDIAN-V, midian(verify,cached,r=5),
 midian_internals adds r∈{5,10,20}×δ∈{0,1/3} and V at r∈{5,10,20}; sequential_halving and sequential_halving(peer_reported);
