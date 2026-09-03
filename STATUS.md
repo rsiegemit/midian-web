@@ -48,7 +48,7 @@ tool runs are now memoised in the shared memo (`llm_client.memo_call`, commit 23
 Shard jobs with >=2 units left were restarted to pick this up. Memo load on a compute node: ~107 s for 37M rows.
 
 
-**2026-09-02 23:30 — everything complete (all grids 100%), RESULTS_rte.md audited against the rows, figures A–G in `figures/`, memo compaction job 44095669 submitted, fleet + replicas kept up per user.**
+**2026-09-02 23:30 — everything complete (all grids 100%), RESULTS_rte.md audited against the rows, figures A–G in `figures/`, memo compacted (job 44095669: 2267 shards -> one `cache/memo_compact.sqlite`, 42.1M rows, 8.2 GB, 42 min), fleet + replicas kept up per user.**
 
 (earlier note) **2026-09-02 22:00 — live programme complete; RESULTS_rte.md written.** All live grids closed except 5 budget_sweep rows
 (halving b=10) and Magentic-One seeds 4-5 on the fw grids (24 shards running). Remaining: wait for those, rerun
