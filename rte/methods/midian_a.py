@@ -3,13 +3,12 @@ instances are re-run by the auditor (`view.probe_at`: the same index-seeded inst
 peer's report about that instance is compared with the true outcome; a reporter with 2 mismatches is excluded from
 every aggregation for the rest of the run (its later reports are still charged, never used). Online, 5% of routed
 outcomes are put to the agent's cohort peers through the report channel and compared the same way; a new exclusion
-re-aggregates that cohort's level-0 estimates from the stored per-peer report means and recomputes their paths.
-Level 0 is MIDIAN-SH's engine with halving off: b probes per cell, one report per peer per probe, est = trimmed mean
-over non-excluded peers of each peer's mean report. Build probes = n*K*b*(1 + audit) <= 1.05x plain."""
+re-aggregates that cohort's level-0 estimates from the stored per-peer report means and recomputes its path.
+Level 0 is MIDIAN-SH's engine with halving off (one round of b probes, one report per peer per probe, est = trimmed
+mean over non-excluded peers of each peer's mean report). Build probes = n*K*b*(1 + audit) <= 1.05x plain."""
 import numpy as np
 
 from .midian_sh import MidianSH
-
 
 STRIKES = 2                                            # mismatches before a reporter is excluded (work order 1.2)
 
@@ -30,17 +29,12 @@ class MidianA(MidianSH):
         self.excluded |= new
         return np.flatnonzero(new)
 
-    def _audit(self, view, ag, fam, surv, k0, rep_ids, out, rep):
-        """Re-run a uniform `rate` of this round's (member, family, probe) instances; compare all peers' claims."""
-        C, K, sz, p = out.shape
-        pick = np.nonzero(view.rng.random((C, K, sz, p)) < self.rate)                  # (c, f, slot, j)
-        if not pick[0].size:
-            return
-        c, f, i, j = pick
-        cidx = np.arange(C)[:, None, None]
-        a = ag[cidx, surv][c, f, i]
-        truth = view.probe_at(a, f, k0[c, f, surv[c, f, i]] + j)                       # same instance, charged as probes
-        self._strike(rep_ids[cidx, surv][c, f, i], rep[c, f, i, :, j], truth[:, None])
+    def _audit(self, view, agents, fams, k, reporters, claims):
+        """Re-run a uniform `rate` of this round's (probe v, pull j) instances; compare every peer's claim with the truth."""
+        v, j = np.nonzero(view.rng.random(claims[:, 0].shape) < self.rate)             # claims[V, s-1, p] -> (V, p) draws
+        if v.size:
+            truth = view.probe_at(agents[v], fams[v], k[v] + j)                            # same instance, charged as probes
+            self._strike(reporters[v], claims[v, :, j], truth[:, None])
 
     def observe(self, task, agent, outcome):
         super().observe(task, agent, outcome)

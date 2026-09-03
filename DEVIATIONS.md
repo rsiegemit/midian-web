@@ -696,3 +696,12 @@
   single round through the SH engine (so its per-peer trimming differs from plain's per-report trimming, see above).
 - 2026-09-03 (variants fork) `_repath` in midian_a.py duplicates the path-recompute loop of `Midian.observe`; fold it into midian.py
   (observe -> _repath) when that file is next touched.
+- 2026-09-03 (MIDIAN-V definition, found by the equivalence guard): charging reports per probe (0.3) is not pure accounting for
+  MIDIAN-V — the report channel's collusion rule ranks "top-20% honest" on what the reporter observed, so per-probe reports and
+  per-peer means give different corrupted values under collusion (est differs in every n=1000 cell, picks in 2/12). The 2026-09-02
+  MIDIAN-V rows therefore measure the per-peer-mean variant; every v2 row (`midian_v`, and `midian(verify=True, cached=True)` run
+  after commit 5e40f9d) measures the per-probe definition in `midian_v.py`, which is the one plain MIDIAN uses and the one the
+  replication grid (2.3) confirms. Plain MIDIAN, r=5 and online=False are fingerprint-identical to the pre-v2 code (36/36 cells).
+- 2026-09-03 (simplification pass, byte-identical): `scripts/equivalence.py` fingerprints picks, ledgers and tree arrays for every
+  MIDIAN variant before and after a refactor; 0/96 mismatches for the pass that brought midian.py to 150 lines and made
+  midian_sh.py call `_est.peer_estimate` round by round.

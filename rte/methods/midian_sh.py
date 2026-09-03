@@ -1,14 +1,13 @@
 """MIDIAN-SH (labeled variant, 2026-09-03): plain MIDIAN whose level-0 estimation runs SUCCESSIVE HALVING inside every
-cohort, per family, through the same trimmed peer-report channel. Round 1 probes all s members, keeps the top
-ceil(s/2) by trimmed peer estimate, round 2 probes the survivors again, ... until one remains; the per-round pulls are
-chosen so the cohort spends exactly the s*b probes plain MIDIAN spends (any remainder goes to the winner). Every probe
-outcome is reported by the s-1 other members (one report per peer per probe); est[m, f] is the trimmed mean over
-PEERS of each peer's mean report about m (`_est.trimmed_by_reporter`, with MIDIAN-A's exclusion mask). Tree,
-descent, online updates: plain MIDIAN. `halving=False` is plain MIDIAN's single round of b probes through this same
-engine (MIDIAN-A builds on it). Overrides only `Midian._level0`."""
+cohort, per family, through the same trimmed peer-report channel. Round 1 probes all s members, keeps the top ceil(s/2)
+by trimmed peer estimate, round 2 probes the survivors again, ... until one remains; the per-round pulls spend exactly
+the s*b probes plain MIDIAN spends (remainder to the winner). Every probe outcome is reported by the s-1 other members
+(one report per peer per probe, `_est.peer_estimate`); est[m, f] is the trimmed mean over PEERS of each peer's mean
+report about m (`_est.trimmed_by_reporter`, with MIDIAN-A's exclusion mask). Tree, descent, online updates: plain
+MIDIAN. `halving=False` is a single round of b probes through the same engine (MIDIAN-A builds on it)."""
 import numpy as np
 
-from ._est import REPORT_ELEMS, trimmed_by_reporter
+from ._est import REPORT_ELEMS, peer_estimate, trimmed_by_reporter
 from .midian import Midian
 
 
@@ -31,8 +30,9 @@ class MidianSH(Midian):
         super().__init__(halving=halving, **p)
         self.halving = bool(halving)
 
-    def _audit(self, view, ag, fam, surv, k0, rep_ids, out, rep):
-        """Report audits (MIDIAN-A overrides). Exclusions land in self.excluded."""
+    def _audit(self, view, agents, fams, k, reporters, claims):
+        """Hook for MIDIAN-A: one round's probes (agents[V], fams[V], first probe index k[V]) and the reporters'
+        claims[V, s-1, p]. Plain SH audits nothing."""
 
     def _level0(self, view, cohorts, b, outcomes=None):
         if outcomes is not None and self.halving:
@@ -58,14 +58,18 @@ class MidianSH(Midian):
             surv = np.broadcast_to(np.arange(s), (C, K, s)).copy()                  # member slots still in the race
             k0 = np.zeros((C, K, s), np.int32)                                      # probes taken so far per slot
             for sz, p in _schedule(s, b, self.halving):
-                mem = ag[cidx, surv]                                                # (C, K, sz)
-                out = outcomes[mem, fam] if outcomes is not None else view.probe_many(mem, fam, p)   # (C, K, sz, p)
-                rep = view.report_many(rep_ids[cidx, surv][..., None], mem[..., None, None], out[..., None, :])
-                self._audit(view, ag, fam, surv, k0, rep_ids, out, rep)              # rep: (C, K, sz, s-1, p)
-                np.add.at(self.rsum[:, :, :s - 1], (mem, fam), rep.sum(-1)); np.add.at(self.rcnt[:, :, :s - 1], (mem, fam), p)
+                mem, f = ag[cidx, surv], np.broadcast_to(fam, (C, K, sz))            # (C, K, sz)
+                rep = rep_ids[cidx, surv].reshape(-1, s - 1)                         # (V, s-1) reporters of each probe
+                if outcomes is not None:                                            # stratify: probes already spent
+                    per = view.report_many(rep[:, :, None], mem.reshape(-1, 1, 1), outcomes[mem, f].reshape(-1, 1, p))
+                else:
+                    _, per = peer_estimate(view, mem.ravel(), f.ravel(), p, rep, self.delta)
+                self._audit(view, mem.ravel(), f.ravel(), k0[cidx, fam, surv].ravel(), rep, per)   # claims per[V, s-1, p]
+                per = per.reshape(C, K, sz, s - 1, p)
+                np.add.at(self.rsum[:, :, :s - 1], (mem, f), per.sum(-1)); np.add.at(self.rcnt[:, :, :s - 1], (mem, f), p)
                 np.add.at(k0, (cidx, fam, surv), p)
                 if sz > 1:                                                          # keep the top half by estimate
-                    e = self._estimates(mem, fam, s)
+                    e = self._estimates(mem, f, s)
                     surv = np.take_along_axis(surv, np.argsort(-e, axis=-1, kind="stable")[..., :-(-sz // 2)], -1)
             self.est[ag.ravel()] = self._estimates(ag[:, :, None], fam.reshape(1, 1, K), s).reshape(-1, K)
         return self.est
