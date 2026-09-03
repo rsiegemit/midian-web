@@ -51,6 +51,7 @@ class LLMBackend:
         self.dir = Path(population_dir) if population_dir else \
             POP_DIR / f"{dist}_n{self.n}_K{self.K}_seed{self.seed}"
         self._S = self._desc = None
+        self._dir0 = self.dir
         self._counts = {"executions": 0, "tool_calls": 0}
         self._lock = threading.Lock()
         global _CURRENT
@@ -58,6 +59,16 @@ class LLMBackend:
 
     def _sig(self, a: int, f: int) -> tuple:
         return signature(self.profiles[a], f, self.max_tokens, self.handicap_max_tokens)
+
+    # ---- churn: fresh profiles for `ids`; S / self-ratings / descriptions are recomputed lazily under a per-event
+    # population dir (every signature is already measured, so only the new agents' descriptions cost generations)
+    def snapshot(self): return ([dict(p) for p in self.profiles], self.dir, self._S, self._desc)
+    def restore(self, snap): self.profiles, self.dir, self._S, self._desc = [dict(p) for p in snap[0]], snap[1], snap[2], snap[3]
+    def redraw(self, ids, rng):
+        tag = int(rng.integers(2 ** 31))
+        new = draw_profiles(len(ids), self.K, self.dist, tag, self.cfg)
+        for i, prof in zip(ids, new): self.profiles[int(i)] = {**prof, "id": int(i)}
+        self.dir, self._S, self._desc = self._dir0 / f"churn_{tag}", None, None
 
     def _by_model(self) -> dict[str, list[int]]:
         g: dict[str, list[int]] = {}

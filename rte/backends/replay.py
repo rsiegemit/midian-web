@@ -75,10 +75,21 @@ class ReplayBackend:
         self._weakest_model = np.argmin(model_cat_acc, axis=0)         # (K,) per-category weakest
         model_rank = np.argsort(-model_cat_acc.mean(axis=1))           # (M,) best -> worst overall
 
+        self._model_rank = model_rank
         self.model_id, self.mask = _draw_profiles(dist, self.n, self.K, model_rank, rng)
-        own = self._model_cat_acc[self.model_id, :]
+        self._S = self._skill(self.model_id, self.mask)
+
+    def _skill(self, model_id, mask):
+        own = self._model_cat_acc[model_id, :]
         weak = self._model_cat_acc[self._weakest_model, np.arange(self.K)]
-        self._S = np.where(self.mask, weak, own).astype(np.float32)
+        return np.where(mask, weak, own).astype(np.float32)
+
+    # ---- churn
+    def snapshot(self): return (self.model_id.copy(), self.mask.copy())
+    def restore(self, snap): self.model_id, self.mask = (x.copy() for x in snap); self._S = self._skill(self.model_id, self.mask)
+    def redraw(self, ids, rng):
+        self.model_id[ids], self.mask[ids] = _draw_profiles(self.dist, len(ids), self.K, self._model_rank, rng)
+        self._S = self._skill(self.model_id, self.mask)
 
     def true_skill(self) -> np.ndarray:
         return self._S

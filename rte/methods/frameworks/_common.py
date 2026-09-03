@@ -1,7 +1,9 @@
 """Shared base for framework rivals: needs={"declared"} only; retrieval adapter (top-k by description
 similarity, SPEC §6A "common scaling adapter"); agent-name <-> id mapping; ledger accounting
 (compare(k) for the k descriptions read, hop(1) for the one supervisor call); fallback to declared
-argmax among the k when the framework fails to pick (counted in stats)."""
+argmax among the k when the framework fails to pick (counted in stats). Two accountings per task: lenient
+(the fallback pick is routed and scored) and strict (`success_strict`: a task the framework did not delegate
+-- worker answered "FAILURE: ..." -- or named nothing/not a candidate scores 0)."""
 from __future__ import annotations
 
 import os
@@ -55,7 +57,8 @@ class FrameworkMethod(Method):
         self.retrieval, self.r = retrieval, int(r)
         if retrieval == "midian":                            # verified shortlist: MIDIAN-V's leaf cohort (k = r)
             self.needs = self.needs | {"probe", "reports"}
-        self.stats = {"picks": 0, "fallbacks": 0, "bad_name": 0}
+        self.stats = {"picks": 0, "fallbacks": 0, "failures": 0, "bad_name": 0, "success_strict": 0.0, "fallback_rate": 0.0}
+        self._picked, self._n, self._strict = False, 0, 0
 
     # ---- world accessors (llm backend provides real text; bernoulli/replay get synthesized descriptions)
     def _texts(self, view):
@@ -97,6 +100,9 @@ class FrameworkMethod(Method):
         return np.argsort(-sims, kind="stable")[:k]
 
     def observe(self, task, agent, outcome):
+        self._n += 1; self._strict += int(outcome) if self._picked else 0
+        self.stats["success_strict"] = self._strict / self._n
+        self.stats["fallback_rate"] = 1 - self.stats["picks"] / max(1, sum(self.stats[k] for k in ("picks", "fallbacks", "failures", "bad_name")))
         if self.retrieval == "midian":
             self.mid.observe(task, agent, outcome)
 
@@ -107,9 +113,11 @@ class FrameworkMethod(Method):
         payload = [{"name": self.names[a], "description": self.desc[a]} for a in cand]
         resp = self.bridge.select(self._task_text(task), payload, self.supervisor, self.base_url, params=self.params)
         choice = resp.get("choice")
-        if choice in self._name2id and self._name2id[choice] in set(int(a) for a in cand):
+        self._picked = choice in self._name2id and self._name2id[choice] in set(int(a) for a in cand)
+        if self._picked:
             self.stats["picks"] += 1
             return self._name2id[choice]
-        self.stats["fallbacks" if choice is None else "bad_name"] += 1
+        failed = str(resp.get("raw") or "").startswith("FAILURE")   # the framework answered instead of delegating
+        self.stats["failures" if failed else "fallbacks" if choice is None else "bad_name"] += 1
         D = self.view.declared
         return int(cand[np.argmax(D[cand, task.family])])

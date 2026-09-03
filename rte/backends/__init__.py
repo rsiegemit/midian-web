@@ -7,6 +7,8 @@ Backend protocol (duck-typed; see bernoulli.py for the reference):
     execute(a, task) -> int                     0/1; Task.instance is the instance seed
     execute_many(agents, families, inst) -> int8 of inst.shape   fresh instances from the given seeds (World index-seeds them)
     stats() -> dict                             e.g. cache hit rate
+    snapshot() / restore(snap) / redraw(ids, rng)   churn support: copy the population state, put it back,
+                                                and replace agents `ids` in place with fresh profiles
 """
 from __future__ import annotations
 

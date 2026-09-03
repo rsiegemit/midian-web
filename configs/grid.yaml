@@ -77,7 +77,8 @@ grids:
   # Headline comparison (SPEC §6A): the 10 frameworks vs MIDIAN, paired with core4 + llm_supervisor. Each framework fetch is
   # a real supervisor call (~1-2 s, serial per framework), so: ecological channel only, 3 seeds, Q=300, one process per method.
   fw_live_n1000:    {backend: llm, n: [1000], dist: [specialist, heavy_tail, bimodal], beta: [0, 0.1, 0.25, 0.5],
-                     declared_source: [self_described], seeds: 1-5, Q: 1000, methods: [*frameworks, *fw_paired]}   # v2 0.4: 5 seeds, Q=1000 (was 3 / 300)
+                     declared_source: [self_described], seeds: 1-5, Q: 1000,
+                     methods: [*frameworks, {name: fw_magentic_one, params: {supervisor: Qwen/Qwen2.5-14B-Instruct}}, *fw_paired]}   # v2 0.4: 5 seeds, Q=1000 (was 3/300); 14B orchestrator arm is asymmetric (0.2)
   fw_live_n100:     {mirror_of: fw_live_n1000, n: [100]}
   fw_live_n1000_verified: {mirror_of: fw_live_n1000, methods: *frameworks_verified}   # labeled variant: verified shortlist
   fw_live_n100_verified:  {mirror_of: fw_live_n1000, n: [100], methods: *frameworks_verified}
@@ -108,6 +109,11 @@ grids:
                                {name: midian, params: {r: 20, delta: 0.0}}, {name: midian, params: {r: 20, delta: 0.3333333333333333}},
                                {name: midian_a, params: {r: 5, delta: 0.0}}, {name: midian_a, params: {r: 5, delta: 0.3333333333333333}}, {name: midian_a, params: {r: 10, delta: 0.0}}, {name: midian_a, params: {r: 10, delta: 0.3333333333333333}},
                                {name: midian_a, params: {r: 20, delta: 0.0}}, {name: midian_a, params: {r: 20, delta: 0.3333333333333333}}, flat_probe_argmax]}   # 2.5
+  churn_n1000:      {backend: llm, n: [1000], dist: [specialist, heavy_tail], beta: [0, 0.25], declared_source: [self_described], seeds: 1-5, Q: 1000,
+                     blocks: [{churn: {frac: 0.1, every: 200}}, {churn: {frac: 0.3, every: 200}}],
+                     methods: [midian, midian_sh, midian_a, midian_v, {name: sequential_halving, params: {peer_reported: true, churn_mode: rebuild}},
+                               {name: sequential_halving, params: {peer_reported: true, churn_mode: stale}}, {name: flat_probe_argmax, params: {online: true}},
+                               warm_start_bandit, linucb_honest, fw_langgraph, fw_autogen]}                                    # 2.1 (V2-6)
   variants_f1:      {<<: *live, declared_source: [self_described], methods: [midian, midian_sh, midian_a, midian_sha, midian_v, linucb_honest, {name: sequential_halving, params: {peer_reported: true}}, {name: flat_probe_argmax, params: {online: true}}]}   # Phase 1 variants on the F1 cells (V2-1..3, V2-5)
 
   # ---- bernoulli twins of every live grid: exercise the pipeline before the fleet is up (never headline numbers)

@@ -37,7 +37,8 @@ async def _select(req):
     async for event in runner.run_async(user_id=APP, session_id=session.id, new_message=message):
         target = getattr(event.actions, "transfer_to_agent", None)
         if target:
-            return back[target], f"transfer_to_agent -> {target}"
+            return back.get(target), f"transfer_to_agent -> {target}"
+    return None, "FAILURE: router answered itself (no transfer_to_agent)"
 
 
 if __name__ == "__main__":

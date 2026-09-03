@@ -33,14 +33,14 @@ class SequentialHalving(Method):
     name = "sequential_halving"
     needs = frozenset({"probe"})
 
-    def __init__(self, peer_reported=False, r=10, delta=1 / 3, **p):
-        super().__init__(peer_reported=peer_reported, r=r, delta=delta, **p)
-        self.peers, self.delta = (r - 1) if peer_reported else 0, delta
+    def __init__(self, peer_reported=False, r=10, delta=1 / 3, churn_mode="stale", **p):
+        super().__init__(peer_reported=peer_reported, r=r, delta=delta, churn_mode=churn_mode, **p)
+        self.peers, self.delta, self.churn_mode = (r - 1) if peer_reported else 0, delta, churn_mode
         if peer_reported:
             self.needs = self.needs | {"reports"}                       # no trusted observer: MIDIAN's channel
 
     def build(self, view, budget):
-        self.view = view
+        self.view, self.budget = view, budget
         res = [halving(view, f, view.n * budget.b, self.peers, self.delta) for f in range(view.K)]
         self.best = np.array([a for a, _ in res])
         assert sum(u for _, u in res) <= budget.total_probes(view.n, view.K)
@@ -48,3 +48,7 @@ class SequentialHalving(Method):
     def fetch(self, task):
         self.view.ledger.compare(1)
         return int(self.best[task.family])
+
+    def churn(self, departed, arrived):
+        """rebuild: the full n*K*b halving again at every churn event (charged); stale: keep the old picks."""
+        if self.churn_mode == "rebuild": self.build(self.view, self.budget)

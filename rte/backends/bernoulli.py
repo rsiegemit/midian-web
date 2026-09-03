@@ -17,11 +17,12 @@ CHUNK = 1_000_000
 class BernoulliBackend:
     def __init__(self, n: int, K: int, dist: str, seed: int, rng: np.random.Generator,
                  calibrate_from: str | None = None, declared_noise: float = 0.05, **_):
-        self.n, self.K = int(n), int(K)
+        self.n, self.K, self.dist = int(n), int(K), dist
         self.families = [f"fam{f:02d}" for f in range(self.K)]
         self.seed = int(seed)
+        self._Sm = np.load(calibrate_from).astype(np.float32) if calibrate_from else None
         if calibrate_from:
-            Sm = np.load(calibrate_from).astype(np.float32)
+            Sm = self._Sm
             self._S = np.empty((self.n, self.K), dtype=np.float32)
             for lo in range(0, self.n, CHUNK):
                 hi = min(self.n, lo + CHUNK)
@@ -51,3 +52,10 @@ class BernoulliBackend:
 
     def stats(self) -> dict:
         return {}
+
+    # ---- churn
+    def snapshot(self): return self._S.copy()
+    def restore(self, snap): self._S = snap.copy()
+    def redraw(self, ids, rng):
+        self._S[ids] = self._Sm[rng.integers(0, self._Sm.shape[0], size=len(ids))] if self._Sm is not None \
+            else sample_skill(self.dist, len(ids), self.K, rng).astype(np.float32)

@@ -56,3 +56,10 @@ the sub-agent never runs.
 
 ## What still needs a real model
 Routing quality. The mock returns `transfer_to_agent(agent_name=<first candidate>)` regardless of the roster.
+
+
+## 2026-09-03 fix (v2 work order 0.2)
+- `event.actions.transfer_to_agent` capture verified on the fleet (transfer events arrive with the sanitized
+  sub-agent name; mapped back through `sanitize`). A run that ends without any transfer event means the router
+  answered the task itself; the worker now returns `FAILURE: router answered itself` and the adapter counts it as a
+  failure (strict success 0) instead of a fallback.

@@ -14,7 +14,7 @@ class FlatProbeArgmax(Method):
         self.cached, self.online = cached, online
 
     def build(self, view, budget):
-        self.view = view
+        self.view, self.b = view, budget.b
         self.cnt = np.full((view.n, view.K), budget.b, np.int64)
         self.est = probe_successes(view, budget.b) / budget.b
         self.best = np.argmax(self.est, axis=0)
@@ -32,3 +32,9 @@ class FlatProbeArgmax(Method):
             self.cnt[agent, f] += 1
             self.est[agent, f] += (outcome - self.est[agent, f]) / self.cnt[agent, f]
             self.best[f] = np.argmax(self.est[:, f])
+
+    def churn(self, departed, arrived):
+        """Re-probe the replaced agents b times per family (len(arrived)*K*b probes), then re-argmax."""
+        ids = np.asarray(arrived)
+        self.est[ids] = self.view.probe_many(ids[:, None], np.arange(self.view.K)[None, :], self.b).mean(-1)
+        self.cnt[ids] = self.b; self.best = np.argmax(self.est, axis=0)

@@ -59,3 +59,18 @@ no worker agent executed.
 - If the model names an agent that is not a participant, the orchestrator raises
   `ValueError("Invalid next speaker: ...")` rather than retrying; the bridge turns that into an error and
   `FrameworkMethod` counts a fallback.
+
+
+## 2026-09-03 fix (v2 work order 0.2)
+- `robust=True` (default): when the orchestrator rejects a ledger (JSON that does not parse, missing keys, or a
+  `next_speaker` that is not a participant) the worker no longer lets it retry up to `max_json_retries` = 10 model
+  calls; it reads the participant named right after `next_speaker` in the raw reply (else the first participant named
+  anywhere) and returns that as the pick. A rejected ledger that names nobody is `FAILURE: ledger rejected and names
+  nobody` (counted as a failure, strict success 0). `robust=False` reproduces the 2026-09-02 behaviour.
+- The orchestrator may run on `Qwen/Qwen2.5-14B-Instruct` via the method param `supervisor` (grid params
+  `{supervisor: Qwen/Qwen2.5-14B-Instruct}`); every other framework keeps the 7B, so a 14B Magentic-One row is an
+  asymmetric comparison and must be labeled as such.
+- Live check with real specialist self-descriptions (6 Reasoning Gym questions): the dominant failure is NOT the
+  ledger format — the orchestrator's ledger says `is_request_satisfied: true` (it solved the arithmetic itself during
+  the facts/plan stage) and no speaker is chosen. 7B: 1/6 picks, 5/6 answered itself (both `robust` settings);
+  14B: 3/6 picks. Such runs are `FAILURE: orchestrator answered itself or named nobody` (strict success 0).

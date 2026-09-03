@@ -63,13 +63,15 @@ def cells(blk):
         c = dict(zip(CELL, combo)); c.update(n=int(c["n"]), K=int(c["K"]), b=int(c["b"]), Q=int(c["Q"]), beta=float(c["beta"]))
         c["backend_kwargs"] = {k: (os.path.expandvars(str(v).replace("$RTE_DATA", RTE_DATA)) if isinstance(v, str) else v)
                                for k, v in (blk.get("backend_kwargs") or {}).items()}
+        c["churn"] = blk.get("churn")                                   # optional {frac, every}; absent -> None
         cal = c["backend_kwargs"].get("calibrate_from")
         assert not cal or os.path.exists(cal), f"calibrate_from={cal} missing: measure the live S first (bernoulli_scale must be calibrated)"
         yield c
 
 
 def row_id(cell, method, params, seed):
-    return hashlib.blake2b(f"{jkey({f: cell[f] for f in CELL})}|{jkey(cell['backend_kwargs'])}|{method}|{jkey(params)}|{seed}".encode(),
+    churn = f"|churn={jkey(cell['churn'])}" if cell.get("churn") else ""       # only churn cells carry it: old ids unchanged
+    return hashlib.blake2b(f"{jkey({f: cell[f] for f in CELL})}|{jkey(cell['backend_kwargs'])}|{method}|{jkey(params)}|{seed}{churn}".encode(),
                            digest_size=16).hexdigest()
 
 
@@ -95,14 +97,30 @@ def execute(world, task, ret):
     return (outs[0] if len(outs) == 1 else int(2 * sum(outs) > len(outs))), agents, outs
 
 
-def run_method(world, stream, spec, b):
+def churn_due(churn, i):
+    return bool(churn) and i > 0 and i % int(churn["every"]) == 0
+
+
+def oracle_line(world, stream, churn):
+    """The oracle re-picks by true S after every churn event and always knows the arrivals."""
+    outs, liar = [], []
+    for i, t in enumerate(stream):
+        if churn_due(churn, i): world.churn(churn["frac"]); world.seen_epoch[:] = world.epoch
+        a = world.oracle(t); outs.append(world.execute(a, t)); liar.append(world.liars[a])
+    return outs, liar
+
+
+def run_method(world, stream, spec, b, churn=None):
     m = load_method(spec["name"])(**spec["params"]); view = world.view(m.needs)
     world.reset(spec["name"] + jkey(spec["params"])); t0 = time.perf_counter(); m.build(view, Budget(b)); wall_build = time.perf_counter() - t0
     build = world.ledger.snapshot(); world.ledger.reset()
     if build["probes"] > Budget(b).total_probes(world.n, world.K):
         log(f"  [WARNING] {spec['name']}: build spent {build['probes']} probes > budget {Budget(b).total_probes(world.n, world.K)}")
-    outcomes, liar, route, t_run = [], [], 0.0, time.perf_counter()
-    for task in stream:
+    outcomes, liar, route, t_run, repair, events = [], [], 0.0, time.perf_counter(), dict.fromkeys(build, 0), 0
+    for i, task in enumerate(stream):
+        if churn_due(churn, i):                                        # replace agents, let the method repair; cost is
+            ids = world.churn(churn["frac"]); before = world.ledger.snapshot(); m.churn(ids, ids); events += 1
+            for k, v in world.ledger.diff(before).items(): repair[k] += v   # charged like any other run-time spend
         t = time.perf_counter(); ret = m.fetch(task); route += time.perf_counter() - t
         o, agents, outs = execute(world, task, ret)
         t = time.perf_counter()
@@ -110,6 +128,7 @@ def run_method(world, stream, spec, b):
         route += time.perf_counter() - t
         outcomes.append(o); liar.append(world.liars[agents[0]])
     return {**metrics(outcomes, liar, build, world.ledger.snapshot(), len(stream), wall_build, route, time.perf_counter() - t_run),
+            **({f"repair_{k}_per_event": v / events for k, v in repair.items() if k != "tasks"} if events else {}),
             "method_stats": jkey(getattr(m, "stats", {}))}          # e.g. framework picks/fallbacks, LLM-descent parse failures
 
 
@@ -119,14 +138,14 @@ def run_unit(cell, seed, specs, rows_dir, grid):
     base = {**{f: cell[f] for f in CELL}, "backend_kwargs": jkey(cell["backend_kwargs"]), "seed": seed, "grid": grid,
             "n_agents": world.n, "n_liars": st.pop("n_liars"),
             **{("" if k.startswith("skill_") else "skill_") + k: v for k, v in st.items() if k not in ("n", "K", "dist", "beta", "backend")}}
-    picks = world.oracle_all()[[t.family for t in stream]]
-    oracle = [world.execute(int(a), t) for a, t in zip(picks, stream)]
+    base["churn"] = jkey(cell["churn"]) if cell.get("churn") else ""
+    oracle, liar = oracle_line(world, stream, cell.get("churn"))
     zero = dict.fromkeys(world.ledger.snapshot(), 0)
-    rows = {"oracle": {"method": "oracle", "params": "{}", **metrics(oracle, world.liars[picks], zero, {**zero, "tasks": len(stream)}, len(stream), 0, 0, 0)}}
+    rows = {"oracle": {"method": "oracle", "params": "{}", **metrics(oracle, liar, zero, {**zero, "tasks": len(stream)}, len(stream), 0, 0, 0)}}
     failed = []
     for s in specs:
         try:
-            rows[s["name"] + jkey(s["params"])] = {"method": s["name"], "params": jkey(s["params"]), **run_method(world, stream, s, cell["b"])}
+            rows[s["name"] + jkey(s["params"])] = {"method": s["name"], "params": jkey(s["params"]), **run_method(world, stream, s, cell["b"], cell.get("churn"))}
         except Exception as e:                       # one bad method must not kill the unit
             failed.append(f"{s['name']}: {type(e).__name__}: {e}"); log(traceback.format_exc())
     for k, r in rows.items():

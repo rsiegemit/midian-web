@@ -637,3 +637,62 @@
   `execute_many(agents, families, inst)`. Bernoulli outcomes are a deterministic hash of the instance seed. Live rows written
   before this change used per-method instances; both are valid samples, and pairing across methods is by the task stream.
 - 2026-09-02 17:30: python tool runs are memoised alongside generations (deterministic sandbox); wall-clock columns of runs before/after differ only by that CPU cost, outcomes are unchanged.
+
+## v2 work order (2026-09-03)
+- 2026-09-03 (churn, Phase 2.1): agents are replaced IN PLACE (same ids, n unchanged) rather than retired: the backend redraws
+  the replaced agents' profiles (llm: fresh ladder signature and self-description under a per-event population dir, S and
+  self-ratings recomputed lazily from the memo; bernoulli/replay: new skill row / model), liars are redrawn at rate beta
+  for arrivals whatever `liar_select` says, declarations recomputed, probe indices reset, reporters forget them. Draws are
+  seeded by the event index so every method sees the same churn; `World.reset()` restores the initial population.
+  "Departed agents' routed tasks fail" is enforced with an epoch rule: the first task routed to a replaced agent the method
+  has not probed or executed since the swap scores 0 and marks it seen (the new agent is real from then on). The oracle
+  line re-picks by S after each event and always knows arrivals. `churn: {frac, every}` is a block field, in row ids only
+  when set. Repair spend per event is recorded as `repair_<counter>_per_event`.
+- 2026-09-03 (0.3, peer-reported halving): it already charged one report per (peer, member, family, probe) via
+  `report_many` on the per-pull outcomes, so no accounting change was needed there.
+- 2026-09-03 (0.3 report accounting): MIDIAN-V reported one number per peer (the peer's mean of the b0 or e outcomes it saw);
+  it now sends one report per (peer, member, family, probe) like plain MIDIAN, at level 0 and at verification. Estimates are
+  unchanged (the per-peer mean is taken after the per-probe collusion lie, which is identical), only `reports` rises: MIDIAN-V
+  n=1000 r=10 build reports 159,840 -> 430,560 (= probes × (r−1)); r=5: 80,000 -> 192,000. referral_network and
+  gossip_reputation_greedy already reported per probe (one observer per outcome). Rows written before this bullet carry the old
+  V report counts; RESULTS v2 recomputes §6 from the new formula.
+- 2026-09-03 (0.7): `rte/methods/midian_v.py` = `midian(verify=True, cached=True)` under the name `midian_v` (byte-identical
+  picks, verified by test); the docstring is the definition of record.
+- 2026-09-03 (1.5): `midian(stratify=True)` implemented: the level-0 probes are spent BEFORE grouping, cohorts take one random
+  member from each of r equal strata of the measured probe mean (n mod r leftovers form one random short cohort); reports are
+  charged on the same probes, so the budget is unchanged. SPEC's "stratify by declared mean" is NOT used (declared is lie-prone).
+- 2026-09-03 (churn): `Midian.churn(departed, arrived)` assumes ids are reused (arrived ⊆ former ids); each arrived agent is
+  re-probed b times per family, reported by its cohort peers, and its path recomputed for all K families:
+  K*b probes + K*b*(r−1) reports + (r−1)+depth messages per arrived agent. MIDIAN-V does not re-verify on churn.
+- 2026-09-03 (analysis, 0.1): `rte.analyze` reports every declared-channel reader (methods whose `needs` include `declared`, plus all
+  fw_*) separately per declaration channel whenever a grid has both (success x beta, success x dist, paired-vs-MIDIAN roll-up per
+  channel); programmatic is captioned "upper bound (S + N(0,0.05))". Probe-only methods are pooled (identical across channels).
+- 2026-09-03 (analysis, 0.5): one label per arm: `flat_probe_argmax_frozen` / `flat_probe_argmax_online`, `midian_v` / `midian_v_r5`,
+  `sequential_halving_peer` (alias map in `rte.analyze.ALIAS`; row files keep method+params). T2/T5 text names the frozen scan.
+- 2026-09-03 (analysis, 0.6): wall-clock removed from every analyzer table and figure (memo hits and misses were mixed). The one
+  wall-clock table left is the frameworks' supervisor latency per task (their clients call vLLM directly, never memoised).
+- 2026-09-03 (0.2 frameworks): `FrameworkMethod` keeps two accountings. Lenient (unchanged): a task the framework did not
+  pick is routed to declared-argmax over its shortlist and scored. Strict (`success_strict` in `method_stats`): such a
+  task scores 0. Workers now distinguish `FAILURE: ...` (the framework answered instead of delegating) from a bridge
+  error / no choice (fallback); `failures`, `fallback_rate` (= 1 − picks/tasks) are in `method_stats`.
+- 2026-09-03 (0.2 CrewAI): the 2026-09-02 CrewAI rows are invalid as a measurement of CrewAI — its shared SQLite
+  task-output store was corrupted by concurrent workers at ~11:05 and every later kickoff failed before the manager
+  ran (counted as fallback). Fixed with a private `CREWAI_STORAGE_DIR` per worker, an explicit delegating manager and
+  `allow_delegation=True` workers; rows re-run.
+- 2026-09-03 (0.2 Magentic-One): rejected ledgers are read by name mention (`robust=True`) instead of retried up to 10
+  times; the orchestrator may use the 14B via `supervisor` (asymmetric vs the other frameworks' 7B; labeled).
+- 2026-09-03 (0.2 Google ADK): a router that answers instead of transferring is a failure, not a fallback.
+- 2026-09-03 (variants fork) `midian_sh` / `midian_a` / `midian_sha` / `linucb_honest` added as labeled variants (TARGETS_rte_v2 V2-1..3, V2-5).
+  MIDIAN-SH's per-round pulls follow `_schedule`: pulls = max(1, remaining // (survivors * rounds_left)), remainder to the winner, so a
+  cohort spends exactly s*b probes (r=10, b=3: 10x1, 5x1, 3x2, 2x4, +1). Estimates in SH/A/SH+A are trimmed over PEERS of each peer's mean
+  report (`_est.trimmed_by_reporter`, as MIDIAN-V), not over individual reports as plain MIDIAN: with unequal probe counts per member a
+  per-report trim has no single trim depth. Reports are still charged per (peer, member, family, probe).
+- 2026-09-03 (variants fork) MIDIAN-A audits 5% of level-0 PROBE INSTANCES (one re-run checks all s-1 peers' claims about it), not 5% of
+  reports, which is what keeps build probes <= 1.05x plain; the same-instance re-run needs a `View.probe_at(agents, families, k)` accessor
+  that `World` did not have (shimmed in tests/test_midian_variants.py until it lands). Audited builds exceed the n*K*b cap by the audit rate
+  by design; the generic contract test's cap must allow `1 + rate` for audited variants. Online audits ask the cohort peers to report the
+  routed outcome (charged as s-1 reports) and compare; a new exclusion re-aggregates that cohort from the stored per-peer means, which
+  discards its members' online running-mean updates (rare event; noted, not fixed). MIDIAN-A with `halving=False` runs plain MIDIAN's
+  single round through the SH engine (so its per-peer trimming differs from plain's per-report trimming, see above).
+- 2026-09-03 (variants fork) `_repath` in midian_a.py duplicates the path-recompute loop of `Midian.observe`; fold it into midian.py
+  (observe -> _repath) when that file is next touched.

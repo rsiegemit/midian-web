@@ -17,6 +17,7 @@ from rte.world import World
 
 RTE_DATA = os.environ.get("RTE_DATA", "/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte")
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+_picks = lambda st: {k: st[k] for k in ("picks", "fallbacks", "bad_name")}
 FRAMEWORKS = {"fw_smolagents": "fw_smolagents", "fw_camel_workforce": "fw_camel",
               "fw_metagpt": "fw_metagpt", "fw_agentscope": "fw_agentscope"}
 N_TASKS = 20
@@ -60,7 +61,7 @@ def test_picks_the_first_candidate(method, env, mock_url):
     try:
         for t in w.tasks(N_TASKS):
             assert M.fetch(t) == int(M.retrieve(t)[0]), f"{method} did not return the framework's own pick"
-        assert M.stats == {"picks": N_TASKS, "fallbacks": 0, "bad_name": 0}, M.stats
+        assert _picks(M.stats) == {"picks": N_TASKS, "fallbacks": 0, "bad_name": 0}, M.stats
     finally:
         M.bridge.close()
 
@@ -75,5 +76,21 @@ def test_bad_choice_falls_back_to_declared_argmax(method, choice, counter):
     for t in w.tasks(5):
         cand = M.retrieve(t)
         assert M.fetch(t) == int(cand[np.argmax(M.view.declared[cand, t.family])])
-    assert M.stats == {"picks": 0, "fallbacks": 5 if counter == "fallbacks" else 0,
-                       "bad_name": 5 if counter == "bad_name" else 0}, M.stats
+    assert _picks(M.stats) == {"picks": 0, "fallbacks": 5 if counter == "fallbacks" else 0,
+                               "bad_name": 5 if counter == "bad_name" else 0}, M.stats
+
+
+@pytest.mark.parametrize("method", ["fw_crewai", "fw_magentic_one", "fw_google_adk"])
+def test_no_delegation_is_a_failure_with_strict_success_zero(method):
+    """A worker that reports "FAILURE: ..." (the framework answered instead of delegating) still routes the
+    declared-argmax fallback (lenient accounting) but scores 0 under `success_strict`; picks score their outcome."""
+    M, w = _build(method, base_url="http://127.0.0.1:1/v1")
+    M.bridge.select = lambda *a, **kw: {"choice": None, "error": None, "raw": "FAILURE: answered itself"}
+    tasks = w.tasks(4)
+    for t in tasks[:2]:
+        a = M.fetch(t); M.observe(t, a, 1)
+    M.bridge.select = lambda task, cands, *a, **kw: {"choice": cands[0]["name"], "error": None, "raw": "ok"}
+    for t in tasks[2:]:
+        a = M.fetch(t); M.observe(t, a, 1)
+    assert M.stats["failures"] == 2 and M.stats["picks"] == 2 and M.stats["fallbacks"] == 0
+    assert M.stats["success_strict"] == 0.5 and M.stats["fallback_rate"] == 0.5

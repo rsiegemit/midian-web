@@ -58,3 +58,18 @@ chat-completions request per `fetch`, and `selected_agent.execute_task` is never
   100, so a long-lived worker began failing after ~100 requests (seen as one fallback in a 40-fetch run,
   and it would dominate a Q=1000 grid cell). The worker calls
   `crewai.events.event_context.restore_event_scope(())` at the top of every request.
+
+
+## 2026-09-03 fix (v2 work order 0.2)
+- **Root cause of the 79–84% "fallback" in the 2026-09-02 runs was infrastructure, not CrewAI's manager.** CrewAI resets
+  a SQLite `latest_kickoff_task_outputs.db` under the user data dir at every kickoff; hundreds of concurrent workers on
+  NFS corrupted it (`DatabaseOperationError: Error deleting task outputs: database disk image is malformed`, file mtime
+  11:05) and every kickoff after that failed before the manager ran — the bridge reported an error and the adapter
+  counted a fallback. The worker now sets `CREWAI_STORAGE_DIR` to a private temp dir per process.
+- The manager is an explicit `manager_agent` ("Dispatcher": delegate every task to exactly one coworker, never solve it
+  yourself), every worker has `allow_delegation=True`, and the task reads "Delegate this to exactly one coworker: ...".
+  The first `Delegate work to coworker` call is still intercepted at `BaseAgentTool._execute` (one frame after the
+  tool call that `step_callback` would see; the event bus is asynchronous, see above). A kickoff that finishes without a
+  delegate call returns `FAILURE: manager answered itself`, which the adapter counts as a failure (strict success 0).
+- Live check (fleet, 7B): synthesized descriptions 6/6 delegations; real specialist self-descriptions: see the v2
+  report / DEVIATIONS.

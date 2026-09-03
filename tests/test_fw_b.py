@@ -19,6 +19,7 @@ from rte.methods import load_method
 from rte.world import World
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+_picks = lambda st: {k: st[k] for k in ("picks", "fallbacks", "bad_name")}
 RTE_DATA = os.environ.get("RTE_DATA", "/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte")
 N, K, DIST, BETA, SEED, Q = 100, 16, "specialist", 0.25, 1, 20
 NAMES = ["fw_maf", "fw_openai_agents", "fw_google_adk", "fw_llamaindex"]
@@ -61,7 +62,7 @@ def test_framework_picks_the_agent_the_model_named(name, params, first, mock_url
             topk = [int(a) for a in method.retrieve(task)]
             chosen = method.fetch(task)
             assert chosen == topk[0] if first else chosen in topk, f"{name} {params}: {chosen} not in {topk[:3]}"
-        assert method.stats == {"picks": Q, "fallbacks": 0, "bad_name": 0}, f"bridge {method.bridge.stats}"
+        assert _picks(method.stats) == {"picks": Q, "fallbacks": 0, "bad_name": 0}, f"bridge {method.bridge.stats}"
     finally:
         method.bridge.close()
 
@@ -78,5 +79,5 @@ def test_unknown_choice_falls_back_to_declared_argmax(name, n):
     for task in tasks:
         topk = method.retrieve(task)
         assert method.fetch(task) == int(topk[np.argmax(method.view.declared[topk, task.family])])
-    assert method.stats == {"picks": 0, "fallbacks": 0, "bad_name": len(tasks)}
+    assert _picks(method.stats) == {"picks": 0, "fallbacks": 0, "bad_name": len(tasks)}
     assert world.ledger.messages == n + len(tasks) * (method.k + 2)   # n at build, k + 2 per fetch

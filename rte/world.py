@@ -6,6 +6,14 @@ task instances, and `execute(agent, task) -> 0/1`. The World layers on top:
 liar selection, the lying model (`apply_lying`), the report channel, the
 ledger, the paired task stream, and the access-controlled `View` that methods
 see. Methods NEVER see S or the liar set.
+
+Churn (v2): `World.churn(frac)` replaces round(frac*n) random agents IN PLACE (same ids, n unchanged): the backend
+redraws their profiles (llm: new ladder signature + fresh self-description; bernoulli/replay: new skill row / model),
+liars are redrawn at rate beta, declarations recomputed, probe indices reset, reporters forget them. Draws are seeded
+by the event index, so every method sees the same churn sequence, and `reset()` restores the initial population.
+Epoch rule: `epoch[a]` is bumped when a is replaced and `seen_epoch[a]` catches up when a is probed or executed; the
+first task routed to a replaced agent the method has not probed or observed since the swap scores 0 (the message went
+to an agent that no longer exists) and marks it seen.
 """
 from __future__ import annotations
 
@@ -234,6 +242,20 @@ class World:
         self._obs: dict[int, dict[int, list]] = {}    # reporter j -> {a: [sum, cnt]} (scalar report path)
         self._probe_idx = np.zeros((self.n, self.K), np.uint16)    # probes drawn so far per (agent, family)
         self._probe_salt = stable_seed_32(seed, "probes")
+        self.epoch = np.zeros(self.n, np.int32); self.seen_epoch = np.zeros(self.n, np.int32); self.churn_events = 0
+        self._snap = (self.S.copy(), self.D.copy(), self.liars.copy(), self.backend.snapshot())
+
+    # ---- churn (see module docstring)
+    def churn(self, frac: float) -> np.ndarray:
+        rng = np.random.default_rng(stable_seed_32(self.seed, "churn", self.churn_events)); self.churn_events += 1
+        ids = np.sort(rng.choice(self.n, int(round(frac * self.n)), replace=False))
+        self.backend.redraw(ids, rng)
+        self.S = np.asarray(self.backend.true_skill(), dtype=np.float32)
+        self.liars[ids] = rng.random(ids.size) < self.beta                   # arrivals lie at rate beta, whatever liar_select
+        self.D = apply_lying(np.asarray(self.backend.declared(self.declared_source), np.float32), self.liars, self.lie_mode, self.demand)
+        self.D_view = self.D.copy(); self.D_view.setflags(write=False)
+        self._probe_idx[ids] = 0; self.epoch[ids] += 1; self._obs.clear()      # reporters' scalar-path memories restart
+        return ids
 
     # ---- demand / tasks
     def _demand_vector(self) -> np.ndarray:
@@ -254,6 +276,8 @@ class World:
     # ---- execution
     def execute(self, a: int, task: Task) -> int:
         self.ledger.task(1)
+        if self.seen_epoch[a] < self.epoch[a]:                    # stale route to a replaced agent: fails, now seen
+            self.seen_epoch[a] = self.epoch[a]; return 0
         return int(self.backend.execute(int(a), task))
 
     def oracle(self, task: Task) -> int:
@@ -272,7 +296,7 @@ class World:
         agents, families = np.broadcast_arrays(np.asarray(agents, np.int64), np.asarray(families, np.int64))
         self.ledger.probe(agents.size * reps)
         k = self._probe_idx[agents, families].astype(np.int64)[..., None] + np.arange(reps)
-        self._probe_idx[agents, families] += reps
+        self._probe_idx[agents, families] += reps; self.seen_epoch[agents] = self.epoch[agents]
         inst = probe_seed(self._probe_salt, agents[..., None], families[..., None], k)
         return self.backend.execute_many(np.broadcast_to(agents[..., None], inst.shape), np.broadcast_to(families[..., None], inst.shape), inst)
 
@@ -330,6 +354,10 @@ class World:
         build never depends on which methods ran before it (pairing is through the task stream + deterministic execute)."""
         self.ledger.reset(); self._obs.clear()
         self._probe_idx[:] = 0                      # every method starts at probe index 0 of every cell
+        if self.churn_events:                       # undo churn: same initial population for every method
+            self.S, self.D, self.liars = (x.copy() for x in self._snap[:3]); self.backend.restore(self._snap[3])
+            self.D_view = self.D.copy(); self.D_view.setflags(write=False)
+            self.epoch[:] = 0; self.seen_epoch[:] = 0; self.churn_events = 0
 
     # ---- view
     def view(self, needs: Iterable[str], seed: int | None = None) -> View:

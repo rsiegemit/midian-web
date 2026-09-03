@@ -23,6 +23,7 @@ from rte.methods.frameworks._bridge import venv_python
 from rte.world import World
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+_picks = lambda st: {k: st[k] for k in ("picks", "fallbacks", "bad_name")}
 N, K, DIST, BETA, SEED, QUERIES = 100, 16, "specialist", 0.25, 1, 20
 CASES = [("fw_langgraph", "fw_langgraph"), ("fw_crewai", "fw_crewai"),
          ("fw_autogen", "fw_autogen"), ("fw_magentic_one", "fw_autogen")]
@@ -72,7 +73,7 @@ def test_framework_pick_is_its_own_choice(method, env, mock_url):
         for task in world.tasks(QUERIES):
             a = int(m.fetch(task))
             assert a == m._name2id[seen[-1]["choice"]] and a in set(map(int, m.retrieve(task))), f"{method}: pick != framework choice"
-        assert m.stats == {"picks": QUERIES, "fallbacks": 0, "bad_name": 0}, \
+        assert _picks(m.stats) == {"picks": QUERIES, "fallbacks": 0, "bad_name": 0}, \
             f"{method}: {m.stats}, bridge={m.bridge.stats}"
         # SPEC §6A ledger formula: per fetch, k descriptions compared, one supervisor hop, k+2 messages.
         cost = world.ledger.diff(before)
@@ -93,4 +94,4 @@ def test_unmapped_choice_falls_back_to_declared_argmax(method, env, n):
     task = world.tasks(1)[0]
     cand = m.retrieve(task)
     assert m.fetch(task) == int(cand[np.argmax(m.view.declared[cand, task.family])])
-    assert m.stats == {"picks": 0, "fallbacks": 0, "bad_name": 1}
+    assert _picks(m.stats) == {"picks": 0, "fallbacks": 0, "bad_name": 1}

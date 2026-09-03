@@ -338,27 +338,24 @@ def roll_up(cmp_):
         midian_better=n("midian_better"), rival_better=n("rival_better"), within_floor=n(FLOOR),
         min_sign_p=("sign_p", "min")).sort_values("delta_mean").reset_index()
 UPPER = "programmatic = upper bound (S + N(0,0.05)): an honest declaration no live agent produces"
+def sec(t, table, *prose, level=2):
+    return ["", f"{'#' * level} {t}", "", *prose, *([""] if prose else []), table]
 def by_channel(df, cmp_):
-    """(0.1) Declared-channel readers reported per declaration channel (never pooled) when both channels exist:
-    success x beta and x dist per channel, plus the paired-vs-MIDIAN roll-up per channel. Probe-only methods once."""
-    sec = lambda t, table, *prose: ["", f"### {t}", "", *prose, *([""] if prose else []), table]
-    dec = df.method.map(reads_declared)
+    """(0.1) Success tables per declaration channel: declared-channel readers are never pooled across channels
+    (x beta, x dist and the paired-vs-MIDIAN roll-up per channel); probe-only methods once, identical by construction."""
     piv = lambda d, col: md(d.pivot_table(index=["group", "label"], columns=col, values="success").reset_index())
-    if df.declared_source.nunique() < 2:
-        return sec("Success by method x beta", piv(df, "beta"),
-                   f"single declaration channel: {df.declared_source.iloc[0]}"
-                   + (f" ({UPPER})" if df.declared_source.iloc[0] == "programmatic" else ""))
+    dec = df.method.map(reads_declared)
+    chans = sorted(df.declared_source.unique(), reverse=True)          # self_described first
     L = []
-    for ch in ("self_described", "programmatic"):
+    for ch in chans if chans[1:] else []:
         d = df[dec & (df.declared_source == ch)]
-        if d.empty: continue
-        cap = f"declaration = {ch}" + (f"; {UPPER}" if ch == "programmatic" else " (the live channel: agents' own self-descriptions)")
-        L += sec(f"Declared-channel readers, success x beta [{ch}]", piv(d, "beta"), cap)
-        L += sec(f"Declared-channel readers, success x dist [{ch}]", piv(d, "dist"), cap)
+        cap = f"declaration = {ch}; " + (UPPER if ch == "programmatic" else "the live channel: agents' own self-descriptions")
+        for col in ("beta", "dist"): L += sec(f"Declared-channel readers, success x {col} [{ch}]", piv(d, col), cap, level=3)
         c = cmp_[cmp_.rival.isin(d.label.unique()) & (cmp_.declared_source == ch)] if not cmp_.empty else cmp_
-        if not c.empty: L += sec(f"MIDIAN vs declared-channel readers, paired by seed [{ch}]", md(roll_up(c)), cap)
-    L += sec("Probe-only methods, success x beta (identical across channels)", piv(df[~dec], "beta"))
-    return L
+        if not c.empty: L += sec(f"MIDIAN vs declared-channel readers, paired by seed [{ch}]", md(roll_up(c)), cap, level=3)
+    rest = df if not chans[1:] else df[~dec]
+    note = f"single declaration channel: {chans[0]}" + (f"; {UPPER}" if chans == ["programmatic"] else "") if not chans[1:] else "probe-only methods: identical across channels"
+    return L + sec("Success x beta", piv(rest, "beta"), note, level=3)
 def latency(df):
     """(0.6) The one wall-clock table: frameworks' supervisor call per task. Their clients call vLLM directly and are
     never memoised, so these are cache-consistent; they are latencies under shared-fleet load, not compute costs."""
@@ -366,11 +363,9 @@ def latency(df):
     if f.empty: return []
     q = f.groupby(["label", "n"]).wall_clock_per_task.quantile([.25, .5, .75]).unstack()
     q.columns = ["q25_s", "median_s", "q75_s"]
-    return ["", "## Frameworks' supervisor latency per task (seconds; cache-consistent, under shared-fleet load)", "",
-            "Every other wall-clock column is omitted: memo hits and misses are mixed and say nothing about cost.", "",
-            md(q.reset_index(), "{:.2f}")]
+    return sec("Frameworks' supervisor latency per task (seconds; cache-consistent, under shared-fleet load)", md(q.reset_index(), "{:.2f}"),
+               "Every other wall-clock column is omitted: memo hits and misses are mixed and say nothing about cost.")
 def summary(out, grids, df, agg, cmp_, fits, tgts, figs):
-    sec = lambda t, table, *prose: ["", f"## {t}", "", *prose, *([""] if prose else []), table]
     L = [f"# RTE results -- {', '.join(grids)}", "",
          f"{len(df)} rows | {df.label.nunique()} methods | "
          f"{df.groupby(cells(df), dropna=False).ngroups} cells | seeds {sorted(map(int, df.seed.unique()))}",

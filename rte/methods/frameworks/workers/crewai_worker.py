@@ -1,12 +1,20 @@
-"""CrewAI, SPEC §6A recipe 2: a `Process.hierarchical` crew's auto-built manager delegates through
+"""CrewAI, SPEC §6A recipe 2: a `Process.hierarchical` crew whose manager delegates through
 `Delegate work to coworker`, whose description lists only each agent's `role` -- so the self-description
-goes there, prefixed with the agent id to stay invertible. See NOTES_crewai.md."""
+goes there, prefixed with the agent id to stay invertible. Since 2026-09-03 the manager is an explicit
+`manager_agent` whose persona and task both demand delegation; a kickoff that finishes without a single
+delegate call is a FAILURE (the manager answered itself), not a fallback. See NOTES_crewai.md."""
 import contextlib
 import os
 import re
 import sys
 
+import tempfile
+
 os.environ.setdefault("OPENAI_API_KEY", "EMPTY")
+# CrewAI keeps a SQLite "latest_kickoff_task_outputs.db" under the user data dir and resets it at every
+# kickoff; hundreds of concurrent workers on NFS corrupted the shared file ("database disk image is
+# malformed") and every kickoff after that failed before the manager ran. One private dir per worker.
+os.environ.setdefault("CREWAI_STORAGE_DIR", tempfile.mkdtemp(prefix="crewai_"))
 os.environ.setdefault("CREWAI_TELEMETRY_OPT_OUT", "true")
 os.environ.setdefault("OTEL_SDK_DISABLED", "true")
 _HERE = os.path.dirname(os.path.abspath(__file__))
@@ -42,15 +50,20 @@ def select(req):
         kw = openai_kwargs(req)
         llm = LLM(temperature=0, **{**kw, "model": "openai/" + kw["model"]})
         agents = [Agent(role=f"{c['name']}: {c['description']}", goal="Solve tasks you are best at.",
-                        backstory=c["description"], llm=llm, tools=[], allow_delegation=False)
+                        backstory=c["description"], llm=llm, tools=[], allow_delegation=True)
                   for c in req["candidates"]]
-        crew = Crew(agents=agents, tasks=[Task(description=req["task"], expected_output="The answer.")],
-                    process=Process.hierarchical, manager_llm=llm)
+        manager = Agent(role="Dispatcher", goal="Delegate every task to exactly one coworker; never solve it yourself.",
+                        backstory="You are a dispatcher. You must always call 'Delegate work to coworker' exactly once, "
+                                  "choosing the single coworker best suited to the task. You never answer tasks yourself.",
+                        llm=llm, tools=[], allow_delegation=True)
+        crew = Crew(agents=agents, manager_agent=manager, process=Process.hierarchical,
+                    tasks=[Task(description=f"Delegate this to exactly one coworker: {req['task']}", expected_output="The answer.")])
         try:
             crew.kickoff()
         except Picked as p:
             hit = NAME.search(p.args[0])
             return (hit.group(0) if hit else None), p.args[0][:500]
+        return None, "FAILURE: manager answered itself (no delegate call)"
 
 
 if __name__ == "__main__":
