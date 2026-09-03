@@ -26,9 +26,15 @@ def probe_set(view, b: int):
     for f in range(view.K):
         for lo in range(0, view.n, CHUNK):
             Y[lo:lo + CHUNK, f], I[lo:lo + CHUNK, f] = view.probe_text(np.arange(lo, min(view.n, lo + CHUNK)), f, b)
-    E = embed([view.text(f, i) for a in range(view.n) for f in range(view.K) for i in I[a, f]]).reshape(view.n, view.K * b, -1)
+    E = np.stack([vec(view, f, i, True) for a in range(view.n) for f in range(view.K) for i in I[a, f]]).reshape(view.n, view.K * b, -1)
     return E, Y.reshape(view.n, view.K * b), np.repeat(np.arange(view.K), b)
 
 
-def task_text(view, task) -> str:
-    return view.text(task.family, task.instance)
+def vec(view, f, inst, probe=False) -> np.ndarray:
+    """The prompt's embedding: the backend's own vectors when it has them (routereval), else MiniLM over its text."""
+    e = view.embedding(f, inst, probe)
+    return e if e is not None else embed([view.text(f, inst, probe)])[0]
+
+
+def task_vec(view, task) -> np.ndarray:
+    return vec(view, task.family, task.instance)

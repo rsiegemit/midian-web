@@ -208,8 +208,11 @@ class View:
         self._require("probe")
         return self._w._probe(np.asarray(agents), np.asarray(families), int(reps))
 
-    def text(self, f: int, inst: int) -> str:
-        return self._w.text(f, inst)
+    def text(self, f: int, inst: int, probe: bool = False) -> str:
+        return self._w.text(f, inst, probe)
+
+    def embedding(self, f: int, inst: int, probe: bool = False):
+        return self._w.embedding(f, inst, probe)
 
     def report_channel(self, j: int, a: int, outcome: int) -> int:
         """Peer j reports the outcome it observed for agent a. May be corrupted if j lies."""
@@ -317,10 +320,16 @@ class World:
     def probe_many(self, agents: np.ndarray, families: np.ndarray, reps: int) -> np.ndarray:
         return self._probe(agents, families, reps)[0]
 
-    def text(self, f: int, inst: int) -> str:
-        """The prompt text of instance `inst` of family f (what a prober or router actually sent); synthetic on backends without text."""
+    def text(self, f: int, inst: int, probe: bool = False) -> str:
+        """The prompt text of instance `inst` of family f (what a prober or router actually sent); `probe` marks a probe
+        instance for backends whose probe and task prompts live in different pools (routereval). Synthetic without text."""
         fn = getattr(self.backend, "text", None)
-        return fn(int(f), int(inst)) if fn else f"A task of family {self.families[int(f)]} (instance {int(inst)})."
+        return fn(int(f), int(inst), probe) if fn else f"A task of family {self.families[int(f)]} (instance {int(inst)})."
+
+    def embedding(self, f: int, inst: int, probe: bool = False):
+        """A backend-provided prompt embedding (routereval ships RoBERTa vectors), or None: the router embeds the text itself."""
+        fn = getattr(self.backend, "embedding", None)
+        return fn(int(f), int(inst), probe) if fn else None
 
     # ---- reports: the only channel decentralized methods learn through
     def _lie_report(self, j: int, a: int, outcome: int, observed_mean_of: dict) -> int:

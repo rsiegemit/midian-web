@@ -5,7 +5,7 @@ multi-output partial fit); the online learned router is knn_router(online=True).
 import numpy as np
 from sklearn.neural_network import MLPRegressor
 from .base import Method
-from ._learned import embed, probe_set, task_text
+from ._learned import probe_set, task_vec
 
 
 class MLPRouter(Method):
@@ -25,5 +25,5 @@ class MLPRouter(Method):
 
     def fetch(self, task):
         self.view.ledger.compare(self.view.n)
-        q = embed([task_text(self.view, task)])[0]
+        q = task_vec(self.view, task)
         return int(np.argmax(self.model.predict(np.concatenate([self.eye, np.broadcast_to(q, (self.view.n, q.size))], 1))))

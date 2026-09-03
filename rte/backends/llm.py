@@ -253,7 +253,7 @@ class LLMBackend:
     def task_text(self, task) -> str:
         return self.text(task.family, task.instance)
 
-    def text(self, f: int, inst: int) -> str:
+    def text(self, f: int, inst: int, probe: bool = False) -> str:
         return families.question(self.families[int(f)], int(inst))
 
     def stats(self) -> dict:

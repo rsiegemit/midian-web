@@ -205,3 +205,34 @@ grids:
       - declared_argmax
       - knn_router
       - {name: knn_router, params: {online: true}}
+
+  routereval_mmlu:                  # TARGETS_rte_v3 D2: every arm + liars on RouterEval's REAL LLM pools (dist axis = pool config)
+    backend: routereval
+    backend_kwargs: {dataset: mmlu}
+    n: [10, 100, 1000]
+    K: [16]
+    dist: [strong_to_weak, all_strong, all_weak]
+    beta: [0, 0.25, 0.5]
+    liar_select: [random, low_skill_first]
+    declared_source: [programmatic]
+    b: [3]
+    seeds: "1-5"
+    Q: 1000
+    methods:
+      - midian
+      - midian_v
+      - midian_sh
+      - midian_a
+      - midian_sha
+      - midian_va
+      - flat_probe_argmax
+      - {name: flat_probe_argmax, params: {online: true}}
+      - sequential_halving
+      - {name: sequential_halving, params: {peer_reported: true}}
+      - warm_start_bandit
+      - linucb_honest
+      - declared_argmax
+      - knn_router
+      - {name: knn_router, params: {online: true}}
+      - mlp_router
+      - random

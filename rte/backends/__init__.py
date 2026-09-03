@@ -33,4 +33,7 @@ def make(name: str, **kw):
     if name == "llm":
         from .llm import LLMBackend
         return LLMBackend(**kw)
+    if name == "routereval":
+        from .routereval import RouterEvalBackend
+        return RouterEvalBackend(**kw)
     raise ValueError(f"unknown backend {name!r}")
