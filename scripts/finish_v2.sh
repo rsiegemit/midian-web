@@ -10,6 +10,7 @@ source "$RTE_DATA/env/rte/bin/activate"
 quiet=0                                   # need 3 consecutive empty polls; a failing squeue counts as "still running"
 while [ $quiet -lt 3 ]; do
   out=$(squeue -u "$USER" -h -o %j 2>/dev/null) || { sleep 600; continue; }
+  echo "$out" | grep -q finish_v2 || { sleep 600; continue; }               # a listing without this very job is a failed poll, not "all done"
   if echo "$out" | grep -E '^rte_' | grep -vqE 'serve|finish_v2'; then quiet=0; else quiet=$((quiet+1)); fi
   sleep 600
 done
