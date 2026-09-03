@@ -23,6 +23,27 @@ from sklearn.neighbors import NearestNeighbors, KNeighborsClassifier
 from sklearn.cluster import KMeans
 from sklearn.neural_network import MLPRegressor
 from sklearn.linear_model import Ridge
+import torch
+
+
+def embedllm(Etr, Ytr, Ete, dim=64, epochs=5, batch=2048, seed=0):
+    """EmbedLLM (Zhuang et al., ICLR 2025) router: model embedding table v_m, query projection v_q = W e_q, score
+    s = sigmoid(w . (v_m * v_q)), BCE on every (prompt, model) train entry; pick argmax_m s. Their defaults are dim 232,
+    50 epochs, batch 2048 (mf.py); here dim 64 and 5 epochs on CPU (11M entries at m = 1000) — stated deviation."""
+    torch.manual_seed(seed); n_q, m = Ytr.shape
+    Vm = torch.nn.Parameter(torch.randn(m, dim) * 0.1); W = torch.nn.Linear(Etr.shape[1], dim); w = torch.nn.Linear(dim, 1)
+    opt = torch.optim.Adam([Vm, *W.parameters(), *w.parameters()], lr=1e-3)
+    Xq, Y = torch.tensor(Etr, dtype=torch.float32), torch.tensor(Ytr, dtype=torch.float32)
+    qi, mi = np.divmod(np.arange(n_q * m), m); rng = np.random.default_rng(seed)
+    for _ in range(epochs):
+        perm = rng.permutation(n_q * m)
+        for lo in range(0, len(perm), batch):
+            b = perm[lo:lo + batch]; q, mm = torch.tensor(qi[b]), torch.tensor(mi[b])
+            logit = w(W(Xq[q]) * Vm[mm]).squeeze(1); loss = torch.nn.functional.binary_cross_entropy_with_logits(logit, Y[q, mm])
+            opt.zero_grad(); loss.backward(); opt.step()
+    with torch.no_grad():
+        Vq = W(torch.tensor(Ete, dtype=torch.float32))                                  # (n_te, dim)
+        return (w.weight[0] * Vq[:, None, :] * Vm[None, :, :]).sum(-1).argmax(1).numpy()   # (n_te, m) scores -> argmax
 sys.path.insert(0, os.path.dirname(__file__)); from routerbench_terms import midian_tree_pick
 
 R = os.environ.get("RTE_DATA", "/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte")
@@ -54,7 +75,7 @@ def run(ds):
     rng = np.random.default_rng(SEED); rows = []
     # families that do not depend on the pool: unsupervised clusters, and the MMLU subject
     fams = {}
-    for K in (3, 16):
+    for K in (3, 16, 64):
         km = KMeans(n_clusters=K, random_state=SEED, n_init=10).fit(Etr); fams[f"cluster{K}"] = (km.labels_, km.predict(Ete))
     if ds == "mmlu":
         subj = lambda P: np.array([(SUBJECT.search(str(p)) or [None, "?"])[1] for p in P]); s_tr, s_te = subj(Ptr), subj(Pte)
@@ -77,8 +98,14 @@ def run(ds):
             add("random (theirs)", rng.integers(0, Ytr.shape[1], len(Yte)), 0)
             add("oracle (theirs)", np.argmax(Yte, 1), 0)
             add("best single model", np.full(len(Yte), int(np.argmax(Ytr.mean(0)))), n_tr)          # best on train, applied to test
+            # --- SOTA (LLMRouterBench 2026 leaders with released code): Avengers top-1 = per-cluster accuracy ranking on ALL train labels
+            for K in (16, 64):
+                lab_tr, lab_te = fams[f"cluster{K}"]; best = np.array([np.argmax(Ytr[lab_tr == c].mean(0)) if (lab_tr == c).any() else int(np.argmax(Ytr.mean(0))) for c in range(K)])
+                add(f"Avengers top-1 K={K} (AAAI26, full labels)", best[lab_te], n_tr)
+            add("EmbedLLM MF (ICLR25, dim64 5ep)", embedllm(Etr, Ytr, Ete), n_tr)
             # --- ours
             for fname, (ftr, fte) in fams.items():
+                if fname == "cluster64": continue                                     # Avengers' partition; probe tables use 3 / 16 / subject
                 if fte is None: fte = KNeighborsClassifier(n_neighbors=5).fit(Etr, ftr).predict(Ete)   # subject predicted from text embeddings
                 for b in B_PROBES:
                     pick, used, est = probe_family(ftr, fte, Ytr, b, rng); add(f"probe_{fname}_b{b}", pick, used)
@@ -97,7 +124,7 @@ def summarise():
         md += [f"## m = {m} candidates ({df[df.m == m].dataset.nunique()} datasets × 3 configs)", "", "| router | μ | V_B | V_R | labelled outcomes | runs |", "|---|---|---|---|---|---|"]
         md += [f"| {r} | {v.mu:.4f} | {v.V_B:.3f} | {v.V_R:.3f} | {v.labels:,.0f} | {int(v.n)} |" for r, v in t.iterrows()] + [""]
     piv = df[df.m == 1000].pivot_table(index="dataset", columns="router", values="mu")
-    keep = [c for c in ["oracle (theirs)", "best single model", "PRKnn (theirs)", "C-RoBERTa-cluster (theirs)", "MLPR (theirs, sklearn)", "probe_cluster16_b10", "probe_cluster16_b30", "probe_subject_b10", "random (theirs)"] if c in piv]
+    keep = [c for c in ["oracle (theirs)", "best single model", "PRKnn (theirs)", "C-RoBERTa-cluster (theirs)", "LinearR (theirs, ridge)", "MLPR (theirs, sklearn)", "Avengers top-1 K=64 (AAAI26, full labels)", "EmbedLLM MF (ICLR25, dim64 5ep)", "probe_cluster16_b10", "probe_cluster16_b30", "probe_subject_b30", "random (theirs)"] if c in piv]
     md += ["## m = 1000, per dataset (μ)", "", "| dataset | " + " | ".join(keep) + " |", "|---" * (len(keep) + 1) + "|"]
     md += ["| " + ds + " | " + " | ".join("" if pd.isna(piv.loc[ds, c]) else f"{piv.loc[ds, c]:.3f}" for c in keep) + " |" for ds in piv.index]
     open(f"{OUT}/summary.md", "w").write("\n".join(md) + "\n"); print("\n".join(md))
