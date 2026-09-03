@@ -81,6 +81,27 @@ results/<grid>/summary.md and results/v2_targets/summary.md, refresh README numb
 no Claude trailers), push to origin main. Known: MIDIAN-V v2 definition = per-probe reports (DEVIATIONS 2026-09-03); CrewAI
 2026-09-02 rows were a corrupted-store artefact (archived as rows_v1_Q300.d).
 
+
+**2026-09-03 15:05 — HANDOFF / COMPACT POINT.** Repo = GitHub rsiegemit/midian-web main (author rsiegemit, no Claude trailers).
+DONE: v2 phases 0–1 code (all forks merged; suite 374+ green; `scripts/equivalence.py` guards MIDIAN refactors); grids complete:
+variants_f1 (98.5%, +midian_va shards running), internals_v2, midian_r20, stratify, live_f1_core_s6_10, churn (461/480, gap-fill
+running), budget_b10_shapes (103/108, tail-fill launched), live_n10k_v2 (120/126: the two peer-halving units died in the 12:52
+registry gap after 8 h and were relaunched — ~8 h more), midian_v_replication (88%: midian_va added, seeds 11-20).
+RUNNING (~1,650 CPU shards on shared+sapphire): fw_live_n100/n1000 (92%, 10 seeds, Q=1000; Magentic-One tail; ETA ~17:00),
+fw_live_n100_verified 75% (~17:30), fw_live_n1000_verified 55% (~18:30), fw_live_n{100,1000}_lowskill (β=0.5 low-skill-first,
+new, 39%/66%), midian_va on variants_f1 + replication. Serving: fleet 2 (44175863, all 7 models as "#44175863" aliases, ends
+2026-09-05 ~10:30) + 8×7B replicas (4 of them until ~2026-09-04 13:00); primary fleet retired 12:52. endpoints.d = 15 entries;
+`scripts/restore_endpoints.sh $RTE_DATA/endpoints_snapshot 44175863` re-registers after any wipe (serve_fleet no longer clears).
+RESULTS_rte_v2.md: filled for every closed grid; §1/§2/App.E provisional (*) from ~90% fw grids; §1b verified and n=10k halving row
+TODO; §6b energy/latency (H10/H11) final under stated assumptions; observe-time accounting (3415f03) applied everywhere.
+KNOWN ISSUES: `scripts/finish_v2.sh` fired prematurely three times (squeue polls) — do NOT rely on it unattended; run it manually
+once `squeue -u $USER | grep rte_ | grep -v serve` is empty. `midian.py` is 154 lines (guideline 150).
+TO FINISH: (1) when fw grids close: rte.analyze both, `python scripts/extra_figs.py`, de-asterisk §1/§2/App.E, add the low-skill
+block (fw_live_n*_lowskill) to §1 + an H1 panel, README headline numbers; (2) verified grids → §1b/H7; (3) midian_va → §4 + V2-11
+verdict (targets_v2 merge: `--grid variants_f1 --grids stratify,internals_v2,live_f1_n1000,live_f1_core_s6_10,midian_v_replication,
+churn_n1000,live_n10k_v2,budget_b10_shapes --out $RTE_DATA/results/v2_targets`); (4) n=10k halving row, churn/budget tails;
+(5) final pass: RESULTS_rte_v2 status line, README, `python -m rte.llm_client compact` (memo ~9 GB, shards accumulate), commit, push.
+
 ## 3. Method variants in the grids (all paired on the same streams)
 midian (v1, pre-registered), midian(online=false), midian(r=5), midian(verify,cached) = MIDIAN-V, midian(verify,cached,r=5),
 midian_internals adds r∈{5,10,20}×δ∈{0,1/3} and V at r∈{5,10,20}; sequential_halving and sequential_halving(peer_reported);
