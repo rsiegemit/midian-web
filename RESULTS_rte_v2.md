@@ -1,8 +1,8 @@
 # RESULTS_rte_v2.md — RTE after the v2 work order (DRAFT, 2026-09-03)
 
-Status (16:40, 2026-09-03): every MIDIAN-side grid is complete (variants_f1 incl. MIDIAN-VA, internals_v2, midian_r20,
-stratify, budget_b10_shapes, live_f1_core_s6_10); midian_v_replication, churn_n1000 and live_n10k_v2 lack only
-sequential-halving rows (35 / 11 / 5, running). fw_live_n100 / fw_live_n1000 (10 seeds, Q=1000, fixed adapters) are at
+Status (19:05, 2026-09-03): every MIDIAN-side grid is complete (variants_f1 incl. MIDIAN-VA, internals_v2, midian_r20,
+stratify, budget_b10_shapes, live_f1_core_s6_10, midian_v_replication incl. MIDIAN-VA, live_n10k_v2 incl. the halving
+row); churn_n1000 lacks 6 halving rows (running). fw_live_n100 / fw_live_n1000 (10 seeds, Q=1000, fixed adapters) are at
 94%, the two _verified grids at 84% / 67%, the two low-skill-first framework grids at 80%: §1, §2's framework axis and
 Appendix E are filled PROVISIONALLY from those and marked \*; the verified-shortlist section (§1b) and the n = 10k
 halving row stay `TODO`. Every number without a `TODO(grid)` mark is final and comes from completed grids (the 2026-09-02
@@ -272,8 +272,8 @@ verification reliably buys on top of a robust estimator is the halved per-task c
 β = 0.5. At β = 0 VA equals V exactly (no reporter is ever struck). Where VA is below V (β = 0.1, 0.25) the code-path
 hypothesis — not a measured decomposition — is that a struck reporter's probes are also removed from V's verified
 promotion (`_verify(..., exclude)`), which shrinks the verification set. **V2-11 WITHIN_FLOOR**: (i) VA ≥ max(V, A) − 0.01
-fails at β = 0.1 by 0.003 beyond the tolerance (−0.013; −0.017 at β = 0.25 in the replication-merged evaluation, whose
-halving rows are still landing), inside MIDIAN's 0.074 seed envelope; (ii) HIT (+0.014 vs A at β = 0.5
+fails at β = 0.1 by 0.003 beyond the tolerance (−0.013 on variants_f1; −0.010 / −0.013 / −0.017 / +0.001 by β in the
+final merged evaluation with the replication grid), inside MIDIAN's 0.074 seed envelope; (ii) HIT (+0.014 vs A at β = 0.5
 low-skill-first); (iii) HIT (1.033× V's build probes, per-task cost V's + 2%).
 
 **All variants on the same 240 units, with the negative results (SH, SH+A, LinUCB).**
@@ -314,7 +314,11 @@ Absolute (n = 1000, β = 0 / 0.25 / 0.5): oracle 0.714 / 0.715 / 0.714, halving_
 0.675 / 0.670 / 0.594, flat_online 0.654 / 0.653 / 0.654, midian 0.653 / 0.641 / 0.611. **V2-8 HIT** (+0.02 ± 0.02 at
 β ≤ 0.25); the β = 0.5 exposure is real and reported as measured. Note that on these seeds peer-reported halving does
 not collapse at β = 0.5 (0.703): the replication grid uses random liars only, and the collapse is a low-skill-first
-effect (§4 table).
+effect (§4 table). **MIDIAN-VA on the same fresh seeds** (360 pairs): VA − V **+0.020** [+0.016, +0.025] overall;
+n = 1000: +0.001 / −0.004 / **+0.074** [+0.066, +0.082] at β = 0 / 0.25 / 0.5; n = 100: +0.000 / −0.008 / +0.058.
+VA − MIDIAN +0.031 [+0.028, +0.035] (n = 1000: +0.022 / +0.025 / +0.057). VA − halving_peer at n = 1000: −0.038 /
+−0.045 / −0.006. The variants_f1 picture (§4 steps 1–2) replicates: VA equals V at β = 0, gives back ≤ 0.008 at
+β = 0.25, and is +0.06–0.07 above V under collusion — on random liars, without the low-skill-first selection.
 
 ## 5. Churn (H9)
 
@@ -515,6 +519,7 @@ supervisors pick the same agent on these tasks.)
 
 | arm | β=0 | β=0.25 | build probes | reports | msgs / comps per task |
 |---|---|---|---|---|---|
+| sequential_halving_peer | 0.863 | 0.863 | 460,016 | 4,140,144 | 0 / 1 |
 | oracle | 0.859 | 0.859 | | | |
 | midian_v | 0.813 | 0.806 | 479,840 | 4,318,560 | 6 / 41 |
 | midian_sh | 0.794 | 0.772 | 480,000 | 4,320,000 | 12 / 80 |
@@ -531,7 +536,12 @@ Paired: midian − flat_online +0.013 [−0.004, +0.031] (3/6), midian_v − mid
 frameworks average 0.29, **below random** (0.417): with 10,000 self-descriptions the TF-IDF top-10 is dominated by
 descriptions that match the task's words rather than the task's family, and the supervisor never sees a competent
 agent. frameworks − flat_online = −0.48. LinUCB also collapses at this scale (16k × 10 arms, 300 tasks). **V2-7 HIT.**
-The two peer-reported-halving units at n = 10k were still running at write time (**TODO(live_n10k_v2, halving row)**).
+Peer-reported halving at n = 10k (the six units landed 2026-09-03 18:45): 0.863 at both β, **+0.054** [+0.042, +0.067]
+over midian_v (6/6) and +0.076 over plain MIDIAN, +0.004 over the oracle (2/6; the oracle is the argmax of S measured
+with ±0.035 binomial error, so a method can sit on it). With random liars at β = 0.25 its picks are unchanged from
+β = 0: at n = 10k the trimmed report of 16 reporters per cohort absorbs a quarter of random liars entirely. The
+low-skill-first collusion that breaks it at n = 1000 (§4) is not in this grid; the learned_n10k grid (RESULTS_rte_v3
+part C) runs both liar selections at n = 10k.
 
 ## 8. Pre-registered verdicts
 
@@ -561,7 +571,7 @@ WITHIN_FLOOR = decisive delta inside MIDIAN's mean seed envelope, 0.070 at n = 1
 | V2-8 | replication, fresh seeds 11–20: midian_v − midian = +0.02 ± 0.02 at β ≤ 0.25 | **HIT** | +0.021 (240 pairs; n=1000: +0.021 / +0.029 at β = 0 / 0.25, n=100: +0.007 / +0.026); at β=0.5 collude −0.008 (n=1000 −0.017, n=100 0.000) |
 | V2-9 | b=10 closes the bimodal framework gap to ±0.02; heavy_tail MIDIAN ≥ fw + 0.03 | **HIT** | bimodal +0.002; heavy_tail −0.097 |
 | V2-10 | trimming hurts plain MIDIAN ≥ 0.02 under collusion, not MIDIAN-A | **HIT** | r=10: MIDIAN −0.038 (δ=1/3 − δ=0, collude), MIDIAN-A −0.000 |
-| V2-11 | MIDIAN-VA ≥ max(V, A) − 0.01 at every β; within 0.02 of A at β=0.5 low-skill collude; build probes ≤ 1.05× V, per-task cost V's | **MISS** (within floor) | VA − max(V, A): +0.000 / −0.013 / −0.009 / +0.001 at β = 0 / 0.1 / 0.25 / 0.5 on variants_f1 (−0.010 / −0.013 / −0.017 / +0.001 merged with the 98%-complete replication grid); VA − A at β=0.5 low-skill +0.014 (30 pairs); 1.033× probes; 31.6 / 5.06 per task vs V's 31 / 5 |
+| V2-11 | MIDIAN-VA ≥ max(V, A) − 0.01 at every β; within 0.02 of A at β=0.5 low-skill collude; build probes ≤ 1.05× V, per-task cost V's | **MISS** (within floor) | VA − max(V, A): +0.000 / −0.013 / −0.009 / +0.001 at β = 0 / 0.1 / 0.25 / 0.5 on variants_f1 (−0.010 / −0.013 / −0.017 / +0.001 merged with the complete replication grid); VA − A at β=0.5 low-skill +0.014 (30 pairs); 1.033× probes; 31.6 / 5.06 per task vs V's 31 / 5 |
 
 Six hits, four misses (SH does not help; SH+A adds nothing over A; a history-only LinUCB is below a flat scan; VA gives
 back ~0.01 of V's edge at β = 0.1–0.25 while repairing its collusion collapse — the two within-floor misses, V2-3 and
