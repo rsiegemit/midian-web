@@ -273,7 +273,15 @@ pre-registered +0.10); (ii) HIT (0.706–0.711 across β); (iii) HIT (peer halvi
 MIDIAN +0.062 at β = 0; V −0.164 at β = 0.5 low-skill); (vi) HIT on the boundary (trusted halving −0.020 from the
 oracle).
 
-### D3. GraphRouter through the released LLMRouter library (`scripts/rivals_llmrouter.py`)
+### D3. GraphRouter through the released LLMRouter library (`scripts/rivals_llmrouter.py`) — DEFAULT RUN BELOW IS A FAILURE MODE; TUNED RUN IN PROGRESS
+
+**Diagnosis (22:30).** Their release builds the training label as the one-hot argmax of performance per query; on 0/1
+outcomes argmax breaks ties by index, so on RouterBench the "best model" label is WizardLM-13B (index 0) on 11,271 of
+25,265 train prompts. The GNN cannot fit that and its best-validation checkpoint is a constant router. A fair run —
+label = the edge's own performance (the paper's objective), LLM node features from description embeddings, and
+hyperparameters (hidden 64/256 × lr 1e-3/3e-4 × mask 0.3/0.6, 200 epochs) selected on their validation split — is
+running (jobs 44285342-7); the table below is replaced when it lands. The same validation-selection protocol is being
+applied to every router in D1 (rerun rte_re3_*), so no rival is reported at a failure-mode default.
 
 GraphRouter (Feng et al., ICLR 2025; the library's default configuration: hidden 64, AdamW 1e-3, 100 epochs, 4 masked
 samples per step, mask rate 0.3, 20% validation) trained on exactly the inputs its pipeline consumes (routing JSONL,

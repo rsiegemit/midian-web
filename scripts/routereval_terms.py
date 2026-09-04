@@ -68,22 +68,28 @@ def probe_family(fam_tr, fam_te, Ytr, b, rng):
     return np.argmax(est[fam_te], axis=1), used, est
 
 
+def tuned(name, cands, Yva, Yte):
+    """Pick the candidate with the best VALIDATION μ (their val split), report its TEST μ. cands = [(label, pick_va, pick_te, labels_used)]."""
+    best = max(cands, key=lambda c: score(c[1], Yva)); return f"{name} [val-tuned: {best[0]}]", best[2], best[3]
+
+
 def run(ds):
     d = pickle.load(open(f"{DATA}/{ds}_router_dataset.pkl", "rb"))
-    Etr, Ete = np.asarray(d["embedding"]["train_embed"]), np.asarray(d["embedding"]["test_embed"])
+    Etr, Ete = np.asarray(d["embedding"]["train_embed"]), np.asarray(d["embedding"]["test_embed"]); Eva = np.asarray(d["embedding"]["val_embed"])
     Ptr, Pte = d["prompt"]["train_prompt"], d["prompt"]["test_prompt"]
     rng = np.random.default_rng(SEED); rows = []
     # families that do not depend on the pool: unsupervised clusters, and the MMLU subject
     fams = {}
-    for K in (3, 16, 64):
-        km = KMeans(n_clusters=K, random_state=SEED, n_init=10).fit(Etr); fams[f"cluster{K}"] = (km.labels_, km.predict(Ete))
+    fams_va = {}
+    for K in (3, 16, 64, 128):
+        km = KMeans(n_clusters=K, random_state=SEED, n_init=10).fit(Etr); fams[f"cluster{K}"] = (km.labels_, km.predict(Ete)); fams_va[K] = km.predict(Eva)
     if ds == "mmlu":
         subj = lambda P: np.array([(SUBJECT.search(str(p)) or [None, "?"])[1] for p in P]); s_tr, s_te = subj(Ptr), subj(Pte)
         names = {s: i for i, s in enumerate(sorted(set(s_tr)))}; fams["subject"] = (np.array([names[s] for s in s_tr]), None)   # test family predicted below
     for m, cfgs in d["hard"].items():
         for cfg in CONFIGS:
             dd = cfgs[cfg]["data"]; key = "train_label" if ds == "harness_truthfulqa_mc_0" else "train_score"
-            Ytr, Yte = np.asarray(dd[key], float), np.asarray(dd["test_score"], float)
+            Ytr, Yte, Yva = np.asarray(dd[key], float), np.asarray(dd["test_score"], float), np.asarray(dd["val_score"], float)
             bsm = Yte.mean(0).max(); n_tr = Ytr.size
             def add(name, pick, labels):
                 rows.append({"dataset": ds, "m": m, "config": cfg, "router": name, "mu": score(pick, Yte), "V_B": score(pick, Yte) / bsm,
@@ -103,6 +109,35 @@ def run(ds):
                 lab_tr, lab_te = fams[f"cluster{K}"]; best = np.array([np.argmax(Ytr[lab_tr == c].mean(0)) if (lab_tr == c).any() else int(np.argmax(Ytr.mean(0))) for c in range(K)])
                 add(f"Avengers top-1 K={K} (AAAI26, full labels)", best[lab_te], n_tr)
             add("EmbedLLM MF (ICLR25, dim64 5ep)", embedllm(Etr, Ytr, Ete), n_tr)
+            # --- the same routers with hyperparameters selected on THEIR validation split (no failure-mode defaults)
+            Eall = np.vstack([Eva, Ete]); nv = len(Eva)
+            c = []
+            for k in (5, 20, 50):
+                nb = NearestNeighbors(n_neighbors=k, metric="cosine").fit(Etr).kneighbors(Eall)[1]; pk = np.argmax(Ytr[nb].mean(1), 1); c.append((f"k={k}", pk[:nv], pk[nv:], n_tr))
+            add(*tuned("PRKnn (theirs)", c, Yva, Yte))
+            c = []
+            for K in (3, 16, 64, 128):
+                lab_tr, lab_te = fams[f"cluster{K}"]; best = np.array([np.argmax(Ytr[lab_tr == q].mean(0)) if (lab_tr == q).any() else int(np.argmax(Ytr.mean(0))) for q in range(K)])
+                c.append((f"K={K}", best[fams_va[K]], best[lab_te], n_tr))
+            add(*tuned("cluster table, full labels (C-RoBERTa-cluster / Avengers top-1)", c, Yva, Yte))
+            c = []
+            for a in (0.1, 1.0, 10.0):
+                pr = Ridge(alpha=a).fit(Etr, Ytr).predict(Eall); c.append((f"alpha={a}", np.argmax(pr[:nv], 1), np.argmax(pr[nv:], 1), n_tr))
+            add(*tuned("LinearR (theirs, ridge)", c, Yva, Yte))
+            c = []
+            for h in (256, 1024):
+                pr = MLPRegressor(hidden_layer_sizes=(h,), max_iter=100, batch_size=32, random_state=SEED).fit(Etr, Ytr).predict(Eall); c.append((f"hidden={h}", np.argmax(pr[:nv], 1), np.argmax(pr[nv:], 1), n_tr))
+            add(*tuned("MLPR (theirs, sklearn)", c, Yva, Yte))
+            c = []
+            for dim, ep in ((64, 5), (232, 20)):
+                pk = embedllm(Etr, Ytr, Eall, dim=dim, epochs=ep); c.append((f"dim={dim},ep={ep}", pk[:nv], pk[nv:], n_tr))
+            add(*tuned("EmbedLLM MF (ICLR25)", c, Yva, Yte))
+            c = []
+            for fname in ("cluster3", "cluster16"):
+                ftr, fte = fams[fname]; fva = fams_va[int(fname[7:])]
+                for b in B_PROBES:
+                    pk_te, used, est = probe_family(ftr, fte, Ytr, b, np.random.default_rng(SEED)); pk_va = np.argmax(est[fva], axis=1); c.append((f"{fname},b={b}", pk_va, pk_te, used))
+            add(*tuned("probe table", c, Yva, Yte))
             # --- ours
             for fname, (ftr, fte) in fams.items():
                 if fname == "cluster64": continue                                     # Avengers' partition; probe tables use 3 / 16 / subject
@@ -119,12 +154,19 @@ def summarise():
     df = pd.concat([pd.read_csv(f"{OUT}/{ds}.csv") for ds in DATASETS if os.path.exists(f"{OUT}/{ds}.csv")])
     df.to_csv(f"{OUT}/rows.csv", index=False)
     md = ["# RouterEval on its own terms (hard setting; mean over the three pool configs, as their harness reports)", ""]
+    df["base"] = df.router.str.replace(r" \[val-tuned: .*\]$", " [val-tuned]", regex=True)
     for m in sorted(df.m.unique()):
-        t = df[df.m == m].groupby("router").agg(mu=("mu", "mean"), V_B=("V_B", "mean"), V_R=("V_R", "mean"), labels=("labelled_outcomes", "mean"), n=("mu", "size")).sort_values("mu", ascending=False)
+        t = df[df.m == m].groupby("base").agg(mu=("mu", "mean"), V_B=("V_B", "mean"), V_R=("V_R", "mean"), labels=("labelled_outcomes", "mean"), n=("mu", "size")).sort_values("mu", ascending=False)
         md += [f"## m = {m} candidates ({df[df.m == m].dataset.nunique()} datasets × 3 configs)", "", "| router | μ | V_B | V_R | labelled outcomes | runs |", "|---|---|---|---|---|---|"]
         md += [f"| {r} | {v.mu:.4f} | {v.V_B:.3f} | {v.V_R:.3f} | {v.labels:,.0f} | {int(v.n)} |" for r, v in t.iterrows()] + [""]
     piv = df[df.m == 1000].pivot_table(index="dataset", columns="router", values="mu")
     keep = [c for c in ["oracle (theirs)", "best single model", "PRKnn (theirs)", "C-RoBERTa-cluster (theirs)", "LinearR (theirs, ridge)", "MLPR (theirs, sklearn)", "Avengers top-1 K=64 (AAAI26, full labels)", "EmbedLLM MF (ICLR25, dim64 5ep)", "probe_cluster16_b10", "probe_cluster16_b30", "probe_subject_b30", "random (theirs)"] if c in piv]
+    # val-tuned rows carry their chosen config in the name: pool them by base name for the per-dataset table
+    df["base"] = df.router.str.replace(r" \[val-tuned: .*\]$", " [val-tuned]", regex=True)
+    pv2 = df[df.m == 1000].pivot_table(index="dataset", columns="base", values="mu"); tuned_cols = [c for c in pv2.columns if "[val-tuned]" in c]
+    if tuned_cols:
+        md += ["", "## m = 1000, per dataset (μ), hyperparameters selected on their validation split", "", "| dataset | " + " | ".join(tuned_cols) + " |", "|---" * (len(tuned_cols) + 1) + "|"]
+        md += ["| " + ds + " | " + " | ".join("" if pd.isna(pv2.loc[ds, c]) else f"{pv2.loc[ds, c]:.3f}" for c in tuned_cols) + " |" for ds in pv2.index]
     md += ["## m = 1000, per dataset (μ)", "", "| dataset | " + " | ".join(keep) + " |", "|---" * (len(keep) + 1) + "|"]
     md += ["| " + ds + " | " + " | ".join("" if pd.isna(piv.loc[ds, c]) else f"{piv.loc[ds, c]:.3f}" for c in keep) + " |" for ds in piv.index]
     open(f"{OUT}/summary.md", "w").write("\n".join(md) + "\n"); print("\n".join(md))
