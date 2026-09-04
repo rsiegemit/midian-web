@@ -31,12 +31,13 @@ def X3():
 
 def X4():
     R = os.environ.get("RTE_DATA", "/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte"); df = pd.read_csv(f"{R}/results/routereval_terms/rows.csv")
-    show = ["oracle (theirs)", "LinearR (theirs, ridge)", "MLPR (theirs, sklearn)", "C-RoBERTa-cluster (theirs)", "Avengers top-1 K=64 (AAAI26, full labels)", "EmbedLLM MF (ICLR25, dim64 5ep)", "PRKnn (theirs)", "best single model", "probe_cluster16_b30", "probe_cluster16_b10", "probe_cluster3_b30", "random (theirs)"]
+    df["router"] = df.router.str.replace(r" \[val-tuned: .*\]$", " [tuned]", regex=True)
+    show = ["oracle (theirs)", "LinearR (theirs, ridge) [tuned]", "EmbedLLM MF (ICLR25) [tuned]", "MLPR (theirs, sklearn) [tuned]", "cluster table, full labels (C-RoBERTa-cluster / Avengers top-1) [tuned]", "PRKnn (theirs) [tuned]", "PRKnn (theirs)", "Avengers top-1 K=64 (AAAI26, full labels)", "best single model", "probe table [tuned]", "probe_cluster16_b30", "probe_cluster16_b10", "random (theirs)"]
     show = [s for s in show if s in set(df.router)]
-    fig, ax = plt.subplots(figsize=(9, 5)); t = df.groupby(["router", "m"]).mu.mean().unstack(); ax.set_prop_cycle(color=plt.cm.tab20.colors)
+    fig, ax = plt.subplots(figsize=(9.5, 5.5)); t = df.groupby(["router", "m"]).mu.mean().unstack(); ax.set_prop_cycle(color=plt.cm.tab20.colors)
     for s in show: ax.plot(t.columns, t.loc[s], marker="o", lw=2 if "probe" in s else 1.1, ls="--" if "probe" in s else "-", label=s)
     ax.set_xscale("log"); ax.set_xlabel("candidate pool size m (real LLMs)"); ax.set_ylabel("μ = mean test score of the routed model (12 datasets × 3 pools)"); ax.grid(alpha=.3); ax.legend(fontsize=7)
-    ax.set_title("X4  RouterEval on its own terms: their baselines, SOTA routers, and the probe-family table"); fig.savefig(f"{O}/X4_routereval_terms.png", dpi=300, bbox_inches="tight"); print("[X4] written")
+    ax.set_title("X4  RouterEval on its own terms (validation-tuned where marked): their baselines, SOTA routers, probe table"); fig.savefig(f"{O}/X4_routereval_terms.png", dpi=300, bbox_inches="tight"); print("[X4] written")
 
 
 def X5():

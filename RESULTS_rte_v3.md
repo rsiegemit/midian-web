@@ -219,6 +219,16 @@ labels, 0.015 under the best single model. Every method is 0.3 below the per-pro
 headroom RouterEval advertises is per-prompt, and nothing family-level or label-cheap reaches it. MIDIAN's own
 mechanisms do not act here (no liars, no cost accounting); they act in D2.
 
+**D1, validation-tuned (rerun 2026-09-04 02:00; every router's hyperparameters chosen on RouterEval's own validation
+split — PRKnn k ∈ {5, 20, 50}, cluster K ∈ {3, 16, 64, 128}, ridge α ∈ {0.1, 1, 10}, MLPR width ∈ {256, 1024}, EmbedLLM
+(dim, epochs) ∈ {(64, 5), (232, 20)}, probe table b ∈ {3, 10, 30} × K ∈ {3, 16}).** m = 1,000, mean over 12 datasets × 3
+pools: LinearR 0.667 (α = 10 in 19/36 runs), EmbedLLM 0.661, MLPR 0.654, cluster table 0.647 (K = 3 in 18, K = 16 in 12),
+**probe table 0.630** (16 × 30 in 18, 3 × 30 in 12; 0.26M labels), best single model 0.629, PRKnn 0.627 (k = 50 in 27 of 36),
+random 0.463. Their kNN's default k = 5 was the failure mode (0.489); at k = 50 it is a best-single-model router. Verdicts
+under tuning: T3-11 HIT (probe table +0.003 vs PRKnn), T3-12 MISS by 0.017 (was 0.042), T3-13 unchanged (MISS: bbh +0.09,
+gpqa +0.07, musr +0.11 over the best single model for prompt-level routers), T3-16 MISS (EmbedLLM +0.031 over the probe
+table). Per-dataset tuned table: `results/routereval_terms/summary.md`.
+
 ### D2. Every arm with liars on RouterEval's real LLM pools (`rte/backends/routereval.py`; grids routereval_mmlu, routereval_mmlu5k; figure X5)
 
 The same score tables inside our World: agents = the pool's real LLMs, families = the 16 largest MMLU subjects (named in

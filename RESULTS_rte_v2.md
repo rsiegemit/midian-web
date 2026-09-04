@@ -137,10 +137,31 @@ that channel changes little. At Q = 1000 and 10 seeds the picture is the 2026-09
 
 ## 1b. Frameworks given MIDIAN's verified shortlist (H7)
 
-**TODO(verified)**: fw_live_n100_verified is 1619/2520 rows (64.2%) and fw_live_n1000_verified 1062/2520 (42.1%) at
-13:40 on 2026-09-03 (missing rows are seeds 2–10 of Magentic-One, CAMEL, CrewAI, LlamaIndex first); filled when ≥ 90%.
-The 2026-09-02 result (3 seeds, Q = 300, old adapters) was a lift of +0.04 to +0.12 for every framework with every one
-still below `midian_v` alone; figure H7 regenerates from the new rows.
+Frameworks given MIDIAN-V's verified leaf cohort as their shortlist (`retrieval: midian`, r = 10 or r = 5 candidates)
+instead of the TF-IDF top-10 of self-descriptions; everything else unchanged (same supervisor, prompts, accounting).
+Grids fw_live_n{100,1000}_verified (3 shapes × 4 β × 10 seeds, Q = 1000; 99.4–99.8% complete, ≤ 15 Magentic-One rows
+outstanding), paired against the plain arm of fw_live_n{100,1000} on identical cells.
+
+| framework, n = 1000 | plain | MIDIAN-V shortlist r=10 | r=5 | lift r=10 [95% CI] | lift r=5 |
+|---|---|---|---|---|---|
+| Magentic-One (7B) | 0.552 | **0.632** | 0.623 | **+0.086** [+0.068, +0.103] | +0.078 |
+| AutoGen | 0.532 | 0.609 | 0.594 | +0.077 [+0.058, +0.096] | +0.060 |
+| smolagents | 0.526 | 0.595 | 0.608 | +0.069 [+0.053, +0.086] | +0.081 |
+| Google ADK | 0.542 | 0.606 | 0.608 | +0.064 [+0.049, +0.079] | +0.066 |
+| CrewAI | 0.528 | 0.577 | 0.587 | +0.049 [+0.031, +0.066] | +0.059 |
+| LangGraph | 0.537 | 0.581 | 0.585 | +0.047 [+0.030, +0.063] | +0.046 |
+| CAMEL workforce | 0.532 | 0.578 | 0.592 | +0.040 [+0.024, +0.054] | +0.055 |
+| OpenAI Agents | 0.528 | 0.566 | 0.568 | +0.038 [+0.025, +0.050] | +0.039 |
+| MAF | 0.524 | 0.553 | 0.580 | +0.030 [+0.013, +0.047] | +0.056 |
+| LlamaIndex | 0.533 | 0.541 | 0.528 | +0.007 [−0.015, +0.030] | −0.006 |
+| MIDIAN-V / MIDIAN / oracle | 0.663 / 0.654 / 0.723 | | | | |
+
+n = 100: lifts +0.060 (AutoGen), +0.059 (Magentic-One), +0.053 (smolagents), +0.049 (ADK), +0.045 (CAMEL), +0.038
+(OpenAI Agents), +0.037 (CrewAI), +0.036 (LangGraph), +0.025 (MAF), +0.007 (LlamaIndex, CI covers 0); shortlisted
+frameworks reach 0.53–0.61 against MIDIAN-V's 0.642. Nine of ten frameworks gain 0.03–0.09 from a verified shortlist
+(the phase-1 range +0.04 … +0.12 at Q = 300 / 3 seeds is reproduced at 10 seeds), and none reaches MIDIAN-V itself:
+given a cohort of ten verified candidates, the supervisor's own choice among them still costs 0.03–0.12. LlamaIndex's
+selector ignores the shortlist order and gains nothing. r = 5 vs r = 10: within ±0.02 of each other for every framework.
 
 ## 2. Legibility (H2)
 

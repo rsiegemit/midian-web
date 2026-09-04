@@ -91,17 +91,19 @@ path update (commit 3415f03). Wall-clock is reported only in the supervisor-late
 - Missing: 71 (n = 1,000) and 76 (n = 100) rows, almost all Magentic-One; the other eight frameworks move < 0.005.
 - Phase-1 replication (Q = 300, 3 seeds, 60 cells, earlier adapters): frameworks 0.51–0.54 vs MIDIAN 0.637 / V 0.659.
 
-### II.2 Why the frameworks lose, and what repairs them — legibility **FINAL**, verified shortlist **TODO**
+### II.2 Why the frameworks lose, and what repairs them — legibility **FINAL**, verified shortlist **PROVISIONAL (99%)**
 
 - The frameworks' only signal is the self-description, which over-claims by +0.4 (clipped) and correlates with true
   skill at Spearman **0.443** (specialist), **0.194** (heavy_tail), **0.295** (bimodal).
 - On **bimodal** populations every framework sits on the oracle (strong agents are strong everywhere, so description ≈
   skill). On **specialist** populations they collapse to **0.39 vs MIDIAN's 0.75**. The framework − MIDIAN gap is
   monotone in within-family legibility (Fig. H2).
-- **Verified shortlist (Fig. H7).** Phase 1: handing each framework MIDIAN-V's verified cohort as its shortlist lifted every
-  one by +0.04 to +0.12. **TODO:** the phase-2 table (10 frameworks × n ∈ {100, 1,000} × 10 seeds) needs grids
-  fw_live_n{100,1000}_verified, at 96.5% / 94.2%; missing 87 / 146 rows (Magentic-One 58 each, CAMEL 29 / 55, CrewAI 19);
-  ETA ~05:00 / ~02:00.
+- **Verified shortlist (Fig. H7) — PROVISIONAL (99.4–99.8%; ≤ 15 Magentic-One rows outstanding).** Given MIDIAN-V's
+  verified leaf cohort (r = 10) instead of the TF-IDF top-10, nine of ten frameworks gain +0.03 to +0.09 at n = 1,000
+  (Magentic-One +0.086 [+0.068, +0.103] → 0.632; AutoGen +0.077 → 0.609; smolagents +0.069; ADK +0.064; CrewAI +0.049;
+  LangGraph +0.047; CAMEL +0.040; OpenAI Agents +0.038; MAF +0.030; LlamaIndex +0.007, CI covers 0) and +0.03 to +0.06
+  at n = 100 — and none reaches MIDIAN-V (0.663 / 0.642): the supervisor's own pick among ten verified candidates still
+  costs 0.03–0.12. Full table: RESULTS_rte_v2.md §1b.
 
 ### II.3 The MIDIAN family: add audits first, then verification — **FINAL**
 
@@ -232,31 +234,34 @@ prior but stays below VA at every β and n (T3-7 mixed). Both are immune to liar
 the VA − KNN gap grows with n (HIT); its "within ±0.02 at β = 0" clause MISSES because KNN = flat frozen at every n.
 T3-10 HIT (latency).
 
-### III.4 RouterEval on its own terms (pools of 10 / 100 / 1,000 real LLMs, 12 datasets) — defaults **FINAL**, tuned **PROVISIONAL (9 of 12 datasets)**
+### III.4 RouterEval on its own terms (pools of 10 / 100 / 1,000 real LLMs, 12 datasets) — **FINAL** (defaults and validation-tuned)
 
-*Table 6. m = 1,000 candidates; μ = mean test score of the routed model; mean over 12 datasets × 3 pool types.*
+*Table 6. m = 1,000 candidates; μ = mean test score of the routed model; mean over 12 datasets × 3 pool types. "tuned" =
+hyperparameters selected on RouterEval's own validation split (k for PRKnn, K for cluster tables, α for ridge, width for
+MLPR, dim/epochs for EmbedLLM, b and K for the probe table), so no router is reported at a failure-mode default.*
 
-| router | μ | labelled outcomes |
-|---|---|---|
-| oracle (per prompt) | 0.986 | |
-| LinearR (theirs) | **0.661** | 3.35M |
-| EmbedLLM MF (ICLR 2025) | 0.658 | 3.35M |
-| MLPR (theirs) | 0.645 | 3.35M |
-| C-RoBERTa-cluster (theirs, K = 3) | 0.643 | 3.35M |
-| Avengers top-1, K = 16 (AAAI 2026) | 0.638 | 3.35M |
-| best single model | 0.629 | |
-| **probe table, 16 clusters × 30 probes** | **0.615** | 0.43M (13%) |
-| Avengers top-1, K = 64 (their default) | 0.597 | 3.35M |
-| PRKnn (theirs, k = 5) | 0.489 | 3.35M |
-| random | 0.461 | |
+| router | μ, their defaults | μ, validation-tuned | labelled outcomes |
+|---|---|---|---|
+| oracle (per prompt) | 0.986 | | |
+| LinearR (theirs) | 0.661 | **0.667** (α mostly 10) | 3.35M |
+| EmbedLLM MF (ICLR 2025) | 0.658 | 0.661 | 3.35M |
+| MLPR (theirs) | 0.645 | 0.654 | 3.35M |
+| cluster table, full labels (C-RoBERTa-cluster K = 3 / Avengers top-1) | 0.643 (K = 3) / 0.638 (K = 16) / 0.597 (K = 64, Avengers' default) | 0.647 (K = 3 or 16) | 3.35M |
+| **probe table** (ours; MIDIAN's estimate) | 0.615 (16 clusters × 30 probes) | **0.630** (mostly 16 × 30; 0.26M labels = 8%) | 0.43M / 0.26M |
+| best single model | 0.629 | | |
+| PRKnn (theirs) | 0.489 (k = 5) | 0.627 (k = 50) | 3.35M |
+| random | 0.461 | | |
 
-- Their KNN router is barely above random at 1,000 candidates; a linear probe of the prompt embedding is the strongest
-  published router; prompt-level routers beat the best single model by up to +0.14 on single-task datasets — the
-  headroom is per-prompt (T3-13 MISS). T3-11 HIT by letter (the table is above PRKnn), T3-12 MISS (−0.042 to the same
-  partition with 37× the labels), T3-14 HIT.
-- **Tuned rows** (hyperparameters of every router selected on the benchmark's own validation split, so no rival is
-  reported at a failure-mode default): 9 of 12 datasets in; the tuned table replaces this one when mmlu, mmlu_pro and
-  hellaswag finish (~02:30).
+- Tuning moves their kNN from below-random-plus-a-bit to the best-single-model level (k = 50 instead of 5), lifts the
+  others by 0.003–0.009, and lifts the probe table by 0.015; the ordering is unchanged: a linear probe of the prompt
+  embedding is the strongest published router (+0.038 over the best single model), the probe table sits at the best
+  single model with 8% of the labels, and everything is 0.32 below the per-prompt oracle.
+- Prompt-level routers beat the best single model by up to +0.14 on single-task datasets (gpqa, musr, bbh): the
+  headroom is per-prompt, which no family table sees (T3-13 MISS). T3-11 HIT (tuned probe table within 0.003 of tuned
+  PRKnn); T3-12 MISS (−0.017 to the tuned cluster table with 13× the labels); T3-14 HIT; T3-16 MISS (EmbedLLM +0.031).
+- Per-dataset tuned μ at m = 1,000 (LinearR / EmbedLLM / cluster / probe): mmlu 0.755 / 0.741 / 0.745 / 0.696; bbh 0.727 /
+  0.701 / 0.718 / 0.682; hellaswag 0.761 / 0.755 / 0.754 / 0.721; winogrande 0.811 / 0.816 / 0.790 / 0.756; gsm8k 0.725 /
+  0.745 / 0.725 / 0.722; math 0.463 / 0.449 / 0.463 / 0.414; gpqa 0.422 / 0.408 / 0.381 / 0.369.
 
 ### III.5 MIDIAN and every rival with liars on RouterEval's real LLM pools — **FINAL** except the 5k KNN column
 
@@ -340,8 +345,7 @@ recent routers fail to beat a simple baseline. RouterDC (DeBERTa fine-tune, GPU)
 | Magentic-One tails (7B and 14B arms) on fw_live_n100 / n1000 | 47 + 54 | ~08:00–10:00 | Table 1 FINAL, Appendix E fallback table, README headline |
 | CAMEL / CrewAI / minor stragglers on the same grids | ≈ 40 | same window | — |
 | Low-skill framework grids (Magentic-One 60 + CAMEL 5–7 each) | 65 + 67 | afternoon 09-04 | §II.5 low-skill block FINAL, H1 low-skill panel |
-| Verified-shortlist grids | 87 + 146 | ~05:00 / ~02:00 | §II.2 table, Fig. H7 |
-| RouterEval validation-tuned rerun | 3 datasets | ~02:30 | Table 6 tuned rows, Fig. X4 |
+| Verified-shortlist grids (last Magentic-One rows) | 4 + 15 | ~02:30 | §II.2 → FINAL |
 | Their KNN router at n = 5,000 | 16 rows | ~04:30 | Table 7 one column, Fig. X5 |
 | Final pass | — | after the above | energy tables re-synced (§II.6), memo compaction, STATUS, memory |
 
@@ -366,7 +370,7 @@ embeddings), MODEL-SAT (LLM fine-tune), Avengers voting (needs generations).
 | X1 | RouterBench protocol: quality vs cost, their routers vs the probe table | final |
 | X2 | RouteLLM protocol on RouterBench outcomes | final |
 | X3 | their KNN/MLP routers inside our benchmark vs MIDIAN variants, n = 100 / 1k / 10k | final |
-| X4 | RouterEval on its terms by pool size | defaults final; tuned rows pending |
+| X4 | RouterEval on its terms by pool size, defaults and tuned | final |
 | X5 | every arm with liars on real pools, n = 10 / 100 / 1,000 / 5,000 | pending 2 MLP cells + 5k KNN |
 
 Scripts: `rte.analyze`, `scripts/extra_figs.py`, `scripts/v3_figs.py`, `scripts/energy.py`, `scripts/routerbench_terms.py`,
