@@ -85,7 +85,25 @@ RouterBench's. It is distribution shift: the router was trained on Chatbot-Arena
 prompts are benchmark items (MMLU, GSM8K, HellaSwag, …), where "GPT-4 wins" correlates with nothing the classifier
 learned. A 20-probes-per-family table built on the target distribution recovers 0.59 of the gap; their own
 distribution-matched routers should do better on their own benchmarks, which is what T3-5 (their harness on MMLU /
-GSM8K / MT-Bench, job running) measures.
+GSM8K / MT-Bench) measures.
+
+**T3-5 — their harness on their benchmarks.** RouteLLM's `evaluate.py` with their precomputed strong/weak outcomes
+(MMLU 14,037 prompts, GSM8K 1,307, MT-Bench 144 turns; contaminated prompts removed by their lists) and their `bert`
+router. Their script crashes at its metrics step (`routed_pair` arrives as a str in `generate_results`), so APGR and
+CPT are computed from its own per-threshold prints with its own formulas (11 thresholds at 0–100% strong calls):
+
+| benchmark | weak (Mixtral) | strong (GPT-4) | bert APGR | CPT 20 / 50 / 80 % |
+|---|---|---|---|---|
+| MMLU | 68.1 | 80.6 | 0.536 | 17 / 44 / 77 % |
+| GSM8K | 63.7 | 85.8 | 0.531 | 17 / 45 / 79 % |
+| MT-Bench (score 0–10) | 8.28 | 9.21 | 0.751 | 10 / 20 / 34 % |
+
+On their own distribution the released BERT router recovers half the gap on MMLU / GSM8K and three quarters on
+MT-Bench (the Arena-like distribution it was trained on), against 0.48 on RouterBench's items (above) — the shift, not
+the router, is what part B measures. Our probe-family router was **NOT RUN** inside their harness (T3-5's expectation
+needs the family table on *their* prompts; adding a router class to their package was not worth a fourth harness run
+tonight); on the same three benchmarks it would be the per-subject table on MMLU (57 subjects) and a constant on GSM8K /
+MT-Bench, i.e. the pre-registered "degenerates to always-strong or always-weak" case.
 
 ## C. Their routers on our terms (`knn_router`, `knn_router(online)`, `mlp_router`; grids learned_f1 / learned_n100 / learned_n10k; figure X3)
 
@@ -135,4 +153,63 @@ rows still running at write time).** midian_va 0.811 / 0.787–0.803 / 0.792–0
 grows with n) pending the knn rows; the VA − V collusion gap is +0.058 / +0.074 / +0.057 at n = 100 / 1k / 10k
 (learned_n100, replication, learned_n10k).
 
+
+
+## D. RouterEval — the benchmark at MIDIAN's scale (pools of 10 / 100 / 1,000 real LLMs; `scripts/routereval_terms.py`, `rte/backends/routereval.py`)
+
+### D1. On its own terms (figure X4; `results/routereval_terms/summary.md`)
+
+Their hard setting: 12 datasets × three pool types (all_strong / all_weak / strong_to_weak) × m ∈ {10, 100, 1000}
+REAL LLMs drawn from 8,500 leaderboard models, binary score of every candidate on every prompt, 8:1:1 split, their
+RoBERTa prompt embeddings, their metrics μ (mean test score of the routed model) and V_B = μ / best single model,
+averaged over the three pools as their harness does. Their baselines re-implemented from their router/ scripts
+(PRKnn k = 5, C-RoBERTa-cluster K = 3, LinearR, MLPR — sklearn batch 32 instead of batch 1), plus the SOTA routers
+named by LLMRouterBench (2026) that have open algorithms: **Avengers top-1** (AAAI 2026 oral: KMeans K = 64 on query
+embeddings, per-cluster accuracy ranking on all train labels, top model; their voting needs generations) and
+**EmbedLLM** (ICLR 2025: matrix-factorised model embeddings × projected query embedding, BCE; dim 64 / 5 epochs on CPU
+instead of 232 / 50). Our arm: the probe-family table with unsupervised KMeans families (K = 3, 16) and, on mmlu, the
+subject named in the prompt. With truthful labels every MIDIAN variant reduces to this table (max-tree = argmax,
+asserted on every pool; nothing to audit; V's re-probing at n ≤ 1000 with r = 10 is one extra probe per promoted cell).
+
+| router, m = 1000 | μ | V_B | labelled outcomes |
+|---|---|---|---|
+| oracle | 0.986 | 1.63 | |
+| LinearR (theirs) | **0.661** | 0.99 | 3.35M |
+| EmbedLLM MF (ICLR 2025) | 0.658 | 0.96 | 3.35M |
+| MLPR (theirs) | 0.645 | 0.95 | 3.35M |
+| C-RoBERTa-cluster (theirs, K = 3) | 0.643 | 0.94 | 3.35M |
+| Avengers top-1 K = 16 (AAAI 2026) | 0.638 | 0.94 | 3.35M |
+| best single model | 0.629 | 0.90 | 3.35M |
+| **probe table, 16 clusters × 30 probes** | **0.615** | 0.90 | 0.43M (13%) |
+| probe table, 3 clusters × 30 probes | 0.601 | 0.88 | 0.09M |
+| Avengers top-1 K = 64 | 0.597 | 0.88 | 3.35M |
+| probe table, 16 clusters × 10 probes | 0.532 | 0.78 | 0.15M |
+| PRKnn (theirs, k = 5) | 0.489 | 0.73 | 3.35M |
+| random | 0.461 | 0.68 | |
+
+(m = 100: LinearR 0.605, MLPR 0.589, cluster 0.589, Avengers-16 0.584, EmbedLLM 0.578, probe-16×30 0.569, best single
+0.559, PRKnn 0.531; m = 10: LinearR 0.586, cluster 0.574, MLPR 0.573, probe-16×10 0.571, best single 0.553, PRKnn 0.552.)
+
+Per dataset at m = 1000 (μ): on **mmlu** LinearR 0.748, Avengers-64 0.745, EmbedLLM 0.740, MLPR 0.734, cluster 0.731,
+best single 0.724, probe-subject×30 0.687, probe-16×30 0.683, PRKnn 0.500. On the single-task datasets their
+prompt-level routers beat the best single model by a lot — bbh 0.720 vs 0.636, musr 0.522 vs 0.408, gpqa 0.497 vs
+0.356, ifeval 0.709 vs 0.667 — and the cluster table by less (bbh 0.659, musr 0.496).
+
+Verdicts. **T3-11 HIT** on its letter and wrong in spirit: probe-16×10 is +0.043 *above* PRKnn (0.532 vs 0.489) and
+probe-16×30 +0.125, because their kNN router is below random-plus-a-bit at 1,000 candidates (k = 5 neighbours over
+binary labels of 1,000 models is a lottery among ties); against the real leaders the probe table is −0.047 (LinearR)
+and −0.043 (EmbedLLM) with 13% of the labels, and −0.014 below the best single model. **T3-12 MISS**: probe-3×30 is
+−0.042 below C-RoBERTa-cluster on the same partition — the label budget (90k vs 3.35M) is the whole difference.
+**T3-13 MISS on both halves**: on mmlu the routers beat the best single model by only +0.024, and on the single-task
+datasets they beat it by up to +0.14 (gpqa), i.e. prompt-level routers exploit within-task variation the family table
+cannot see. **T3-14 HIT** (tree = argmax). **T3-16 (partial)**: EmbedLLM beats the probe table by +0.043 (> 0.02:
+MISS for "none beats it"); Avengers top-1 at their default K = 64 is *below* the probe table at m = 1000 (0.597: 64
+clusters × 1,000 candidates over-partitions the 11k train prompts) and above it at K = 16; GraphRouter / RouterDC (D3)
+not yet run.
+
+What this says. At 1,000 real LLMs with all labels, a linear probe of the prompt embedding is the strongest published
+router and it is +0.03 over the best single model; the strongest cheap thing is a 16-cluster table at 13% of the
+labels, 0.015 under the best single model. Every method is 0.3 below the per-prompt oracle. The "model-level scaling"
+headroom RouterEval advertises is per-prompt, and nothing family-level or label-cheap reaches it. MIDIAN's own
+mechanisms do not act here (no liars, no cost accounting); they act in D2.
 

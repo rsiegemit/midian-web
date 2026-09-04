@@ -236,3 +236,32 @@ grids:
       - {name: knn_router, params: {online: true}}
       - mlp_router
       - random
+
+  routereval_mmlu5k:                # TARGETS_rte_v3 D2 at scale: ALL 5,000 leaderboard LLMs on MMLU (16 largest subjects), liars, no embeddings shipped
+    backend: routereval
+    backend_kwargs: {dataset: leaderboard_mmlu}
+    n: [5000]
+    K: [16]
+    dist: [all]
+    beta: [0, 0.25, 0.5]
+    liar_select: [random, low_skill_first]
+    declared_source: [programmatic]
+    b: [3]
+    seeds: "1-3"
+    Q: 300
+    methods:
+      - midian
+      - midian_v
+      - midian_sh
+      - midian_a
+      - midian_sha
+      - midian_va
+      - flat_probe_argmax
+      - {name: flat_probe_argmax, params: {online: true}}
+      - sequential_halving
+      - {name: sequential_halving, params: {peer_reported: true}}
+      - warm_start_bandit
+      - linucb_honest
+      - declared_argmax
+      - knn_router
+      - random

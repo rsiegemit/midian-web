@@ -97,3 +97,14 @@ lemons" trust-layer paper (conceptual; the only work framing lying capability ad
   library, trained on RouterBench (part A protocol) and RouterEval pools; reported on their terms next to our arms.
   Expectation **T3-16** (from LLMRouterBench's own finding): none beats the probe-family table by more than 0.02 μ
   at m = 1000; RouterDC / GraphRouter are within 0.02 of PRKnn.
+- **D2 at n = 5,000 (added 2026-09-03 20:50, before launch; grid `routereval_mmlu5k`).** RouterEval's leaderboard_old
+  score table (5,000 real LLMs × 57 MMLU subjects, binary, complete) as one pool: the 16 largest subjects, a fixed 80/20
+  split per subject, b = 3, Q = 300, β ∈ {0, 0.25, 0.5}, both liar selections, 3 seeds; every arm of routereval_mmlu
+  except mlp_router (one-hot over 240k probes) — knn_router embeds the 5-shot prompts itself (no embeddings shipped).
+  Smoke run (seed 1, β = 0.25 low-skill): flat 0.607, MIDIAN 0.667, MIDIAN-VA 0.813, trusted halving 0.893, LinUCB 0.257,
+  oracle 0.897 — written down before the grid so the pre-registration is not fitted to it:
+  **T3-17.** (i) MIDIAN-VA ≥ flat_online + 0.10 at every β (ties among 5,000 3/3 scorers make any argmax a lottery; the
+  tree's cohort elimination + online root updates are the difference); (ii) VA within 0.03 of itself across β (flat in β);
+  (iii) peer halving loses ≥ 0.10 from β = 0 to β = 0.5 low-skill; (iv) LinUCB-honest < random (5,000 × 16 arms, 300
+  tasks); (v) MIDIAN-V − MIDIAN ≥ +0.05 at β = 0 (verified root pick over 5,000 candidates), and V collapses ≥ 0.10 at
+  β = 0.5 low-skill; (vi) trusted halving within 0.02 of the oracle.

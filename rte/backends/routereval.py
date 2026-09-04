@@ -20,20 +20,41 @@ SUBJECT = re.compile(r"questions \(with answers\) about (.+?)\.")
 class RouterEvalBackend:
     def __init__(self, n: int, K: int, dist: str, seed: int, rng, dataset: str = "mmlu", pool: str | None = None, **_):
         pool = pool or dist                                              # the grid's `dist` axis names the pool config
-        d = pickle.load(open(f"{DATA}/{dataset}_router_dataset.pkl", "rb"))
-        assert int(n) in d["hard"], f"n={n} is not a RouterEval pool size {list(d['hard'])}"
-        c = d["hard"][int(n)][pool]; self.n, self.dist, self.seed = int(n), dist, int(seed)
-        self.model_names = [str(x) for x in c["model"]]
-        key = "train_label" if dataset == "harness_truthfulqa_mc_0" else "train_score"
-        Ytr, Yte = np.asarray(c["data"][key], np.int8), np.asarray(c["data"]["test_score"], np.int8)   # (prompts, n)
-        Ptr, Pte = list(d["prompt"]["train_prompt"]), list(d["prompt"]["test_prompt"])
-        ftr, fte, names = self._families(dataset, Ptr, Pte, d["embedding"], int(K), seed)
+        self.n, self.dist, self.seed = int(n), dist, int(seed)
+        if dataset == "leaderboard_mmlu":                                # ALL 5,000 leaderboard LLMs on MMLU (their leaderboard_score, 57 subjects)
+            Ytr, Yte, Ptr, Pte, ftr, fte, names, self._Etr, self._Ete = self._leaderboard(int(K))
+            assert self.n == Ytr.shape[1], f"n must be {Ytr.shape[1]} for the leaderboard pool"
+            self.model_names = [f"llm{i}" for i in range(self.n)]
+        else:
+            d = pickle.load(open(f"{DATA}/{dataset}_router_dataset.pkl", "rb"))
+            assert int(n) in d["hard"], f"n={n} is not a RouterEval pool size {list(d['hard'])}"
+            c = d["hard"][int(n)][pool]; self.model_names = [str(x) for x in c["model"]]
+            key = "train_label" if dataset == "harness_truthfulqa_mc_0" else "train_score"
+            Ytr, Yte = np.asarray(c["data"][key], np.int8), np.asarray(c["data"]["test_score"], np.int8)   # (prompts, n)
+            Ptr, Pte = list(d["prompt"]["train_prompt"]), list(d["prompt"]["test_prompt"])
+            ftr, fte, names = self._families(dataset, Ptr, Pte, d["embedding"], int(K), seed)
+            self._Etr, self._Ete = np.asarray(d["embedding"]["train_embed"], np.float32), np.asarray(d["embedding"]["test_embed"], np.float32)
         self.families = names; self.K = len(names)
         self._tr = [np.flatnonzero(ftr == k) for k in range(self.K)]     # train prompt rows per family
         self._te = [np.flatnonzero(fte == k) for k in range(self.K)]     # test prompt rows per family
         self._Ytr, self._Yte, self._Ptr, self._Pte = Ytr, Yte, Ptr, Pte
-        self._Etr, self._Ete = np.asarray(d["embedding"]["train_embed"], np.float32), np.asarray(d["embedding"]["test_embed"], np.float32)
         self._S = np.stack([Ytr[r].mean(0) for r in self._tr], 1).astype(np.float32)   # (n, K)
+
+    @staticmethod
+    def _leaderboard(K):
+        """The K largest MMLU subjects of RouterEval's leaderboard_old (5,000 LLMs, per-prompt binary correctness); a fixed 80/20
+        train/test split per subject (rng 0). No embeddings ship per prompt here: routers embed the text themselves."""
+        base = os.path.dirname(DATA)
+        d = pickle.load(open(f"{base}/leaderboard_score/leaderboard_old.pkl", "rb"))["data"]
+        P = pickle.load(open(f"{base}/leaderboard_prompt/leaderboard_old_prompt.pkl", "rb"))
+        subj = sorted([k for k in d if k.startswith("harness_hendrycksTest_")], key=lambda k: -d[k]["correctness"].shape[0])[:K]
+        rng = np.random.default_rng(0); Ytr, Yte, Ptr, Pte, ftr, fte = [], [], [], [], [], []
+        for i, k in enumerate(subj):
+            Y = np.asarray(d[k]["correctness"], np.int8); perm = rng.permutation(len(Y)); cut = int(0.8 * len(Y))
+            Ytr.append(Y[perm[:cut]]); Yte.append(Y[perm[cut:]]); prompts = list(P[k])
+            Ptr += [prompts[j] for j in perm[:cut]]; Pte += [prompts[j] for j in perm[cut:]]; ftr += [i] * cut; fte += [i] * (len(Y) - cut)
+        names = [k.replace("harness_hendrycksTest_", "").replace("_5", "").replace("_", " ") for k in subj]
+        return np.concatenate(Ytr), np.concatenate(Yte), Ptr, Pte, np.array(ftr), np.array(fte), names, None, None
 
     @staticmethod
     def _families(dataset, Ptr, Pte, emb, K, seed):
@@ -64,6 +85,7 @@ class RouterEvalBackend:
     def embedding(self, f: int, inst: int, probe: bool = False) -> np.ndarray:
         """Their RoBERTa embedding of the same prompt `text` returns (unit-normalised)."""
         rows, E = (self._tr, self._Etr) if probe else (self._te, self._Ete)
+        if E is None: return None                                            # leaderboard pool: no per-prompt embeddings shipped
         e = E[rows[f][inst % len(rows[f])]]; return e / (np.linalg.norm(e) + 1e-9)
 
     def execute(self, a: int, task) -> int:
