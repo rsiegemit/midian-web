@@ -21,7 +21,15 @@ class RouterEvalBackend:
     def __init__(self, n: int, K: int, dist: str, seed: int, rng, dataset: str = "mmlu", pool: str | None = None, **_):
         pool = pool or dist                                              # the grid's `dist` axis names the pool config
         self.n, self.dist, self.seed = int(n), dist, int(seed)
-        if dataset == "leaderboard_mmlu":                                # ALL 5,000 leaderboard LLMs on MMLU (their leaderboard_score, 57 subjects)
+        if dataset == "llmrouterbench":                                  # LLMRouterBench performance setting: 20 models × 15 datasets (scripts/llmrouterbench_terms.py --prep)
+            z = np.load(os.path.join(os.path.dirname(DATA), "..", "llmrouterbench", "perf_matrix.npz"), allow_pickle=True)
+            Y, fam, P, E = z["Y"], z["fam"], list(z["prompts"]), z["E"].astype(np.float32); rng0 = np.random.default_rng(0)
+            perm = rng0.permutation(len(Y)); cut = int(0.7 * len(Y)); tr_i, te_i = perm[:cut], perm[cut:]
+            Ytr, Yte = (Y[tr_i] >= 0.5).astype(np.int8), (Y[te_i] >= 0.5).astype(np.int8)
+            Ptr, Pte, ftr, fte = [P[i] for i in tr_i], [P[i] for i in te_i], fam[tr_i], fam[te_i]; names = [str(x) for x in z["datasets"]][:int(K)]
+            self._Etr, self._Ete = E[tr_i], E[te_i]; assert self.n == Y.shape[1], f"n must be {Y.shape[1]} for the llmrouterbench pool"
+            self.model_names = [str(m) for m in z["models"]]
+        elif dataset == "leaderboard_mmlu":                              # ALL 5,000 leaderboard LLMs on MMLU (their leaderboard_score, 57 subjects)
             Ytr, Yte, Ptr, Pte, ftr, fte, names, self._Etr, self._Ete = self._leaderboard(int(K))
             assert self.n == Ytr.shape[1], f"n must be {Ytr.shape[1]} for the leaderboard pool"
             self.model_names = [f"llm{i}" for i in range(self.n)]

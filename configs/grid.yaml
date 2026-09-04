@@ -307,3 +307,34 @@ grids:
       - linucb_honest
       - declared_argmax
       - random
+
+  llmrouterbench_pool:              # TARGETS_rte_v3 F: every arm + liars on LLMRouterBench's 20 real models × 15 datasets (family = dataset)
+    backend: routereval
+    backend_kwargs: {dataset: llmrouterbench}
+    n: [20]
+    K: [15]
+    dist: [all]
+    beta: [0, 0.25, 0.5]
+    liar_select: [random, low_skill_first]
+    declared_source: [programmatic]
+    b: [3]
+    seeds: "1-5"
+    Q: 1000
+    methods:
+      - midian
+      - midian_v
+      - midian_sh
+      - midian_a
+      - midian_sha
+      - midian_va
+      - flat_probe_argmax
+      - {name: flat_probe_argmax, params: {online: true}}
+      - sequential_halving
+      - {name: sequential_halving, params: {peer_reported: true}}
+      - warm_start_bandit
+      - linucb_honest
+      - declared_argmax
+      - knn_router
+      - {name: knn_router, params: {online: true}}
+      - mlp_router
+      - random

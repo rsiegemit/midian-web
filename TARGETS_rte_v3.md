@@ -121,3 +121,17 @@ estimated, not launched: 4.8M fresh probe calls per (population, seed) ≈ 13 h 
   β = 0.5 (the cohort is chosen with audited reports).
 - **T3-20.** Under churn VA − V ≥ +0.03 at 30% churn (V's verified cache goes stale faster than the audited estimates).
 - **T3-21.** In the budget sweep VA ≥ V at every b (audits cost 5% of the budget, returned under β = 0.25 liars).
+
+**F. LLMRouterBench (Li et al., Findings@ACL'26) — added 2026-09-04 02:50, before any run.** Their performance setting
+(15 datasets × the same 20 lightweight models, per-instance scores from their bench-release), their protocol (70/30 ×
+their five seeds), their metrics (AvgAcc, Gain@R, Gain@B, Gap@O), MiniLM embeddings for every embedding router (they
+use gte-qwen2-7B), hyperparameters of every router chosen on a 20% slice of the train split. Their released baselines are
+not re-run through their code; the open algorithms (KNN / linear / MLP routers, EmbedLLM, Avengers top-1) are ours as in
+D1, and their paper's numbers are quoted where the PDF gives them. Our arm: the probe table with the dataset as the family
+(their routing records carry `task_name`) and a predicted-family variant. With liars: grid `llmrouterbench_pool`
+(n = 20 real models, K = 15, our full arm suite via the routereval backend).
+- **T3-22.** AvgAcc: probe table (family given, b = 30) within 0.02 of the best learned router (KNN / MLP / EmbedLLM /
+  Avengers) and ≥ best single model + 0.02 (the dataset id is a strong family signal here).
+- **T3-23.** Gap@O ≥ 0.25 for every router (per-instance oracle headroom, as on RouterEval).
+- **T3-24.** With liars at n = 20: MIDIAN-VA flat in β within 0.03; MLP router ≥ VA at β = 0 (small-n prior effect, as
+  at m = 10 / 100 on RouterEval); peer halving collapses ≥ 0.05 at β = 0.5 low-skill.
