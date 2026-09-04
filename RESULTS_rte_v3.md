@@ -244,14 +244,14 @@ the leaderboard pool:
 | MIDIAN-A | 0.586 | 0.585 | 0.585 | 0.598 | 0.597 | 0.638 | 0.638 | 0.643 | 0.643 | 0.643 |
 | MIDIAN | 0.587 | 0.576 | 0.531 | 0.597 | 0.563 | 0.638 | 0.576 | 0.643 | 0.617 | 0.599 |
 | linucb_honest | 0.618 | 0.616 | 0.616 | 0.598 | 0.598 | 0.650 | 0.650 | 0.609 | 0.609 | 0.609 |
-| mlp_router (theirs) | 0.598 | pending | pending | 0.627 | 0.627 | 0.649 | 0.649 | — | — | — |
+| mlp_router (theirs) | 0.620 | 0.620 | 0.607 | 0.627 | 0.627 | 0.649 | 0.649 | — | — | — |
 | flat_probe_argmax_online | 0.503 | 0.503 | 0.503 | 0.578 | 0.578 | 0.649 | 0.649 | 0.621 | 0.621 | 0.621 |
 | knn_router (theirs) = flat frozen | 0.380 | 0.379 | 0.380 | 0.475 | 0.475 | 0.556 | 0.556 | pending | pending | pending |
 | random | 0.505 | 0.505 | 0.505 | 0.538 | 0.538 | 0.541 | 0.541 | 0.550 | 0.550 | 0.550 |
 
 Paired (identical pool × seed units). n = 1000: VA − knn +0.22 at every β; VA − flat_online +0.09 … +0.11; VA − MLP
 +0.008 [−0.016, +0.039] at β = 0 (11 pairs); VA − V +0.000 / −0.021 / +0.082 at β = 0 / 0.25 / 0.5 low-skill; VA − peer
-halving +0.009 / −0.010 / **+0.124**. n = 5,000: VA − flat_online **+0.084 / +0.090 / +0.089** (β = 0 / 0.25 low-skill /
+halving +0.009 / −0.010 / **+0.124**; VA − MLP −0.003 / −0.028 / −0.007 (β = 0 / 0.25 / 0.5 low-skill). n = 5,000: VA − flat_online **+0.084 / +0.090 / +0.089** (β = 0 / 0.25 low-skill /
 0.5 low-skill); VA − V +0.000 / +0.020 / **+0.168**; VA − MIDIAN +0.062 / +0.094 / +0.111; V − MIDIAN +0.062 at β = 0;
 VA − peer halving −0.177 / −0.144 / **+0.146**; trusted halving − oracle −0.020 [−0.060, +0.003]. Costs at 5,000: build
 240k probes for every probe arm (VA 248k), 2.16M reports for the MIDIAN family and 2.07M for peer halving, per task 42
@@ -267,8 +267,10 @@ lose 0.15–0.32 from β = 0 to β = 0.5 low-skill. (3) **In the honest regime M
 declaration reader (0.86) and the warm-start bandit (0.82) beat VA (0.71) by 0.11–0.16 when nobody lies. Adaptive
 allocation over 5,000 candidates is worth 0.17 over a static three-probe tree, and MIDIAN-VA's claim is robustness at
 fixed cost, not honest-regime accuracy. (4) At 10 and 100 real LLMs their MLP router is the best method (0.649 / 0.627):
-a learned skill prior beats a 4-valued table when ties are few; at 1,000 it equals VA (+0.008) and at 5,000 it does not
-fit. (5) LinUCB-honest matches VA at 1,000 (0.618) and is immune by construction, at 5,000 comparisons per task; at
+a learned skill prior beats a 4-valued table when ties are few; at 1,000 it matches VA (0.620 vs 0.617: VA − MLP −0.003
+/ −0.028 / −0.019 / −0.007 at β = 0 / 0.25 / 0.5 random / 0.5 low-skill, 15 pairs each) and is immune to liars by
+construction; at 5,000 and 10,000 it does not fit (agent one-hot over 240k / 480k probes) and it pays n comparisons per
+task where VA pays 42. (5) LinUCB-honest matches VA at 1,000 (0.618) and is immune by construction, at 5,000 comparisons per task; at
 5,000 candidates it is flat frozen (0.609).
 
 Verdicts. **T3-15 HIT**: the v2 ordering reproduces on real outcomes — VA and A flat in β, V best at β = 0 (tied with

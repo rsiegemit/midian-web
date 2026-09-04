@@ -258,7 +258,7 @@ T3-10 HIT (latency).
   reported at a failure-mode default): 9 of 12 datasets in; the tuned table replaces this one when mmlu, mmlu_pro and
   hellaswag finish (~02:30).
 
-### III.5 MIDIAN and every rival with liars on RouterEval's real LLM pools — **FINAL** except two MLP cells and the 5k KNN column
+### III.5 MIDIAN and every rival with liars on RouterEval's real LLM pools — **FINAL** except the 5k KNN column
 
 *Table 7. Success on MMLU test prompts (16 subjects, b = 3). n ≤ 1,000: their pools (3 types × 5 seeds, Q = 1,000);
 n = 5,000: all leaderboard LLMs (3 seeds, Q = 300).*
@@ -275,7 +275,7 @@ n = 5,000: all leaderboard LLMs (3 seeds, Q = 300).*
 | MIDIAN-A | 0.586 | 0.585 | 0.643 | 0.643 |
 | MIDIAN | 0.587 | 0.531 | 0.643 | 0.599 |
 | LinUCB-honest | 0.618 | 0.616 | 0.609 | 0.609 |
-| their MLP router | 0.598 | PROVISIONAL (5 rows) | — | — |
+| their MLP router | 0.620 | 0.607 | — | — |
 | flat probe argmax (online) | 0.503 | 0.503 | 0.621 | 0.621 |
 | their KNN router (= flat frozen) | 0.380 | 0.380 | PROVISIONAL (16 rows) | PROVISIONAL |
 | random | 0.505 | 0.505 | 0.550 | 0.550 |
@@ -285,8 +285,11 @@ n = 5,000: all leaderboard LLMs (3 seeds, Q = 300).*
 - Under collusion only VA and A hold; the declaration reader, warm-start bandit, V and peer halving lose 0.15–0.32.
 - In the honest regime at 5,000, adaptive halving (0.88 ≈ oracle) and the honest declaration (0.86) beat VA by 0.15:
   **MIDIAN-VA buys robustness at fixed cost, not honest-regime accuracy.**
-- At 10 / 100 real LLMs their MLP router is the best method (0.649 / 0.627 vs VA 0.629 / 0.595).
-- Paired at n = 1,000: VA − KNN +0.22 at every β; VA − flat online +0.09…+0.11; VA − MLP +0.008 [−0.016, +0.039] at β = 0.
+- Their MLP router (an agent prior learned from the same probes) is the best method at 10 / 100 real LLMs (0.649 /
+  0.627 vs VA 0.629 / 0.595) and **matches VA at 1,000** (0.620 vs 0.617; VA − MLP −0.003 [−0.026, +0.023] at β = 0,
+  −0.028 [−0.051, −0.004] at β = 0.25, −0.019 at β = 0.5 random, −0.007 at β = 0.5 low-skill) while being immune to
+  liars by construction; it does not fit at 5,000 (one-hot over 240k probes) or 10,000 and pays n comparisons per task.
+- Paired at n = 1,000: VA − KNN +0.22 at every β; VA − flat online +0.09…+0.11; MLP − flat online +0.117.
   At n = 5,000: VA − flat online +0.084 / +0.090 / +0.089; VA − V +0.000 / +0.020 / **+0.168**; trusted halving − oracle
   −0.020. T3-15 HIT; T3-17 four of six clauses HIT (misses: VA − flat +0.09 vs pre-registered +0.10; LinUCB equals flat
   frozen rather than falling below random).
@@ -307,7 +310,9 @@ recent routers fail to beat a simple baseline. RouterDC (DeBERTa fine-tune, GPU)
 1. **Honest regime at scale.** Peer-reported halving (0.72 / 0.86 / 0.88 at n = 1k / 10k / 5k-real) and, on real pools,
    the honest declaration (0.86) and the warm-start bandit (0.82) beat MIDIAN-VA (0.71) when nobody lies. MIDIAN-VA's
    claim is flatness under collusion at O(log n) route cost.
-2. **Small real pools.** At 10–100 LLMs a learned skill prior (their MLP router) beats the probe table and VA by 0.02–0.03.
+2. **Learned skill priors on real pools.** At 10–100 LLMs their MLP router beats the probe table and VA by 0.02–0.03,
+   and at 1,000 it matches VA (0.620 vs 0.617) with no report channel to corrupt — at n comparisons per task and with
+   no path to 5,000+ agents. Where it fits, a learned prior over probe outcomes is as good a robust router as VA.
 3. **Per-prompt headroom.** Every method, ours and theirs, is 0.2–0.4 below the per-prompt oracle on real data;
    family-level routing cannot see within-family variation, which is what the routing literature is after.
 4. **Why nobody does this.** The benchmark supplies what probing needs and most deployments lack: a cheap probe with a
@@ -337,7 +342,6 @@ recent routers fail to beat a simple baseline. RouterDC (DeBERTa fine-tune, GPU)
 | Low-skill framework grids (Magentic-One 60 + CAMEL 5–7 each) | 65 + 67 | afternoon 09-04 | §II.5 low-skill block FINAL, H1 low-skill panel |
 | Verified-shortlist grids | 87 + 146 | ~05:00 / ~02:00 | §II.2 table, Fig. H7 |
 | RouterEval validation-tuned rerun | 3 datasets | ~02:30 | Table 6 tuned rows, Fig. X4 |
-| Their MLP router at n = 1,000, β > 0 (real pools) | 5 rows | minutes | Table 7 two cells |
 | Their KNN router at n = 5,000 | 16 rows | ~04:30 | Table 7 one column, Fig. X5 |
 | Final pass | — | after the above | energy tables re-synced (§II.6), memo compaction, STATUS, memory |
 
