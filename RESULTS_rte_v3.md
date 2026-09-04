@@ -322,3 +322,21 @@ recent routers "fail to reliably outperform a simple baseline" — reproduced wi
 > 0.02 μ at m = 1000" was already a MISS via EmbedLLM (D1); GraphRouter beats the probe table wherever a single model
 dominates, by being that model.
 
+
+## G. Benchmarks considered and not run, with reasons
+
+- **AgentsNet** (Grötschla et al. 2025): five distributed-computing tasks — (Δ+1)-colouring, minimal vertex cover, maximal
+  matching, leader election, consensus — solved by 4–100 LLM agents exchanging messages on small-world / scale-free /
+  Delaunay topologies; binary task success. It contains no notion of selecting or routing to the best agent for a job
+  and no skill estimation, so none of our arms or rivals has a counterpart in it. The overlap is thematic only
+  (decentralised protocols over many agents); reported as not applicable rather than run.
+- **RouterArena** (ICLR 2026): 8,400 queries over 9 domains × 3 difficulty levels; a router submission outputs one model
+  name per query from a candidate list the submitter configures (e.g. gpt-4o-mini, claude-3-haiku, gemini-2.0-flash),
+  and the platform then runs those models through paid APIs to score the choices. Per-model responses are not
+  precomputed, so an offline evaluation is impossible without provider keys; NOT RUN (the probe table would need the
+  same paid calls to build). Leaderboard top-3 at fetch time: Paix2 77.63, KT-ModelRouter 76.28, Sqwish 76.21
+  (Acc–Cost Arena score).
+- **LLMRouterBench** (Findings@ACL'26): run — part F (their Table 11 gives, on the same setting, Oracle 91.64, Dataset
+  Oracle 73.10, Avengers 71.94, Model-SAT 71.88, EmbedLLM 71.24, GraphRouter 70.29, RouterDC 61.33, Random 48.79,
+  best single model Qwen3-8B 68.01 — AvgAcc in %).
+- **TwinRouterBench** (2026, agentic routing): not examined tonight.
