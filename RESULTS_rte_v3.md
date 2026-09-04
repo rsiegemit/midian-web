@@ -293,8 +293,11 @@ model's). Its validation curve oscillated (0.59–0.70 on RouterBench, 0.25–0.
 the best validation value is the constant router. That is the behaviour LLMRouterBench (2026) reports for the recent
 routers — "fail to reliably outperform a simple baseline" — reproduced with the authors' own code. On RouterBench the
 constant router is a strong baseline (0.784 vs the probe table's 0.781 at b = 50 and KNN's 0.760), so GraphRouter
-"wins" at λ = 0 by paying GPT-4's price everywhere; on RouterEval at m = 100 the best single model (0.787) is below
-LinearR / EmbedLLM and above the probe tables, so GraphRouter sits above our table and below the simple learned ones.
+"wins" at λ = 0 by paying GPT-4's price everywhere; on this RouterEval pool (mmlu, m = 100, strong_to_weak) the best
+single model (0.787) is *above* every learned router (Avengers-16 0.785, cluster 0.783, MLPR 0.778, EmbedLLM 0.777,
+LinearR 0.770) and far above the probe tables (0.718 / 0.685), so the constant router GraphRouter converged to is the
+top of the table here — a pool with one dominant model, where routing has nothing to add and a family table with 30
+probes loses 0.07 to simply picking the strongest.
 **T3-16**: GraphRouter is not within 0.02 of PRKnn (it is +0.23 above it at m = 100, because PRKnn is
 bad); "none beats the probe table by > 0.02 μ at m = 1000" was already a MISS via EmbedLLM (D1), and GraphRouter at
 m = 100 beats the 16-cluster table by +0.069 by being the best single model. Deviation stated in
