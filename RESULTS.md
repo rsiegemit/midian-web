@@ -65,24 +65,27 @@ path update (commit 3415f03). Wall-clock is reported only in the supervisor-late
 | arm | success | strict success | fallback rate | Δ vs MIDIAN (paired) |
 |---|---|---|---|---|
 | oracle | 0.723 | | | |
+| **MIDIAN-VA** | **0.675** | | | +0.021 [+0.016, +0.026] |
+| MIDIAN-A | 0.668 | | | +0.014 |
 | MIDIAN-V | 0.663 | | | +0.009 |
-| **MIDIAN** | **0.654** | | | — |
+| MIDIAN | 0.654 | | | — |
 | flat probe argmax (frozen) | 0.612 | | | −0.042 |
 | declared argmax | 0.575 | | | |
 | LLM supervisor (7B, whole roster) | 0.568 | 0.568 | 0.000 | |
-| Magentic-One (7B) | 0.552 | 0.161 | 0.630 | −0.104 [−0.137, −0.073] |
+| Magentic-One (7B) | 0.552 | 0.161 | 0.630 | −0.104 [−0.137, −0.073] (vs VA −0.126) |
 | Google ADK | 0.542 | 0.380 | 0.285 | |
 | LangGraph | 0.537 | 0.430 | 0.191 | −0.114 [−0.148, −0.082] |
 | CAMEL workforce | 0.534 | 0.429 | 0.190 | −0.117 [−0.153, −0.084] |
 | LlamaIndex | 0.533 | 0.444 | 0.163 | |
-| AutoGen | 0.532 | 0.500 | 0.061 | −0.120 [−0.153, −0.086] |
+| AutoGen | 0.532 | 0.500 | 0.061 | −0.120 [−0.153, −0.086] (vs VA −0.141) |
 | CrewAI | 0.528 | 0.463 | 0.118 | |
 | OpenAI Agents | 0.528 | 0.444 | 0.153 | |
 | smolagents | 0.526 | 0.462 | 0.069 | |
 | MAF | 0.524 | 0.501 | 0.028 | |
 | random | 0.314 | | | |
 
-- **n = 100** (same design, 97%): MIDIAN 0.639, MIDIAN-V 0.642, frameworks 0.523–0.552, paired −0.08 to −0.11.
+- **n = 100** (same design, 97%): MIDIAN-A 0.656, MIDIAN-VA 0.653, MIDIAN-V 0.642, MIDIAN 0.639, frameworks 0.523–0.552,
+  paired −0.08 to −0.11 vs MIDIAN and −0.10 to −0.12 vs MIDIAN-VA.
 - **n = 10,000** (specialist, 3 seeds, **FINAL**): MIDIAN-V 0.813, MIDIAN 0.786, flat online 0.774, frameworks
   0.257–0.367 — **below random (0.417)**: at 10,000 self-descriptions the TF-IDF shortlist matches the task's words, not
   its family.
@@ -175,9 +178,10 @@ honest regime VA is 0.04–0.05 below peer halving (T3-18 HIT). Frameworks have 
 
 **Liars (FINAL, Tables 2–4).** The collusion regime is what MIDIAN-A / VA exist for.
 
-**Low-skill-first framework grids — PROVISIONAL (89% done).** β = 0.5, n = 1,000: flat frozen 0.612, MIDIAN 0.569,
-Google ADK 0.536, MIDIAN-V 0.531, other frameworks 0.520–0.531, declared 0.515, random 0.315; on the same cells
-MIDIAN-VA = 0.679 (Table 2): **+0.15 over every framework**. Missing: 60 Magentic-One rows per grid (n = 100 and 1,000).
+**Low-skill-first framework grids — PROVISIONAL (91% done).** β = 0.5, n = 1,000: **MIDIAN-VA 0.679**, MIDIAN-A 0.665, flat
+frozen 0.612, MIDIAN 0.569, Google ADK 0.536, MIDIAN-V 0.531, other frameworks 0.520–0.531, declared 0.515, random 0.315
+(n = 100: VA 0.657, A 0.656, frameworks 0.52–0.53): **VA is +0.15 over every framework on identical cells**. Missing: 60
+Magentic-One rows per grid.
 
 **Churn (FINAL; grid churn_n1000, heavy_tail, 10% / 30% of agents replaced every 200 tasks, 20 units).** MIDIAN −0.008 /
 −0.014 vs no churn; MIDIAN-VA 0.687 / 0.675 is 0.02–0.03 *below* plain MIDIAN (its cached root pick goes stale like V's; T3-20 MISS); repair = 10% / 30% of the build per event; MIDIAN-V −0.06; halving with stale scores −0.13 at 30%;
