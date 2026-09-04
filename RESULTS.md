@@ -1,6 +1,6 @@
 # RTE / MIDIAN — Consolidated Results Dossier
 
-**Snapshot:** 2026-09-04 00:50 · **Repository:** `rsiegemit/midian-web` · **Purpose:** the single ordered source for the
+**Snapshot:** 2026-09-04 15:30 (all grids complete) · **Repository:** `rsiegemit/midian-web` · **Purpose:** the single ordered source for the
 manuscript. Detailed protocols, per-grid tables and figure captions are in the linked documents; this file carries every
 number a paper needs, each tagged with its status.
 
@@ -58,7 +58,7 @@ path update (commit 3415f03). Wall-clock is reported only in the supervisor-late
 
 ## Part II — Results on our benchmark
 
-### II.1 Headline: MIDIAN vs the ten agent frameworks — **PROVISIONAL (97% done)**
+### II.1 Headline: MIDIAN vs the ten agent frameworks — **FINAL**
 
 *Table 1. n = 1,000, self-described channel, 3 shapes × 4 β × 10 seeds, Q = 1,000, fixed adapters (grid fw_live_n1000).*
 
@@ -72,41 +72,51 @@ path update (commit 3415f03). Wall-clock is reported only in the supervisor-late
 | flat probe argmax (frozen) | 0.612 | | | −0.042 |
 | declared argmax | 0.575 | | | |
 | LLM supervisor (7B, whole roster) | 0.568 | 0.568 | 0.000 | |
-| Magentic-One (7B) | 0.552 | 0.161 | 0.630 | −0.104 [−0.137, −0.073] (vs VA −0.126) |
-| Google ADK | 0.542 | 0.380 | 0.285 | |
-| LangGraph | 0.537 | 0.430 | 0.191 | −0.114 [−0.148, −0.082] |
-| CAMEL workforce | 0.534 | 0.429 | 0.190 | −0.117 [−0.153, −0.084] |
-| LlamaIndex | 0.533 | 0.444 | 0.163 | |
-| AutoGen | 0.532 | 0.500 | 0.061 | −0.120 [−0.153, −0.086] (vs VA −0.141) |
-| CrewAI | 0.528 | 0.463 | 0.118 | |
-| OpenAI Agents | 0.528 | 0.444 | 0.153 | |
-| smolagents | 0.526 | 0.462 | 0.069 | |
-| MAF | 0.524 | 0.501 | 0.028 | |
+| Magentic-One (7B) | 0.546 | 0.172 | 0.604 | −0.108 [−0.140, −0.076] (vs VA −0.129) |
+| Google ADK | 0.542 | 0.380 | 0.285 | −0.112 |
+| Magentic-One (14B orchestrator, asymmetric arm) | 0.533 | 0.287 | 0.432 | −0.121 |
+| LangGraph | 0.531 | 0.427 | 0.187 | −0.123 [−0.157, −0.090] |
+| LlamaIndex | 0.531 | 0.443 | 0.161 | −0.123 |
+| OpenAI Agents | 0.528 | 0.444 | 0.153 | −0.125 |
+| AutoGen | 0.528 | 0.497 | 0.060 | −0.126 [−0.160, −0.093] (vs VA −0.147) |
+| CrewAI | 0.528 | 0.463 | 0.118 | −0.126 |
+| CAMEL workforce | 0.527 | 0.429 | 0.177 | −0.127 [−0.161, −0.094] |
+| smolagents | 0.526 | 0.462 | 0.069 | −0.128 |
+| MAF | 0.524 | 0.501 | 0.028 | −0.130 |
 | random | 0.314 | | | |
 
-- **n = 100** (same design, 97%): MIDIAN-A 0.656, MIDIAN-VA 0.653, MIDIAN-V 0.642, MIDIAN 0.639, frameworks 0.523–0.552,
-  paired −0.08 to −0.11 vs MIDIAN and −0.10 to −0.12 vs MIDIAN-VA.
+- **n = 100** (same design, complete): MIDIAN-A 0.656, MIDIAN-VA 0.653, MIDIAN-V 0.642, MIDIAN 0.639, frameworks
+  0.522–0.553, paired −0.09 to −0.12 vs MIDIAN and −0.10 to −0.13 vs MIDIAN-VA.
 - **n = 10,000** (specialist, 3 seeds, **FINAL**): MIDIAN-V 0.813, MIDIAN 0.786, flat online 0.774, frameworks
   0.257–0.367 — **below random (0.417)**: at 10,000 self-descriptions the TF-IDF shortlist matches the task's words, not
   its family.
-- Strict success counts only picks the supervisor actually named (0.16–0.50); Magentic-One's 63% "fallback" is its
-  orchestrator answering the task itself and naming no speaker, counted as failure under strict accounting.
-- Missing: 71 (n = 1,000) and 76 (n = 100) rows, almost all Magentic-One; the other eight frameworks move < 0.005.
+- Strict success counts only picks the supervisor actually named (0.17–0.50); Magentic-One's 60% "fallback" is two
+  thirds its orchestrator answering the task itself and naming no speaker (counted as failure under strict accounting);
+  the 14B orchestrator turns those into named fallbacks and is 0.013 below the 7B arm on lenient success.
+- By shape (n = 1,000): specialist frameworks 0.390 vs MIDIAN 0.778 / VA 0.802 (0 of 400 pairs won); heavy_tail 0.630
+  vs 0.643 / 0.679; bimodal 0.573 = oracle vs 0.540 / 0.544 (all 400 pairs won). Frameworks are flat in β (0.530–0.532).
 - Phase-1 replication (Q = 300, 3 seeds, 60 cells, earlier adapters): frameworks 0.51–0.54 vs MIDIAN 0.637 / V 0.659.
 
-### II.2 Why the frameworks lose, and what repairs them — **FINAL** (8 Magentic-One rows of the n = 1,000 verified grid outstanding)
+### II.2 Why the frameworks lose, and what repairs them — **FINAL**
 
 - The frameworks' only signal is the self-description, which over-claims by +0.4 (clipped) and correlates with true
   skill at Spearman **0.443** (specialist), **0.194** (heavy_tail), **0.295** (bimodal).
 - On **bimodal** populations every framework sits on the oracle (strong agents are strong everywhere, so description ≈
   skill). On **specialist** populations they collapse to **0.39 vs MIDIAN's 0.75**. The framework − MIDIAN gap is
   monotone in within-family legibility (Fig. H2).
-- **Verified shortlist (Fig. H7) — FINAL at n = 100, n = 1,000 at 99.7% (8 Magentic-One rows).** Given MIDIAN-V's
-  verified leaf cohort (r = 10) instead of the TF-IDF top-10, nine of ten frameworks gain +0.03 to +0.09 at n = 1,000
-  (Magentic-One +0.086 [+0.068, +0.103] → 0.632; AutoGen +0.077 → 0.609; smolagents +0.069; ADK +0.064; CrewAI +0.049;
-  LangGraph +0.047; CAMEL +0.040; OpenAI Agents +0.038; MAF +0.030; LlamaIndex +0.007, CI covers 0) and +0.03 to +0.06
-  at n = 100 — and none reaches MIDIAN-V (0.663 / 0.642): the supervisor's own pick among ten verified candidates still
-  costs 0.03–0.12. Full table: RESULTS_rte_v2.md §1b.
+- **Verified shortlist (Fig. H7) — FINAL.** Given MIDIAN-V's verified leaf cohort (r = 10) instead of the TF-IDF
+  top-10, nine of ten frameworks gain +0.03 to +0.09 at n = 1,000 (Magentic-One +0.087 [+0.069, +0.104] → 0.633;
+  AutoGen +0.081 → 0.609; smolagents +0.069; ADK +0.064; CAMEL +0.050; LangGraph +0.049; CrewAI +0.049; OpenAI Agents
+  +0.038; MAF +0.030; LlamaIndex +0.010, CI covers 0) and +0.03 to +0.06 at n = 100 — and none reaches MIDIAN-V
+  (0.663 / 0.642): the supervisor's own pick among ten verified candidates still costs 0.03–0.12. Full table:
+  RESULTS_rte_v2.md §1b.
+- **MIDIAN-VA's audited shortlist (grid fw_live_n1000_verified_va, 1,320 rows) — FINAL.** With VA's cohort the ten
+  frameworks reach 0.539–0.622 (lifts +0.008 to +0.084 over plain), within ±0.011 of their V-shortlisted arm on average
+  (VA − V: −0.003 / −0.017 / −0.006 at β = 0 / 0.1 / 0.25) and +0.021 above it at β = 0.5, where V's unaudited cohort
+  admits liars (MIDIAN-V itself 0.685 → 0.607 across β, MIDIAN-VA 0.684 → 0.680). **T3-19 SPLIT**: the β ≤ 0.25
+  clause holds, the β = 0.5 clause (≥ +0.03) holds for LangGraph, AutoGen and smolagents only. The audited cohort
+  protects the supervisor less than MIDIAN-VA's own pick because the frameworks re-rank the ten candidates by their
+  inflated self-descriptions.
 
 ### II.3 The MIDIAN family: add audits first, then verification — **FINAL**
 
@@ -203,11 +213,12 @@ n^0.14 (60 → 80 from 1k to 10k) against n¹ for flat (1,000 → 10,000). Succe
 | MIDIAN-V / VA | 31.6 | 5 | 0 | 47,840 / 49,420 | 430,560 | ~0 | 2 ms |
 | flat probe argmax | 1,000 | 0 | 0 | 48,000 | 0 | ~0 | 5 ms |
 | learned KNN / MLP router | 1,000 | 0 | 0 | 48,000 (+2.8 min embedding) | 0 | ~0 | 9 ms (54 ms at 1k incl. scoring; 49 ms at 10k) |
-| AutoGen (one 7B call) | 10 | 12 | 1 | 0 | 0 | 20.6 J | 1.11 s |
-| Magentic-One (7B) | 10 | 12 | 1 | 0 | 0 | ≈ 300 J | seconds |
+| AutoGen (one 7B call) | 10 | 12 | 1 | 0 | 0 | 20.6 J | 1.92 s |
+| Magentic-One (7B) | 10 | 12 | 1 | 0 | 0 | ≈ 200 J | 18 s |
 
 - MIDIAN's build costs 277 GPU-s on specialist populations; cumulative cost crosses below AutoGen's after **9,416 tasks**
-  and below Magentic-One's after **568**.
+  and below Magentic-One's after **987** (CrewAI / LlamaIndex / CAMEL: 1,900–2,300; the framework supervisor costs are
+  the final-grid latency ratios to AutoGen, re-measured 2026-09-04).
 - Cost exponents (probes and comparisons vs n): MIDIAN route n^0.14, flat and declared scans n^1.00; MIDIAN-V ≈ n^0.
 
 ---
@@ -366,18 +377,16 @@ declaration reader 0.15 while A / VA hold (T3-24 HIT). With one cohort per level
 |---|---|---|---|---|
 | v1 (TARGETS_rte.md) | 6 | 0 | 5 | 1 split (T2) — each miss explained in RESULTS_rte.md §8 |
 | v2 (TARGETS_rte_v2.md) | 11 | 6 (V2-2, 7, 8, 9, 10, V2-6 quality) | 4 (V2-1, 3, 5, 11 — two within the seed floor) | 1 cost-split (V2-6), 1 reported (V2-4) |
-| v3 (TARGETS_rte_v3.md) | 24 | T3-2, 3, 4, 10, 11 (letter), 14, 15; most clauses of 6, 7, 9, 17 | T3-1 (by 0.006), 12, 13, 16; β = 0 clause of 9; two of six clauses of 17 | T3-5 ours NOT RUN; T3-8 stated |
+| v3 (TARGETS_rte_v3.md) | 24 | T3-2, 3, 4, 10, 11 (letter), 14, 15, 18, 24; most clauses of 6, 7, 9, 17; first clause of 19 and of 22 | T3-1 (by 0.006), 12, 13, 16, 20, 23; β = 0 clause of 9; two of six clauses of 17; β = 0.5 clause of 19 (+0.021 vs ≥ +0.03; 3/10 frameworks hit); second clause of 22 (by 0.004) | T3-5 ours NOT RUN; T3-8 stated; T3-21 split by budget |
 
 ---
 
-## Part VI — Outstanding work (04:20)
+## Part VI — Outstanding work (15:30)
 
-| item | rows / units left | ETA | unlocks |
-|---|---|---|---|
-| Magentic-One tails on fw_live_n100 / n1000 (both arms) | ≈ 60 + 60 | ~08:00–10:00 | Table 1 FINAL, Appendix E, README headline, energy re-sync |
-| Verified n = 1,000, last Magentic-One rows | 8 | ~08:00 | §II.2 fully FINAL |
-| Frameworks with a MIDIAN-VA shortlist (fw_live_n1000_verified_va, 1,320 rows) | 79% | ~08:00 | §II.2 VA-shortlist column, T3-19 |
-| Final pass | — | after the above | memo compaction, STATUS, memory |
+Nothing is outstanding: every grid cited in this dossier is complete and every section is tagged FINAL (the energy and
+latency figures remain estimates under the stated per-call cost model). Table 1, Appendix E of RESULTS_rte_v2.md, the
+verified- and VA-shortlist tables, the H1 / H7 / H10 / H11 figures and the README headline were re-synced from the
+completed grids on 2026-09-04.
 
 Not planned without a decision: RouterDC (GPU fine-tune), RouteLLM causal_llm (gated Llama-3), mf / sw_ranking (OpenAI
 embeddings), MODEL-SAT (LLM fine-tune), Avengers voting (needs generations).
@@ -388,15 +397,15 @@ embeddings), MODEL-SAT (LLM fine-tune), Avengers voting (needs generations).
 
 | id | content | status |
 |---|---|---|
-| H1 | headline by shape: frameworks vs MIDIAN (β panels; low-skill panel pending) | provisional |
+| H1 | headline by shape: frameworks vs MIDIAN (β panels; low-skill panel) | final |
 | H2 | legibility: Spearman(description, skill) vs framework − MIDIAN | final |
 | H3 | consistency vs robustness (β = 0 vs β = 0.5 low-skill) | final |
 | H4, H5 | cost–quality Pareto with break-even; cost scaling 10² → 10⁷ | final |
 | H6 | MIDIAN → +A → +VA vs halving, by β and liar selection; replay twin | final |
-| H7 | frameworks given MIDIAN's verified shortlist | pending verified grids |
+| H7 | frameworks given MIDIAN's verified shortlist | final |
 | H8 | budget by channel | final |
 | H9 | churn | final |
-| H10, H11 | cumulative GPU-s / Wh / messages / comparisons; joules + latency with crossings | final (re-sync at the end) |
+| H10, H11 | cumulative GPU-s / Wh / messages / comparisons; joules + latency with crossings | final (estimate under the stated cost model) |
 | X1 | RouterBench protocol: quality vs cost, their routers vs the probe table | final |
 | X2 | RouteLLM protocol on RouterBench outcomes | final |
 | X3 | their KNN/MLP routers inside our benchmark vs MIDIAN variants, n = 100 / 1k / 10k | final |

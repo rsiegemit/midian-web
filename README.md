@@ -8,14 +8,17 @@ LlamaIndex, smolagents, CAMEL), along three axes: population size n (10² to 10�
 skill structure. Every method is charged for every probe, report, message, hop and comparison it makes, so the
 comparison is success *and* cost.
 
-The headline result (live LLM population, n = 1000, paired cells, 95% CI): MIDIAN routes correctly 0.64 of the
-time and MIDIAN-V 0.66, versus 0.51–0.54 for every one of the ten frameworks, 0.61 for a flat probe scan, 0.56 for a
-one-call LLM supervisor and 0.72 for the oracle. The average hides a split: on populations where skill is legible from
-a self-description (a minority of big tool-using models) the frameworks sit on the oracle, and on populations where
-skill is family-specific they collapse to 0.39 against MIDIAN's 0.75. MIDIAN-V does it with 2 messages and 1 comparison
-per task; a framework spends 12 messages, 10 comparisons and at least one supervisor LLM call. Full results, the
-honest control that beats MIDIAN (adaptive sequential halving) and the six pre-registered targets (five misses and one split
-verdict) are in [`RESULTS_rte.md`](RESULTS_rte.md).
+The headline result (live LLM population, n = 1000, 10 seeds, Q = 1000, paired cells, 95% CI; all grids complete):
+MIDIAN routes correctly 0.65 of the time, MIDIAN-V 0.66 and MIDIAN-VA 0.68, versus 0.52–0.55 for every one of the ten
+frameworks, 0.61 for a flat probe scan, 0.57 for a one-call LLM supervisor and 0.72 for the oracle. The average hides
+a split: on populations where skill is legible from a self-description (a minority of big tool-using models) the
+frameworks sit on the oracle, and on populations where skill is family-specific they collapse to 0.39 against MIDIAN's
+0.78. Under low-skill-first collusion MIDIAN-VA holds 0.68 while every framework stays at 0.52–0.54 and unaudited
+MIDIAN falls to 0.57. MIDIAN-VA does it with 5 messages, 32 comparisons and no LLM call per task; a framework spends 12
+messages, 10 comparisons and at least one supervisor LLM call. The consolidated dossier is [`RESULTS.md`](RESULTS.md);
+the per-grid write-ups are [`RESULTS_rte_v2.md`](RESULTS_rte_v2.md) (our benchmark) and
+[`RESULTS_rte_v3.md`](RESULTS_rte_v3.md) (external comparisons); [`RESULTS_rte.md`](RESULTS_rte.md) is the frozen
+phase-1 report with its six pre-registered targets.
 
 ---
 
@@ -277,7 +280,7 @@ NFS, replica herding, memo sharding, tool-run memoisation) are in `STATUS.md` an
 ## 9. Documents
 
 **Start with `RESULTS.md`** — the consolidated, ordered dossier of every result (phases 1–3), each table tagged FINAL /
-PROVISIONAL / TODO with the remaining work quantified. The documents below are its sources.
+FINAL (every grid complete as of 2026-09-04; the energy/latency figures are estimates under the stated cost model). The documents below are its sources.
 
 
 | file | what it is |
