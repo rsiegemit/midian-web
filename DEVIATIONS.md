@@ -720,7 +720,9 @@
   RoBERTa-MLC and A3M not run. EmbedLLM: dim 64, 5 epochs (their 232 / 50). Avengers: top-1 routing only (their
   voting needs generations). RouteLLM: causal_llm (gated Llama-3-8B), mf and sw_ranking (OpenAI embeddings) not run;
   their harness crashes at its metrics step, so APGR/CPT on their benchmarks are computed from its per-threshold prints
-  with its own formulas. GraphRouter / RouterDC (LLMRouter library) installed, not run.
+  with its own formulas. GraphRouter run through the LLMRouter library with its default hparams: LLM node features random-initialised
+  (seeded), test queries scored in one batched `route_single` with the graph's own embedder (no Longformer), RouterEval
+  train split subsampled to 2,000 queries (their per-query pandas filtering is quadratic); RouterDC (DeBERTa fine-tune) not run.
 - Part C: the learned routers' embedding arithmetic is outside the ledger (as the frameworks' TF-IDF shortlist is);
   mlp_router excluded at n = 10,000 and 5,000 (agent one-hot over 480k / 240k probes).
 - Part D2: families on RouterEval = the 16 largest MMLU subjects named in the prompt; declarations = noisy_declared(S)
