@@ -178,10 +178,12 @@ honest regime VA is 0.04–0.05 below peer halving (T3-18 HIT). Frameworks have 
 
 **Liars (FINAL, Tables 2–4).** The collusion regime is what MIDIAN-A / VA exist for.
 
-**Low-skill-first framework grids — PROVISIONAL (91% done).** β = 0.5, n = 1,000: **MIDIAN-VA 0.679**, MIDIAN-A 0.665, flat
-frozen 0.612, MIDIAN 0.569, Google ADK 0.536, MIDIAN-V 0.531, other frameworks 0.520–0.531, declared 0.515, random 0.315
-(n = 100: VA 0.657, A 0.656, frameworks 0.52–0.53): **VA is +0.15 over every framework on identical cells**. Missing: 60
-Magentic-One rows per grid.
+**Low-skill-first framework grids — FINAL** (β = 0.5, the weakest half lie and collude; 3 shapes × 10 seeds). n = 1,000:
+**MIDIAN-VA 0.679**, MIDIAN-A 0.665, flat frozen 0.612, MIDIAN 0.569, LLM supervisor 0.552, Magentic-One 0.538, Google
+ADK 0.536, MIDIAN-V 0.531, the other seven frameworks 0.520–0.528, declared 0.515, random 0.315 (n = 100: VA 0.657, A
+0.656, frameworks 0.52–0.54). Paired: VA − AutoGen **+0.154** [+0.082, +0.225], − Magentic-One +0.141, − ADK +0.144;
+even a frozen probe scan beats AutoGen by +0.086. The frameworks never read reports, so collusion leaves them at their
+§II.1 level; it is the report-trusting arms without audits (MIDIAN, V) that fall, and A / VA that hold.
 
 **Churn (FINAL; grid churn_n1000, heavy_tail, 10% / 30% of agents replaced every 200 tasks, 20 units).** MIDIAN −0.008 /
 −0.014 vs no churn; MIDIAN-VA 0.687 / 0.675 is 0.02–0.03 *below* plain MIDIAN (its cached root pick goes stale like V's; T3-20 MISS); repair = 10% / 30% of the build per event; MIDIAN-V −0.06; halving with stale scores −0.13 at 30%;
@@ -280,7 +282,7 @@ MLPR, dim/epochs for EmbedLLM, b and K for the probe table), so no router is rep
   0.701 / 0.718 / 0.682; hellaswag 0.761 / 0.755 / 0.754 / 0.721; winogrande 0.811 / 0.816 / 0.790 / 0.756; gsm8k 0.725 /
   0.745 / 0.725 / 0.722; math 0.463 / 0.449 / 0.463 / 0.414; gpqa 0.422 / 0.408 / 0.381 / 0.369.
 
-### III.5 MIDIAN and every rival with liars on RouterEval's real LLM pools — **FINAL** except the 5k KNN column
+### III.5 MIDIAN and every rival with liars on RouterEval's real LLM pools — **FINAL**
 
 *Table 7. Success on MMLU test prompts (16 subjects, b = 3). n ≤ 1,000: their pools (3 types × 5 seeds, Q = 1,000);
 n = 5,000: all leaderboard LLMs (3 seeds, Q = 300).*
@@ -299,7 +301,7 @@ n = 5,000: all leaderboard LLMs (3 seeds, Q = 300).*
 | LinUCB-honest | 0.618 | 0.616 | 0.609 | 0.609 |
 | their MLP router | 0.620 | 0.607 | — | — |
 | flat probe argmax (online) | 0.503 | 0.503 | 0.621 | 0.621 |
-| their KNN router (= flat frozen) | 0.380 | 0.380 | PROVISIONAL (16 rows) | PROVISIONAL |
+| their KNN router (= flat frozen) | 0.380 | 0.380 | 0.609 | 0.609 |
 | random | 0.505 | 0.505 | 0.550 | 0.550 |
 
 - With real LLMs and three probes per family a flat argmax is a lottery (hundreds tie at 3/3): their KNN router is below
@@ -371,11 +373,9 @@ running.
 | item | rows / units left | ETA | unlocks |
 |---|---|---|---|
 | Magentic-One tails on fw_live_n100 / n1000 (both arms) | ≈ 60 + 60 | ~08:00–10:00 | Table 1 FINAL, Appendix E, README headline, energy re-sync |
-| Low-skill framework grids (Magentic-One) | 58 + 60 | ~10:00 | §II.5 low-skill block FINAL, H1 panel |
 | Verified n = 1,000, last Magentic-One rows | 8 | ~08:00 | §II.2 fully FINAL |
 | Frameworks with a MIDIAN-VA shortlist (fw_live_n1000_verified_va, 1,320 rows) | 79% | ~08:00 | §II.2 VA-shortlist column, T3-19 |
 | LLMRouterBench 20-model liar pool (grid llmrouterbench_pool, 510 rows) | launched 04:40 | ~06:00 | §III.7 liar table, T3-24 |
-| Their KNN router at n = 5,000 | 7 rows | ~06:00 | Table 7 one column, X5 |
 | Final pass | — | after the above | memo compaction, STATUS, memory |
 
 Not planned without a decision: RouterDC (GPU fine-tune), RouteLLM causal_llm (gated Llama-3), mf / sw_ranking (OpenAI
@@ -400,7 +400,7 @@ embeddings), MODEL-SAT (LLM fine-tune), Avengers voting (needs generations).
 | X2 | RouteLLM protocol on RouterBench outcomes | final |
 | X3 | their KNN/MLP routers inside our benchmark vs MIDIAN variants, n = 100 / 1k / 10k | final |
 | X4 | RouterEval on its terms by pool size, defaults and tuned | final |
-| X5 | every arm with liars on real pools, n = 10 / 100 / 1,000 / 5,000 | pending 5k KNN |
+| X5 | every arm with liars on real pools, n = 10 / 100 / 1,000 / 5,000 | final |
 | X6 | every arm at n = 10,000 and 100,000 (synthetic, calibrated) | final |
 
 Scripts: `rte.analyze`, `scripts/extra_figs.py`, `scripts/v3_figs.py`, `scripts/energy.py`, `scripts/routerbench_terms.py`,

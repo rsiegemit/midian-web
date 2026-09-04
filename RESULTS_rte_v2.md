@@ -137,6 +137,32 @@ every cell by 0.33–0.41; on heavy_tail they trail by 0.01. Frameworks are flat
 `results/fw_live_n1000/summary.md`): self-descriptions overclaim and carry little family-level signal, so lying about
 that channel changes little. At Q = 1000 and 10 seeds the picture is the 2026-09-02 one within 0.02 on every row.
 
+
+**Low-skill-first collusion at β = 0.5, frameworks included (fw_live_n{100,1000}_lowskill, 3 shapes × 10 seeds, Q = 1000;
+complete 2026-09-04 05:10).** The liars are the weakest half of the population and they collude on their reports:
+
+| arm | n = 1000 | n = 100 | strict success (n = 1000) | fallback rate |
+|---|---|---|---|---|
+| oracle | 0.723 | 0.716 | | |
+| **MIDIAN-VA** | **0.679** | **0.657** | | |
+| MIDIAN-A | 0.665 | 0.656 | | |
+| flat probe argmax (frozen) | 0.612 | 0.588 | | |
+| MIDIAN | 0.569 | 0.537 | | |
+| LLM supervisor (7B, whole roster) | 0.552 | 0.552 | | 0.000 |
+| Magentic-One (7B) | 0.538 | 0.537 | 0.217 | 0.507 |
+| Google ADK | 0.536 | 0.534 | 0.413 | 0.220 |
+| MIDIAN-V | 0.531 | 0.528 | | |
+| CrewAI / smolagents / LangGraph / AutoGen / OpenAI Agents / CAMEL / MAF / LlamaIndex | 0.520–0.528 | 0.519–0.532 | 0.41–0.53 | 0.00–0.23 |
+| declared argmax | 0.515 | 0.520 | | |
+| random | 0.315 | 0.315 | | |
+
+Paired on identical cells (30 each): MIDIAN-VA − AutoGen **+0.154** [+0.082, +0.225], − Magentic-One +0.141, − Google
+ADK +0.144 at n = 1000 (+0.134 / +0.120 / +0.123 at n = 100); even a frozen flat probe scan beats AutoGen by +0.086
+here. The frameworks are unmoved by collusion (they never read the report channel), so this is the same 0.52–0.54 as
+§1; what collapses is anything that trusts reports without audits — plain MIDIAN to 0.57, MIDIAN-V to 0.53 — and what
+holds is A / VA. The 14B-supervisor Magentic-One arm is in the grid (`fw_magentic_one[supervisor=...14B]`) and sits with
+the 7B arm.
+
 ## 1b. Frameworks given MIDIAN's verified shortlist (H7)
 
 Frameworks given MIDIAN-V's verified leaf cohort as their shortlist (`retrieval: midian`, r = 10 or r = 5 candidates)

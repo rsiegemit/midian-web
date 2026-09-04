@@ -237,7 +237,8 @@ as in v1/v2 (β of the pool lies about observed outcomes; `low_skill_first` pick
 the honest noisy control since no self-descriptions exist here). Pools of 10 / 100 / 1,000 (their three pool types × 5
 seeds, Q = 1000) and, from their leaderboard table, **all 5,000 MMLU-scored LLMs** as one pool (3 seeds, Q = 300;
 pre-registered T3-17 from one smoke run). Their KNN / MLP routers run on their own RoBERTa embeddings (knn_router,
-mlp_router); at n = 5,000 knn_router embeds the 5-shot prompts itself (rows still running) and mlp_router does not fit.
+mlp_router); at n = 5,000 knn_router embeds the 5-shot prompts itself (= flat frozen 0.609 at every β; VA − knn +0.097 / +0.101 at β = 0 /
+0.5 low-skill) and mlp_router does not fit.
 
 **Success (mean over pools × seeds) by pool size, β and liar selection.** n = 1000, 100, 10 use their pools; n = 5,000
 the leaderboard pool:
@@ -256,7 +257,7 @@ the leaderboard pool:
 | linucb_honest | 0.618 | 0.616 | 0.616 | 0.598 | 0.598 | 0.650 | 0.650 | 0.609 | 0.609 | 0.609 |
 | mlp_router (theirs) | 0.620 | 0.620 | 0.607 | 0.627 | 0.627 | 0.649 | 0.649 | — | — | — |
 | flat_probe_argmax_online | 0.503 | 0.503 | 0.503 | 0.578 | 0.578 | 0.649 | 0.649 | 0.621 | 0.621 | 0.621 |
-| knn_router (theirs) = flat frozen | 0.380 | 0.379 | 0.380 | 0.475 | 0.475 | 0.556 | 0.556 | pending | pending | pending |
+| knn_router (theirs) = flat frozen | 0.380 | 0.379 | 0.380 | 0.475 | 0.475 | 0.556 | 0.556 | 0.609 | 0.609 | 0.609 |
 | random | 0.505 | 0.505 | 0.505 | 0.538 | 0.538 | 0.541 | 0.541 | 0.550 | 0.550 | 0.550 |
 
 Paired (identical pool × seed units). n = 1000: VA − knn +0.22 at every β; VA − flat_online +0.09 … +0.11; VA − MLP
