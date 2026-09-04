@@ -401,6 +401,33 @@ smaller than on RouterEval's 1,000-model pools). With truthful labels every MIDI
 argmax, nothing to audit); the 20-model pool with liars (grid `llmrouterbench_pool`, T3-24) is running.
 
 
+**F2 — LLMRouterBench's 20 models with liars (grid `llmrouterbench_pool`; family = dataset, K = 15, b = 3, Q = 1000, 5 seeds).**
+
+| arm | β=0 | β=.25 random | β=.25 low-skill | β=.5 random | β=.5 low-skill |
+|---|---|---|---|---|---|
+| oracle | 0.725 | 0.725 | 0.725 | 0.725 | 0.725 |
+| declared argmax (honest, noisy) | 0.718 | 0.635 | 0.553 | 0.681 | 0.568 |
+| their MLP router / flat online | 0.687 | 0.687 | 0.687 | 0.687 | 0.687 |
+| LinUCB-honest | 0.679 | 0.679 | 0.679 | 0.679 | 0.679 |
+| warm-start bandit | 0.679 | 0.658 | 0.651 | 0.663 | 0.627 |
+| **MIDIAN-A** | 0.677 | 0.676 | 0.676 | 0.676 | **0.677** |
+| MIDIAN-VA | 0.669 | 0.664 | 0.666 | 0.649 | 0.666 |
+| MIDIAN-V | 0.669 | 0.671 | 0.666 | 0.657 | 0.597 |
+| MIDIAN | 0.674 | 0.661 | 0.663 | 0.664 | 0.605 |
+| peer halving | 0.664 | 0.663 | 0.660 | 0.638 | **0.464** |
+| trusted halving | 0.662 | 0.662 | 0.662 | 0.662 | 0.662 |
+| their KNN router (online / frozen) | 0.663 / 0.637 | | | | |
+| flat frozen | 0.620 | 0.620 | 0.620 | 0.620 | 0.620 |
+| random | 0.489 | 0.489 | 0.489 | 0.489 | 0.489 |
+
+At 20 candidates and 15 families with 3 probes each, the online flat scan and their MLP router are the best arms (0.687,
+tied), MIDIAN-A the best MIDIAN variant (0.677, flat in β), and VA 0.02 below them (VA − MLP −0.018 [−0.036, −0.003] at
+β = 0, −0.021 at β = 0.5 low-skill); V loses 0.07 and peer halving 0.20 under low-skill collusion, the declaration
+reader 0.15. The tree has nothing to compress at n = 20 (one cohort of 10 per level) and the audits' cost shows.
+**T3-24 HIT** on all three clauses: VA moves 0.020 across β (≤ 0.03); MLP ≥ VA at β = 0 (+0.018); peer halving −0.200
+at β = 0.5 low-skill (≥ 0.05). Costs per task: VA 21 comparisons / 4 messages, MIDIAN 40 / 6, flat and MLP 20 / 0.
+
+
 ## G. Benchmarks considered and not run, with reasons
 
 - **AgentsNet** (Grötschla et al. 2025): five distributed-computing tasks — (Δ+1)-colouring, minimal vertex cover, maximal

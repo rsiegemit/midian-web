@@ -336,7 +336,9 @@ labels) scores 0.704**: within 0.005 of Avengers and EmbedLLM, +0.016 over the b
 dataset table (0.718); their published leaders (Model-SAT 0.719, GraphRouter 0.703, RouterDC 0.613) bracket it. Every
 router is 0.22–0.25 below the per-instance oracle. T3-22 HIT / MISS (within 0.02 of the best learned router; +0.016 vs a
 pre-registered +0.02 over the best single model); T3-23 MISS (Gap@O just under 0.25). The 20-model liar pool (T3-24) is
-running.
+complete: at 20 candidates the online flat scan and their MLP router tie for best (0.687), MIDIAN-A is the best
+MIDIAN variant (0.677, flat in β) and VA is 0.02 below; under low-skill collusion V loses 0.07, peer halving 0.20 and the
+declaration reader 0.15 while A / VA hold (T3-24 HIT). With one cohort per level the tree compresses nothing at n = 20.
 
 ---
 
@@ -375,7 +377,6 @@ running.
 | Magentic-One tails on fw_live_n100 / n1000 (both arms) | ≈ 60 + 60 | ~08:00–10:00 | Table 1 FINAL, Appendix E, README headline, energy re-sync |
 | Verified n = 1,000, last Magentic-One rows | 8 | ~08:00 | §II.2 fully FINAL |
 | Frameworks with a MIDIAN-VA shortlist (fw_live_n1000_verified_va, 1,320 rows) | 79% | ~08:00 | §II.2 VA-shortlist column, T3-19 |
-| LLMRouterBench 20-model liar pool (grid llmrouterbench_pool, 510 rows) | launched 04:40 | ~06:00 | §III.7 liar table, T3-24 |
 | Final pass | — | after the above | memo compaction, STATUS, memory |
 
 Not planned without a decision: RouterDC (GPU fine-tune), RouteLLM causal_llm (gated Llama-3), mf / sw_ranking (OpenAI
