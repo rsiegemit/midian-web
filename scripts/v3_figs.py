@@ -12,7 +12,7 @@ COLOR.update({"mlp_router": "#2ecc71", "knn_router": "#16a085", "knn_router_onli
 
 def line(ax, df, label, **kw):
     g = df.groupby("beta")
-    m = g.success.mean(); lo, hi = zip(*[ci(x.groupby(["dist", "liar_select", "seed"]).success.mean().to_numpy()) for _, x in g])
+    m = g.success.mean(); lo, hi = zip(*[ci(x.groupby("seed").success.mean().to_numpy()) for _, x in g])   # per-seed mean over cells, bootstrap over seeds
     ax.errorbar(m.index, m.values, yerr=[m.values - np.array(lo), np.array(hi) - m.values], marker="o", ms=3, capsize=2, label=label, color=COLOR.get(label), **kw)
 
 
@@ -40,16 +40,17 @@ def X4():
 
 
 def X5():
-    df = load(["routereval_mmlu"]); arms = ["oracle", "sequential_halving_peer", "midian_va", "midian_v", "midian_a", "midian", "flat_probe_argmax_online", "mlp_router", "knn_router", "warm_start_bandit"]
-    fig, axes = plt.subplots(2, 3, figsize=(16, 9), sharey="row")
-    for j, n in enumerate([10, 100, 1000]):
+    df = load(["routereval_mmlu", "routereval_mmlu5k"]); arms = ["oracle", "sequential_halving_peer", "midian_va", "midian_v", "midian_a", "midian", "flat_probe_argmax_online", "mlp_router", "knn_router", "warm_start_bandit", "declared_argmax"]
+    COLOR.setdefault("declared_argmax", "#5d6d7e")
+    fig, axes = plt.subplots(2, 4, figsize=(20, 9), sharey="row")
+    for j, n in enumerate([10, 100, 1000, 5000]):
         for i, ls in enumerate(["random", "low_skill_first"]):
             ax = axes[i][j]; sub = df[(df.n == n) & (df.liar_select == ls)]
             for l in arms:
                 x = sub[sub.label == l]
                 if len(x): line(ax, x, l, lw=2.2 if l == "midian_va" else 1.2, ls="--" if l in ("knn_router", "mlp_router") else "-")
-            ax.set_title(f"n = {n} real LLMs (3 pool types × 5 seeds), liars = {ls}"); ax.set_xlabel("β"); ax.grid(alpha=.3)
-    axes[0][0].set_ylabel("success (MMLU test prompts)"); axes[1][0].set_ylabel("success"); axes[0][2].legend(fontsize=7)
+            ax.set_title(f"n = {n:,} real LLMs, liars = {ls}" + (" (3 pools × 5 seeds)" if n < 5000 else " (leaderboard, 3 seeds)"), fontsize=10); ax.set_xlabel("β"); ax.grid(alpha=.3)
+    axes[0][0].set_ylabel("success (MMLU test prompts)"); axes[1][0].set_ylabel("success"); axes[0][3].legend(fontsize=7)
     fig.suptitle("X5  Every arm with liars on RouterEval's real LLM pools (MMLU, 16 subjects, b = 3)"); fig.savefig(f"{O}/X5_routereval_liars.png", dpi=300, bbox_inches="tight"); print("[X5] written")
 
 

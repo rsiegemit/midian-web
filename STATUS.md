@@ -139,3 +139,19 @@ flat_probe_argmax and (online); frameworks fw_* and fw_*(retrieval=midian, r∈{
 **2026-09-03 11:30 — finish_v2 (unattended): RAN PREMATURELY AGAIN (three empty squeue listings under controller load while ~2,300 jobs were still queued; poll now also requires the finisher itself to appear in the listing); analyses, targets_v2 merge (results/v2_targets) and figures regenerated. Next: fill RESULTS_rte_v2.md TODO(grid) markers from the summaries.**
 
 **2026-09-03 14:34 — finish_v2 (unattended): all v2 grids closed (3 consecutive empty polls); analyses, targets_v2 merge (results/v2_targets) and figures regenerated. Next: fill RESULTS_rte_v2.md TODO(grid) markers from the summaries.**
+
+**2026-09-03 21:20 — v3 HANDOFF (external comparisons).** Read TARGETS_rte_v3.md (T3-1..T3-17) and RESULTS_rte_v3.md
+(A RouterBench on its terms, B RouteLLM, C their KNN/MLP routers inside our benchmark, D RouterEval: D1 their terms with
+Avengers/EmbedLLM, D2 every arm with liars on their real pools incl. all 5,000 leaderboard LLMs, D3 GraphRouter/RouterDC
+NOT RUN). Figures X1–X5 in figures/ (scripts/routerbench_terms.py, rivals_routellm.py, routereval_terms.py, v3_figs.py;
+backend rte/backends/routereval.py; methods knn_router/mlp_router/_learned.py; grids learned_f1/n100/n10k,
+routereval_mmlu, routereval_mmlu5k). Data: $RTE_DATA/data/{routerbench_0shot.pkl, routereval/*}; envs
+$RTE_DATA/env/{routellm,llmrouter}. STILL RUNNING at 21:20: learned_n10k knn_router (18 shards, embedding 480k prompts,
+~3 h in), routereval_mmlu mlp_router at n=1000 β>0 (3 units), routereval_mmlu5k knn_router (9 units), fw grids'
+Magentic-One tails (restarted 20:15 after the per-call endpoint fix; 3 × 14B replicas), fw lowskill 88%, verified
+96%/89%, churn 478/480. TO FINISH: (1) when those land: part C n=10k (T3-9) + X3, D2 mlp/knn rows + X5, v2 §1/§1b/App.E
+de-asterisk + H1 low-skill panel + README headline + §6b sync; (2) D3 GraphRouter/RouterDC via LLMRouter
+(exporter + GNNPredictor.predict path) if wanted; (3) `python -m rte.llm_client compact`; (4) remove the 7 bare
+endpoints.d entries by hand when fleet 44175863 exits (2026-09-05 ~10:30). KNOWN: LinUCB on the 5k pool = flat frozen
+(0.609) though a smoke run gave 0.257 (seed effect; reported as measured); Avengers K=64 below the probe table at
+m=1000 (over-partition); RouteLLM harness crashes at its metrics step (metrics recomputed from its prints).
