@@ -55,7 +55,7 @@ class FrameworkMethod(Method):
         super().__init__(k=k, supervisor=supervisor, retrieval=retrieval, r=r, **params)
         self.k, self.supervisor, self._base_url = int(k), supervisor, base_url
         self.retrieval, self.r = retrieval, int(r)
-        if retrieval == "midian":                            # verified shortlist: MIDIAN-V's leaf cohort (k = r)
+        if retrieval in ("midian", "midian_va"):             # verified shortlist: MIDIAN-V's (or MIDIAN-VA's) leaf cohort (k = r)
             self.needs = self.needs | {"probe", "reports"}
         self.stats = {"picks": 0, "fallbacks": 0, "failures": 0, "bad_name": 0, "success_strict": 0.0, "fallback_rate": 0.0}
         self._picked, self._n, self._strict = False, 0, 0
@@ -86,12 +86,12 @@ class FrameworkMethod(Method):
         self.bridge = Bridge(self.env, self.worker)
         self.base_url = self._base_url or _endpoint(self.supervisor)
         view.ledger.message(view.n)                         # every agent sends its description to the registry once
-        if self.retrieval == "midian":
-            from ..midian import Midian
-            self.mid = Midian(verify=True, cached=True, r=self.r); self.mid.build(view, budget)
+        if self.retrieval in ("midian", "midian_va"):
+            from ..midian import Midian; from ..midian_va import MidianVA
+            self.mid = (MidianVA(r=self.r) if self.retrieval == "midian_va" else Midian(verify=True, cached=True, r=self.r)); self.mid.build(view, budget)
 
     def retrieve(self, task) -> np.ndarray:
-        if self.retrieval == "midian":                        # MIDIAN's pick first, then the rest of its leaf cohort
+        if self.retrieval in ("midian", "midian_va"):         # MIDIAN's pick first, then the rest of its leaf cohort
             a = self.mid.fetch(task)
             coh = self.mid.leaves[self.mid.leaf_of[a]]
             return np.concatenate([[a], coh[(coh >= 0) & (coh != a)]])
@@ -103,7 +103,7 @@ class FrameworkMethod(Method):
         self._n += 1; self._strict += int(outcome) if self._picked else 0
         self.stats["success_strict"] = self._strict / self._n
         self.stats["fallback_rate"] = 1 - self.stats["picks"] / max(1, sum(self.stats[k] for k in ("picks", "fallbacks", "failures", "bad_name")))
-        if self.retrieval == "midian":
+        if self.retrieval in ("midian", "midian_va"):
             self.mid.observe(task, agent, outcome)
 
     def fetch(self, task) -> int:

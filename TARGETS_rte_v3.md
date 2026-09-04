@@ -108,3 +108,16 @@ lemons" trust-layer paper (conceptual; the only work framing lying capability ad
   (iii) peer halving loses ≥ 0.10 from β = 0 to β = 0.5 low-skill; (iv) LinUCB-honest < random (5,000 × 16 arms, 300
   tasks); (v) MIDIAN-V − MIDIAN ≥ +0.05 at β = 0 (verified root pick over 5,000 candidates), and V collapses ≥ 0.10 at
   β = 0.5 low-skill; (vi) trusted halving within 0.02 of the oracle.
+
+**E. MIDIAN-VA everywhere, scale to 10k / 100k (added 2026-09-04 02:40, before launch).** VA (and A where absent) added
+to live_f1_n1000 (+ its replay/bernoulli mirrors), fw_live_n1000 (+ n100 / lowskill mirrors), churn_n1000, budget_sweep,
+budget_b10_shapes, live_n10k_v2, midian_r20; frameworks get a VA shortlist arm (`retrieval: midian_va`, r = 10, n = 1000);
+grid `scale_100k` = every MIDIAN variant + the self-contained rivals at n = 10,000 and 100,000 on the calibrated bernoulli
+backend (3 shapes × 3 β × 2 liar selections × 3 seeds; no LLM calls, frameworks not applicable). Live-LLM 100k is
+estimated, not launched: 4.8M fresh probe calls per (population, seed) ≈ 13 h of the whole fleet each.
+- **T3-18.** VA's collusion gap over V (+0.06–0.07 at n ≤ 10k) persists at 100k (≥ +0.05 at β = 0.5 low-skill) and VA
+  stays flat in β within 0.03 at 100k; peer halving's β = 0.5 low-skill collapse persists at 100k (≥ 0.10).
+- **T3-19.** VA-shortlisted frameworks are within ±0.02 of V-shortlisted ones at β ≤ 0.25 and ≥ +0.03 above them at
+  β = 0.5 (the cohort is chosen with audited reports).
+- **T3-20.** Under churn VA − V ≥ +0.03 at 30% churn (V's verified cache goes stale faster than the audited estimates).
+- **T3-21.** In the budget sweep VA ≥ V at every b (audits cost 5% of the budget, returned under β = 0.25 liars).
