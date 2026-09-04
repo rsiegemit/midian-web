@@ -280,7 +280,8 @@ NFS, replica herding, memo sharding, tool-run memoisation) are in `STATUS.md` an
 ## 9. Documents
 
 **Start with `RESULTS.md`** — the consolidated, ordered dossier of every result (phases 1–3), each table tagged
-FINAL (every grid complete as of 2026-09-04; the energy/latency figures are estimates under the stated cost model). The documents below are its sources.
+FINAL (every grid complete as of 2026-09-04; the energy/latency figures are estimates under the stated cost model).
+`CHANGES_AND_ERRATA.md` lists what the earlier results had wrong or incomplete and what moved. The documents below are its sources.
 
 
 | file | what it is |

@@ -1,12 +1,14 @@
-# RESULTS_rte_v3.md — external comparisons (DRAFT, 2026-09-03 evening)
+# RESULTS_rte_v3.md — external comparisons (FINAL, 2026-09-04)
 
 Pre-registration: `TARGETS_rte_v3.md` (A, B written 18:10; C 18:20–18:45; all before the runs). Motivation: RESULTS_rte_v2.md
 §11, last bullet. Three parts: **A** our arm on RouterBench's own protocol against its own routers (done);
-**B** RouteLLM's released routers against our arm on their model pair with their metrics (done; their own harness running);
+**B** RouteLLM's released routers against our arm on their model pair with their metrics (done, incl. their own harness);
 **C** RouterBench's routers as methods inside our benchmark at n = 100 / 1,000 / 10,000 against every MIDIAN variant
-and the top self-contained rivals (n = 100 and 1,000 done, n = 10k tail running);
+and the top self-contained rivals (n = 100, 1,000 and 10,000 done);
 **D** RouterEval (EMNLP 2025; pools of 10 / 100 / 1,000 real LLMs): their protocol with their baselines and the SOTA
-routers with released code (Avengers, EmbedLLM), and our whole method suite with liars on their real pools (running).
+routers with released code (Avengers, EmbedLLM), and our whole method suite with liars on their real pools (done);
+**E** scale to 10k / 100k agents; **F** LLMRouterBench on its terms and its 20-model pool with liars; **G** AgentsNet /
+RouterArena (not applicable / not run). Every part is complete.
 
 ## A. RouterBench on its own terms (`scripts/routerbench_terms.py`; figure X1)
 
@@ -398,7 +400,7 @@ model; nothing gets within 0.2 of the per-instance oracle. **T3-22**: within 0.0
 −0.005 vs Avengers) but +0.016 over the best single model against a pre-registered +0.02 (MISS by 0.004). **T3-23
 MISS**: Gap@O is 0.22–0.25 for the top routers, just under the pre-registered 0.25 (the per-instance headroom is real but
 smaller than on RouterEval's 1,000-model pools). With truthful labels every MIDIAN variant is the probe table (max-tree =
-argmax, nothing to audit); the 20-model pool with liars (grid `llmrouterbench_pool`, T3-24) is running.
+argmax, nothing to audit); the 20-model pool with liars (grid `llmrouterbench_pool`, T3-24) is in F2 below.
 
 
 **F2 — LLMRouterBench's 20 models with liars (grid `llmrouterbench_pool`; family = dataset, K = 15, b = 3, Q = 1000, 5 seeds).**

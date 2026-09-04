@@ -413,6 +413,8 @@ embeddings), MODEL-SAT (LLM fine-tune), Avengers voting (needs generations).
 | X5 | every arm with liars on real pools, n = 10 / 100 / 1,000 / 5,000 | final |
 | X6 | every arm at n = 10,000 and 100,000 (synthetic, calibrated) | final |
 
+Errata and change log against the earlier drafts: `CHANGES_AND_ERRATA.md`.
+
 Scripts: `rte.analyze`, `scripts/extra_figs.py`, `scripts/v3_figs.py`, `scripts/energy.py`, `scripts/routerbench_terms.py`,
 `scripts/rivals_routellm.py`, `scripts/routereval_terms.py`, `scripts/rivals_llmrouter.py`. Data and results under
 `$RTE_DATA` (`results/<grid>/`, `results/{routerbench_terms,rivals_routellm,routereval_terms,rivals_llmrouter}/`).

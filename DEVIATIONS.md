@@ -729,3 +729,11 @@
   (no self-descriptions exist); the 5,000-LLM pool uses a fixed 80/20 split per subject and Q = 300.
 - Duplicate launch 18:03/18:11 (an interrupted tool call had already run): the second batch was cancelled; a 5-job
   remnant of learned_n10k was cancelled and the grid relaunched cleanly at 18:45.
+- 2026-09-04 (final sync, all grids complete): the framework headline, verified-shortlist and fallback tables were
+  recomputed from the full 120 cell × seed pairs (the 09-03 draft used 86–120 pairs per framework). Magentic-One's
+  14B-orchestrator arm moved from 0.546 to 0.533 and its fallback rate from 61% to 43% once its slowest rows (6–14 h
+  each, specialist β = 0.1) landed; every other framework moved ≤ 0.006. energy.py's framework supervisor cost is the
+  measured latency ratio to AutoGen; re-measured on the final rows (lighter fleet load) the ratios roughly halved, so
+  the break-even crossings moved (Magentic-One ~570 → ~990 tasks, multi-call frameworks 1,000–1,600 → 1,900–2,300);
+  the Reading sentence in energy.py was updated to the new values. Two duplicate Magentic-One units (44268179 /
+  44268195, re-writing rows that already existed) were left to finish; memo compaction waits for them.
