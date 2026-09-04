@@ -355,15 +355,17 @@ recent routers fail to beat a simple baseline. RouterDC (DeBERTa fine-tune, GPU)
 
 ---
 
-## Part VI — Outstanding work
+## Part VI — Outstanding work (04:20)
 
 | item | rows / units left | ETA | unlocks |
 |---|---|---|---|
-| Magentic-One tails (7B and 14B arms) on fw_live_n100 / n1000 | 47 + 54 | ~08:00–10:00 | Table 1 FINAL, Appendix E fallback table, README headline |
-| CAMEL / CrewAI / minor stragglers on the same grids | ≈ 40 | same window | — |
-| Low-skill framework grids (Magentic-One 60 + CAMEL 5–7 each) | 65 + 67 | afternoon 09-04 | §II.5 low-skill block FINAL, H1 low-skill panel |
-| Their KNN router at n = 5,000 | 16 rows | ~04:30 | Table 7 one column, Fig. X5 |
-| Final pass | — | after the above | energy tables re-synced (§II.6), memo compaction, STATUS, memory |
+| Magentic-One tails on fw_live_n100 / n1000 (both arms) | ≈ 60 + 60 | ~08:00–10:00 | Table 1 FINAL, Appendix E, README headline, energy re-sync |
+| Low-skill framework grids (Magentic-One) | 58 + 60 | ~10:00 | §II.5 low-skill block FINAL, H1 panel |
+| Verified n = 1,000, last Magentic-One rows | 8 | ~08:00 | §II.2 fully FINAL |
+| Frameworks with a MIDIAN-VA shortlist (fw_live_n1000_verified_va, 1,320 rows) | 79% | ~08:00 | §II.2 VA-shortlist column, T3-19 |
+| LLMRouterBench on its terms (job running) | — | ~05:00 | §III.7 (part F), T3-22/23; then the 20-model liar pool grid (T3-24) |
+| Their KNN router at n = 5,000 | 7 rows | ~06:00 | Table 7 one column, X5 |
+| Final pass | — | after the above | memo compaction, STATUS, memory |
 
 Not planned without a decision: RouterDC (GPU fine-tune), RouteLLM causal_llm (gated Llama-3), mf / sw_ranking (OpenAI
 embeddings), MODEL-SAT (LLM fine-tune), Avengers voting (needs generations).
