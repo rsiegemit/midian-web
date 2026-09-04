@@ -276,6 +276,10 @@ NFS, replica herding, memo sharding, tool-run memoisation) are in `STATUS.md` an
 
 ## 9. Documents
 
+**Start with `RESULTS.md`** — the consolidated, ordered dossier of every result (phases 1–3), each table tagged FINAL /
+PROVISIONAL / TODO with the remaining work quantified. The documents below are its sources.
+
+
 | file | what it is |
 |---|---|
 | `SPEC.md` | the study specification: world, MIDIAN, rivals, frameworks (§6A), figures, compute plan |
