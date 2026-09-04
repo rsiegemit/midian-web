@@ -324,13 +324,12 @@ VA − MIDIAN +0.031 [+0.028, +0.035] (n = 1000: +0.022 / +0.025 / +0.057). VA �
 
 churn_n1000: 10% or 30% of agents replaced in place every 200 tasks (fresh profiles, liars redrawn at rate β, probe
 indices reset; the first task routed to a replaced agent the method has not re-probed scores 0), n = 1000, specialist +
-heavy_tail, β ∈ {0, 0.25}, self-described, 5 seeds, Q = 1000; 20 units per arm and fraction (halving-rebuild 10–11: its
-full re-probe per event is slow and its last units were still running at write time).
+heavy_tail, β ∈ {0, 0.25}, self-described, 5 seeds, Q = 1000; 20 units per arm and fraction (complete 2026-09-03 21:30).
 
 | arm | success, 10% churn | Δ vs same cells no churn | success, 30% churn | Δ vs no churn | repair probes / event (% of build) |
 |---|---|---|---|---|---|
 | oracle | 0.797 | — | 0.797 | — | — |
-| sequential_halving_peer, rebuild | 0.759 (n=10) | +0.04* | 0.833 (n=11) | +0.12* | 44,928 (100%) |
+| sequential_halving_peer, rebuild | 0.794 | +0.07* | 0.794 | +0.07* | 44,928 (100%) |
 | warm_start_bandit | 0.732 | −0.001 | 0.729 | −0.005 | 4,800 / 14,400 (10 / 30%) |
 | flat_probe_argmax_online | 0.722 | −0.002 | 0.710 | −0.015 | 4,800 / 14,400 |
 | sequential_halving_peer, stale | 0.721 | +0.00 | 0.589 | −0.13 | 0 |
