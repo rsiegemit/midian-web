@@ -711,3 +711,19 @@
   `Midian._recompute`; rows written before this (no `observe_charged` stat) get r*ceil(log_r n) comparisons and ceil(log_r n)
   messages per task added in `analyze.prepare()`. Honest per-task cost at n=1000, r=10: plain MIDIAN 60 comparisons / 9 messages,
   MIDIAN-V 31 / 5 (its saving is the descent, not the update); churn repairs charge K*r per level. Picks are unchanged.
+
+## v3 external comparisons (2026-09-03 evening; RESULTS_rte_v3.md)
+- Prompt embeddings for every router in part A/B are a local all-MiniLM-L6-v2, not OpenAI's (no API key in the project);
+  RouterEval parts use their shipped RoBERTa embeddings; the 5,000-LLM leaderboard pool ships none, so knn_router
+  embeds its 5-shot prompts with MiniLM.
+- RouterEval's MLPR/LinearR are sklearn MLPRegressor(256, batch 32) / Ridge instead of their torch FNN with batch 1;
+  RoBERTa-MLC and A3M not run. EmbedLLM: dim 64, 5 epochs (their 232 / 50). Avengers: top-1 routing only (their
+  voting needs generations). RouteLLM: causal_llm (gated Llama-3-8B), mf and sw_ranking (OpenAI embeddings) not run;
+  their harness crashes at its metrics step, so APGR/CPT on their benchmarks are computed from its per-threshold prints
+  with its own formulas. GraphRouter / RouterDC (LLMRouter library) installed, not run.
+- Part C: the learned routers' embedding arithmetic is outside the ledger (as the frameworks' TF-IDF shortlist is);
+  mlp_router excluded at n = 10,000 and 5,000 (agent one-hot over 480k / 240k probes).
+- Part D2: families on RouterEval = the 16 largest MMLU subjects named in the prompt; declarations = noisy_declared(S)
+  (no self-descriptions exist); the 5,000-LLM pool uses a fixed 80/20 split per subject and Q = 300.
+- Duplicate launch 18:03/18:11 (an interrupted tool call had already run): the second batch was cancelled; a 5-job
+  remnant of learned_n10k was cancelled and the grid relaunched cleanly at 18:45.

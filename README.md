@@ -224,6 +224,11 @@ Per-grid machine summaries are `$RTE_DATA/results/<grid>/summary.md`. The figure
 - **H9** churn: success and cumulative probes across churn events
 - **H10** runtime and energy estimate (GPU-seconds and Wh per 1,000 tasks)
 - appendix: internals, learning curve, k-sensitivity, replay mirror, fallback table, UCB/Thompson; the 2026-09-02 figures A–G are kept under `figures/v1/`
+- **X1–X5 (v3, external comparisons; RESULTS_rte_v3.md)**: X1 RouterBench on its own protocol (AIQ) vs its KNN/MLP
+  routers; X2 RouteLLM's released BERT router vs the probe table on their model pair with their metrics; X3 RouterBench's
+  KNN/MLP routers as methods inside our benchmark vs the MIDIAN variants at n = 100 / 1k / 10k; X4 RouterEval (pools of
+  10 / 100 / 1,000 real LLMs) on its own terms with its baselines, Avengers and EmbedLLM; X5 every arm with liars on
+  RouterEval's real pools (10 / 100 / 1,000 and all 5,000 leaderboard LLMs)
 
 In one paragraph: the frameworks' only signal is self-description, which overclaims by +0.27 and correlates 0.36 with
 true skill, so they sit at 0.5 regardless of β and fall to 0.4 on specialist populations; handing them MIDIAN's
@@ -235,6 +240,17 @@ poisoned reports that early elimination does not. Adding audits (MIDIAN-A) makes
 nothing at any β and halves the per-task cost (31.6 comparisons and 5 messages instead of 60 and 9). Verification alone
 (MIDIAN-V) is +0.02 at β ≤ 0.25 but the most exposed variant at β = 0.5 (−0.03 vs plain), which is why the order is A
 then V. (RESULTS_rte_v2.md §4.)
+
+**v3 in one paragraph (RESULTS_rte_v3.md, pre-registered in TARGETS_rte_v3.md).** With truthful labels every MIDIAN
+variant is the probe-family table, and that table is competitive with published routers at a fraction of the labels
+(RouterBench: 0.707 vs their KNN's 0.713 AIQ with 7× fewer labels; RouterEval at 1,000 real LLMs: 0.615 with 13% of
+the labels vs their best linear router 0.661, EmbedLLM 0.658, best single model 0.629; RouteLLM's released BERT
+router scores below random on RouterBench outcomes for its own model pair). Inside our benchmark their KNN router is
+flat probe argmax exactly and their MLP router is +0.03–0.06 over it but below MIDIAN-VA at every β and n. On
+RouterEval's real pools with liars, MIDIAN-VA is the only arm besides MIDIAN-A that holds its accuracy under low-skill
+collusion (0.61 at 1,000, 0.71 at 5,000 LLMs, flat in β) while the declaration reader, the warm-start bandit, MIDIAN-V
+and peer halving lose 0.15–0.32; in the honest regime at 5,000 LLMs adaptive halving (0.88 ≈ oracle) and the honest
+declaration (0.86) beat it by 0.15, which is the trade MIDIAN makes.
 
 ## 8. Design principles and how to extend
 

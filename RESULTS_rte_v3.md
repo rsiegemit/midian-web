@@ -213,3 +213,72 @@ labels, 0.015 under the best single model. Every method is 0.3 below the per-pro
 headroom RouterEval advertises is per-prompt, and nothing family-level or label-cheap reaches it. MIDIAN's own
 mechanisms do not act here (no liars, no cost accounting); they act in D2.
 
+### D2. Every arm with liars on RouterEval's real LLM pools (`rte/backends/routereval.py`; grids routereval_mmlu, routereval_mmlu5k; figure X5)
+
+The same score tables inside our World: agents = the pool's real LLMs, families = the 16 largest MMLU subjects (named in
+the prompt), probes = index-seeded train prompts (b = 3 per agent per family), tasks = test prompts, reporters and liars
+as in v1/v2 (β of the pool lies about observed outcomes; `low_skill_first` picks the weakest as liars; declarations are
+the honest noisy control since no self-descriptions exist here). Pools of 10 / 100 / 1,000 (their three pool types × 5
+seeds, Q = 1000) and, from their leaderboard table, **all 5,000 MMLU-scored LLMs** as one pool (3 seeds, Q = 300;
+pre-registered T3-17 from one smoke run). Their KNN / MLP routers run on their own RoBERTa embeddings (knn_router,
+mlp_router); at n = 5,000 knn_router embeds the 5-shot prompts itself (rows still running) and mlp_router does not fit.
+
+**Success (mean over pools × seeds) by pool size, β and liar selection.** n = 1000, 100, 10 use their pools; n = 5,000
+the leaderboard pool:
+
+| arm | n=1000 β=0 | β=.25 rnd | β=.5 low-skill | n=100 β=0 | β=.5 low-skill | n=10 β=0 | β=.5 low-skill | **n=5000 β=0** | β=.25 low-skill | **β=.5 low-skill** |
+|---|---|---|---|---|---|---|---|---|---|---|
+| oracle | 0.747 | 0.748 | 0.748 | 0.669 | 0.669 | 0.666 | 0.666 | 0.902 | 0.902 | 0.902 |
+| trusted halving | 0.608 | 0.608 | 0.608 | 0.572 | 0.572 | 0.567 | 0.567 | 0.882 | 0.882 | 0.882 |
+| peer halving | 0.608 | 0.602 | **0.483** | 0.572 | 0.521 | 0.567 | 0.545 | 0.882 | 0.856 | **0.564** |
+| declared_argmax (honest noisy) | 0.710 | 0.539 | 0.470 | 0.639 | 0.536 | 0.661 | 0.562 | 0.864 | 0.608 | 0.614 |
+| warm_start_bandit | 0.646 | 0.569 | 0.516 | 0.608 | 0.563 | 0.643 | 0.619 | 0.822 | 0.694 | 0.634 |
+| **MIDIAN-VA** | 0.617 | 0.592 | **0.607** | 0.595 | 0.590 | 0.629 | 0.629 | 0.706 | 0.711 | **0.710** |
+| MIDIAN-V | 0.617 | 0.613 | 0.525 | 0.596 | 0.562 | 0.631 | 0.582 | 0.706 | 0.691 | 0.542 |
+| MIDIAN-A | 0.586 | 0.585 | 0.585 | 0.598 | 0.597 | 0.638 | 0.638 | 0.643 | 0.643 | 0.643 |
+| MIDIAN | 0.587 | 0.576 | 0.531 | 0.597 | 0.563 | 0.638 | 0.576 | 0.643 | 0.617 | 0.599 |
+| linucb_honest | 0.618 | 0.616 | 0.616 | 0.598 | 0.598 | 0.650 | 0.650 | 0.609 | 0.609 | 0.609 |
+| mlp_router (theirs) | 0.598 | pending | pending | 0.627 | 0.627 | 0.649 | 0.649 | — | — | — |
+| flat_probe_argmax_online | 0.503 | 0.503 | 0.503 | 0.578 | 0.578 | 0.649 | 0.649 | 0.621 | 0.621 | 0.621 |
+| knn_router (theirs) = flat frozen | 0.380 | 0.379 | 0.380 | 0.475 | 0.475 | 0.556 | 0.556 | pending | pending | pending |
+| random | 0.505 | 0.505 | 0.505 | 0.538 | 0.538 | 0.541 | 0.541 | 0.550 | 0.550 | 0.550 |
+
+Paired (identical pool × seed units). n = 1000: VA − knn +0.22 at every β; VA − flat_online +0.09 … +0.11; VA − MLP
++0.008 [−0.016, +0.039] at β = 0 (11 pairs); VA − V +0.000 / −0.021 / +0.082 at β = 0 / 0.25 / 0.5 low-skill; VA − peer
+halving +0.009 / −0.010 / **+0.124**. n = 5,000: VA − flat_online **+0.084 / +0.090 / +0.089** (β = 0 / 0.25 low-skill /
+0.5 low-skill); VA − V +0.000 / +0.020 / **+0.168**; VA − MIDIAN +0.062 / +0.094 / +0.111; V − MIDIAN +0.062 at β = 0;
+VA − peer halving −0.177 / −0.144 / **+0.146**; trusted halving − oracle −0.020 [−0.060, +0.003]. Costs at 5,000: build
+240k probes for every probe arm (VA 248k), 2.16M reports for the MIDIAN family and 2.07M for peer halving, per task 42
+comparisons / 6 messages (VA), 80 / 12 (MIDIAN), 5,000 / 0 (flat, LinUCB), 1 / 0 (halving).
+
+Reading, in order of what a reviewer would check. (1) **With real LLMs and three probes per family, a flat argmax is a
+lottery**: at 1,000 candidates hundreds tie at 3/3 and flat frozen (= their KNN router, 0.38) is below random; at 5,000
+flat_online is 0.62. The tree turns the same probes into 0.59–0.62 at 1,000 and 0.64–0.71 at 5,000: cohort elimination
+plus online updates on a root cohort of ten. (2) **Under collusion only two things stay up**: MIDIAN-VA (0.61 at 1,000,
+0.71 at 5,000, flat across β) and MIDIAN-A; the declaration reader, the warm-start bandit, MIDIAN-V and peer halving all
+lose 0.15–0.32 from β = 0 to β = 0.5 low-skill. (3) **In the honest regime MIDIAN is not the best thing at scale**: at
+5,000 the trusted halving sits on the oracle (0.88 vs 0.90) and peer halving keeps that until liars collude; the
+declaration reader (0.86) and the warm-start bandit (0.82) beat VA (0.71) by 0.11–0.16 when nobody lies. Adaptive
+allocation over 5,000 candidates is worth 0.17 over a static three-probe tree, and MIDIAN-VA's claim is robustness at
+fixed cost, not honest-regime accuracy. (4) At 10 and 100 real LLMs their MLP router is the best method (0.649 / 0.627):
+a learned skill prior beats a 4-valued table when ties are few; at 1,000 it equals VA (+0.008) and at 5,000 it does not
+fit. (5) LinUCB-honest matches VA at 1,000 (0.618) and is immune by construction, at 5,000 comparisons per task; at
+5,000 candidates it is flat frozen (0.609).
+
+Verdicts. **T3-15 HIT**: the v2 ordering reproduces on real outcomes — VA and A flat in β, V best at β = 0 (tied with
+VA), peer halving best at β ≤ 0.25 and collapsing under low-skill collusion (−0.125 at 1,000, −0.318 at 5,000), the
+learned routers = flat and immune. **T3-17**: (i) MISS by 0.01–0.016 (VA − flat_online +0.084 … +0.090 against a
+pre-registered +0.10); (ii) HIT (0.706–0.711 across β); (iii) HIT (peer halving −0.318); (iv) MISS — LinUCB is +0.059
+*above* random (the smoke run's 0.257 was one seed; over 3 seeds LinUCB reduces to flat frozen, 0.609); (v) HIT (V −
+MIDIAN +0.062 at β = 0; V −0.164 at β = 0.5 low-skill); (vi) HIT on the boundary (trusted halving −0.020 from the
+oracle).
+
+### D3. LLMRouter's GraphRouter / RouterDC — NOT RUN tonight
+
+The library is installed (`$RTE_DATA/env/llmrouter`, 16 routers). Its routers train from a routing JSONL + a
+`query_embeddings.pt` + an LLM-description JSON, and score test prompts by re-embedding them with Longformer at
+inference (`get_longformer_embedding` in `route_batch`), so a faithful run on RouterBench / RouterEval needs an
+exporter plus a direct call into `GNNPredictor.predict` with `FormData.formulation` to bypass the re-embedding — about
+a day's engineering, not tonight's. The comparable evidence is LLMRouterBench (2026): GraphRouter, EmbedLLM, MODEL-SAT
+and Avengers "achieve comparable performance" on 33 models, and EmbedLLM and Avengers are in D1 above.
+
