@@ -73,27 +73,34 @@ def selfdesc(df):
 
 # ------------------------------------------------------------------ headline
 def H1():
-    """By shape, n=1000, self-described: oracle / midian_v / midian / midian_sha / flat online bars; frameworks as a min-max band
-    with fallback % annotated. midian_sha and flat online come from variants_f1 on the same (dist, beta, seed) cells."""
-    fwr = selfdesc(rows("fw_live_n1000")); var = selfdesc(rows("variants_f1"))
+    """By shape, n=1000, self-described: oracle / MIDIAN-VA / A / V / MIDIAN / flat online bars; the ten frameworks as a min-max
+    band (two extreme names + fallback %). Fourth panel: β=0.5 low-skill-first collusion (fw_live_n1000_lowskill), all shapes."""
+    bars = ["oracle", "midian_va", "midian_a", "midian_v", "midian", FLAT_ON]
+    fwr = selfdesc(rows("fw_live_n1000")); var = selfdesc(rows("variants_f1")); low = selfdesc(rows("fw_live_n1000_lowskill"))
     var = var[var.liar_select == "random"] if "liar_select" in var else var
-    w = pd.concat([piv(fwr), piv(var)[[c for c in piv(var).columns if c in ("midian_sha", FLAT_ON)]]] if len(var) else [piv(fwr)], axis=1)
-    bars = need(w, ["oracle", "midian_v", "midian", "midian_sha", FLAT_ON], "H1"); fws = sorted(c for c in w.columns if c.startswith("fw_") and c != MAG14)
-    core = w[bars + fws].dropna() if bars and fws else pd.DataFrame(); shapes = [d for d in ["specialist", "heavy_tail", "bimodal"] if len(core) and d in core.index.get_level_values("dist")]
+    def frame(df, extra):
+        w = piv(df); ex = piv(extra)[[c for c in piv(extra).columns if c == FLAT_ON and c not in w.columns]] if len(extra) else None
+        return pd.concat([w, ex], axis=1) if ex is not None and len(ex.columns) else w
+    w = frame(fwr, var); fws = sorted(c for c in w.columns if c.startswith("fw_") and c != MAG14)
+    have = need(w, bars, "H1"); core = w[have + fws].dropna() if have and fws else pd.DataFrame()
+    shapes = [d for d in ["specialist", "heavy_tail", "bimodal"] if len(core) and d in core.index.get_level_values("dist")]
     if not shapes: return print("[H1] no complete cells yet")
     fb = fwr[fwr.label.isin(fws)].assign(fbr=stat(fwr, "fallback_rate")).groupby("label").fbr.mean()
-    fig, axes = plt.subplots(1, len(shapes), figsize=(6 * len(shapes), 6), sharey=True)
-    for ax, d in zip(np.atleast_1d(axes), shapes):
-        g = core.xs(d, level="dist"); x = np.arange(len(bars))
-        ax.bar(x, [g[b].mean() for b in bars], color=[col(b) for b in bars], yerr=[[g[b].mean() - ci(g[b])[0] for b in bars], [ci(g[b])[1] - g[b].mean() for b in bars]], capsize=3)
-        fm = g[fws].mean(); ax.axhspan(fm.min(), fm.max(), color="#2980b9", alpha=.18, label=f"10 frameworks, min-max ({fm.min():.2f}-{fm.max():.2f})")
+    panels = [(d, core.xs(d, level="dist")) for d in shapes]
+    if len(low):
+        wl = frame(low, var); hl = need(wl, bars, "H1-lowskill"); cl = wl[hl + [f for f in fws if f in wl.columns]].dropna()
+        if len(cl): panels.append(("β = 0.5, low-skill-first liars (all shapes)", cl))
+    fig, axes = plt.subplots(1, len(panels), figsize=(5.2 * len(panels), 6), sharey=True)
+    for ax, (title, g) in zip(np.atleast_1d(axes), panels):
+        bs = [b for b in bars if b in g.columns]; x = np.arange(len(bs)); fl = [f for f in fws if f in g.columns]
+        ax.bar(x, [g[b].mean() for b in bs], color=[col(b) for b in bs], yerr=[[g[b].mean() - ci(g[b])[0] for b in bs], [ci(g[b])[1] - g[b].mean() for b in bs]], capsize=3)
+        fm = g[fl].mean(); lo_f, hi_f = fm.idxmin(), fm.idxmax()
+        ax.axhspan(fm.min(), fm.max(), color="#2980b9", alpha=.18, label=f"10 frameworks {fm.min():.2f}–{fm.max():.2f} ({fw(lo_f)} … {fw(hi_f)} {100 * fb.get(hi_f, np.nan):.0f}% fallback)")
         ax.axhline(fm.mean(), color="#2980b9", ls="--", lw=1)
-        for i, f in enumerate(fm.sort_values().index):
-            ax.text(len(bars) - .4, fm[f], f"{fw(f)} {100 * fb.get(f, np.nan):.0f}%", fontsize=6, va="center", ha="left", color="#1f618d")
-        ax.set_xticks(x); ax.set_xticklabels(bars, rotation=25, ha="right"); ax.set_title(d.replace("_", " ")); ax.grid(axis="y", alpha=.3); ax.legend(fontsize=7, loc="lower left")
+        ax.set_xticks(x); ax.set_xticklabels([b.replace("flat_probe_argmax_online", "flat online") for b in bs], rotation=25, ha="right"); ax.set_title(title.replace("_", " ") if "β" not in title else title, fontsize=10); ax.grid(axis="y", alpha=.3); ax.legend(fontsize=6.5, loc="lower left")
     sp = core.xs("specialist", level="dist") if "specialist" in shapes else None
-    ttl = f"specialist: frameworks {sp[fws].mean().mean():.2f} vs MIDIAN {sp['midian'].mean():.2f}" if sp is not None else ""
-    fig.suptitle(f"H1  n=1000, self-described channel, {len(core)} paired cells; {ttl} (framework labels: fallback %)"); axes[0].set_ylabel("success")
+    ttl = f"specialist: frameworks {sp[fws].mean().mean():.2f} vs MIDIAN-VA {sp['midian_va'].mean():.2f}" if sp is not None and "midian_va" in sp else ""
+    fig.suptitle(f"H1  n=1000, self-described channel, {len(core)} paired cells; {ttl}"); np.atleast_1d(axes)[0].set_ylabel("success")
     save(fig, "H1_headline_by_shape")
 
 
