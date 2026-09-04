@@ -91,14 +91,14 @@ path update (commit 3415f03). Wall-clock is reported only in the supervisor-late
 - Missing: 71 (n = 1,000) and 76 (n = 100) rows, almost all Magentic-One; the other eight frameworks move < 0.005.
 - Phase-1 replication (Q = 300, 3 seeds, 60 cells, earlier adapters): frameworks 0.51–0.54 vs MIDIAN 0.637 / V 0.659.
 
-### II.2 Why the frameworks lose, and what repairs them — legibility **FINAL**, verified shortlist **PROVISIONAL (99%)**
+### II.2 Why the frameworks lose, and what repairs them — **FINAL** (8 Magentic-One rows of the n = 1,000 verified grid outstanding)
 
 - The frameworks' only signal is the self-description, which over-claims by +0.4 (clipped) and correlates with true
   skill at Spearman **0.443** (specialist), **0.194** (heavy_tail), **0.295** (bimodal).
 - On **bimodal** populations every framework sits on the oracle (strong agents are strong everywhere, so description ≈
   skill). On **specialist** populations they collapse to **0.39 vs MIDIAN's 0.75**. The framework − MIDIAN gap is
   monotone in within-family legibility (Fig. H2).
-- **Verified shortlist (Fig. H7) — PROVISIONAL (99.4–99.8%; ≤ 15 Magentic-One rows outstanding).** Given MIDIAN-V's
+- **Verified shortlist (Fig. H7) — FINAL at n = 100, n = 1,000 at 99.7% (8 Magentic-One rows).** Given MIDIAN-V's
   verified leaf cohort (r = 10) instead of the TF-IDF top-10, nine of ten frameworks gain +0.03 to +0.09 at n = 1,000
   (Magentic-One +0.086 [+0.068, +0.103] → 0.632; AutoGen +0.077 → 0.609; smolagents +0.069; ADK +0.064; CrewAI +0.049;
   LangGraph +0.047; CAMEL +0.040; OpenAI Agents +0.038; MAF +0.030; LlamaIndex +0.007, CI covers 0) and +0.03 to +0.06
@@ -155,8 +155,9 @@ path update (commit 3415f03). Wall-clock is reported only in the supervisor-late
 - Floors: flat frozen 0.588 / 0.615 / 0.691, flat online 0.661 / 0.667 / 0.774 (n = 100 / 1k / 10k). Warm-start bandit
   reads declarations and loses them under lies. LinUCB-honest is flat in β and below flat online.
 - **Budget** (n = 1,000, β = 0.25; Fig. H8): b = 1 — MIDIAN 0.585 is the best probe-only arm (+0.10 over flat and
-  halving); b = 3 — halving 0.722, MIDIAN-V 0.675, MIDIAN 0.650, flat 0.620; b = 10 — every probe method within 0.03 of
-  the oracle; the bimodal framework gap closes to +0.002 while heavy_tail opens to −0.097 (V2-9 HIT).
+  halving); b = 3 — halving 0.722, MIDIAN-V 0.675, MIDIAN-VA 0.662, MIDIAN 0.650, flat 0.620; b = 10 — every probe method
+  within 0.03 of the oracle, MIDIAN-VA 0.715 the best MIDIAN variant (VA − V +0.017; at b ≤ 3 with random liars VA is
+  0.006–0.013 below V: T3-21 MISS/HIT); the bimodal framework gap closes to +0.002 while heavy_tail opens to −0.097 (V2-9 HIT).
 
 
 ### II.4b Scale to 10,000 and 100,000 agents — **FINAL** (calibrated synthetic backend; RESULTS_rte_v3.md part E, Fig. X6)
@@ -179,7 +180,7 @@ Google ADK 0.536, MIDIAN-V 0.531, other frameworks 0.520–0.531, declared 0.515
 MIDIAN-VA = 0.679 (Table 2): **+0.15 over every framework**. Missing: 60 Magentic-One rows per grid (n = 100 and 1,000).
 
 **Churn (FINAL; grid churn_n1000, heavy_tail, 10% / 30% of agents replaced every 200 tasks, 20 units).** MIDIAN −0.008 /
-−0.014 vs no churn, repair = 10% / 30% of the build per event; MIDIAN-V −0.06; halving with stale scores −0.13 at 30%;
+−0.014 vs no churn; MIDIAN-VA 0.687 / 0.675 is 0.02–0.03 *below* plain MIDIAN (its cached root pick goes stale like V's; T3-20 MISS); repair = 10% / 30% of the build per event; MIDIAN-V −0.06; halving with stale scores −0.13 at 30%;
 halving that rebuilds reaches 0.794 (+0.07) by re-spending the whole budget each event (9.4× MIDIAN's repair). V2-6:
 quality HIT, cost MISS (the pre-registered 3% was mis-derived).
 
@@ -357,7 +358,6 @@ recent routers fail to beat a simple baseline. RouterDC (DeBERTa fine-tune, GPU)
 | Magentic-One tails (7B and 14B arms) on fw_live_n100 / n1000 | 47 + 54 | ~08:00–10:00 | Table 1 FINAL, Appendix E fallback table, README headline |
 | CAMEL / CrewAI / minor stragglers on the same grids | ≈ 40 | same window | — |
 | Low-skill framework grids (Magentic-One 60 + CAMEL 5–7 each) | 65 + 67 | afternoon 09-04 | §II.5 low-skill block FINAL, H1 low-skill panel |
-| Verified-shortlist grids (last Magentic-One rows) | 4 + 15 | ~02:30 | §II.2 → FINAL |
 | Their KNN router at n = 5,000 | 16 rows | ~04:30 | Table 7 one column, Fig. X5 |
 | Final pass | — | after the above | energy tables re-synced (§II.6), memo compaction, STATUS, memory |
 

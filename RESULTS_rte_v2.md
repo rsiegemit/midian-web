@@ -139,25 +139,24 @@ that channel changes little. At Q = 1000 and 10 seeds the picture is the 2026-09
 
 Frameworks given MIDIAN-V's verified leaf cohort as their shortlist (`retrieval: midian`, r = 10 or r = 5 candidates)
 instead of the TF-IDF top-10 of self-descriptions; everything else unchanged (same supervisor, prompts, accounting).
-Grids fw_live_n{100,1000}_verified (3 shapes × 4 β × 10 seeds, Q = 1000; 99.4–99.8% complete, ≤ 15 Magentic-One rows
-outstanding), paired against the plain arm of fw_live_n{100,1000} on identical cells.
+Grids fw_live_n{100,1000}_verified (3 shapes × 4 β × 10 seeds, Q = 1000; n = 100 complete, n = 1000 at 99.7% with 8
+Magentic-One rows outstanding), paired against the plain arm of fw_live_n{100,1000} on identical cells.
 
 | framework, n = 1000 | plain | MIDIAN-V shortlist r=10 | r=5 | lift r=10 [95% CI] | lift r=5 |
 |---|---|---|---|---|---|
-| Magentic-One (7B) | 0.552 | **0.632** | 0.623 | **+0.086** [+0.068, +0.103] | +0.078 |
+| Magentic-One (7B) | 0.552 | 0.632 | 0.623 | +0.085 [+0.067, +0.103] | +0.078 |
 | AutoGen | 0.532 | 0.609 | 0.594 | +0.077 [+0.058, +0.096] | +0.060 |
 | smolagents | 0.526 | 0.595 | 0.608 | +0.069 [+0.053, +0.086] | +0.081 |
 | Google ADK | 0.542 | 0.606 | 0.608 | +0.064 [+0.049, +0.079] | +0.066 |
 | CrewAI | 0.528 | 0.577 | 0.587 | +0.049 [+0.031, +0.066] | +0.059 |
 | LangGraph | 0.537 | 0.581 | 0.585 | +0.047 [+0.030, +0.063] | +0.046 |
-| CAMEL workforce | 0.532 | 0.578 | 0.592 | +0.040 [+0.024, +0.054] | +0.055 |
+| CAMEL workforce | 0.532 | 0.577 | 0.590 | +0.043 [+0.027, +0.058] | +0.057 |
 | OpenAI Agents | 0.528 | 0.566 | 0.568 | +0.038 [+0.025, +0.050] | +0.039 |
 | MAF | 0.524 | 0.553 | 0.580 | +0.030 [+0.013, +0.047] | +0.056 |
-| LlamaIndex | 0.533 | 0.541 | 0.528 | +0.007 [−0.015, +0.030] | −0.006 |
-| MIDIAN-V / MIDIAN / oracle | 0.663 / 0.654 / 0.723 | | | | |
+| LlamaIndex | 0.533 | 0.541 | 0.528 | +0.007 [-0.015, +0.030] | -0.006 |
+| MIDIAN-V / MIDIAN / MIDIAN-VA / oracle | 0.663 / 0.654 / 0.675 / 0.723 | | | | |
 
-n = 100: lifts +0.060 (AutoGen), +0.059 (Magentic-One), +0.053 (smolagents), +0.049 (ADK), +0.045 (CAMEL), +0.038
-(OpenAI Agents), +0.037 (CrewAI), +0.036 (LangGraph), +0.025 (MAF), +0.007 (LlamaIndex, CI covers 0); shortlisted
+n = 100: lifts AutoGen +0.060, Magentic-One (7B) +0.058, smolagents +0.053, Google ADK +0.049, CAMEL workforce +0.045, OpenAI Agents +0.038, CrewAI +0.037, LangGraph +0.036, MAF +0.025, LlamaIndex +0.007 (LlamaIndex's CI covers 0); shortlisted
 frameworks reach 0.53–0.61 against MIDIAN-V's 0.642. Nine of ten frameworks gain 0.03–0.09 from a verified shortlist
 (the phase-1 range +0.04 … +0.12 at Q = 300 / 3 seeds is reproduced at 10 seeds), and none reaches MIDIAN-V itself:
 given a cohort of ten verified candidates, the supervisor's own choice among them still costs 0.03–0.12. LlamaIndex's
@@ -354,6 +353,7 @@ heavy_tail, β ∈ {0, 0.25}, self-described, 5 seeds, Q = 1000; 20 units per ar
 | warm_start_bandit | 0.732 | −0.001 | 0.729 | −0.005 | 4,800 / 14,400 (10 / 30%) |
 | flat_probe_argmax_online | 0.722 | −0.002 | 0.710 | −0.015 | 4,800 / 14,400 |
 | sequential_halving_peer, stale | 0.721 | +0.00 | 0.589 | −0.13 | 0 |
+| midian_va (added 2026-09-04) | 0.687 | −0.02 vs MIDIAN | 0.675 | −0.03 vs MIDIAN | 6,400 (13%) |
 | midian_a | 0.713 | −0.012 | 0.697 | −0.028 | 4,800 / 14,400 (9.5 / 28.6%) |
 | midian_sh | 0.712 | −0.009 | 0.703 | −0.018 | 4,800 / 14,400 |
 | **midian** | 0.709 | **−0.008** | 0.702 | **−0.014** | 4,800 / 14,400 (10 / 30%) |
@@ -373,6 +373,18 @@ messages, which these rows predate). **V2-6**: quality half HIT (−0.008 at 10%
 cost half MISS as written — repair is 10% of build per event at 10% churn, not ≤ 3% (the 3% was mis-derived: re-probing
 10% of agents at full b is 10% of the build by definition), and halving-rebuild's repair is 9.4× MIDIAN's, not ≥ 10×.
 Figure H9 shows success and cumulative probes vs task index.
+
+**MIDIAN-VA under churn, budget and r = 20 (rows added 2026-09-04; pre-registered T3-19–21 in TARGETS_rte_v3.md).**
+Churn: VA 0.687 / 0.675 at 10% / 30% vs V 0.689 / 0.683, MIDIAN 0.709 / 0.702, A 0.713 / 0.697 — VA − V −0.002 / −0.008,
+VA − MIDIAN −0.022 / −0.028 (20 pairs each): the cached root pick goes stale exactly like V's, and the audits do not
+repair staleness; **T3-20 MISS** (VA − V ≥ +0.03 expected). Budget (β = 0.25, random liars): VA 0.588 / 0.662 / 0.715 at
+b = 1 / 3 / 10 vs V 0.593 / 0.675 / 0.698 — VA − V −0.006 [−0.013, +0.002] / −0.013 [−0.025, −0.001] / +0.017
+[+0.008, +0.028]; **T3-21 MISS at b ≤ 3** (with random liars V's exposure is small and the 5% audit budget costs more
+than it returns), HIT at b = 10. b = 10 shapes: VA 0.568 (bimodal) / 0.723 (heavy_tail), the best MIDIAN variant, 0.015
+under peer halving. n = 10k (random liars): VA 0.811 / 0.803 vs V 0.813 / 0.806 (−0.002 [−0.010, +0.006]), +0.019 over
+MIDIAN. r = 20: VA 0.661 / 0.665 at β = 0.25 / 0.5 vs V(r = 20) 0.653 / 0.636 (+0.018 [+0.011, +0.026]) and MIDIAN(r = 20)
+0.641 / 0.644. Net: VA's advantage is the collusion regime (§4, part E of v3) and b = 10; under churn and small budgets
+with random liars it trails V and plain MIDIAN by 0.01–0.03.
 
 ## 6. Cost scaling and break-even (H4, H5)
 
@@ -509,6 +521,8 @@ budget_sweep (n = 1000, β = 0.25, 3 shapes × 5 seeds, all 45 cells paired; bot
 | oracle | 0.723 | 0.723 | 0.723 |
 | sequential_halving (trusted) | 0.479 | 0.722 | 0.723 |
 | midian_v | 0.593 | 0.675 | 0.698 |
+| midian_va (added 2026-09-04) | 0.588 | 0.662 | 0.715 |
+| midian_a (added 2026-09-04) | 0.588 | 0.667 | 0.710 |
 | midian | 0.585 | 0.650 | 0.702 |
 | flat_probe_argmax_frozen | 0.481 | 0.620 | 0.695 |
 | warm_start_bandit | 0.676 | 0.684 | 0.704 |
@@ -526,7 +540,9 @@ the bimodal gap disappears and heavy_tail opens up:
 | shape | oracle | sequential_halving (trusted) | sequential_halving_peer | midian_v | midian | flat_probe_argmax_online | LangGraph / AutoGen |
 |---|---|---|---|---|---|---|---|
 | bimodal | 0.568 | 0.568 | 0.569 | 0.563 | 0.566 | 0.567 | 0.568 / 0.568 |
+| bimodal, midian_va / midian_a | | | | 0.568 / 0.568 | | | |
 | heavy_tail | 0.739 | 0.741 | 0.738 | 0.722 | 0.701 | 0.712 | 0.604 / 0.604 |
+| heavy_tail, midian_va / midian_a | | | | 0.723 / 0.718 | | | |
 
 Paired, frameworks − MIDIAN: bimodal **+0.002**, heavy_tail **−0.097** [−0.112, −0.081] (6 pairs each); trusted halving − MIDIAN
 +0.040 and peer halving − MIDIAN +0.037 on heavy_tail (all 108 rows in).
@@ -542,6 +558,7 @@ supervisors pick the same agent on these tasks.)
 | sequential_halving_peer | 0.863 | 0.863 | 460,016 | 4,140,144 | 0 / 1 |
 | oracle | 0.859 | 0.859 | | | |
 | midian_v | 0.813 | 0.806 | 479,840 | 4,318,560 | 6 / 41 |
+| midian_va (added 2026-09-04) | 0.811 | 0.803 | 495,651 | 4,318,560 | 6 / 42 |
 | midian_sh | 0.794 | 0.772 | 480,000 | 4,320,000 | 12 / 80 |
 | midian | 0.786 | 0.790 | 480,000 | 4,320,000 | 12 / 80 |
 | midian_a | 0.784 | 0.786 | 503,806 | 4,320,000 | 12 / 80 |
