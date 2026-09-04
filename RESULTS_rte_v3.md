@@ -146,14 +146,20 @@ VA − knn +0.074 / +0.062 / +0.071; VA − AutoGen +0.13 (29 pairs); VA − pee
 (+0.285 low-skill). At n = 100 the MLP router's skill prior closes most of the gap to VA in the honest regime; VA's
 edge is the collusion regime and the cost.
 
-**n = 10,000 (learned_n10k: specialist, both liar selections, 3 seeds, Q = 300; knn_router and the β = 0.5 halving
-rows still running at write time).** midian_va 0.811 / 0.787–0.803 / 0.792–0.810 at β = 0 / 0.25 / 0.5, midian_v
-0.812 / 0.803–0.814 / 0.732–0.757, flat_online 0.774, flat_frozen 0.691, peer halving 0.863 at β ≤ 0.25; VA − V
-−0.001 / −0.014 / **+0.057** [+0.032, +0.081]; VA − plain MIDIAN +0.058 at β = 0.5 low-skill. **T3-9** (VA − knn gap
-grows with n) pending the knn rows; the VA − V collusion gap is +0.058 / +0.074 / +0.057 at n = 100 / 1k / 10k
-(learned_n100, replication, learned_n10k).
+**n = 10,000 (learned_n10k: specialist, both liar selections, 3 seeds, Q = 300; complete 22:50).** knn_router
+0.686 at every β = flat frozen 0.691 (−0.006 [−0.014, +0.003]); knn_router_online 0.731 vs flat_online 0.774 (−0.043:
+the nearest-probe store dilutes the routed outcomes more as n grows); midian_va 0.811 / 0.787–0.803 / 0.792–0.810 at
+β = 0 / 0.25 / 0.5; midian_v 0.812 / 0.803–0.814 / 0.732–0.757; peer halving 0.863 at β ≤ 0.25 and **0.730** at β = 0.5
+low-skill (0.855 random); warm-start 0.74–0.80. Paired: VA − knn **+0.126 / +0.109 / +0.116** [+0.084, +0.144] by β
+(+0.124 at β = 0.5 low-skill); VA − knn_online +0.080 / +0.064 / +0.070; VA − V −0.001 / −0.014 / **+0.057**. Costs at
+10k: knn 480k probes and 10,000 comparisons per task; VA 496k probes and 43 comparisons / 6 messages. Their MLP router
+does not fit at this n (one-hot over 480k rows).
 
-
+**T3-9**: the VA − knn gap grows with n — +0.074 / +0.070 / +0.126 at β = 0 and +0.070 / +0.066 / +0.124 at β = 0.5
+low-skill for n = 100 / 1k / 10k — so the growth clause HITS; the clause "β = 0 gap within ±0.02" MISSES, because a
+learned KNN router on the probe budget *is* flat frozen, and flat frozen is 0.07–0.13 below the tree at every n once
+ties among b = 3 probes make the argmax a lottery. **T3-10 HIT**: per-task latency 9 / 54 / 49 ms for the learned
+routers at n = 100 / 1k / 10k (measured, TARGETS) against MIDIAN-V's 2 ms and MIDIAN's 6 ms.
 
 ## D. RouterEval — the benchmark at MIDIAN's scale (pools of 10 / 100 / 1,000 real LLMs; `scripts/routereval_terms.py`, `rte/backends/routereval.py`)
 
