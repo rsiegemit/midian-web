@@ -279,42 +279,34 @@ pre-registered +0.10); (ii) HIT (0.706–0.711 across β); (iii) HIT (peer halvi
 MIDIAN +0.062 at β = 0; V −0.164 at β = 0.5 low-skill); (vi) HIT on the boundary (trusted halving −0.020 from the
 oracle).
 
-### D3. GraphRouter through the released LLMRouter library (`scripts/rivals_llmrouter.py`) — DEFAULT RUN BELOW IS A FAILURE MODE; TUNED RUN IN PROGRESS
+### D3. GraphRouter through the released LLMRouter library (`scripts/rivals_llmrouter.py`)
 
-**Diagnosis (22:30).** Their release builds the training label as the one-hot argmax of performance per query; on 0/1
-outcomes argmax breaks ties by index, so on RouterBench the "best model" label is WizardLM-13B (index 0) on 11,271 of
-25,265 train prompts. The GNN cannot fit that and its best-validation checkpoint is a constant router. A fair run —
-label = the edge's own performance (the paper's objective), LLM node features from description embeddings, and
-hyperparameters (hidden 64/256 × lr 1e-3/3e-4 × mask 0.3/0.6, 200 epochs) selected on their validation split — is
-running (jobs 44285342-7); the table below is replaced when it lands. The same validation-selection protocol is being
-applied to every router in D1 (rerun rte_re3_*), so no rival is reported at a failure-mode default.
+GraphRouter (Feng et al., ICLR 2025) run two ways through the authors' library. **Their defaults**: routing JSONL,
+query-embedding tensor, LLM json, `GraphRouter(yaml)` + `GraphTrainer.train()` (hidden 64, AdamW 1e-3, 100 epochs,
+4 masked samples per step, mask rate 0.3, 20% validation), LLM node features random-initialised (seeded), label =
+their one-hot argmax of performance per query. **Tuned, so that no failure mode is reported as the method**: label =
+the edge's own performance (the paper's objective; the release's one-hot argmax breaks 0/1 ties by index, which on
+RouterBench makes WizardLM-13B the "best model" on 11,271 of 25,265 train prompts), MiniLM embeddings of model
+descriptions as LLM node features, and hyperparameters chosen on their validation split from hidden 64/256 × lr
+1e-3/3e-4 × mask 0.3/0.6 at 200 epochs. Scoring in both cases is the batched form of their `route_single` (test
+queries appended to the training graph with zero edges, `GNNPredictor.predict`) with the same embedder as the graph.
+RouterDC fine-tunes a DeBERTa encoder (GPU): NOT RUN.
 
-GraphRouter (Feng et al., ICLR 2025; the library's default configuration: hidden 64, AdamW 1e-3, 100 epochs, 4 masked
-samples per step, mask rate 0.3, 20% validation) trained on exactly the inputs its pipeline consumes (routing JSONL,
-query-embedding tensor, LLM json) and scored by the batched form of its own `route_single` (every test query appended
-to the training graph, `GNNPredictor.predict`), with the *same* embedder the graph was built with instead of its
-Longformer re-embedding; LLM node features are its own random init (no description embeddings). RouterDC fine-tunes a
-DeBERTa encoder (GPU): NOT RUN.
-
-| setting | GraphRouter | best single model | strongest other router | probe table |
+| setting | GraphRouter, defaults | GraphRouter, tuned | best single model | other routers on the same split |
 |---|---|---|---|---|
-| RouterBench, part-A splits 0–2, quality at λ = 0 | 0.7844 (cost $0.00326) | 0.7845 (gpt-4, $0.00329) | KNN 0.7596, MLP 0.7181 | b=50 0.7805, b=20 0.7529 |
-| RouterEval mmlu, m = 100 strong_to_weak (2,000 train queries) | 0.7867 (V_B = 1.000) | 0.7867 | LinearR 0.770, EmbedLLM 0.777, MLPR 0.778, PRKnn 0.562 | 16 clusters × 30: 0.718; subject × 30: 0.685 |
+| RouterBench split 0 / 1 / 2, quality at λ = 0 | 0.7847 / 0.7831 / 0.7854 (2 / 1 / 3 distinct models, $0.00326) | 0.7849 / 0.7828 / 0.7855 (1 / 3 / 1) | gpt-4: 0.7845 ($0.00329) | KNN 0.760, probe b=50 0.781, MLP 0.718, oracle 0.915 |
+| RouterEval mmlu m = 100 strong_to_weak | 0.7867 (1 model) | 0.7867 (1 model) | 0.7867 | LinearR 0.770, EmbedLLM 0.777, MLPR 0.778, cluster 0.783, probe-16×30 0.718 |
+| RouterEval mmlu m = 1000 strong_to_weak | 0.8685 (1 model) | 0.8685 (1 model) | 0.8685 | (this pool; the D1 mmlu row averages three pool types) |
 
-In both runs GraphRouter converged to **routing every prompt to the strongest single model** (RouterBench: GPT-4 on
-99.9% of prompts, quality and cost equal to the zero router's best point; RouterEval: μ exactly the best single
-model's). Its validation curve oscillated (0.59–0.70 on RouterBench, 0.25–0.83 on RouterEval) and the checkpoint with
-the best validation value is the constant router. That is the behaviour LLMRouterBench (2026) reports for the recent
-routers — "fail to reliably outperform a simple baseline" — reproduced with the authors' own code. On RouterBench the
-constant router is a strong baseline (0.784 vs the probe table's 0.781 at b = 50 and KNN's 0.760), so GraphRouter
-"wins" at λ = 0 by paying GPT-4's price everywhere; on this RouterEval pool (mmlu, m = 100, strong_to_weak) the best
-single model (0.787) is *above* every learned router (Avengers-16 0.785, cluster 0.783, MLPR 0.778, EmbedLLM 0.777,
-LinearR 0.770) and far above the probe tables (0.718 / 0.685), so the constant router GraphRouter converged to is the
-top of the table here — a pool with one dominant model, where routing has nothing to add and a family table with 30
-probes loses 0.07 to simply picking the strongest.
-**T3-16**: GraphRouter is not within 0.02 of PRKnn (it is +0.23 above it at m = 100, because PRKnn is
-bad); "none beats the probe table by > 0.02 μ at m = 1000" was already a MISS via EmbedLLM (D1), and GraphRouter at
-m = 100 beats the 16-cluster table by +0.069 by being the best single model. Deviation stated in
-DEVIATIONS.md: the RouterEval train split is subsampled to 2,000 queries because the library's per-query pandas
-filtering is quadratic.
+The sweep is the evidence: on RouterBench split 0 every one of the eight configurations reaches exactly the constant
+router's validation value (0.7851 = best single model on val) and picks 1–5 distinct models on test; on the RouterEval
+pools every configuration is the constant router (val 0.8325 at m = 100, one distinct pick). GraphRouter, tuned or
+not, **is the best-single-model router** on these data. On RouterBench that is a strong baseline (0.784 vs the probe
+table's 0.781 at b = 50 and KNN's 0.760), bought by paying GPT-4's price on every prompt; on the RouterEval pools the
+best single model is above every learned router at m = 100 (Avengers-16 0.785, cluster 0.783, MLPR 0.778, EmbedLLM
+0.777, LinearR 0.770) and far above the probe tables (0.718 / 0.685). This is the LLMRouterBench (2026) finding —
+recent routers "fail to reliably outperform a simple baseline" — reproduced with the authors' code and a fair sweep.
+**T3-16**: GraphRouter is not within 0.02 of PRKnn (PRKnn is bad here: 0.56 at m = 100); "none beats the probe table by
+> 0.02 μ at m = 1000" was already a MISS via EmbedLLM (D1); GraphRouter beats the probe table wherever a single model
+dominates, by being that model.
 
