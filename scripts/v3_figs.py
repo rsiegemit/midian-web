@@ -55,7 +55,22 @@ def X5():
     fig.suptitle("X5  Every arm with liars on RouterEval's real LLM pools (MMLU, 16 subjects, b = 3)"); fig.savefig(f"{O}/X5_routereval_liars.png", dpi=300, bbox_inches="tight"); print("[X5] written")
 
 
+def X6():
+    df = load(["scale_100k"]); arms = ["oracle", "sequential_halving_peer", "midian_va", "midian_v", "midian_a", "midian", "flat_probe_argmax_online", "warm_start_bandit", "declared_argmax", "linucb_honest"]
+    COLOR.setdefault("declared_argmax", "#5d6d7e")
+    fig, axes = plt.subplots(2, 2, figsize=(12, 9), sharey=True)
+    for j, n in enumerate([10000, 100000]):
+        for i, ls in enumerate(["random", "low_skill_first"]):
+            ax = axes[i][j]; sub = df[(df.n == n) & (df.liar_select == ls)]
+            for l in arms:
+                x = sub[sub.label == l]
+                if len(x): line(ax, x, l, lw=2.2 if l == "midian_va" else 1.2)
+            ax.set_title(f"n = {n:,} (3 shapes × 3 seeds), liars = {ls}", fontsize=10); ax.set_xlabel("β"); ax.grid(alpha=.3)
+    axes[0][0].set_ylabel("success"); axes[1][0].set_ylabel("success"); axes[0][1].legend(fontsize=7)
+    fig.suptitle("X6  Every arm at n = 10,000 and 100,000 agents (calibrated synthetic backend)"); fig.savefig(f"{O}/X6_scale_100k.png", dpi=300, bbox_inches="tight"); print("[X6] written")
+
+
 if __name__ == "__main__":
-    for name in (sys.argv[1:] or ["X3", "X4", "X5"]):
+    for name in (sys.argv[1:] or ["X3", "X4", "X5", "X6"]):
         try: globals()[name]()
         except Exception as e: print(f"[{name}] FAILED: {type(e).__name__}: {e}")

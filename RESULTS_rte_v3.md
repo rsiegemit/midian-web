@@ -323,6 +323,44 @@ recent routers "fail to reliably outperform a simple baseline" — reproduced wi
 dominates, by being that model.
 
 
+## E. Scale: every variant and rival at n = 10,000 and 100,000 (grid scale_100k; figure X6)
+
+Calibrated bernoulli backend (S drawn to match the measured live populations; no LLM calls, so the frameworks have no
+arm here), 3 shapes × β ∈ {0, 0.25, 0.5} × both liar selections × 3 seeds, b = 3, Q = 1,000. Pre-registered T3-18.
+
+| arm | n=10k β=0 | β=.25 low-skill | β=.5 low-skill | **n=100k β=0** | β=.25 low-skill | **β=.5 low-skill** |
+|---|---|---|---|---|---|---|
+| oracle | 0.847 | 0.847 | 0.847 | 0.849 | 0.849 | 0.849 |
+| trusted halving | 0.846 | 0.846 | 0.846 | 0.846 | 0.846 | 0.846 |
+| peer halving | 0.847 | 0.846 | **0.654** | 0.846 | 0.845 | **0.682** |
+| declared argmax (honest, noisy) | 0.839 | 0.707 | 0.720 | 0.845 | 0.710 | 0.733 |
+| warm-start bandit | 0.837 | 0.787 | 0.770 | 0.845 | 0.791 | 0.779 |
+| **MIDIAN-VA** | 0.798 | 0.782 | **0.792** | 0.805 | 0.782 | **0.793** |
+| MIDIAN-V | 0.798 | 0.799 | 0.684 | 0.805 | 0.790 | 0.651 |
+| MIDIAN-SH+A | 0.778 | 0.779 | 0.751 | 0.767 | 0.768 | 0.737 |
+| MIDIAN-A | 0.772 | 0.771 | 0.766 | 0.765 | 0.764 | 0.757 |
+| MIDIAN | 0.772 | 0.766 | 0.727 | 0.765 | 0.757 | 0.710 |
+| MIDIAN-SH | 0.778 | 0.745 | 0.573 | 0.767 | 0.728 | 0.578 |
+| flat probe argmax (online) | 0.757 | 0.757 | 0.757 | 0.767 | 0.767 | 0.767 |
+| flat probe argmax (frozen) | 0.704 | 0.704 | 0.704 | 0.708 | 0.708 | 0.708 |
+| LinUCB-honest | 0.620 | 0.620 | 0.620 | 0.426 | 0.426 | 0.426 |
+| random | 0.408 | 0.408 | 0.408 | 0.419 | 0.419 | 0.419 |
+
+Paired (9 pairs per cell): at n = 100k, VA − V +0.000 at β = 0 and **+0.143** [+0.107, +0.179] at β = 0.5 low-skill;
+VA − MIDIAN +0.040 / +0.084; VA − flat online +0.038 / +0.027; VA − peer halving −0.041 / **+0.112**. At n = 10k: VA − V
++0.000 / +0.108, VA − peer halving −0.049 / +0.138. Costs at 100k per task: MIDIAN 100 comparisons / 15 messages, V and
+VA 51–53 / 7, flat and LinUCB 100,000 / 0, halving 1 / 0; build 4.8M probes for every probe arm (VA 4.96M) and 43.2M
+reports for the MIDIAN family (41.8M for peer halving). LinUCB-honest over 1.6M arms with 1,000 tasks is below random.
+
+**T3-18 HIT** on all three clauses: VA − V under low-skill collusion is +0.108 at 10k and +0.143 at 100k (≥ +0.05);
+VA moves by 0.025 across β at 100k (≤ 0.03); peer halving loses 0.164 from β = 0 to β = 0.5 low-skill at 100k (≥ 0.10).
+What changes with scale: the verification step is worth more (VA / V − MIDIAN +0.026 at 10k → +0.040 at 100k at β = 0,
+because among 100k candidates the unverified cohort winners are more often 3/3 lottery tickets), the collusion
+collapse of V and of peer halving does not shrink, and MIDIAN-VA is the only arm that is both within 0.05 of the
+adaptive-halving ceiling in the honest regime and flat under collusion — at 53 comparisons per task against 100,000.
+A live-LLM run at 100k is not launched: 4.8M fresh probe calls per seed (≈ 13 h of the whole fleet each).
+
+
 ## G. Benchmarks considered and not run, with reasons
 
 - **AgentsNet** (Grötschla et al. 2025): five distributed-computing tasks — (Δ+1)-colouring, minimal vertex cover, maximal

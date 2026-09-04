@@ -158,6 +158,18 @@ path update (commit 3415f03). Wall-clock is reported only in the supervisor-late
   halving); b = 3 — halving 0.722, MIDIAN-V 0.675, MIDIAN 0.650, flat 0.620; b = 10 — every probe method within 0.03 of
   the oracle; the bimodal framework gap closes to +0.002 while heavy_tail opens to −0.097 (V2-9 HIT).
 
+
+### II.4b Scale to 10,000 and 100,000 agents — **FINAL** (calibrated synthetic backend; RESULTS_rte_v3.md part E, Fig. X6)
+
+| n | oracle | peer halving β=0 → β=.5 low-skill | **MIDIAN-VA** β=0 → β=.5 low-skill | MIDIAN-V | MIDIAN | flat online | comparisons / task: VA vs flat |
+|---|---|---|---|---|---|---|---|
+| 10,000 | 0.847 | 0.847 → 0.654 | **0.798 → 0.792** | 0.798 → 0.684 | 0.772 → 0.727 | 0.757 | 42 vs 10,000 |
+| 100,000 | 0.849 | 0.846 → 0.682 | **0.805 → 0.793** | 0.805 → 0.651 | 0.765 → 0.710 | 0.767 | 53 vs 100,000 |
+
+VA − V under low-skill collusion: +0.108 (10k), **+0.143** (100k); VA − peer halving there +0.138 / +0.112; in the
+honest regime VA is 0.04–0.05 below peer halving (T3-18 HIT). Frameworks have no arm at these n (no LLM calls); a live
+100k run would cost 4.8M probe calls per seed and is not launched.
+
 ### II.5 Robustness axes
 
 **Liars (FINAL, Tables 2–4).** The collusion regime is what MIDIAN-A / VA exist for.
@@ -371,7 +383,8 @@ embeddings), MODEL-SAT (LLM fine-tune), Avengers voting (needs generations).
 | X2 | RouteLLM protocol on RouterBench outcomes | final |
 | X3 | their KNN/MLP routers inside our benchmark vs MIDIAN variants, n = 100 / 1k / 10k | final |
 | X4 | RouterEval on its terms by pool size, defaults and tuned | final |
-| X5 | every arm with liars on real pools, n = 10 / 100 / 1,000 / 5,000 | pending 2 MLP cells + 5k KNN |
+| X5 | every arm with liars on real pools, n = 10 / 100 / 1,000 / 5,000 | pending 5k KNN |
+| X6 | every arm at n = 10,000 and 100,000 (synthetic, calibrated) | final |
 
 Scripts: `rte.analyze`, `scripts/extra_figs.py`, `scripts/v3_figs.py`, `scripts/energy.py`, `scripts/routerbench_terms.py`,
 `scripts/rivals_routellm.py`, `scripts/routereval_terms.py`, `scripts/rivals_llmrouter.py`. Data and results under

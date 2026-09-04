@@ -40,7 +40,7 @@ def prep():
         n = min(len(v) for v in recs.values())
         Y.append(np.stack([[r["score"] for r in recs[m][:n]] for m in models], 1)); fam += [k] * n
         prompts += [str(recs[models[0]][i]["prompt"]) for i in range(n)]
-    Y = np.concatenate(Y).astype(np.float32); fam = np.array(fam)
+    Y = np.nan_to_num(np.concatenate(Y).astype(np.float32), nan=0.0); fam = np.array(fam)   # a few records carry NaN scores (unscored outputs): counted as wrong
     from rte.methods._learned import embed
     E = embed(prompts)
     np.savez(NPZ, Y=Y, fam=fam, prompts=np.array(prompts, dtype=object), E=E, models=np.array(models), datasets=np.array(DATASETS))
