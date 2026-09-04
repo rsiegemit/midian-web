@@ -279,7 +279,7 @@ NFS, replica herding, memo sharding, tool-run memoisation) are in `STATUS.md` an
 
 ## 9. Documents
 
-**Start with `RESULTS.md`** — the consolidated, ordered dossier of every result (phases 1–3), each table tagged FINAL /
+**Start with `RESULTS.md`** — the consolidated, ordered dossier of every result (phases 1–3), each table tagged
 FINAL (every grid complete as of 2026-09-04; the energy/latency figures are estimates under the stated cost model). The documents below are its sources.
 
 
