@@ -30,7 +30,7 @@ _sets:
   core4: &core4 [midian, {name: midian, params: {r: 5}}, {name: midian, params: {verify: true, cached: true}}, {name: midian, params: {verify: true, cached: true, r: 5}}, random, declared_argmax, flat_probe_argmax]
   # SPEC §6A: the frameworks are the paper's HEADLINE comparison, so they ride the core grid too
   budget: &budget [midian, {name: midian, params: {r: 5}}, {name: midian, params: {verify: true, cached: true}}, {name: midian, params: {verify: true, cached: true, r: 5}}, flat_probe_argmax, ucb_per_family, thompson_per_family, sequential_halving, verify_on_claim,
-                   warm_start_bandit, referral_network, gossip_reputation_greedy, declared_argmax, random]
+                   warm_start_bandit, referral_network, gossip_reputation_greedy, declared_argmax, random, midian_a, midian_va]
   midian_variants: &midian_variants
     - flat_probe_argmax
     - {name: midian, params: {r: 5,  delta: 0.0}}
@@ -65,7 +65,7 @@ _sets:
     - {name: fw_smolagents, params: {retrieval: midian, r: 5}}
     - {name: fw_camel_workforce, params: {retrieval: midian, r: 10}}
     - {name: fw_camel_workforce, params: {retrieval: midian, r: 5}}
-  fw_paired: &fw_paired [midian, {name: midian, params: {r: 5}}, {name: midian, params: {verify: true, cached: true}}, {name: midian, params: {verify: true, cached: true, r: 5}}, random, declared_argmax, flat_probe_argmax, llm_supervisor]
+  fw_paired: &fw_paired [midian, {name: midian, params: {r: 5}}, {name: midian, params: {verify: true, cached: true}}, {name: midian, params: {verify: true, cached: true, r: 5}}, random, declared_argmax, flat_probe_argmax, llm_supervisor, midian_a, midian_va]
   cost_curve: &cost_curve [midian, {name: midian, params: {r: 5}}, {name: midian, params: {verify: true, cached: true}}, {name: midian, params: {verify: true, cached: true, r: 5}}, flat_probe_argmax, declared_argmax, ucb_per_family, flat_nsw_router, cnp_self_bid, random]
 
 grids:
@@ -94,16 +94,16 @@ grids:
 
   # ---- v2 work order (TARGETS_rte_v2.md), 2026-09-03. Variants are labeled; plain midian unchanged.
   midian_r20:       {backend: llm, n: [1000], dist: [specialist, heavy_tail, bimodal], beta: [0.25, 0.5], declared_source: [programmatic, self_described],
-                     methods: [midian, {name: midian, params: {r: 20}}, {name: midian_v, params: {r: 20}}]}                    # 1.4
+                     methods: [midian, {name: midian, params: {r: 20}}, {name: midian_v, params: {r: 20}}, {name: midian_va, params: {r: 20}}]}                    # 1.4
   stratify:         {backend: llm, n: [1000], dist: [specialist, heavy_tail], beta: [0, 0.5], declared_source: [self_described],
                      methods: [midian, {name: midian, params: {stratify: true}}]}                                                 # 1.5
   live_n10k_v2:     {backend: llm, n: [10000], dist: [specialist], beta: [0, 0.25], declared_source: [self_described], b: [3], seeds: 1-3, Q: 300,
                      methods: [midian, midian_sh, midian_a, midian_v, {name: flat_probe_argmax, params: {online: true}}, {name: sequential_halving, params: {peer_reported: true}},
-                               verify_on_claim, warm_start_bandit, linucb_honest, *frameworks, random]}                        # 2.2 (replaces the b=1/programmatic 10k row)
+                               verify_on_claim, warm_start_bandit, linucb_honest, *frameworks, random, midian_va]}                        # 2.2 (replaces the b=1/programmatic 10k row)
   midian_v_replication: {backend: llm, n: [100, 1000], dist: [specialist, heavy_tail, bimodal], beta: [0, 0.25, 0.5], declared_source: [programmatic, self_described],
                      seeds: 11-20, methods: [midian, midian_v, midian_va, {name: flat_probe_argmax, params: {online: true}}, {name: sequential_halving, params: {peer_reported: true}}]}   # 2.3: 10 FRESH seeds
   budget_b10_shapes: {backend: llm, n: [1000], dist: [bimodal, heavy_tail], beta: [0.25], b: [10], declared_source: [programmatic, self_described], seeds: 1-3, Q: 300,
-                     methods: [midian, midian_v, {name: flat_probe_argmax, params: {online: true}}, sequential_halving, {name: sequential_halving, params: {peer_reported: true}}, fw_langgraph, fw_autogen, random]}   # 2.4
+                     methods: [midian, midian_v, {name: flat_probe_argmax, params: {online: true}}, sequential_halving, {name: sequential_halving, params: {peer_reported: true}}, fw_langgraph, fw_autogen, random, midian_a, midian_va]}   # 2.4
   internals_v2:     {backend: llm, n: [1000], dist: [specialist], beta: [0.5], collude: [true, false], liar_select: [random, low_skill_first], declared_source: [self_described],
                      methods: [{name: midian, params: {r: 5, delta: 0.0}}, {name: midian, params: {r: 5, delta: 0.3333333333333333}}, {name: midian, params: {r: 10, delta: 0.0}}, {name: midian, params: {r: 10, delta: 0.3333333333333333}},
                                {name: midian, params: {r: 20, delta: 0.0}}, {name: midian, params: {r: 20, delta: 0.3333333333333333}},
@@ -118,7 +118,7 @@ grids:
                      blocks: [{churn: {frac: 0.1, every: 200}}, {churn: {frac: 0.3, every: 200}}],
                      methods: [midian, midian_sh, midian_a, midian_v, {name: sequential_halving, params: {peer_reported: true, churn_mode: rebuild}},
                                {name: sequential_halving, params: {peer_reported: true, churn_mode: stale}}, {name: flat_probe_argmax, params: {online: true}},
-                               warm_start_bandit, linucb_honest, fw_langgraph, fw_autogen]}                                    # 2.1 (V2-6)
+                               warm_start_bandit, linucb_honest, fw_langgraph, fw_autogen, midian_va]}                                    # 2.1 (V2-6)
   variants_f1:      {<<: *live, declared_source: [self_described], seeds: 1-10, methods: [midian, midian_sh, midian_a, midian_sha, midian_v, midian_va, linucb_honest, {name: sequential_halving, params: {peer_reported: true}}, {name: flat_probe_argmax, params: {online: true}}]}   # Phase 1 variants on the F1 cells (V2-1..3, V2-5)
 
   # ---- bernoulli twins of every live grid: exercise the pipeline before the fleet is up (never headline numbers)
@@ -151,30 +151,7 @@ grids:
     dist: [specialist]
     beta: [0.25]
     seeds: 1-3
-    methods:
-      - {name: fw_langgraph, params: {retrieval: midian_va, r: 10}}
-      - {name: fw_crewai, params: {retrieval: midian_va, r: 10}}
-      - {name: fw_autogen, params: {retrieval: midian_va, r: 10}}
-      - {name: fw_magentic_one, params: {retrieval: midian_va, r: 10}}
-      - {name: fw_maf, params: {retrieval: midian_va, r: 10}}
-      - {name: fw_openai_agents, params: {retrieval: midian_va, r: 10}}
-      - {name: fw_google_adk, params: {retrieval: midian_va, r: 10}}
-      - {name: fw_llamaindex, params: {retrieval: midian_va, r: 10}}
-      - {name: fw_smolagents, params: {retrieval: midian_va, r: 10}}
-      - {name: fw_camel_workforce, params: {retrieval: midian_va, r: 10}}
-      - midian_a
-      - midian_va
-      - {name: midian_va, params: {r: 20}}
-      - midian_va
-      - midian_a
-      - midian_va
-      - midian_a
-      - midian_va
-      - midian_va
-      - midian_a
-      - midian_va
-      - midian_a
-      - midian_va *cost_curve
+    methods: [*cost_curve, midian_a, midian_va]
     backend_kwargs: {calibrate_from: $RTE_DATA/populations/specialist_n1000_K16_seed1/S.npy}
     blocks: [{n: [100, 1000, 10000, 100000]}, {n: [1000000], b: [1]}, {n: [10000000], b: [1], seeds: 1}]
 
@@ -288,6 +265,20 @@ grids:
       - declared_argmax
       - knn_router
       - random
+
+  fw_live_n1000_verified_va:        # frameworks given MIDIAN-VA's leaf cohort as the shortlist (labeled variant, r = 10)
+    mirror_of: fw_live_n1000
+    methods:
+      - {name: fw_langgraph, params: {retrieval: midian_va, r: 10}}
+      - {name: fw_crewai, params: {retrieval: midian_va, r: 10}}
+      - {name: fw_autogen, params: {retrieval: midian_va, r: 10}}
+      - {name: fw_magentic_one, params: {retrieval: midian_va, r: 10}}
+      - {name: fw_maf, params: {retrieval: midian_va, r: 10}}
+      - {name: fw_openai_agents, params: {retrieval: midian_va, r: 10}}
+      - {name: fw_google_adk, params: {retrieval: midian_va, r: 10}}
+      - {name: fw_llamaindex, params: {retrieval: midian_va, r: 10}}
+      - {name: fw_smolagents, params: {retrieval: midian_va, r: 10}}
+      - {name: fw_camel_workforce, params: {retrieval: midian_va, r: 10}}
 
   scale_100k:                       # every MIDIAN variant + self-contained rivals at n = 10k and 100k on the calibrated bernoulli backend (no LLM calls; frameworks n/a)
     backend: bernoulli
