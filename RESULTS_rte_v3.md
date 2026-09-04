@@ -361,6 +361,45 @@ adaptive-halving ceiling in the honest regime and flat under collusion — at 53
 A live-LLM run at 100k is not launched: 4.8M fresh probe calls per seed (≈ 13 h of the whole fleet each).
 
 
+## F. LLMRouterBench (Li et al., Findings@ACL'26) on its own terms (`scripts/llmrouterbench_terms.py`)
+
+Their performance-oriented setting from their bench-release: 15 datasets (AIME, MATH500, MATHBench, HumanEval, MBPP,
+LiveCodeBench, BBH, KORBench, Knights & Knaves, MMLU-Pro, GPQA, FinQA, MedQA, EmoryNLP, MELD; 11,481 prompts) × the same
+20 lightweight (7–9B) models, per-instance scores; their protocol (70/30 split × their five seeds 42 / 999 / 2024 / 2025 /
+3407); their metrics (AvgAcc = mean over datasets of the routed accuracy; Gain@R, Gain@B = relative gain over the random
+and best-single-model routers; Gap@O = relative gap to the per-instance oracle). Deviation: MiniLM embeddings for every
+embedding router (they use gte-qwen2-7B-instruct). Every router's hyperparameters are chosen on a 20% slice of the
+train split (no failure-mode defaults). Their own routers are not re-run through their code; the open algorithms are
+ours as in D1, and their Table 11 is quoted for the rest.
+
+| router | AvgAcc (ours, MiniLM) | AvgAcc (their Table 11) | Gain@B | Gap@O | labels used |
+|---|---|---|---|---|---|
+| oracle (per instance) | 0.916 | 0.916 | +0.392 | 0 | |
+| dataset table, full labels ("Dataset Oracle") | 0.718 | 0.731 | +0.051 | 0.222 | 161k |
+| Avengers top-1 (K = 128 / 64, tuned) | 0.709 | 0.719 (with voting) | +0.039 | 0.232 | 161k |
+| Model-SAT | — | 0.719 | | | |
+| **probe table, family given, 30 probes / dataset** | **0.704** | — | +0.030 | 0.238 | 9,000 (5.6%) |
+| EmbedLLM MF (dim 232, 20 ep, tuned) | 0.702 | 0.712 | +0.026 | 0.240 | 161k |
+| GraphRouter | — | 0.703 | | | |
+| probe table, family predicted (5-NN), 30 probes | 0.694 | — | +0.015 | 0.249 | 9,000 |
+| best single model (Qwen3-8B) | 0.688 | 0.680 | 0 | 0.252 | |
+| linear router (ridge, tuned) | 0.687 | — | +0.007 | 0.255 | 161k |
+| KNN router (k = 5, tuned) | 0.670 | — | −0.019 | 0.273 | 161k |
+| MLP router (1024, tuned) | 0.637 | — | −0.068 | 0.308 | 161k |
+| RouterDC | — | 0.613 | | | |
+| random | 0.476 | 0.488 | −0.295 | 0.483 | |
+
+The reproduction is faithful where it can be checked: oracle 0.916 vs 0.916, best single model 0.688 vs 0.680, random
+0.476 vs 0.488, dataset table 0.718 vs 0.731, Avengers 0.709 vs 0.719, EmbedLLM 0.702 vs 0.712 (their embeddings are a
+7B encoder; MiniLM costs 0.01). On this benchmark the dataset id is a strong family signal, so a table with 30 probes
+per dataset per model (5.6% of the labels) sits within 0.005 of Avengers / EmbedLLM and +0.016 over the best single
+model; nothing gets within 0.2 of the per-instance oracle. **T3-22**: within 0.02 of the best learned router (HIT,
+−0.005 vs Avengers) but +0.016 over the best single model against a pre-registered +0.02 (MISS by 0.004). **T3-23
+MISS**: Gap@O is 0.22–0.25 for the top routers, just under the pre-registered 0.25 (the per-instance headroom is real but
+smaller than on RouterEval's 1,000-model pools). With truthful labels every MIDIAN variant is the probe table (max-tree =
+argmax, nothing to audit); the 20-model pool with liars (grid `llmrouterbench_pool`, T3-24) is running.
+
+
 ## G. Benchmarks considered and not run, with reasons
 
 - **AgentsNet** (Grötschla et al. 2025): five distributed-computing tasks — (Δ+1)-colouring, minimal vertex cover, maximal
@@ -374,7 +413,5 @@ A live-LLM run at 100k is not launched: 4.8M fresh probe calls per seed (≈ 13 
   precomputed, so an offline evaluation is impossible without provider keys; NOT RUN (the probe table would need the
   same paid calls to build). Leaderboard top-3 at fetch time: Paix2 77.63, KT-ModelRouter 76.28, Sqwish 76.21
   (Acc–Cost Arena score).
-- **LLMRouterBench** (Findings@ACL'26): run — part F (their Table 11 gives, on the same setting, Oracle 91.64, Dataset
-  Oracle 73.10, Avengers 71.94, Model-SAT 71.88, EmbedLLM 71.24, GraphRouter 70.29, RouterDC 61.33, Random 48.79,
-  best single model Qwen3-8B 68.01 — AvgAcc in %).
+- **LLMRouterBench** (Findings@ACL'26): run — part F.
 - **TwinRouterBench** (2026, agentic routing): not examined tonight.

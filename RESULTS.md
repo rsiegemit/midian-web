@@ -325,6 +325,17 @@ best single model with one distinct pick in all eight configurations. This repro
 recent routers fail to beat a simple baseline. RouterDC (DeBERTa fine-tune, GPU) not run. T3-16 MISS via EmbedLLM
 (+0.043 over the probe table at m = 1,000).
 
+### III.7 LLMRouterBench (Findings@ACL'26) on its own terms — **FINAL** (RESULTS_rte_v3.md part F)
+
+15 datasets × 20 lightweight models, their 70/30 × 5-seed protocol and metrics, hyperparameters tuned on a train slice.
+Our reproduction matches their Table 11 where checkable (oracle 0.916 / 0.916, best single 0.688 / 0.680, random 0.476 /
+0.488, Avengers 0.709 / 0.719, EmbedLLM 0.702 / 0.712). **The probe table with 30 probes per dataset per model (5.6% of the
+labels) scores 0.704**: within 0.005 of Avengers and EmbedLLM, +0.016 over the best single model, 0.02 below the full-label
+dataset table (0.718); their published leaders (Model-SAT 0.719, GraphRouter 0.703, RouterDC 0.613) bracket it. Every
+router is 0.22–0.25 below the per-instance oracle. T3-22 HIT / MISS (within 0.02 of the best learned router; +0.016 vs a
+pre-registered +0.02 over the best single model); T3-23 MISS (Gap@O just under 0.25). The 20-model liar pool (T3-24) is
+running.
+
 ---
 
 ## Part IV — Where MIDIAN loses, and the caveat that frames the paper
@@ -351,7 +362,7 @@ recent routers fail to beat a simple baseline. RouterDC (DeBERTa fine-tune, GPU)
 |---|---|---|---|---|
 | v1 (TARGETS_rte.md) | 6 | 0 | 5 | 1 split (T2) — each miss explained in RESULTS_rte.md §8 |
 | v2 (TARGETS_rte_v2.md) | 11 | 6 (V2-2, 7, 8, 9, 10, V2-6 quality) | 4 (V2-1, 3, 5, 11 — two within the seed floor) | 1 cost-split (V2-6), 1 reported (V2-4) |
-| v3 (TARGETS_rte_v3.md) | 17 | T3-2, 3, 4, 10, 11 (letter), 14, 15; most clauses of 6, 7, 9, 17 | T3-1 (by 0.006), 12, 13, 16; β = 0 clause of 9; two of six clauses of 17 | T3-5 ours NOT RUN; T3-8 stated |
+| v3 (TARGETS_rte_v3.md) | 24 | T3-2, 3, 4, 10, 11 (letter), 14, 15; most clauses of 6, 7, 9, 17 | T3-1 (by 0.006), 12, 13, 16; β = 0 clause of 9; two of six clauses of 17 | T3-5 ours NOT RUN; T3-8 stated |
 
 ---
 
@@ -363,7 +374,7 @@ recent routers fail to beat a simple baseline. RouterDC (DeBERTa fine-tune, GPU)
 | Low-skill framework grids (Magentic-One) | 58 + 60 | ~10:00 | §II.5 low-skill block FINAL, H1 panel |
 | Verified n = 1,000, last Magentic-One rows | 8 | ~08:00 | §II.2 fully FINAL |
 | Frameworks with a MIDIAN-VA shortlist (fw_live_n1000_verified_va, 1,320 rows) | 79% | ~08:00 | §II.2 VA-shortlist column, T3-19 |
-| LLMRouterBench on its terms (job running) | — | ~05:00 | §III.7 (part F), T3-22/23; then the 20-model liar pool grid (T3-24) |
+| LLMRouterBench 20-model liar pool (grid llmrouterbench_pool, 510 rows) | launched 04:40 | ~06:00 | §III.7 liar table, T3-24 |
 | Their KNN router at n = 5,000 | 7 rows | ~06:00 | Table 7 one column, X5 |
 | Final pass | — | after the above | memo compaction, STATUS, memory |
 
