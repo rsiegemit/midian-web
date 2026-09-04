@@ -20,7 +20,7 @@ from sklearn.cluster import KMeans
 from sklearn.neural_network import MLPRegressor
 from sklearn.linear_model import Ridge
 
-R = os.environ.get("RTE_DATA", "/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte")
+R = os.environ.get("RTE_DATA", "/scratch/rte")
 B, OUT, NPZ = f"{R}/data/llmrouterbench/bench-release", f"{R}/results/llmrouterbench_terms", f"{R}/data/llmrouterbench/perf_matrix.npz"
 os.makedirs(OUT, exist_ok=True)
 DATASETS = ["aime", "math500", "mathbench", "humaneval", "mbpp", "livecodebench", "bbh", "korbench", "kandk", "mmlupro", "gpqa", "finqa", "medqa", "emorynlp", "meld"]

@@ -15,7 +15,7 @@ import subprocess
 import sys
 import threading
 
-RTE_DATA = os.environ.get("RTE_DATA", "/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte")
+RTE_DATA = os.environ.get("RTE_DATA", "/scratch/rte")
 WORKERS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "workers")
 
 

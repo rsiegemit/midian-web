@@ -1,6 +1,6 @@
 # RTE / MIDIAN — Consolidated Results Dossier
 
-**Snapshot:** 2026-09-04 15:30 (all grids complete) · **Repository:** `rsiegemit/midian-web` · **Purpose:** the single ordered source for the
+**Snapshot:** 2026-09-04 15:30 (all grids complete) · **Purpose:** the single ordered source for the
 manuscript. Detailed protocols, per-grid tables and figure captions are in the linked documents; this file carries every
 number a paper needs, each tagged with its status.
 
@@ -217,6 +217,7 @@ n^0.14 (60 → 80 from 1k to 10k) against n¹ for flat (1,000 → 10,000). Succe
 | Magentic-One (7B) | 10 | 12 | 1 | 0 | 0 | ≈ 200 J | 18 s |
 
 - MIDIAN's build costs 277 GPU-s on specialist populations; cumulative cost crosses below AutoGen's after **9,416 tasks**
+  in GPU-seconds and **9,415** in joules (the joules crossing is the one labelled in Fig. 1a and in `figures/F1_energy_crossings.csv`)
   and below Magentic-One's after **987** (CrewAI / LlamaIndex / CAMEL: 1,900–2,300; the framework supervisor costs are
   the final-grid latency ratios to AutoGen, re-measured 2026-09-04).
 - Cost exponents (probes and comparisons vs n): MIDIAN route n^0.14, flat and declared scans n^1.00; MIDIAN-V ≈ n^0.
@@ -310,7 +311,7 @@ n = 5,000: all leaderboard LLMs (3 seeds, Q = 300).*
 | MIDIAN-A | 0.586 | 0.585 | 0.643 | 0.643 |
 | MIDIAN | 0.587 | 0.531 | 0.643 | 0.599 |
 | LinUCB-honest | 0.618 | 0.616 | 0.609 | 0.609 |
-| their MLP router | 0.620 | 0.607 | — | — |
+| their MLP router | 0.620 | 0.620 | — | — |
 | flat probe argmax (online) | 0.503 | 0.503 | 0.621 | 0.621 |
 | their KNN router (= flat frozen) | 0.380 | 0.380 | 0.609 | 0.609 |
 | random | 0.505 | 0.505 | 0.550 | 0.550 |

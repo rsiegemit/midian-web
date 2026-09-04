@@ -1,7 +1,7 @@
 """Download RouterBench (withmartian/routerbench, 0-shot pickle) and normalize it
 into a compact cell table for `rte.backends.replay`.
 
-Reproduces the old project's category definition (`~/tmp/midian-web-ref/midian/data.py:
+Reproduces the old project's category definition (`the reference implementation's data.py (
 _normalize_routerbench`): category = raw `eval_name` (this already includes each MMLU
 subject as its own eval_name, e.g. "mmlu-abstract-algebra"), keep categories with
 >= `min_category_samples` (60) rows, binarize a model's score at >= 0.5.

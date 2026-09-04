@@ -20,7 +20,7 @@ from rte.world import World
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _picks = lambda st: {k: st[k] for k in ("picks", "fallbacks", "bad_name")}
-RTE_DATA = os.environ.get("RTE_DATA", "/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte")
+RTE_DATA = os.environ.get("RTE_DATA", "/scratch/rte")
 N, K, DIST, BETA, SEED, Q = 100, 16, "specialist", 0.25, 1, 20
 NAMES = ["fw_maf", "fw_openai_agents", "fw_google_adk", "fw_llamaindex"]
 # HandoffBuilder keeps its targets in a set, so MAF's handoff tool order is not the candidate order and the

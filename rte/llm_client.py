@@ -25,7 +25,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Sequence
 
-RTE_DATA = Path(os.environ.get("RTE_DATA", "/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte"))
+RTE_DATA = Path(os.environ.get("RTE_DATA", "/scratch/rte"))
 ENDPOINTS_PATH = Path(os.environ.get("RTE_ENDPOINTS", RTE_DATA / "endpoints.json"))
 ENDPOINT_DIR = Path(os.environ.get("RTE_ENDPOINT_DIR", ENDPOINTS_PATH.parent / "endpoints.d"))
 CACHE_DIR = Path(os.environ.get("RTE_LLM_CACHE", RTE_DATA / "cache"))
@@ -261,18 +261,25 @@ def reset_stats() -> None:
 
 def compact() -> int:
     """Merge every shard into one file and delete the ones merged. Run BETWEEN stages: a shard
-    still being written by a live process would lose whatever it writes after the merge."""
-    mem, _ = _memo()
+    still being written by a live process would lose whatever it writes after the merge.
+    Shards are copied one at a time inside SQLite (ATTACH), so peak memory is a few MB however
+    large the cache is; reading them all into a dict first needed more RAM than the login node has."""
     out = CACHE_DIR / "memo_compact.sqlite"
     old = [f for f in sorted(CACHE_DIR.glob("*.sqlite")) if f != out]
     con = _open(out)
-    con.executemany("INSERT OR REPLACE INTO memo VALUES (?, ?)", list(mem.items()))
-    con.commit()
+    for i, f in enumerate(old, 1):
+        con.execute("ATTACH DATABASE ? AS shard", (str(f),))
+        con.execute("INSERT OR REPLACE INTO memo SELECT k, v FROM shard.memo")
+        con.commit()
+        con.execute("DETACH DATABASE shard")
+        if i % 500 == 0:
+            print(f"  merged {i}/{len(old)} shards", flush=True)
+    rows = con.execute("SELECT count(*) FROM memo").fetchone()[0]
     con.close()
     for f in old:
         f.unlink()
-    print(f"compacted {len(old)} shard(s) -> {out} ({len(mem)} rows)")
-    return len(mem)
+    print(f"compacted {len(old)} shard(s) -> {out} ({rows} rows)")
+    return rows
 
 
 if __name__ == "__main__":                        # python -m rte.llm_client compact

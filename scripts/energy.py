@@ -3,7 +3,7 @@ Wall-clock in the rows is not used for probe methods (memo hits). Model: GPU-sec
 B = 5A (decode is ~5x prefill per token on H100/vLLM), A calibrated so a 7B supervisor call (1,900 prompt + 65 gen tokens) costs
 1/34 GPU-s = the throughput measured on the saturated 1-GPU 7B replicas (2026-09-03, 4 samples, 32-36 req/s). Energy = GPU-s * W."""
 import glob, json, os, yaml, numpy as np, pandas as pd, matplotlib; matplotlib.use("Agg"); import matplotlib.pyplot as plt
-R = os.environ.get("RTE_DATA", "/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte") + "/results"
+R = os.environ.get("RTE_DATA", "/scratch/rte") + "/results"
 REQ_PER_S_7B, SUP_TOK = 34.0, (1900, 65)                          # measured: saturated 1-GPU 7B replica; supervisor prompt/gen tokens
 A = (1 / REQ_PER_S_7B) / (7.0 * (SUP_TOK[0] + 5 * SUP_TOK[1])); B = 5 * A
 WATTS = {"700 W (H100 TDP)": 700, "400 W (typical draw)": 400}

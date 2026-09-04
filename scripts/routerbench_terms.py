@@ -13,7 +13,7 @@ from sklearn.model_selection import StratifiedShuffleSplit
 from sklearn.neighbors import KNeighborsRegressor, KNeighborsClassifier
 from sklearn.neural_network import MLPRegressor
 
-R = os.environ.get("RTE_DATA", "/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte")
+R = os.environ.get("RTE_DATA", "/scratch/rte")
 OUT = f"{R}/results/routerbench_terms"; os.makedirs(OUT, exist_ok=True)
 EMB = f"{R}/data/routerbench_emb_minilm.npy"
 MIN_FAMILY, SEEDS, TEST, KNN_K, FAM_K, R_MIDIAN = 60, 5, 0.3, 20, 5, 10

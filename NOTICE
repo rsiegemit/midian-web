@@ -1,0 +1,14 @@
+This repository is released under the MIT License (see LICENSE). That licence covers the
+benchmark code, the analysis scripts and the result documents in this repository only.
+
+Third-party benchmark data and model outputs keep their own licenses and terms, and are not
+redistributed here — the download scripts under `scripts/` fetch them from their own sources:
+
+- RouterBench (Hu et al., 2024) — recorded outcomes of 11 models on 64 evaluation categories.
+- RouterEval (2025) — per-model scores over pools of real LLMs, including the 5,000-model leaderboard pool.
+- LLMRouterBench (Li et al., Findings@ACL 2026) — per-instance scores for 20 models over 15 datasets.
+- Reasoning Gym — the K = 16 task families used by the live backend.
+- The open-weight models served by the live backend (Qwen2.5 0.5B-14B, Gemma-2 2B/9B) keep their own model licenses.
+
+Users of this repository are responsible for complying with the licenses and terms of each of
+those sources.

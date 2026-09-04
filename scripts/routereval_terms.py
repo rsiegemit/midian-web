@@ -46,7 +46,7 @@ def embedllm(Etr, Ytr, Ete, dim=64, epochs=5, batch=2048, seed=0):
         return (w.weight[0] * Vq[:, None, :] * Vm[None, :, :]).sum(-1).argmax(1).numpy()   # (n_te, m) scores -> argmax
 sys.path.insert(0, os.path.dirname(__file__)); from routerbench_terms import midian_tree_pick
 
-R = os.environ.get("RTE_DATA", "/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte")
+R = os.environ.get("RTE_DATA", "/scratch/rte")
 DATA, OUT = f"{R}/data/routereval/router_dataset", f"{R}/results/routereval_terms"; os.makedirs(OUT, exist_ok=True)
 DATASETS = ["arc", "bbh", "gpqa", "gsm8k", "harness_truthfulqa_mc_0", "hellaswag", "ifeval", "math", "mmlu_pro", "mmlu", "musr", "winogrande"]
 ACC_REF = {"arc": 0.852, "hellaswag": 0.953, "mmlu": 0.864, "harness_truthfulqa_mc_0": 0.669, "winogrande": 0.875, "gsm8k": 0.92,

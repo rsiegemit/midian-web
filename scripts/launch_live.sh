@@ -4,7 +4,7 @@
 #   RTE_GRIDS="live_f1_n1000 ..."  grids (default: all live grids)      RTE_ONLY="midian sequential_halving"  methods
 #   RTE_SHARD="dist,beta"  one job per value-combination of these cell axes (--only)   RTE_SEED_SHARD=1  ... and per seed
 set -uo pipefail
-cd "${RTE_REPO:-$HOME/rte}"; export RTE_DATA="${RTE_DATA:-/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte}"
+cd "${RTE_REPO:-$HOME/rte}"; export RTE_DATA="${RTE_DATA:-/scratch/rte}"
 DEP=${1:+--dependency=afterany:$1}
 PY="$RTE_DATA/env/rte/bin/python"
 for grid in ${RTE_GRIDS:-live_core_n100 fw_live_n100 live_f1_n1000 fw_live_n1000 live_extra_n1000 budget_sweep midian_internals fw_k_sensitivity fw_appendix live_n10k}; do

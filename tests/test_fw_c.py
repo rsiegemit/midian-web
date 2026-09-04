@@ -15,7 +15,7 @@ from rte.budget import Budget
 from rte.methods import load_method
 from rte.world import World
 
-RTE_DATA = os.environ.get("RTE_DATA", "/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte")
+RTE_DATA = os.environ.get("RTE_DATA", "/scratch/rte")
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _picks = lambda st: {k: st[k] for k in ("picks", "fallbacks", "bad_name")}
 FRAMEWORKS = {"fw_smolagents": "fw_smolagents", "fw_camel_workforce": "fw_camel",

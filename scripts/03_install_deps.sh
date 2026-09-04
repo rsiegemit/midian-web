@@ -6,7 +6,7 @@
 set -euo pipefail
 PY="${PY:-$HOME/miniconda3/bin/python}"
 # Keep pip's build/cache off the (nearly full) home quota.
-export RTE_DATA="${RTE_DATA:-/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte}"
+export RTE_DATA="${RTE_DATA:-/scratch/rte}"
 export TMPDIR="$RTE_DATA/tmp"; mkdir -p "$TMPDIR"
 export PIP_CACHE_DIR="$RTE_DATA/pipcache"; mkdir -p "$PIP_CACHE_DIR"
 "$PY" -m pip install --user --upgrade pip setuptools wheel pybind11

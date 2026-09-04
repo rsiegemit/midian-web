@@ -29,7 +29,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-RTE_DATA = Path(os.environ.get("RTE_DATA", "/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte"))
+RTE_DATA = Path(os.environ.get("RTE_DATA", "/scratch/rte"))
 MERGED = Path(os.environ.get("RTE_ENDPOINTS", RTE_DATA / "endpoints.json"))
 ENDPOINT_DIR = Path(os.environ.get("RTE_ENDPOINT_DIR", MERGED.parent / "endpoints.d"))
 

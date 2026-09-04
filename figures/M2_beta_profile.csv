@@ -1,0 +1,81 @@
+panel,series,beta,mean,ci_lo,ci_hi,units,seeds,grid
+random liars,oracle,0.0,0.7229666666666665,0.7187,0.7280333333333332,10,10,variants_f1+learned_f1+live_f1_n1000
+random liars,oracle,0.1,0.7229666666666665,0.7187,0.7280333333333332,10,10,variants_f1+learned_f1+live_f1_n1000
+random liars,oracle,0.25,0.7229666666666665,0.7187,0.7280333333333332,10,10,variants_f1+learned_f1+live_f1_n1000
+random liars,oracle,0.5,0.7229666666666665,0.7187,0.7280333333333332,10,10,variants_f1+learned_f1+live_f1_n1000
+random liars,seq. halving (peer),0.0,0.7218888888888889,0.7168877777777778,0.7275133333333333,10,10,variants_f1+learned_f1+live_f1_n1000
+random liars,seq. halving (peer),0.1,0.7220333333333333,0.7171325,0.7276341666666667,10,10,variants_f1+learned_f1+live_f1_n1000
+random liars,seq. halving (peer),0.25,0.7191333333333333,0.7144666666666668,0.7244999999999999,10,10,variants_f1+learned_f1+live_f1_n1000
+random liars,seq. halving (peer),0.5,0.6778,0.6664991666666666,0.6880000000000001,10,10,variants_f1+learned_f1+live_f1_n1000
+random liars,MIDIAN-VA,0.0,0.6837000000000001,0.6777666666666667,0.6892675,10,10,variants_f1+learned_f1+live_f1_n1000
+random liars,MIDIAN-VA,0.1,0.6716333333333335,0.6649,0.6785675,10,10,variants_f1+learned_f1+live_f1_n1000
+random liars,MIDIAN-VA,0.25,0.6641666666666668,0.6569666666666667,0.6713683333333333,10,10,variants_f1+learned_f1+live_f1_n1000
+random liars,MIDIAN-VA,0.5,0.6800666666666667,0.6727325,0.6872333333333334,10,10,variants_f1+learned_f1+live_f1_n1000
+random liars,MIDIAN-V,0.0,0.6822222222222223,0.6759544444444445,0.6879558333333334,10,10,variants_f1+learned_f1+live_f1_n1000
+random liars,MIDIAN-V,0.1,0.6840333333333334,0.6777538888888889,0.6898336111111111,10,10,variants_f1+learned_f1+live_f1_n1000
+random liars,MIDIAN-V,0.25,0.6754111111111111,0.6677994444444444,0.6826116666666667,10,10,variants_f1+learned_f1+live_f1_n1000
+random liars,MIDIAN-V,0.5,0.6077444444444444,0.5769052777777779,0.6324833333333333,10,10,variants_f1+learned_f1+live_f1_n1000
+random liars,MIDIAN-A,0.0,0.6679666666666668,0.6612325,0.6751000000000001,10,10,variants_f1+learned_f1+live_f1_n1000
+random liars,MIDIAN-A,0.1,0.6675666666666665,0.6603325,0.6751666666666667,10,10,variants_f1+learned_f1+live_f1_n1000
+random liars,MIDIAN-A,0.25,0.6674000000000002,0.6602983333333334,0.674635,10,10,variants_f1+learned_f1+live_f1_n1000
+random liars,MIDIAN-A,0.5,0.6681333333333335,0.6615658333333333,0.6750675,10,10,variants_f1+learned_f1+live_f1_n1000
+random liars,MIDIAN,0.0,0.6672777777777779,0.6605994444444444,0.6743113888888889,10,10,variants_f1+learned_f1+live_f1_n1000
+random liars,MIDIAN,0.1,0.6644555555555557,0.6573408333333333,0.6716333333333333,10,10,variants_f1+learned_f1+live_f1_n1000
+random liars,MIDIAN,0.25,0.6545444444444446,0.6459111111111111,0.6639025000000001,10,10,variants_f1+learned_f1+live_f1_n1000
+random liars,MIDIAN,0.5,0.6273222222222223,0.6184108333333334,0.6359122222222222,10,10,variants_f1+learned_f1+live_f1_n1000
+random liars,flat probe argmax (online),0.0,0.6672888888888888,0.6621772222222222,0.6727586111111111,10,10,variants_f1+learned_f1+live_f1_n1000
+random liars,flat probe argmax (online),0.1,0.6668,0.6619555555555557,0.6718555555555555,10,10,variants_f1+learned_f1+live_f1_n1000
+random liars,flat probe argmax (online),0.25,0.6667666666666665,0.6618888888888889,0.6719119444444445,10,10,variants_f1+learned_f1+live_f1_n1000
+random liars,flat probe argmax (online),0.5,0.6667222222222223,0.6616883333333333,0.6720669444444445,10,10,variants_f1+learned_f1+live_f1_n1000
+random liars,RouterBench MLP router,0.0,0.6473666666666666,0.6396666666666666,0.6558999999999999,10,10,variants_f1+learned_f1+live_f1_n1000
+random liars,RouterBench MLP router,0.1,0.6473666666666666,0.6396666666666666,0.6558999999999999,10,10,variants_f1+learned_f1+live_f1_n1000
+random liars,RouterBench MLP router,0.25,0.6473666666666666,0.6396666666666666,0.6558999999999999,10,10,variants_f1+learned_f1+live_f1_n1000
+random liars,RouterBench MLP router,0.5,0.6473666666666666,0.6396666666666666,0.6558999999999999,10,10,variants_f1+learned_f1+live_f1_n1000
+random liars,RouterBench KNN router,0.0,0.6135999999999999,0.595795,0.6328333333333334,10,10,variants_f1+learned_f1+live_f1_n1000
+random liars,RouterBench KNN router,0.1,0.6135999999999999,0.595795,0.6328333333333334,10,10,variants_f1+learned_f1+live_f1_n1000
+random liars,RouterBench KNN router,0.25,0.6135999999999999,0.595795,0.6328333333333334,10,10,variants_f1+learned_f1+live_f1_n1000
+random liars,RouterBench KNN router,0.5,0.6135999999999999,0.595795,0.6328333333333334,10,10,variants_f1+learned_f1+live_f1_n1000
+random liars,declared argmax,0.0,0.6557666666666666,0.6471333333333333,0.6633333333333333,5,5,variants_f1+learned_f1+live_f1_n1000
+random liars,declared argmax,0.1,0.6123666666666667,0.6000666666666666,0.6246666666666667,5,5,variants_f1+learned_f1+live_f1_n1000
+random liars,declared argmax,0.25,0.6138666666666667,0.5988666666666667,0.6302666666666666,5,5,variants_f1+learned_f1+live_f1_n1000
+random liars,declared argmax,0.5,0.6143666666666666,0.6043666666666667,0.6243666666666667,5,5,variants_f1+learned_f1+live_f1_n1000
+low-skill-first liars,oracle,0.0,0.7229666666666665,0.7187,0.7280333333333332,10,10,variants_f1+learned_f1+live_f1_n1000
+low-skill-first liars,oracle,0.1,0.7229666666666665,0.7187,0.7280333333333332,10,10,variants_f1+learned_f1+live_f1_n1000
+low-skill-first liars,oracle,0.25,0.7229666666666665,0.7187,0.7280333333333332,10,10,variants_f1+learned_f1+live_f1_n1000
+low-skill-first liars,oracle,0.5,0.7229666666666665,0.7187,0.7280333333333332,10,10,variants_f1+learned_f1+live_f1_n1000
+low-skill-first liars,seq. halving (peer),0.0,0.7222222222222222,0.7172549999999999,0.7279777777777777,10,10,variants_f1+learned_f1+live_f1_n1000
+low-skill-first liars,seq. halving (peer),0.1,0.7219333333333332,0.7167333333333332,0.7275341666666666,10,10,variants_f1+learned_f1+live_f1_n1000
+low-skill-first liars,seq. halving (peer),0.25,0.7161333333333335,0.7119,0.7209033333333335,10,10,variants_f1+learned_f1+live_f1_n1000
+low-skill-first liars,seq. halving (peer),0.5,0.4016333333333334,0.39006583333333333,0.4143,10,10,variants_f1+learned_f1+live_f1_n1000
+low-skill-first liars,MIDIAN-VA,0.0,0.6837000000000001,0.6777666666666667,0.6892675,10,10,variants_f1+learned_f1+live_f1_n1000
+low-skill-first liars,MIDIAN-VA,0.1,0.6704,0.6646333333333334,0.6774008333333332,10,10,variants_f1+learned_f1+live_f1_n1000
+low-skill-first liars,MIDIAN-VA,0.25,0.6697,0.6632991666666667,0.6761000000000001,10,10,variants_f1+learned_f1+live_f1_n1000
+low-skill-first liars,MIDIAN-VA,0.5,0.6793666666666667,0.6738333333333333,0.6849333333333333,10,10,variants_f1+learned_f1+live_f1_n1000
+low-skill-first liars,MIDIAN-V,0.0,0.6832333333333336,0.6766661111111112,0.6895111111111112,10,10,variants_f1+learned_f1+live_f1_n1000
+low-skill-first liars,MIDIAN-V,0.1,0.6846333333333334,0.6781666666666667,0.6907008333333333,10,10,variants_f1+learned_f1+live_f1_n1000
+low-skill-first liars,MIDIAN-V,0.25,0.6768333333333333,0.6728,0.6811666666666666,10,10,variants_f1+learned_f1+live_f1_n1000
+low-skill-first liars,MIDIAN-V,0.5,0.5319666666666666,0.5070775,0.5594016666666666,10,10,variants_f1+learned_f1+live_f1_n1000
+low-skill-first liars,MIDIAN-A,0.0,0.6677666666666668,0.6613983333333333,0.6746675,10,10,variants_f1+learned_f1+live_f1_n1000
+low-skill-first liars,MIDIAN-A,0.1,0.6677333333333334,0.6609666666666667,0.6748008333333334,10,10,variants_f1+learned_f1+live_f1_n1000
+low-skill-first liars,MIDIAN-A,0.25,0.6671333333333334,0.6606666666666667,0.673835,10,10,variants_f1+learned_f1+live_f1_n1000
+low-skill-first liars,MIDIAN-A,0.5,0.6655333333333335,0.6578991666666666,0.6737016666666668,10,10,variants_f1+learned_f1+live_f1_n1000
+low-skill-first liars,MIDIAN,0.0,0.6671,0.6603436111111112,0.6740236111111111,10,10,variants_f1+learned_f1+live_f1_n1000
+low-skill-first liars,MIDIAN,0.1,0.6638222222222223,0.6563772222222223,0.6717,10,10,variants_f1+learned_f1+live_f1_n1000
+low-skill-first liars,MIDIAN,0.25,0.6410111111111111,0.6343213888888889,0.6474666666666667,10,10,variants_f1+learned_f1+live_f1_n1000
+low-skill-first liars,MIDIAN,0.5,0.5686444444444444,0.5611211111111111,0.5754336111111111,10,10,variants_f1+learned_f1+live_f1_n1000
+low-skill-first liars,flat probe argmax (online),0.0,0.6669777777777777,0.6619211111111112,0.6724225,10,10,variants_f1+learned_f1+live_f1_n1000
+low-skill-first liars,flat probe argmax (online),0.1,0.666988888888889,0.6619333333333334,0.6725669444444445,10,10,variants_f1+learned_f1+live_f1_n1000
+low-skill-first liars,flat probe argmax (online),0.25,0.6669444444444443,0.6617886111111111,0.6725791666666667,10,10,variants_f1+learned_f1+live_f1_n1000
+low-skill-first liars,flat probe argmax (online),0.5,0.6670222222222221,0.6620111111111112,0.6722777777777778,10,10,variants_f1+learned_f1+live_f1_n1000
+low-skill-first liars,RouterBench MLP router,0.0,0.6473666666666666,0.6396666666666666,0.6558999999999999,10,10,variants_f1+learned_f1+live_f1_n1000
+low-skill-first liars,RouterBench MLP router,0.1,0.6473666666666666,0.6396666666666666,0.6558999999999999,10,10,variants_f1+learned_f1+live_f1_n1000
+low-skill-first liars,RouterBench MLP router,0.25,0.6473666666666666,0.6396666666666666,0.6558999999999999,10,10,variants_f1+learned_f1+live_f1_n1000
+low-skill-first liars,RouterBench MLP router,0.5,0.6473666666666666,0.6396666666666666,0.6558999999999999,10,10,variants_f1+learned_f1+live_f1_n1000
+low-skill-first liars,RouterBench KNN router,0.0,0.6135999999999999,0.595795,0.6328333333333334,10,10,variants_f1+learned_f1+live_f1_n1000
+low-skill-first liars,RouterBench KNN router,0.1,0.6135999999999999,0.595795,0.6328333333333334,10,10,variants_f1+learned_f1+live_f1_n1000
+low-skill-first liars,RouterBench KNN router,0.25,0.6135999999999999,0.595795,0.6328333333333334,10,10,variants_f1+learned_f1+live_f1_n1000
+low-skill-first liars,RouterBench KNN router,0.5,0.6135999999999999,0.595795,0.6328333333333334,10,10,variants_f1+learned_f1+live_f1_n1000
+low-skill-first liars,declared argmax,0.0,0.6557,0.6474666666666666,0.6633666666666667,5,5,variants_f1+learned_f1+live_f1_n1000
+low-skill-first liars,declared argmax,0.1,0.5720666666666666,0.5562333333333334,0.5874666666666667,5,5,variants_f1+learned_f1+live_f1_n1000
+low-skill-first liars,declared argmax,0.25,0.5470666666666667,0.5321,0.5595775000000001,5,5,variants_f1+learned_f1+live_f1_n1000
+low-skill-first liars,declared argmax,0.5,0.5489,0.5328666666666668,0.5612666666666667,5,5,variants_f1+learned_f1+live_f1_n1000

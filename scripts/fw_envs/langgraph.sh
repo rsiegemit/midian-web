@@ -2,7 +2,7 @@
 # Reproducible build of $RTE_DATA/env/fw_langgraph (SPEC §6A). Login node only (needs internet).
 # conda's repodata cache takes an exclusive lock, so parallel builds are serialized via flock + retry.
 set -euo pipefail
-RTE_DATA="${RTE_DATA:-/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte}"
+RTE_DATA="${RTE_DATA:-/scratch/rte}"
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 export CONDA_PKGS_DIRS="$RTE_DATA/conda_pkgs" PIP_CACHE_DIR="$RTE_DATA/pip_cache" TMPDIR="$RTE_DATA/tmp"
 mkdir -p "$CONDA_PKGS_DIRS" "$PIP_CACHE_DIR" "$TMPDIR"

@@ -8,8 +8,8 @@
 #SBATCH --cpus-per-task=32
 #SBATCH --mem=200G
 #SBATCH --time=48:00:00
-#SBATCH --output=/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte/logs/serve_fleet_%j.out
-#SBATCH --error=/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte/logs/serve_fleet_%j.err
+#SBATCH --output=/scratch/rte/logs/serve_fleet_%j.out
+#SBATCH --error=/scratch/rte/logs/serve_fleet_%j.err
 #
 # The RTE model fleet: one vLLM server per model in configs/models.yaml, packed onto 4 GPUs.
 # Each registers itself in $RTE_DATA/endpoints.d/ once /health answers, and deregisters on exit.
@@ -20,7 +20,7 @@
 #   sbatch --partition=kempner_h200 scripts/serve_fleet.sbatch     # 141 GB/GPU, more headroom
 set -uo pipefail
 
-export RTE_DATA="${RTE_DATA:-/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte}"
+export RTE_DATA="${RTE_DATA:-/scratch/rte}"
 REPO="${RTE_REPO:-$HOME/rte}"
 ENV_PREFIX="$RTE_DATA/env/rte"
 source "$REPO/scripts/_serve_env.sh"

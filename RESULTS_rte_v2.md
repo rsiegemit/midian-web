@@ -113,8 +113,9 @@ answered the task itself, "fallback" = it returned no usable name and the adapte
 shortlist. With Q = 1000 the CrewAI rows are a measurement of CrewAI (12% fallback, none of it failures): the 2026-09-02
 84% was the corrupted shared store. Magentic-One's 40% failure rate is real (its orchestrator solves the task in the
 planning stage and declares it satisfied with no speaker); the 14B orchestrator converts almost all of those into
-fallbacks (2.3% failures, 41% fallbacks) and is 0.013 below the 7B arm on lenient success (paired, below in 12/12
-cells) — so under strict accounting Magentic-One is the worst framework (0.17–0.29) and under lenient accounting the
+fallbacks (2.3% failures, 41% fallbacks) and is 0.013 below the 7B arm on lenient success (paired: strictly below in
+the 4 specialist cells, identical in the other 8 — on bimodal and heavy_tail both orchestrators pick the same agent from
+the same shortlist, so the whole difference is the specialist population) — so under strict accounting Magentic-One is the worst framework (0.17–0.29) and under lenient accounting the
 7B arm is the best (0.546).
 
 The average hides the split that decides the paper (figure H1; n = 1000, all 120 cell × seed pairs per arm):

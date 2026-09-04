@@ -131,6 +131,9 @@ AutoGen times the 7B call cost. Re-measured on the final rows (lighter fleet loa
 | Magentic-One (14B) | 0.8020 → 0.4721 | 14B arm | 345 → 587 |
 | LLM supervisor | 0.0138 → 0.0080 | | |
 
+The AutoGen crossing is 9,416 tasks in GPU-seconds and 9,415 in joules (messages and comparisons add a hair to MIDIAN's
+per-task cost). Fig. 1a, `figures/F1_energy_crossings.csv` and this document use the joules value, 9,415;
+RESULTS_energy.md's GPU-second table keeps 9,416 and its joules sentence 9,415.
 Joules per task: Magentic-One 353 → 196 J (14B 561 → 330 J); AutoGen 20.6 J unchanged, its latency 1.11 → 1.92 s.
 The MIDIAN-side numbers did not move (build 277 GPU-s, ~0 per task). Caveat carried into the docs: framework compute
 is an estimate whose scale depends on fleet load at measurement time; the ordering and the "linear in tasks vs flat"
@@ -149,7 +152,8 @@ shape are what the figures support.
    and +0.01 to +0.06 at n = 100; LlamaIndex's lift is not distinguishable from 0.
 4. **v2 draft: "the 14B orchestrator converts failures into fallbacks without changing lenient success (−0.006 vs the 7B,
    10 / 26 cells)".** Final: 14B fallback rate 43% (not 61%), lenient success 0.013 *below* the 7B arm, below it in
-   12 / 12 cells; strict 0.29 (not 0.20). Its missing rows were the slowest of the whole programme (6–14 h each).
+   the 4 specialist cells and identical in the other 8; strict 0.29 (not 0.20). Its missing rows were the slowest of the
+   whole programme (6–14 h each).
 5. **v2 draft / dossier: Magentic-One (7B) 0.550 / 0.552 with 37% failures.** Final 0.546 with 40% failures. Still the
    best framework under lenient accounting and the worst under strict.
 6. **Dossier Table 5 / §II.6: AutoGen 1.11 s per task; MIDIAN crosses Magentic-One after 568 tasks, the multi-call
@@ -167,6 +171,21 @@ shape are what the figures support.
 12. **live_f1_n1000 "8,400 rows expected"** in the progress counter was an artefact of newer method files; the grid's
     VA / A arms are complete at 240 rows each.
 13. **Pre-registration T3-19** was listed as TODO; it is a SPLIT (section 7).
+14. **Their MLP router on RouterEval's 1,000-LLM pool under the cartel was printed as 0.607** (RESULTS.md §III.5,
+    RESULTS_rte_v3.md D2) — that is MIDIAN-VA's value from the row above. The MLP router reads neither declarations nor
+    reports, so it is flat in β: **0.620** at every β and both liar selections. Corrected 2026-09-04. The surrounding
+    text ("at 1,000 it matches VA, 0.620 vs 0.617") was already right.
+15. **The 14B Magentic-One arm was described as below the 7B arm "in 12/12 cells"** (RESULTS_rte_v2.md §1, written
+    earlier on 2026-09-04). It is strictly below in the 4 specialist cells and **identical in the other 8**: on bimodal
+    and heavy_tail both orchestrators pick the same agent from the same shortlist. The paired mean (−0.013) and the
+    "never above" claim are unchanged. Corrected 2026-09-04.
+16. **"MIDIAN-VA is +0.15 over every framework under the cartel"** (this document's section 5, and the 2026-09-04 00:50
+    dossier) rounds up: the paired lifts run **+0.141 (Magentic-One) to +0.159 (LlamaIndex)**, so "+0.14 … +0.16" is the
+    accurate phrasing. RESULTS.md §II.5 and RESULTS_rte_v2.md already print the per-framework values.
+17. **Two cost exponents are in circulation for MIDIAN's per-task comparisons.** The live cross-n fit
+    (`combined_scale`, 6 values of n) gives **n^0.136 [0.131, 0.152]**, quoted as n^0.14; the calibrated-synthetic fit
+    (`bernoulli_scale`, 10²–10⁷) gives **n^0.112 [0.106, 0.118]**. Both are correct for their grid; any text quoting
+    n^0.14 should name `combined_scale`. Flat and declared scans are n^1.000 in both.
 
 ---
 
@@ -185,7 +204,7 @@ shape are what the figures support.
 | F2 | the 20-model pool with liars | MLP / flat online 0.687, MIDIAN-A 0.677 flat in β, VA 0.669; V / peer halving / declared collapse; T3-24 HIT |
 | v2 | MIDIAN-VA / A rows everywhere (live_f1, framework headline, churn, budget, n10k, r20, b10 shapes) | headline VA 0.675 (+0.13…+0.14 over AutoGen / Magentic-One); churn VA 0.02–0.03 below MIDIAN (T3-20 MISS); budget VA best at b = 10, below V at b ≤ 3 (T3-21 split) |
 | v2 | frameworks with MIDIAN-VA's shortlist (fw_live_n1000_verified_va) | within ±0.02 of the V shortlist at β ≤ 0.25, +0.021 at β = 0.5 (3 / 10 frameworks ≥ +0.03); T3-19 SPLIT |
-| v2 | low-skill-first collusion with frameworks (fw_live_n{100,1000}_lowskill) | VA 0.679, +0.15 over every framework; MIDIAN 0.569, V 0.531 |
+| v2 | low-skill-first collusion with frameworks (fw_live_n{100,1000}_lowskill) | VA 0.679, +0.14 … +0.16 over every framework; MIDIAN 0.569, V 0.531 |
 | v2 | §4 restructured as MIDIAN → +A → +VA (audits first) | monotone; V first gives a regression then a fix |
 
 ---
@@ -230,7 +249,7 @@ specialist); every external comparison in RESULTS_rte_v3.md; H8 / H9; the MIDIAN
 
 ## 9. Still open (not results)
 
-- Memo compaction (`python -m rte.llm_client compact`) runs automatically once the two duplicate Magentic-One units
-  (44268179 / 44268195, re-writing rows that already exist) exit; log `$RTE_DATA/logs/compact_when_idle.log`.
-- Remove the 7 hand-made bare `endpoints.d` entries when fleet 44175863 exits (~2026-09-05 10:30).
+- Memo compaction (`python -m rte.llm_client compact`) runs automatically once the last two duplicate Magentic-One
+  units exit (they re-write rows that already exist); log `$RTE_DATA/logs/compact_when_idle.log`.
+- Remove the hand-made bare `endpoints.d` entries once the serving fleet exits (2026-09-05).
 - The not-run rivals in section 1 stay not run without a decision.

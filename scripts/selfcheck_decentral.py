@@ -13,12 +13,13 @@ flat_nsw_router.
 """
 from __future__ import annotations
 
+import os
 import sys
 import time
 
 import numpy as np
 
-sys.path.insert(0, "/n/home02/rsiegelmann/rte")
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from rte.budget import Budget                     # noqa: E402
 from rte.methods import load_method               # noqa: E402

@@ -30,7 +30,7 @@ def X3():
 
 
 def X4():
-    R = os.environ.get("RTE_DATA", "/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte"); df = pd.read_csv(f"{R}/results/routereval_terms/rows.csv")
+    R = os.environ.get("RTE_DATA", "/scratch/rte"); df = pd.read_csv(f"{R}/results/routereval_terms/rows.csv")
     df["router"] = df.router.str.replace(r" \[val-tuned: .*\]$", " [tuned]", regex=True)
     show = ["oracle (theirs)", "LinearR (theirs, ridge) [tuned]", "EmbedLLM MF (ICLR25) [tuned]", "MLPR (theirs, sklearn) [tuned]", "cluster table, full labels (C-RoBERTa-cluster / Avengers top-1) [tuned]", "PRKnn (theirs) [tuned]", "PRKnn (theirs)", "Avengers top-1 K=64 (AAAI26, full labels)", "best single model", "probe table [tuned]", "probe_cluster16_b30", "probe_cluster16_b10", "random (theirs)"]
     show = [s for s in show if s in set(df.router)]

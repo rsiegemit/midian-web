@@ -21,7 +21,7 @@ import os
 import sys
 from pathlib import Path
 
-RTE_DATA = Path(os.environ.get("RTE_DATA", "/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte"))
+RTE_DATA = Path(os.environ.get("RTE_DATA", "/scratch/rte"))
 os.environ.setdefault("HF_HOME", str(RTE_DATA / "hf_cache"))
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))

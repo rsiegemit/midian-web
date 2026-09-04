@@ -1,7 +1,7 @@
 # Shared helper for framework venv builds (SPEC §6A). Sourced by <name>.sh.
 # Creates $RTE_DATA/env/fw_<name> with python 3.12 and pip-installs requirements-frameworks/<name>.txt.
 set -euo pipefail
-RTE_DATA="${RTE_DATA:-/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte}"
+RTE_DATA="${RTE_DATA:-/scratch/rte}"
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 export CONDA_PKGS_DIRS="${CONDA_PKGS_DIRS:-$RTE_DATA/conda_pkgs}"   # honour a pre-set private cache
 export PIP_CACHE_DIR="$RTE_DATA/pip_cache"

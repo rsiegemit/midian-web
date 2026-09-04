@@ -1,9 +1,9 @@
 # STATUS.md — RTE handoff (written 2026-09-02 13:55 ET, for context compaction)
 
 Read with `SPEC.md` (the experiment), `CONTRACT.md` (interfaces + directives), `TARGETS_rte.md` (pre-registration),
-`DEVIATIONS.md` (every departure, dated). Memory pointers: `~/.claude/projects/-n-home02-rsiegelmann/memory/project_rte_*.md`.
+`DEVIATIONS.md` (every departure, dated). 
 
-## 1. What exists (all committed in ~/rte, 64 commits; `RTE_DATA=/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte` holds data)
+## 1. What exists (all committed in ~/rte, 64 commits; `RTE_DATA=/scratch/rte` holds data)
 - Core: `rte/world.py` (View enforcement, lying model, report channel incl. float reports, paired streams, index-seeded
   probes shared across methods), `ledger.py`, `budget.py`, `methods/base.py`, `methods/_est.py` (probe_successes, BetaBandit,
   peer_reported_estimates, trimmed_by_reporter, observed_reports, greedy_walk), `_decl.py`.
@@ -77,12 +77,12 @@ session scratchpad are all detached (nohup) and may be gone; nothing depends on 
 To resume in a new session: read this file, then (1) check `squeue -u $USER | grep rte_`, scan logs for Tracebacks (ignore
 analyze.py-only tracebacks from old jobs), (2) for grids with rows missing, `RTE_GRIDS=<g> RTE_SHARD=dist,beta [RTE_SEED_SHARD=1]
 RTE_PARTITION=shared scripts/launch_live.sh`, (3) after finish_v2 ran: fill every TODO(grid) in RESULTS_rte_v2.md from
-results/<grid>/summary.md and results/v2_targets/summary.md, refresh README numbers, commit by explicit paths (author rsiegemit,
+results/<grid>/summary.md and results/v2_targets/summary.md, refresh README numbers, commit by explicit paths (single release author,
 no Claude trailers), push to origin main. Known: MIDIAN-V v2 definition = per-probe reports (DEVIATIONS 2026-09-03); CrewAI
 2026-09-02 rows were a corrupted-store artefact (archived as rows_v1_Q300.d).
 
 
-**2026-09-03 15:05 — HANDOFF / COMPACT POINT.** Repo = GitHub rsiegemit/midian-web main (author rsiegemit, no Claude trailers).
+**2026-09-03 15:05 — HANDOFF / COMPACT POINT.** Repo = the project's git remote, branch main, single author.
 DONE: v2 phases 0–1 code (all forks merged; suite 374+ green; `scripts/equivalence.py` guards MIDIAN refactors); grids complete:
 variants_f1 (98.5%, +midian_va shards running), internals_v2, midian_r20, stratify, live_f1_core_s6_10, churn (461/480, gap-fill
 running), budget_b10_shapes (103/108, tail-fill launched), live_n10k_v2 (120/126: the two peer-halving units died in the 12:52

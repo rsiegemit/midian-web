@@ -2,10 +2,10 @@
 # Unattended wrap-up of the v2 programme: wait until no rte_ method job remains, then analyze every grid, regenerate the
 # figures, and commit the artefacts. Submit with: sbatch -p shared -c 2 --mem=48G -t 2-00:00:00 scripts/finish_v2.sh
 #SBATCH --job-name=rte_finish_v2
-#SBATCH --output=/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte/logs/finish_v2.out
-#SBATCH --error=/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte/logs/finish_v2.err
+#SBATCH --output=/scratch/rte/logs/finish_v2.out
+#SBATCH --error=/scratch/rte/logs/finish_v2.err
 set -uo pipefail
-cd ~/rte; export RTE_DATA="${RTE_DATA:-/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte}" PYTHONPATH=~/rte
+cd ~/rte; export RTE_DATA="${RTE_DATA:-/scratch/rte}" PYTHONPATH=~/rte
 source "$RTE_DATA/env/rte/bin/activate"
 quiet=0                                   # need 3 consecutive empty polls; a failing squeue counts as "still running"
 while [ $quiet -lt 3 ]; do

@@ -9,7 +9,7 @@ saying so in your final report (append-only additions are fine).
   GPUs are NVIDIA (partitions `kempner_h100`, `kempner_h200`, `gpu`, `gpu_test` for smoke); account `kempner_sompolinsky_lab`.
   The spec's `VLLM_ROCM_USE_AITER=0` is from an old AMD cluster and does not apply here.
 - Code lives in `~/rte` (git repo). Home quota is nearly full: ALL data, caches, model weights, envs, logs and results go under
-  `RTE_DATA=/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte` (exists). Use `os.environ.get("RTE_DATA", ...)`.
+  `RTE_DATA=/scratch/rte` (exists). Use `os.environ.get("RTE_DATA", ...)`.
 - Python: `~/miniconda3/bin/python` (3.13, numpy 2.5, matplotlib) for CPU work. A dedicated env for vLLM/reasoning-gym is the
   llm-backend agent's job: `$RTE_DATA/env/rte` (conda, python 3.12, `pip install vllm reasoning-gym openai`). Extra CPU deps
   (pytest, pandas, scipy, pyyaml, hnswlib, trueskill, scikit-learn) go into that same env. NO MORE `pip install --user`: the user

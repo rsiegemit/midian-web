@@ -1,0 +1,15 @@
+series,build_J,per_task_J,grid,tasks_joules,tasks_gpu_s,label_uses
+fw_autogen,1.0,20.60023539411765,fw_live_n1000 (ledger) × scripts/energy.py cost model,,,
+fw_maf,1.0,24.751457295033394,fw_live_n1000 (ledger) × scripts/energy.py cost model,,,
+fw_smolagents,1.0,30.793768594592436,fw_live_n1000 (ledger) × scripts/energy.py cost model,,,
+fw_google_adk,1.0,33.13826805259762,fw_live_n1000 (ledger) × scripts/energy.py cost model,,,
+fw_langgraph,1.0,39.781629120199945,fw_live_n1000 (ledger) × scripts/energy.py cost model,,,
+fw_openai_agents,1.0,43.19382397332672,fw_live_n1000 (ledger) × scripts/energy.py cost model,,,
+fw_crewai,1.0,83.16258820229794,fw_live_n1000 (ledger) × scripts/energy.py cost model,,,
+fw_llamaindex,1.0,101.74156090252043,fw_live_n1000 (ledger) × scripts/energy.py cost model,,,
+fw_camel_workforce,1.0,103.85823835398297,fw_live_n1000 (ledger) × scripts/energy.py cost model,,,
+fw_magentic_one,1.0,196.41966120921967,fw_live_n1000 (ledger) × scripts/energy.py cost model,,,
+midian,193863.72362477577,0.009000600000000001,live_f1_n1000+variants_f1 (ledger) × scripts/energy.py cost model,,,
+crossing midian vs fw_magentic_one,,,,987.0275015799,987.0425243594307,987.0
+crossing midian vs fw_crewai,,,,2331.38135364611,2331.4653335496755,2331.0
+crossing midian vs fw_autogen,,,,9414.817788399801,9416.188947489109,9415.0

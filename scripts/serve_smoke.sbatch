@@ -8,8 +8,8 @@
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=64G
 #SBATCH --time=01:00:00
-#SBATCH --output=/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte/logs/serve_smoke_%j.out
-#SBATCH --error=/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte/logs/serve_smoke_%j.err
+#SBATCH --output=/scratch/rte/logs/serve_smoke_%j.out
+#SBATCH --error=/scratch/rte/logs/serve_smoke_%j.err
 #
 # One GPU, one model, one hour: the end-to-end check that env + weights + vLLM + rte.llm_client +
 # LLMBackend line up before the real fleet. Defaults to the SMALLEST model in configs/models.yaml;
@@ -24,7 +24,7 @@
 #   $RTE_DATA/env/rte/bin/python scripts/smoke_backend.py       # once endpoints.json lists it
 set -uo pipefail
 
-export RTE_DATA="${RTE_DATA:-/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte}"
+export RTE_DATA="${RTE_DATA:-/scratch/rte}"
 REPO="${RTE_REPO:-$HOME/rte}"
 ENV_PREFIX="$RTE_DATA/env/rte"
 source "$REPO/scripts/_serve_env.sh"

@@ -26,7 +26,7 @@ from . import families, prompts, tools
 from .population import bands, draw_profiles, ladder, signature
 from .prompts import build as build_prompt, extract_answer, find_tool_call, parse_rating  # re-export
 
-RTE_DATA = Path(os.environ.get("RTE_DATA", "/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte"))
+RTE_DATA = Path(os.environ.get("RTE_DATA", "/scratch/rte"))
 POP_DIR = Path(os.environ.get("RTE_POPULATIONS", RTE_DATA / "populations"))
 
 

@@ -12,13 +12,13 @@
 # the conda path instead.
 #
 # Pins come from the validated cu129 vLLM env at
-#   /n/netscratch/sompolinsky_lab/Lab/rsiegelmann/qwen_determinism/env/qwen38-vllm-cu129
+#   /scratch/vllm-env
 # (read-only reference; we do NOT reuse it -- it carries a patched vLLM scheduler overlay).
 # Set RTE_VLLM_FALLBACK=1 to `pip install vllm` from PyPI instead of the pinned wheel,
 # and record the resulting version in DEVIATIONS.md.
 set -euo pipefail
 
-export RTE_DATA="${RTE_DATA:-/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte}"
+export RTE_DATA="${RTE_DATA:-/scratch/rte}"
 ENV_PREFIX="$RTE_DATA/env/rte"
 CONDA_SH="${RTE_CONDA_SH:-/n/sw/Miniforge3-25.3.1-0/etc/profile.d/conda.sh}"
 [ -f "$CONDA_SH" ] || CONDA_SH="$HOME/miniconda3/etc/profile.d/conda.sh"
@@ -65,7 +65,7 @@ else
     # sdist, which bootstraps a Rust toolchain and compiles for ~15+ min. The validated reference
     # env already contains a 1.7.6 abi3 build made on this same cluster, so we reuse it; the
     # `pip install` line below is the from-source path if that env ever disappears.
-    LLG_SRC="${RTE_LLGUIDANCE_SRC:-/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/qwen_determinism/env/qwen38-vllm-cu129/lib/python3.12/site-packages}"
+    LLG_SRC="${RTE_LLGUIDANCE_SRC:-/scratch/vllm-env/lib/python3.12/site-packages}"
     SITE="$ENV_PREFIX/lib/python3.12/site-packages"
     if [ -d "$LLG_SRC/llguidance" ] && [ ! -d "$SITE/llguidance" ]; then
         cp -r "$LLG_SRC/llguidance" "$LLG_SRC/llguidance-1.7.6.dist-info" "$SITE/"

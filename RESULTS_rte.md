@@ -310,7 +310,7 @@ r=5, cached, peer-reported halving and the framework `retrieval: midian` variant
 decentral rivals' message accounting per CONTRACT; NSW index parameters fixed after a transposition bug.
 Runner/analysis: per-row JSON files, row-level `--only` sharding, success_late = last quarter, route-to-many majority
 of binary outcomes, bernoulli_scale at K=16 and b=1 above 10⁶, replay twins programmatic-only (no self-description
-channel on replay). Ops: flock hangs on netscratch (locks in /tmp, SQLite nolock), MIG partition unusable, FlashInfer
+channel on replay). Ops: flock hangs on the shared scratch filesystem (locks in /tmp, SQLite nolock), MIG partition unusable, FlashInfer
 sampler off, replicas with client-side latency-aware re-pick, ~500 sharded jobs.
 
 ## 13. Reproduce
@@ -318,7 +318,7 @@ sampler off, replicas with client-side latency-aware re-pick, ~500 sharded jobs.
 `configs/grid.yaml` holds every grid; `scripts/launch_live.sh` (RTE_GRIDS / RTE_ONLY / RTE_SHARD / RTE_SEED_SHARD)
 launches sharded jobs against the fleet (`scripts/serve_fleet.sbatch`, replicas via `serve_replica.sbatch`);
 `python -m rte.analyze --grid <g>` rewrites a grid's summary and figures; `scripts/check_methods.py` and `pytest`
-(152 tests) verify ledger formulas and method correctness. Data, memo and rows: `$RTE_DATA` on netscratch.
+(152 tests) verify ledger formulas and method correctness. Data, memo and rows: `$RTE_DATA` on the shared scratch filesystem.
 
 Figures (v1, 2026-09-02 data, 5 seeds, pooled error bars): the seven synthesis figures A–G, now under `figures/v1/` (also `$RTE_DATA/results/extra_figs/` (`results/rte_figures_core.zip`; regenerate with
 `scripts/extra_figs.py`): A headline frameworks vs MIDIAN, B verified-shortlist lift, C MIDIAN vs halving by β × liar selection,

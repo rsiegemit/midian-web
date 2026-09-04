@@ -287,12 +287,36 @@ FINAL (every grid complete as of 2026-09-04; the energy/latency figures are esti
 | file | what it is |
 |---|---|
 | `SPEC.md` | the study specification: world, MIDIAN, rivals, frameworks (§6A), figures, compute plan |
-| `TARGETS_rte.md` | the six pre-registered expectations, committed before any run |
+| `TARGETS_rte.md` | the six phase-1 pre-registered expectations, committed before any run |
+| `TARGETS_rte_v2.md` | the eleven v2 expectations, committed before any v2 launch |
+| `TARGETS_rte_v3.md` | the twenty-four v3 expectations (external comparisons, scale, MIDIAN-VA), committed before any v3 run |
+| `RESULTS.md` | the consolidated dossier: every result, ordered, each tagged with its status |
+| `RESULTS_rte_v2.md` / `RESULTS_rte_v3.md` | the per-grid write-ups for our benchmark and the external comparisons |
+| `CHANGES_AND_ERRATA.md` | what the earlier drafts had wrong or incomplete, and every number that moved |
+| `LICENSE` / `NOTICE` | MIT for this code; the third-party benchmark data keep their own licenses |
 | `CONTRACT.md` | frozen interfaces, accounting formulas, correctness checks, simplicity directive |
 | `DEVIATIONS.md` | every departure from the spec, dated, with the reason |
 | `STATUS.md` | run log and handoff: what exists, what ran, findings, how to finish |
 | `RESULTS_rte.md` | the results |
 | `rte/methods/frameworks/NOTES_*.md` | how each framework's selection primitive is intercepted, and what broke |
+
+## 9b. Reproducing the headline table
+
+Every result document is generated from the stored rows, not typed. One command regenerates Table 1, the framework
+headline at n = 1,000, together with its by-shape split and its fallback table:
+
+```bash
+RTE_DATA=<data dir> PYTHONPATH=. python -m rte.analyze --grid fw_live_n1000
+```
+
+The table is `$RTE_DATA/results/fw_live_n1000/summary.md`, section "HEADLINE: frameworks vs MIDIAN, by method class"
+(one row per arm, with the seed-bootstrap interval, the unit count and the paired delta against MIDIAN). Substitute
+`fw_live_n100`, `fw_live_n1000_verified`, `fw_live_n1000_verified_va` or `fw_live_n1000_lowskill` for the n = 100,
+verified-shortlist, VA-shortlist and cartel tables; each grid keeps its own summary, and pooling them with `--grids`
+would average over different n.
+`python scripts/paper_numbers.py` recomputes every number quoted in the write-ups into `paper/NUMBERS.json`
+(value, grid, units, CI per entry); `python scripts/paper_figs.py` redraws the paper figures with a CSV of every
+plotted value beside each one.
 
 ## 10. Caveats
 

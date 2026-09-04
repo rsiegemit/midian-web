@@ -12,7 +12,7 @@ from .methods import load_method
 from .world import World
 import rte.methods
 
-RTE_DATA = os.environ.get("RTE_DATA", "/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte")
+RTE_DATA = os.environ.get("RTE_DATA", "/scratch/rte")
 CELL = ("backend", "n", "K", "dist", "beta", "liar_select", "collude", "declared_source", "lie_mode", "demand", "b", "Q")
 log = lambda m: print(m, file=sys.stderr, flush=True)
 jkey = lambda d: json.dumps(d, sort_keys=True, separators=(",", ":"), default=str)
