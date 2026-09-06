@@ -151,7 +151,9 @@ def M1_full():
             if xs:
                 st = dict(color=COLOR[s], lw=1.0); st.update(STYLE.get(s, {})); ax.errorbar(xs, ys, yerr=[lo, hi], marker="o", ms=3.2, capsize=1.5, elinewidth=0.6, label=SHORT[s], **st)
         ax.set_xscale("log"); ax.set_xlabel("m (candidate LLMs)"); ax.set_ylim(0.3, 1.0); ax.grid(alpha=.3, lw=0.4)
-    h, l = axes[1][0].get_legend_handles_labels(); fig.legend(h, l, loc="outside lower center", ncol=6, fontsize=6.0, frameon=False, handlelength=1.4, columnspacing=0.8)
+    h, l = axes[1][0].get_legend_handles_labels()                 # the lower row carries arms the upper row does not: title the legend so it is not read as global
+    fig.legend(h, l, loc="outside lower center", ncol=6, fontsize=6.0, frameon=False, handlelength=1.4, columnspacing=0.8,
+               title="lower row (real-LLM pools) only; the upper row's arms are in its own legend", title_fontsize=6.0)
     axes[0][0].set_ylabel("success"); axes[1][0].set_ylabel("success"); csv("M1_success_vs_n_full", recs); save(fig, "M1_success_vs_n_full")
 
 
