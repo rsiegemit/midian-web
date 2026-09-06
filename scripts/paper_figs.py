@@ -46,8 +46,8 @@ def units(df, labels, dist=None, beta=None, liar=None, n=None):
 
 
 def mean_ci(s):
-    """Mean and 95% seed-bootstrap CI of a unit series indexed by (..., seed)."""
-    s = s.dropna(); lo, hi = _ci(s); return float(s.mean()), float(lo), float(hi), int(s.index.get_level_values("seed").nunique())
+    """Mean, 95% seed-bootstrap CI, number of (cell x seed) units, number of distinct seeds."""
+    s = s.dropna(); lo, hi = _ci(s); return float(s.mean()), float(lo), float(hi), int(len(s)), int(s.index.get_level_values("seed").nunique())
 
 
 def csv(name, recs):
@@ -60,8 +60,13 @@ def save(fig, name):
 
 
 # ----------------------------------------------------------------------------------------------------- M1
-M1_SERIES = ["oracle", HALP, "midian_va", "midian", FLAT_ON, "knn_router", "random"]
-STYLE = {"oracle": dict(ls=":", color=COLOR["oracle"]), "random": dict(ls="--", color=COLOR["random"]), "midian_va": dict(lw=2.0)}
+M1_SERIES = ["oracle", HALP, "midian_va", "midian_a", "midian", FLAT_ON, "knn_router", "declared_argmax", "random"]
+SIM_SKIP = {"knn_router",            # not run on the calibrated backend
+            "declared_argmax"}       # scale_100k declares on the PROGRAMMATIC channel (honest S + noise); the live points are
+                                     # self-described (over-claiming), so one curve across both would read a channel change as scale
+STYLE = {"oracle": dict(ls=":", color=COLOR["oracle"]), "random": dict(ls="--", color=COLOR["random"]), "midian_va": dict(lw=2.0),
+         "declared_argmax": dict(ls="--"), "knn_router": dict(ls="--"),    # dashed = reads no reports
+         "midian_a": dict(marker="s")}    # colours are fixed (figures/COLOURS.md); A's dark red is close to MIDIAN's red at print size, so separate it by marker
 
 
 def m1_points(cartel):
@@ -70,7 +75,7 @@ def m1_points(cartel):
     pts, band, miss = {}, {}, []
     def put(s, n, src, w, grid, allshape=None):
         if s not in w or w[s].dropna().empty: miss.append(f"{s} n={n} {src} ({grid})"); return
-        m, lo, hi, k = mean_ci(w[s]); pts[(s, n, src)] = dict(mean=m, lo=lo, hi=hi, units=k, grid=grid, all_shape=allshape)
+        m, lo, hi, k, sd = mean_ci(w[s]); pts[(s, n, src)] = dict(mean=m, lo=lo, hi=hi, units=k, seeds=sd, grid=grid, all_shape=allshape)
     # n = 100 / 1,000: MIDIAN-side arms and their KNN on identical units; random from the framework grids (same cells)
     for n, g_arms, g_fw, g_fwc in ((100, ["learned_n100"], "fw_live_n100", "fw_live_n100_lowskill"), (1000, ["variants_f1", "learned_f1", "live_f1_n1000"], "fw_live_n1000", "fw_live_n1000_lowskill")):
         d = rows(*g_arms); w = units(d, M1_SERIES, "specialist", beta, liar); wa = units(d, M1_SERIES, None, beta, liar)
@@ -94,7 +99,7 @@ def m1_points(cartel):
     for n in (10000, 100000):
         w = units(d, M1_SERIES, "specialist", beta, liar, n); wa = units(d, M1_SERIES, None, beta, liar, n)
         for s in M1_SERIES:
-            if s != "knn_router": put(s, n, "sim", w, "scale_100k", allshape=float(wa[s].mean()) if s in wa else None)
+            if s not in SIM_SKIP: put(s, n, "sim", w, "scale_100k", allshape=float(wa[s].mean()) if s in wa else None)
     return pts, band, miss
 
 
@@ -107,24 +112,27 @@ def draw_m1(ax, pts, band, legend):
         st = dict(color=COLOR[s], lw=1.0); st.update(STYLE.get(s, {}))
         live = [(n, pts[(s, n, "live")]) for n in ns_live if (s, n, "live") in pts]; sim = [(n, pts[(s, n, "sim")]) for n in ns_sim if (s, n, "sim") in pts]
         if live:
+            mk = st.pop("marker", "o")
             handles[s] = ax.errorbar([n for n, _ in live], [p["mean"] for _, p in live], yerr=[[p["mean"] - p["lo"] for _, p in live], [p["hi"] - p["mean"] for _, p in live]],
-                        marker="o", ms=3.2, capsize=1.5, elinewidth=0.6, label=SHORT[s], zorder=3, **st)
+                        marker=mk, ms=3.0 if mk == "s" else 3.2, capsize=1.5, elinewidth=0.6, label=SHORT[s], zorder=3, **st)
         if sim:
-            st2 = {**st, "ls": "--" if s not in ("oracle", "random") else st["ls"]}
+            st2 = {**st, "ls": "--" if s not in ("oracle", "random") else st["ls"]}; mk2 = st2.pop("marker", "o")
             h = ax.errorbar([n for n, _ in sim], [p["mean"] for _, p in sim], yerr=[[p["mean"] - p["lo"] for _, p in sim], [p["hi"] - p["mean"] for _, p in sim]],
-                        marker="o", ms=3.2, mfc="white", capsize=1.5, elinewidth=0.6, label=SHORT[s] + " (sim.)", zorder=3, **st2)
+                        marker=mk2, ms=3.0 if mk2 == "s" else 3.2, mfc="white", capsize=1.5, elinewidth=0.6, label=SHORT[s] + " (sim.)", zorder=3, **st2)
             handles.setdefault(s, h)
     ax.set_xscale("log"); ax.set_xlabel("n (agents)"); ax.set_ylim(0.2, 0.9); ax.grid(alpha=.3, lw=0.4)
     if legend:
         hs = [handles[s] for s in M1_SERIES if s in handles] + ([h for h in ax.collections if h.get_label() == "ten frameworks"][:1] if band else [])
-        ax.legend(hs, [h.get_label() for h in hs], loc="lower right", ncol=2, fontsize=6.0, frameon=False, handlelength=1.2, columnspacing=0.6, labelspacing=0.15, handletextpad=0.4, borderaxespad=0.15)
+        ax.legend(hs, [h.get_label() for h in hs], loc="lower right", ncol=3, fontsize=5.6, frameon=False, handlelength=1.1, columnspacing=0.5, labelspacing=0.12, handletextpad=0.35, borderaxespad=0.12)
 
 
 def M1():
     fig, axes = plt.subplots(1, 2, figsize=(cm(13.97), cm(4.6)), sharey=True); recs = []
     for ax, cartel, ttl in zip(axes, (False, True), ("honest, β = 0", "colluding low-skill cartel, β = 0.5")):
         pts, band, miss = m1_points(cartel); draw_m1(ax, pts, band, legend=cartel)          # legend in panel 2: its lower right is free (the framework band has no 10k cartel cell)
-        for (s, n, src), p in pts.items(): recs.append(dict(panel=ttl, series=NAME[s], n=n, source=src, mean=p["mean"], ci_lo=p["lo"], ci_hi=p["hi"], units=p["units"], grid=p["grid"], all_shape_mean=p["all_shape"]))
+        for (s, n, src), p in pts.items(): recs.append(dict(panel=ttl, series=NAME[s], n=n, source=src, mean=p["mean"], ci_lo=p["lo"], ci_hi=p["hi"], units=p["units"], seeds=p["seeds"], grid=p["grid"], all_shape_mean=p["all_shape"]))
+        for s in sorted(SIM_SKIP): recs.append(dict(panel=ttl, series=NAME[s], n="10000, 100000", source="sim", mean=None,
+                                                    grid="scale_100k", note="not plotted at the simulated points: knn_router was not run there; declared_argmax there reads the programmatic (honest) channel, not the self-described one"))
         for n, b in band.items(): recs.append(dict(panel=ttl, series="ten frameworks (min)", n=n, source="live", mean=b["min"], grid=b["grid"], units=b["units"])); recs.append(dict(panel=ttl, series="ten frameworks (max)", n=n, source="live", mean=b["max"], grid=b["grid"], units=b["units"]))
         if miss: print(f"[M1 {ttl}] cells that do not exist (omitted): " + "; ".join(miss))
     axes[0].set_ylabel("success"); csv("M1_success_vs_n", recs); save(fig, "M1_success_vs_n")
@@ -137,7 +145,7 @@ def M1_full():
     fig, axes = plt.subplots(2, 2, figsize=(cm(13.97), cm(9.5)), sharey="row"); recs = []
     for ax, cartel, ttl in zip(axes[0], (False, True), ("RTE, honest, β = 0", "RTE, colluding low-skill cartel, β = 0.5")):
         pts, band, miss = m1_points(cartel); draw_m1(ax, pts, band, legend=cartel)
-        for (s, n, src), p in pts.items(): recs.append(dict(panel=ttl, series=NAME[s], n=n, source=src, mean=p["mean"], ci_lo=p["lo"], ci_hi=p["hi"], units=p["units"], grid=p["grid"]))
+        for (s, n, src), p in pts.items(): recs.append(dict(panel=ttl, series=NAME[s], n=n, source=src, mean=p["mean"], ci_lo=p["lo"], ci_hi=p["hi"], units=p["units"], seeds=p["seeds"], grid=p["grid"]))
     re = rows("routereval_mmlu", "routereval_mmlu5k")
     for ax, cartel, ttl in zip(axes[1], (False, True), ("RouterEval real LLM pools, β = 0", "RouterEval real LLM pools, β = 0.5 low-skill cartel")):
         beta, liar = (0.5, "low_skill_first") if cartel else (0.0, "random")
@@ -146,8 +154,8 @@ def M1_full():
             for n in (10, 100, 1000, 5000):
                 w = units(re, [s], None, beta, liar, n)
                 if s not in w or w[s].dropna().empty: print(f"[M1_full {ttl}] no cell: {s} n={n}"); continue
-                m, l, h, k = mean_ci(w[s]); xs.append(n); ys.append(m); lo.append(m - l); hi.append(h - m)
-                recs.append(dict(panel=ttl, series=NAME[s], n=n, source="real pools", mean=m, ci_lo=l, ci_hi=h, units=k, grid="routereval_mmlu" if n < 5000 else "routereval_mmlu5k"))
+                m, l, h, k, sd = mean_ci(w[s]); xs.append(n); ys.append(m); lo.append(m - l); hi.append(h - m)
+                recs.append(dict(panel=ttl, series=NAME[s], n=n, source="real pools", mean=m, ci_lo=l, ci_hi=h, units=k, seeds=sd, grid="routereval_mmlu" if n < 5000 else "routereval_mmlu5k"))
             if xs:
                 st = dict(color=COLOR[s], lw=1.0); st.update(STYLE.get(s, {})); ax.errorbar(xs, ys, yerr=[lo, hi], marker="o", ms=3.2, capsize=1.5, elinewidth=0.6, label=SHORT[s], **st)
         ax.set_xscale("log"); ax.set_xlabel("m (candidate LLMs)"); ax.set_ylim(0.3, 1.0); ax.grid(alpha=.3, lw=0.4)
@@ -172,8 +180,8 @@ def M2():
             for b in betas:
                 w = units(d, [s], None, b, liar)
                 if s not in w or w[s].dropna().empty: print(f"[M2 {ttl}] no cell: {s} β={b}"); ys.append(np.nan); lo.append(np.nan); hi.append(np.nan); continue
-                m, l, h, k = mean_ci(w[s]); ys.append(m); lo.append(l); hi.append(h)
-                recs.append(dict(panel=ttl, series=NAME[s], beta=b, mean=m, ci_lo=l, ci_hi=h, units=k, seeds=int(w[s].dropna().index.get_level_values("seed").nunique()), grid="variants_f1+learned_f1+live_f1_n1000"))
+                m, l, h, k, sd = mean_ci(w[s]); ys.append(m); lo.append(l); hi.append(h)
+                recs.append(dict(panel=ttl, series=NAME[s], beta=b, mean=m, ci_lo=l, ci_hi=h, units=k, seeds=sd, grid="variants_f1+learned_f1+live_f1_n1000"))
             x = np.arange(len(betas)); ls = ":" if s == "oracle" else ("--" if s in REPORT_FREE else "-")
             lw = 2.0 if s == "midian_va" else (0.8 if s in REPORT_FREE else 1.1)
             ax.plot(x, ys, ls=ls, lw=lw, color=COLOR[s], marker="o", ms=2.8 if s not in REPORT_FREE else 2.2, label=SHORT[s])
@@ -191,15 +199,15 @@ def M3():
     fig, ax = plt.subplots(figsize=(cm(6.8), cm(4.2))); recs = []; x = np.arange(3); wbar = 0.36
     for j, (lab, col, arm) in enumerate((("7B orchestrator", "#2980b9", "fw_magentic_one"), ("14B orchestrator", "#e67e22", MAG14))):
         for i, m in enumerate(("success", "strict", "fallback")):
-            w = d[d.label == arm].pivot_table(index=["dist", "beta", "seed"], values=m)[m]; mu, lo, hi, k = mean_ci(w)
+            w = d[d.label == arm].pivot_table(index=["dist", "beta", "seed"], values=m)[m]; mu, lo, hi, k, sd = mean_ci(w)
             ax.bar(x[i] + (j - .5) * wbar, mu, wbar, color=col, yerr=[[mu - lo], [hi - mu]], capsize=2, error_kw=dict(elinewidth=0.6), label=lab if i == 0 else None)
-            recs.append(dict(metric=m, arm=lab, mean=mu, ci_lo=lo, ci_hi=hi, units=int(len(w)), seeds=k, grid="fw_live_n1000"))
+            recs.append(dict(metric=m, arm=lab, mean=mu, ci_lo=lo, ci_hi=hi, units=k, seeds=sd, grid="fw_live_n1000"))
     for i, m in enumerate(("success", "strict", "fallback")):
         a = d[d.label == "fw_magentic_one"].set_index(["dist", "beta", "seed"])[m]; b = d[d.label == MAG14].set_index(["dist", "beta", "seed"])[m]
-        diff = (b - a).dropna(); mu, lo, hi, k = mean_ci(diff); cells = diff.groupby(level=["dist", "beta"]).mean()
+        diff = (b - a).dropna(); mu, lo, hi, k, sd = mean_ci(diff); cells = diff.groupby(level=["dist", "beta"]).mean()
         top = max(r["ci_hi"] for r in recs if r["metric"] == m and r["arm"] in ("7B orchestrator", "14B orchestrator"))
         ax.text(x[i], top + 0.02, f"{mu:+.3f}\n[{lo:+.3f}, {hi:+.3f}]", ha="center", va="bottom", fontsize=5.8)
-        recs.append(dict(metric=m, arm="14B − 7B (paired)", mean=mu, ci_lo=lo, ci_hi=hi, units=int(len(diff)), seeds=k, cells_14B_lower=int((cells < 0).sum()), cells=int(len(cells)), grid="fw_live_n1000"))
+        recs.append(dict(metric=m, arm="14B − 7B (paired)", mean=mu, ci_lo=lo, ci_hi=hi, units=k, seeds=sd, cells_14B_lower=int((cells < 0).sum()), cells=int(len(cells)), grid="fw_live_n1000"))
     ax.set_xticks(x); ax.set_xticklabels(["lenient\nsuccess", "strict\nsuccess", "fallback\nrate"]); ax.set_ylim(0, 1.02); ax.set_ylabel("fraction of tasks"); ax.grid(axis="y", alpha=.3, lw=0.4)
     ax.legend(loc="upper left", fontsize=6.2, frameon=False, handlelength=1.2); csv("M3_orchestrator_7b_vs_14b", recs); save(fig, "M3_orchestrator_7b_vs_14b")
 
@@ -229,10 +237,10 @@ def F1_shortlist():
     for off, suf, lab, c in ((-.28, "", "own", "#2980b9"), (0, "[r=10,retrieval=midian]", "+V r=10", "#e67e22"), (.28, "[r=5,retrieval=midian]", "+V r=5", "#f1c40f")):
         vals = [mean_ci(w[f + suf]) for f in FWS]
         ax.bar(x + off, [v[0] for v in vals], .28, color=c, label=lab, yerr=[[v[0] - v[1] for v in vals], [v[2] - v[0] for v in vals]], capsize=0.8, error_kw=dict(elinewidth=0.4))
-        for f, v in zip(FWS, vals): recs.append(dict(framework=f, arm=lab, mean=v[0], ci_lo=v[1], ci_hi=v[2], units=int(len(w)), seeds=v[3], grid="fw_live_n1000 / fw_live_n1000_verified"))
+        for f, v in zip(FWS, vals): recs.append(dict(framework=f, arm=lab, mean=v[0], ci_lo=v[1], ci_hi=v[2], units=v[3], seeds=v[4], grid="fw_live_n1000 / fw_live_n1000_verified"))
     mv, orc = mean_ci(w["midian_v"]), mean_ci(w["oracle"])
     ax.axhline(mv[0], color=COLOR["midian_v"], ls="--", lw=0.8, label=f"V {mv[0]:.3f}"); ax.axhline(orc[0], color=COLOR["oracle"], ls=":", lw=0.8, label=f"oracle {orc[0]:.3f}")
-    recs += [dict(framework="", arm="midian_v", mean=mv[0], ci_lo=mv[1], ci_hi=mv[2], units=int(len(w)), seeds=mv[3], grid="fw_live_n1000"), dict(framework="", arm="oracle", mean=orc[0], ci_lo=orc[1], ci_hi=orc[2], units=int(len(w)), seeds=orc[3], grid="fw_live_n1000")]
+    recs += [dict(framework="", arm="midian_v", mean=mv[0], ci_lo=mv[1], ci_hi=mv[2], units=mv[3], seeds=mv[4], grid="fw_live_n1000"), dict(framework="", arm="oracle", mean=orc[0], ci_lo=orc[1], ci_hi=orc[2], units=orc[3], seeds=orc[4], grid="fw_live_n1000")]
     ax.set_xticks(x); ax.set_xticklabels([ABBR[f] for f in FWS], rotation=45, ha="right", fontsize=6.5); ax.set_ylim(0.40, 0.85); ax.set_ylabel("success", fontsize=7); ax.tick_params(axis="y", labelsize=6, pad=1); ax.tick_params(axis="x", pad=1)
     ax.grid(axis="y", alpha=.25, lw=0.3); ax.legend(loc="upper left", ncol=2, fontsize=5.5, frameon=True, framealpha=0.7, edgecolor="none", handlelength=1.0, labelspacing=0.15, columnspacing=0.5, borderpad=0.15, handletextpad=0.4); csv("F1_shortlist_lift_n1000", recs); save(fig, "F1_shortlist_lift_n1000")
 
