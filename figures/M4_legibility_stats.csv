@@ -1,0 +1,13 @@
+n,shape,beta,spearman_pooled,spearman_within_family,framework_minus_midian,ci_lo,ci_hi,pairs,frameworks,seeds,grid
+100,bimodal,beta=0,0.2775,1.0,0.0227,0.0072,0.0377,110,11,10,fw_live_n100 + legibility.json
+100,bimodal,all_beta,0.2775,1.0,0.0338,0.0172,0.0501,440,11,10,fw_live_n100 + legibility.json
+100,heavy_tail,beta=0,0.2022,0.4646,-0.0892,-0.109,-0.0676,110,11,10,fw_live_n100 + legibility.json
+100,heavy_tail,all_beta,0.2022,0.4646,-0.0697,-0.0915,-0.0476,440,11,10,fw_live_n100 + legibility.json
+100,specialist,beta=0,0.4375,0.5677,-0.2881,-0.325,-0.2575,110,11,10,fw_live_n100 + legibility.json
+100,specialist,all_beta,0.4375,0.5677,-0.2813,-0.3183,-0.2504,440,11,10,fw_live_n100 + legibility.json
+1000,bimodal,beta=0,0.2948,1.0,0.0201,0.0166,0.0237,110,11,10,fw_live_n1000 + legibility.json
+1000,bimodal,all_beta,0.2948,1.0,0.0329,0.0292,0.0368,440,11,10,fw_live_n1000 + legibility.json
+1000,heavy_tail,beta=0,0.1943,0.4639,-0.0308,-0.0422,-0.0194,110,11,10,fw_live_n1000 + legibility.json
+1000,heavy_tail,all_beta,0.1943,0.4639,-0.0127,-0.0248,-0.0016,440,11,10,fw_live_n1000 + legibility.json
+1000,specialist,beta=0,0.4435,0.5725,-0.4002,-0.4187,-0.3835,110,11,10,fw_live_n1000 + legibility.json
+1000,specialist,all_beta,0.4435,0.5725,-0.388,-0.4055,-0.3722,440,11,10,fw_live_n1000 + legibility.json

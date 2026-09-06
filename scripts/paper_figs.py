@@ -7,7 +7,8 @@ import json, os, sys
 import numpy as np, pandas as pd, matplotlib
 matplotlib.use("Agg"); import matplotlib.pyplot as plt
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__)))); sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from rte.analyze import load as _load, FLAT_ON
+from rte.analyze import RTE_DATA as _RD, load as _load, FLAT_ON
+RTE_DATA_RESULTS = f"{_RD}/results"
 from extra_figs import COLOR, HAL, HALP, MAG14, ci as _ci, stat
 
 OUT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "figures"); os.makedirs(OUT, exist_ok=True)
@@ -245,6 +246,97 @@ def F1_shortlist():
     ax.grid(axis="y", alpha=.25, lw=0.3); ax.legend(loc="upper left", ncol=2, fontsize=5.5, frameon=True, framealpha=0.7, edgecolor="none", handlelength=1.0, labelspacing=0.15, columnspacing=0.5, borderpad=0.15, handletextpad=0.4); csv("F1_shortlist_lift_n1000", recs); save(fig, "F1_shortlist_lift_n1000")
 
 
-FIGS = {f.__name__: f for f in (M1, M1_full, M2, M3, F1_energy, F1_shortlist)}
+# ----------------------------------------------------------------------------------------------------- M4
+SHAPES = ["bimodal", "heavy_tail", "specialist"]
+SHAPE_LABEL = {"bimodal": "bimodal", "heavy_tail": "heavy-tail", "specialist": "specialist"}
+
+
+def _m4_world(dist, n=1000, seed=1):
+    """The (D, S) pair of one honest self-described cell, exactly as scripts/legibility.py builds it."""
+    import yaml
+    from rte.run import CELL, blocks, cells
+    from rte.world import World
+    cfg = yaml.safe_load(open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "configs", "grid.yaml")))
+    for blk in blocks(cfg, f"fw_live_n{n}"):
+        for c in cells(blk):
+            if c["dist"] != dist or c["beta"] != 0 or c["declared_source"] != "self_described": continue
+            w = World(**{k: c[k] for k in CELL if k not in ("b", "Q")}, seed=seed, backend_kwargs=c["backend_kwargs"] or None)
+            return np.asarray(w.D, float), np.asarray(w.S, float)
+    raise RuntimeError(f"no honest self-described cell for {dist} at n={n}")
+
+
+def M4():
+    import json
+    from scipy.stats import spearmanr
+    # ---- stats sidecar: both Spearman variants and the paired gap, per shape and n
+    L = pd.DataFrame(json.load(open(f"{RTE_DATA_RESULTS}/extra_figs/legibility.json")))
+    srecs = []
+    for n in (100, 1000):
+        d = rows(f"fw_live_n{n}"); d = d[d.declared_source == "self_described"] if "declared_source" in d else d
+        for dist in SHAPES:
+            rho = L[(L.n == n) & (L.dist == dist)]
+            for beta_tag, dd in (("beta=0", d[np.isclose(d.beta, 0)]), ("all_beta", d)):
+                w = dd.pivot_table(index=["dist", "beta", "liar_select", "seed"], columns="label", values="success")
+                x = w.xs(dist, level="dist"); fws = [f for f in FWS + [MAG14] if f in x]
+                diff = pd.concat([(x[f] - x["midian"]).dropna() for f in fws])
+                lo, hi = _ci(diff)
+                srecs.append(dict(n=n, shape=dist, beta=beta_tag, spearman_pooled=round(rho.spearman.mean(), 4),
+                                  spearman_within_family=round(rho.spearman_per_family.mean(), 4),
+                                  framework_minus_midian=round(float(diff.mean()), 4), ci_lo=round(float(lo), 4), ci_hi=round(float(hi), 4),
+                                  pairs=int(len(diff)), frameworks=len(fws), seeds=int(rho.seed.nunique()), grid=f"fw_live_n{n} + legibility.json"))
+    csv("M4_legibility_stats", srecs)
+    # ---- panel A
+    d = rows("fw_live_n1000", "learned_f1"); d = d[d.declared_source == "self_described"] if "declared_source" in d else d
+    w = units(d, FWS + [MAG14, "declared_argmax", "midian", "midian_va", "oracle"], None, 0.0, "random")
+    fig = plt.figure(figsize=(cm(13.97), cm(5.0)), layout="none")
+    gs = fig.add_gridspec(1, 2, width_ratios=[7.5, 6.0], left=0.055, right=0.995, bottom=0.155, top=0.98, wspace=0.28)
+    axA, axB = fig.add_subplot(gs[0]), fig.add_subplot(gs[1])
+    bars = [("declared_argmax", "declared argmax", COLOR["declared_argmax"]), ("midian", "MIDIAN", COLOR["midian"]), ("midian_va", "MIDIAN-VA", COLOR["midian_va"])]
+    recs = []; bw = 0.2
+    for i, dist in enumerate(SHAPES):
+        x = w.xs(dist, level="dist"); fws = [f for f in FWS + [MAG14] if f in x]
+        fm = x[fws].mean(); lo_f, hi_f = float(fm.min()), float(fm.max()); med = float(fm.median())
+        axA.bar(i - 1.5 * bw, hi_f - lo_f, bw, bottom=lo_f, color=COLOR["fw_band"], label="ten frameworks (min-max)" if i == 0 else None, zorder=2)
+        axA.plot([i - 1.5 * bw], [med], marker="_", ms=9, mew=1.4, color="#333", label="framework median" if i == 0 else None, zorder=3)
+        recs += [dict(shape=dist, arm="ten frameworks", stat=k, value=round(v, 4), units=int(len(x)), seeds=int(x.index.get_level_values("seed").nunique()), grid="fw_live_n1000")
+                 for k, v in (("min", lo_f), ("median", med), ("max", hi_f))]
+        for j, (lab, name, c) in enumerate(bars):
+            m, l, h, u, sd = mean_ci(x[lab])
+            axA.bar(i + (j - 0.5) * bw, m, bw, color=c, yerr=[[m - l], [h - m]], capsize=1.5, error_kw=dict(elinewidth=0.6), label=name if i == 0 else None, zorder=2)
+            recs.append(dict(shape=dist, arm=name, stat="mean", value=round(m, 4), ci_lo=round(l, 4), ci_hi=round(h, 4), units=u, seeds=sd, grid="fw_live_n1000"))
+        mo, lo_o, hi_o, uo, sdo = mean_ci(x["oracle"])
+        axA.plot([i - 2.1 * bw, i + 2.1 * bw], [mo, mo], color=COLOR["oracle"], ls="-", lw=1.1, label="oracle" if i == 0 else None, zorder=4)
+        recs.append(dict(shape=dist, arm="oracle", stat="mean", value=round(mo, 4), ci_lo=round(lo_o, 4), ci_hi=round(hi_o, 4), units=uo, seeds=sdo, grid="fw_live_n1000"))
+    axA.set_xticks(range(len(SHAPES))); axA.set_xticklabels([SHAPE_LABEL[s] for s in SHAPES]); axA.set_ylim(0, 1.20); axA.set_yticks([0, 0.2, 0.4, 0.6, 0.8, 1.0])
+    axA.set_ylabel("success (n = 1,000, β = 0)"); axA.grid(axis="y", alpha=.25, lw=0.3)
+    axA.legend(fontsize=7, frameon=True, framealpha=0.88, edgecolor="none", ncol=2, loc="upper left", handlelength=1.1,
+               columnspacing=0.6, labelspacing=0.18, handletextpad=0.4, borderpad=0.25)
+    csv("M4_legibility", recs)
+    # ---- panel B
+    rng = np.random.default_rng(0); brecs = []
+    JIT = 0.012                       # D and S are heavily quantised (bimodal: 6 distinct D, 31 distinct (D,S) pairs over
+                                      # 16,000 cells), so an un-jittered scatter collapses onto a handful of dots and hides
+                                      # all density. Gaussian jitter of this size is well below the gap between levels.
+    for dist, c in (("specialist", COLOR["midian"]), ("bimodal", "#2980b9")):
+        D, S = _m4_world(dist)
+        pts = np.column_stack([D.ravel(), S.ravel()])
+        n_tot = len(pts)
+        if len(pts) > 4000: pts = pts[rng.choice(len(pts), 4000, replace=False)]
+        jx = pts[:, 0] + rng.normal(0, JIT, len(pts)); jy = pts[:, 1] + rng.normal(0, JIT, len(pts))
+        axB.scatter(jx, jy, s=2.5, alpha=.18, lw=0, color=c, label=SHAPE_LABEL[dist])
+        brecs.append(dict(shape=dist, points_plotted=len(pts), points_total=n_tot, distinct_D=int(len(np.unique(D))),
+                          distinct_S=int(len(np.unique(S))), distinct_DS_pairs=len({(round(a, 6), round(b, 6)) for a, b in zip(D.ravel(), S.ravel())}),
+                          jitter_sd=JIT, spearman_pooled=round(float(spearmanr(D.ravel(), S.ravel()).correlation), 4),
+                          grid="fw_live_n1000 world, seed 1, β=0, self-described"))
+    axB.plot([0, 1], [0, 1], color=COLOR["oracle"], ls=":", lw=0.8)
+    axB.set_xlim(0, 1); axB.set_ylim(0, 1); axB.set_xlabel("declared skill D[a, f]"); axB.set_ylabel("measured skill S[a, f]")
+    axB.grid(alpha=.25, lw=0.3)
+    lg = axB.legend(fontsize=7, frameon=False, loc="upper left", handletextpad=0.3, borderaxespad=0.2)
+    for h in lg.legend_handles: h.set_alpha(1); h.set_sizes([12])
+    pd.DataFrame(brecs).to_csv(f"{OUT}/M4_legibility_panelB.csv", index=False)
+    save(fig, "M4_legibility")
+
+
+FIGS = {f.__name__: f for f in (M1, M1_full, M2, M3, M4, F1_energy, F1_shortlist)}
 if __name__ == "__main__":
     for name in (sys.argv[1:] or FIGS): FIGS[name]()

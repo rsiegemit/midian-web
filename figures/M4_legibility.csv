@@ -1,0 +1,22 @@
+shape,arm,stat,value,units,seeds,grid,ci_lo,ci_hi
+bimodal,ten frameworks,min,0.5734,10,10,fw_live_n1000,,
+bimodal,ten frameworks,median,0.5734,10,10,fw_live_n1000,,
+bimodal,ten frameworks,max,0.5734,10,10,fw_live_n1000,,
+bimodal,declared argmax,mean,0.5734,10,10,fw_live_n1000,0.5669,0.5795
+bimodal,MIDIAN,mean,0.5533,10,10,fw_live_n1000,0.5451,0.562
+bimodal,MIDIAN-VA,mean,0.5483,10,10,fw_live_n1000,0.5393,0.5571
+bimodal,oracle,mean,0.5734,10,10,fw_live_n1000,0.5669,0.5795
+heavy_tail,ten frameworks,min,0.6303,10,10,fw_live_n1000,,
+heavy_tail,ten frameworks,median,0.6303,10,10,fw_live_n1000,,
+heavy_tail,ten frameworks,max,0.6303,10,10,fw_live_n1000,,
+heavy_tail,declared argmax,mean,0.6162,10,10,fw_live_n1000,0.589,0.646
+heavy_tail,MIDIAN,mean,0.6611,10,10,fw_live_n1000,0.6481,0.6749
+heavy_tail,MIDIAN-VA,mean,0.6894,10,10,fw_live_n1000,0.6818,0.6968
+heavy_tail,oracle,mean,0.7343,10,10,fw_live_n1000,0.7279,0.7412
+specialist,ten frameworks,min,0.3619,10,10,fw_live_n1000,,
+specialist,ten frameworks,median,0.3794,10,10,fw_live_n1000,,
+specialist,ten frameworks,max,0.4317,10,10,fw_live_n1000,,
+specialist,declared argmax,mean,0.6154,10,10,fw_live_n1000,0.5926,0.6355
+specialist,MIDIAN,mean,0.7897,10,10,fw_live_n1000,0.7862,0.7923
+specialist,MIDIAN-VA,mean,0.8134,10,10,fw_live_n1000,0.8052,0.8208
+specialist,oracle,mean,0.8612,10,10,fw_live_n1000,0.8572,0.8656

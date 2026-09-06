@@ -1,0 +1,3 @@
+shape,points_plotted,points_total,distinct_D,distinct_S,distinct_DS_pairs,jitter_sd,spearman_pooled,grid
+specialist,4000,16000,11,132,184,0.012,0.4453,"fw_live_n1000 world, seed 1, β=0, self-described"
+bimodal,4000,16000,6,29,31,0.012,0.2756,"fw_live_n1000 world, seed 1, β=0, self-described"
