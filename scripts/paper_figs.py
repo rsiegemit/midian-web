@@ -230,18 +230,18 @@ def F1_energy():
 
 
 def F1_shortlist():
-    d = rows("fw_live_n1000", "fw_live_n1000_verified"); d = d[d.declared_source == "self_described"] if "declared_source" in d else d
-    cols = [f + s for f in FWS for s in ("", "[r=10,retrieval=midian]", "[r=5,retrieval=midian]")] + ["midian_v", "oracle"]
+    d = rows("fw_live_n1000", "fw_live_n1000_verified_va"); d = d[d.declared_source == "self_described"] if "declared_source" in d else d
+    cols = [f + s for f in FWS for s in ("", "[r=10,retrieval=midian_va]")] + ["midian_va", "oracle"]
     w = d[d.label.isin(cols)].pivot_table(index=["dist", "beta", "seed"], columns="label", values="success")[cols].dropna()
-    fig = plt.figure(figsize=(cm(3.9), cm(3.2)), layout="none"); ax = fig.add_axes([0.25, 0.31, 0.73, 0.67]); x = np.arange(len(FWS)); recs = []
-    for off, suf, lab, c in ((-.28, "", "own", "#2980b9"), (0, "[r=10,retrieval=midian]", "+V r=10", "#e67e22"), (.28, "[r=5,retrieval=midian]", "+V r=5", "#f1c40f")):
+    fig = plt.figure(figsize=(cm(3.9), cm(3.2)), layout="none"); ax = fig.add_axes([0.25, 0.34, 0.71, 0.64]); x = np.arange(len(FWS)); recs = []
+    for off, suf, lab, c in ((-.2, "", "own", "#2980b9"), (.2, "[r=10,retrieval=midian_va]", "+VA", "#e67e22")):
         vals = [mean_ci(w[f + suf]) for f in FWS]
-        ax.bar(x + off, [v[0] for v in vals], .28, color=c, label=lab, yerr=[[v[0] - v[1] for v in vals], [v[2] - v[0] for v in vals]], capsize=0.8, error_kw=dict(elinewidth=0.4))
-        for f, v in zip(FWS, vals): recs.append(dict(framework=f, arm=lab, mean=v[0], ci_lo=v[1], ci_hi=v[2], units=v[3], seeds=v[4], grid="fw_live_n1000 / fw_live_n1000_verified"))
-    mv, orc = mean_ci(w["midian_v"]), mean_ci(w["oracle"])
-    ax.axhline(mv[0], color=COLOR["midian_v"], ls="--", lw=0.8, label=f"V {mv[0]:.3f}"); ax.axhline(orc[0], color=COLOR["oracle"], ls=":", lw=0.8, label=f"oracle {orc[0]:.3f}")
-    recs += [dict(framework="", arm="midian_v", mean=mv[0], ci_lo=mv[1], ci_hi=mv[2], units=mv[3], seeds=mv[4], grid="fw_live_n1000"), dict(framework="", arm="oracle", mean=orc[0], ci_lo=orc[1], ci_hi=orc[2], units=orc[3], seeds=orc[4], grid="fw_live_n1000")]
-    ax.set_xticks(x); ax.set_xticklabels([ABBR[f] for f in FWS], rotation=45, ha="right", fontsize=6.5); ax.set_ylim(0.40, 0.85); ax.set_ylabel("success", fontsize=7); ax.tick_params(axis="y", labelsize=6, pad=1); ax.tick_params(axis="x", pad=1)
+        ax.bar(x + off, [v[0] for v in vals], .4, color=c, label=lab, yerr=[[v[0] - v[1] for v in vals], [v[2] - v[0] for v in vals]], capsize=0.8, error_kw=dict(elinewidth=0.4))
+        for f, v in zip(FWS, vals): recs.append(dict(framework=f, arm=lab, mean=v[0], ci_lo=v[1], ci_hi=v[2], units=v[3], seeds=v[4], grid="fw_live_n1000 / fw_live_n1000_verified_va"))
+    mv, orc = mean_ci(w["midian_va"]), mean_ci(w["oracle"])
+    ax.axhline(mv[0], color=COLOR["midian_va"], ls="--", lw=0.8, label=f"VA {mv[0]:.3f}"); ax.axhline(orc[0], color=COLOR["oracle"], ls=":", lw=0.8, label=f"oracle {orc[0]:.3f}")
+    recs += [dict(framework="", arm="midian_va", mean=mv[0], ci_lo=mv[1], ci_hi=mv[2], units=mv[3], seeds=mv[4], grid="fw_live_n1000"), dict(framework="", arm="oracle", mean=orc[0], ci_lo=orc[1], ci_hi=orc[2], units=orc[3], seeds=orc[4], grid="fw_live_n1000")]
+    ax.set_xticks(x); ax.set_xticklabels([ABBR[f] for f in FWS], rotation=45, ha="right", fontsize=6.0, rotation_mode="anchor"); ax.set_xlim(-0.7, len(FWS) - 0.3); ax.set_ylim(0.40, 0.85); ax.set_ylabel("success", fontsize=7); ax.tick_params(axis="y", labelsize=6, pad=1); ax.tick_params(axis="x", pad=1)
     ax.grid(axis="y", alpha=.25, lw=0.3); ax.legend(loc="upper left", ncol=2, fontsize=5.5, frameon=True, framealpha=0.7, edgecolor="none", handlelength=1.0, labelspacing=0.15, columnspacing=0.5, borderpad=0.15, handletextpad=0.4); csv("F1_shortlist_lift_n1000", recs); save(fig, "F1_shortlist_lift_n1000")
 
 
