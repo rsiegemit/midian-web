@@ -3,3 +3,5 @@ __pycache__/
 .omc/
 .pytest_cache/
 *.egg-info/
+slurm-*.out
+slurm-*.err

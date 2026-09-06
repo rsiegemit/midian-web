@@ -764,3 +764,33 @@
   `--error=` directives, which cannot expand environment variables; every job script would have failed at submission.
   Fixed to submit-directory-relative `slurm-%x-%j` logs (commit c1a9e6e). The post-scrub test run did not catch this
   because the suite never submits SLURM jobs.
+
+## Frameworks on RouterEval m = 1,000 and on RTE at n = 10,000 under the cartel (2026-09-05/06, POST-HOC)
+
+- `fw_routereval_1k` mirrors `routereval_mmlu` at n = 1,000, beta in {0, 0.5}, both liar selections, seeds 1-5, Q = 1000,
+  nine frameworks (Magentic-One excluded for time). Same declaration-rendered description channel as `fw_routereval_5k`
+  (see the previous entry), kept deliberately identical so the 1k and 5k framework ranges are comparable.
+  CAMEL-Workforce was cancelled at 8/30 units: at Q = 1000 its measured rate implied ~6 h, past the serving window.
+  Its 8 partial rows are LEFT in the grid (real data) but are excluded from every published range; the grid's own
+  summary.md therefore shows a CAMEL mean over 8 of 30 units and must not be quoted.
+  **Ranges are over the EIGHT frameworks that completed, at BOTH pool sizes**, so 1k and 5k stay like-for-like.
+- `fw_live_n10k_cartel` fills the one cell `live_n10k_v2` never ran: the frameworks at n = 10,000 under beta = 0.5
+  low-skill-first collusion. Cells are identical to `learned_n10k`'s cartel cells, so the rows pair with the MIDIAN-side
+  arms already measured there. Nine frameworks; **Magentic-One excluded for time, and unlike CAMEL its removal moves a
+  bound** — it was the TOP of the beta = 0 range at this n (0.367). Any honest-vs-cartel comparison at n = 10,000 must
+  use the nine-framework beta = 0 range 0.257-0.314 recomputed from `live_n10k_v2`, NOT the published ten-framework
+  0.257-0.367.
+- **Floor effect, not robustness.** At n = 10,000 the frameworks move by at most 0.012 between beta = 0 and the cartel
+  (range 0.257-0.314 -> 0.258-0.319, i.e. slightly up). They cannot collapse because at 0.26-0.32 they are already
+  0.10-0.16 BELOW random (0.417). The same caveat applies to the RouterEval pools. What the cell shows is the contrast:
+  MIDIAN-VA 0.810 under the cartel against a best framework of 0.319, while peer halving loses 0.142, MIDIAN-V 0.079
+  and declared argmax 0.126 on the same cells.
+- **The oracle is not a realized-success ceiling.** `World.oracle` returns argmax(S[:, family]) - the best agent in
+  EXPECTATION - and `execute` then draws a stochastic outcome. At n = 10,000 specialist, 247-1,440 agents tie at the
+  per-family max of S (S is measured with 200 probes, so quantised to 0.005), so another arm routing inside that tied
+  set can beat the oracle on a finite stream by luck. This is why the n = 10k table shows peer halving 0.863 vs oracle
+  0.859. Properly paired, halving is BELOW the oracle everywhere: -0.074 [-0.079, -0.069] at n = 100, -0.048 at
+  n = 1,000, -0.024 [-0.029, -0.016] at n = 10,000. Tables printing both marginal means at n = 10k should quote the
+  paired delta or carry this note.
+- **Repo hygiene.** The SBATCH log paths now resolve to the submit directory, so a night of runs left 174
+  `slurm-*.out/err` files in the repo root. Added to .gitignore and moved to `$RTE_DATA/logs/slurm-2026-09-05/`.
