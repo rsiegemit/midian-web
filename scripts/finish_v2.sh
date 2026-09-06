@@ -2,8 +2,8 @@
 # Unattended wrap-up of the v2 programme: wait until no rte_ method job remains, then analyze every grid, regenerate the
 # figures, and commit the artefacts. Submit with: sbatch -p shared -c 2 --mem=48G -t 2-00:00:00 scripts/finish_v2.sh
 #SBATCH --job-name=rte_finish_v2
-#SBATCH --output=/scratch/rte/logs/finish_v2.out
-#SBATCH --error=/scratch/rte/logs/finish_v2.err
+#SBATCH --output=slurm-finish_v2-%j.out
+#SBATCH --error=slurm-finish_v2-%j.err
 set -uo pipefail
 cd ~/rte; export RTE_DATA="${RTE_DATA:-/scratch/rte}" PYTHONPATH=~/rte
 source "$RTE_DATA/env/rte/bin/activate"

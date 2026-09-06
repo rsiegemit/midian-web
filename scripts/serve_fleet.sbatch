@@ -8,8 +8,8 @@
 #SBATCH --cpus-per-task=32
 #SBATCH --mem=200G
 #SBATCH --time=48:00:00
-#SBATCH --output=/scratch/rte/logs/serve_fleet_%j.out
-#SBATCH --error=/scratch/rte/logs/serve_fleet_%j.err
+#SBATCH --output=slurm-serve_fleet-%j.out
+#SBATCH --error=slurm-serve_fleet-%j.err
 #
 # The RTE model fleet: one vLLM server per model in configs/models.yaml, packed onto 4 GPUs.
 # Each registers itself in $RTE_DATA/endpoints.d/ once /health answers, and deregisters on exit.

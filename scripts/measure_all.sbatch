@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=rte_measure_all --account=sompolinsky_lab --partition=sapphire
 #SBATCH --cpus-per-task=16 --mem=64G --time=12:00:00
-#SBATCH --output=/scratch/rte/logs/%x_%j.out --error=/scratch/rte/logs/%x_%j.err
+#SBATCH --output=slurm-%x-%j.out --error=slurm-%x-%j.err
 # Every population the live grids need (SPEC §3), sequentially in ONE process: S is per signature and memoised, so after the
 # first measurement each population costs only its verifier/description time. Failing the >=1.5 gate is recorded, not fatal.
 set -uo pipefail

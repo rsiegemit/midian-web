@@ -3,8 +3,8 @@
 #SBATCH --partition=sapphire
 #SBATCH --account=sompolinsky_lab
 #SBATCH --nodes=1 --ntasks=1 --cpus-per-task=16 --mem=64G --time=12:00:00
-#SBATCH --output=/scratch/rte/logs/%x_%j.out
-#SBATCH --error=/scratch/rte/logs/%x_%j.err
+#SBATCH --output=slurm-%x-%j.out
+#SBATCH --error=slurm-%x-%j.err
 # CPU grid runner (bernoulli / replay backends; the llm backend runs from the fleet job instead).
 #   sbatch scripts/run_grid.sbatch <grid> [rte.run args]
 #   sbatch -p bigmem -c 48 --mem 700G --export=ALL,RTE_WORKERS=4 scripts/run_grid.sbatch bernoulli_scale   # 1e6-1e7: memory-bound

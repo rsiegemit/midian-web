@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=rte_serve_replica --account=kempner_sompolinsky_lab --partition=kempner_h100
 #SBATCH --nodes=1 --ntasks=1 --gres=gpu:1 --cpus-per-task=8 --mem=64G --time=24:00:00
-#SBATCH --output=/scratch/rte/logs/%x_%j.out --error=/scratch/rte/logs/%x_%j.err
+#SBATCH --output=slurm-%x-%j.out --error=slurm-%x-%j.err
 # One extra replica of a model already in the fleet (default: the 7B supervisor, the bottleneck under framework load).
 # Registers under the alias "<model>#<jobid>"; clients pick uniformly among "<model>" and "<model>#*" entries.
 #   RTE_REPLICA_MODEL=Qwen/Qwen2.5-7B-Instruct sbatch scripts/serve_replica.sbatch

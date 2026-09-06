@@ -5,8 +5,8 @@
 #SBATCH --cpus-per-task=16
 #SBATCH --mem=64G
 #SBATCH --time=12:00:00
-#SBATCH --output=/scratch/rte/logs/measure_%j.out
-#SBATCH --error=/scratch/rte/logs/measure_%j.err
+#SBATCH --output=slurm-measure-%j.out
+#SBATCH --error=slurm-measure-%j.err
 #
 # CPU-only: it calls the vLLM fleet over HTTP and runs the verifiers and python sandboxes locally.
 #   sbatch scripts/measure.sbatch <dist> <n> [seed]      # e.g. specialist 100 1
