@@ -737,3 +737,30 @@
   the break-even crossings moved (Magentic-One ~570 → ~990 tasks, multi-call frameworks 1,000–1,600 → 1,900–2,300);
   the Reading sentence in energy.py was updated to the new values. Two duplicate Magentic-One units (44268179 /
   44268195, re-writing rows that already existed) were left to finish; memo compaction waits for them.
+
+## Frameworks on RouterEval's 5,000-LLM pool (2026-09-05, POST-HOC — not pre-registered)
+
+- Added after the v3 pre-registrations were closed, at the user's request, to answer "how do the deployed frameworks do
+  on RouterEval's real pools?". Grid `fw_routereval_5k` mirrors `routereval_mmlu5k` at beta in {0, 0.5}, both liar
+  selections, seeds 1-3, Q = 300; nine frameworks. **Magentic-One is excluded**: at 18 s per task on the live backend it
+  alone would need ~5 h per unit, and the run had to fit before the serving fleet's window closed.
+- **Description channel.** That pool's model names are synthetic (`llm0`..`llm4999`, assigned in
+  `RouterEvalBackend._leaderboard`), so there is no real text for the frameworks to read. The adapter's backend-agnostic
+  fallback applies: each agent's description is its declaration vector rendered as text ("Self-rated competence:
+  <subject> 0.83, ..."). The frameworks therefore read the SAME declaration channel as declared_argmax — honest+noisy at
+  beta = 0, corrupted by liars above it. Two consequences to state wherever these numbers are used: (a) the TF-IDF
+  retrieval step is degenerate on rendered numbers, so only the supervisor's pick among the top-10 carries signal;
+  (b) this is not the self-described channel of the live benchmark, where descriptions are LLM-written prose that
+  over-claims. The other RouterEval pools DO ship real model names and would support a genuine name channel; that
+  variant (option "b") was not run.
+- **Harness change.** `rte.run.method_specs` dropped every method flagged `requires_llm` unless the world backend was
+  `llm` — a guard so bernoulli/replay mirrors of framework grids skip the frameworks rather than fail. The frameworks
+  need only a supervisor endpoint, not an llm world, so a grid may now opt back in with `allow_llm_methods: true`.
+  The guard is unchanged for every other grid (verified on `bernoulli_mirror_live_f1_n1000`).
+- **Serving.** The 4-GPU fleet had timed out; on this backend agents are table lookups, so only the 7B supervisor is
+  needed. Two `serve_replica` jobs (1 GPU each, 4 h cap) were used instead of the full fleet. Measured supervisor
+  latency here is ~0.095 s per task against ~1.9 s on the live backend, because there is no agent execution.
+- **Repo hygiene, same day.** The anonymization scrub had replaced the absolute data path inside `#SBATCH --output=` /
+  `--error=` directives, which cannot expand environment variables; every job script would have failed at submission.
+  Fixed to submit-directory-relative `slurm-%x-%j` logs (commit c1a9e6e). The post-scrub test run did not catch this
+  because the suite never submits SLURM jobs.

@@ -266,6 +266,20 @@ grids:
       - knn_router
       - random
 
+  fw_routereval_5k:                 # POST-HOC (2026-09-05, not pre-registered): the deployed frameworks on RouterEval's 5,000-LLM
+                                    # leaderboard pool. That pool's model names are synthetic (llm0..llm4999), so the adapter's
+                                    # fallback descriptions apply: each agent's declaration vector rendered as text. The frameworks
+                                    # therefore read the same declaration channel as declared_argmax (honest+noisy at beta=0,
+                                    # corrupted by liars above it); the TF-IDF retrieval step is degenerate on rendered numbers, so
+                                    # only the supervisor's pick among the top-10 carries signal. Magentic-One is excluded: at 18 s
+                                    # per task it alone would take 5 h per unit. Agents are table lookups, so the only LLM calls are
+                                    # the supervisor's.
+    mirror_of: routereval_mmlu5k
+    allow_llm_methods: true         # frameworks need only a supervisor endpoint; the world backend stays routereval
+    beta: [0, 0.5]
+    methods: [fw_langgraph, fw_crewai, fw_autogen, fw_maf, fw_openai_agents, fw_google_adk,
+              fw_llamaindex, fw_smolagents, fw_camel_workforce]
+
   fw_live_n1000_verified_va:        # frameworks given MIDIAN-VA's leaf cohort as the shortlist (labeled variant, r = 10)
     mirror_of: fw_live_n1000
     methods:
