@@ -138,6 +138,34 @@ if "churn" in ch:
         if {"midian", "midian_va"} <= set(q.columns): put(f"s4.churn_{int(fr*100)}pct_va_minus_midian", (q["midian_va"] - q["midian"]).dropna(), f"churn_n1000, churn {int(fr*100)}%")
 put_v("s4.phase1_targets_missed", "5 of 6 (T2 split) — TARGETS_rte.md / RESULTS_rte.md §8", "static")
 
+# ------------------------------------------------------------------------------------------------ (v4) cohort modes
+# Every cohort mode paired against the SAME base variant with cohort=random on identical (shape, seed) cells, one entry
+# per (pool, base, b, regime). CIs are the usual seed bootstrap, so they answer "does this mode move the base", not
+# "is this cell different from that cell" — with 3-5 seeds per regime they are wide by construction.
+# Regimes follow RESULTS_rte_v4: β = 0 has NO liars, so its two liar-selection cells are bit-identical and only one is
+# kept; under the cartel the two cells are different worlds and are reported separately.
+V4_POOLS = {"m1000": "cohort_routereval", "m5000": "cohort_routereval5k", "lrb20": "cohort_llmrouterbench", "rte": "cohort_rte"}
+V4_MODES = {"stratify": "{b}_stratified", "block": "{b}[cohort=block]", "specialty": "{b}[cohort=specialty]", "declared": "{b}[cohort=declared]"}
+def v4_regimes(co):
+    """(tag, β, liar-selection) per regime: β = 0 once (liar-free, so the liar-selection axis is degenerate), each β > 0 per cell."""
+    for beta in sorted(co.beta.dropna().unique()):
+        if np.isclose(beta, 0.0): yield "beta0", beta, "random"
+        else: yield from ((f"cartel{beta:g}_{ls}", beta, ls) for ls in sorted(co.liar_select.dropna().unique()))
+for pool, grid in V4_POOLS.items():
+    try: co = rows(grid)
+    except SystemExit: print(f"[v4] {grid}: no rows yet, skipped"); continue
+    for base in ("midian", "midian_a", "midian_va"):
+        labs = [base] + [t.format(b=base) for t in V4_MODES.values()]
+        for bb in sorted(co.b.dropna().unique()):
+            for reg, beta, ls in v4_regimes(co):
+                w = W(co, labs, b=bb, beta=beta, liar_select=ls)
+                if base not in w or w[base].dropna().empty: continue
+                tag, where = f"v4.{pool}.{base}_b{int(bb)}_{reg}", f"{grid} (b = {int(bb)}, β = {beta:g}, liars = {ls})"
+                put(f"{tag}_random", w[base], where)
+                for mode, tmpl in V4_MODES.items():
+                    lab = tmpl.format(b=base)
+                    if lab in w: paired(f"{tag}_{mode}", w, lab, base, where, "paired by cell × seed against cohort=random")
+
 # ------------------------------------------------------------------------------------------------ appendix source tables
 def table(key, df, labels, by, grid, **f):
     w = W(df, labels, **f); N[key] = dict(value={l: {str(k): round(float(v), 4) for k, v in w[l].groupby(level=by).mean().items()} for l in labels if l in w}, grid=grid, units=int(len(w)), ci=None)
