@@ -16,19 +16,48 @@ class Midian(Method):
     name = "midian"
     needs = frozenset({"probe", "reports"})
 
-    def __init__(self, r=10, delta=1 / 3, online=True, verify=False, observers=None, b0=None, cached=False, top=1, stratify=False, **p):
-        super().__init__(r=r, delta=delta, online=online, verify=verify, observers=observers, b0=b0, cached=cached, top=top, stratify=stratify, **p)
+    def __init__(self, r=10, delta=1 / 3, online=True, verify=False, observers=None, b0=None, cached=False, top=1, stratify=False, cohort=None, **p):
+        super().__init__(r=r, delta=delta, online=online, verify=verify, observers=observers, b0=b0, cached=cached, top=top, stratify=stratify,
+                         **({"cohort": cohort} if cohort else {}), **p)
         self.r, self.delta, self.online, self.verify, self.stratify = int(r), float(delta), bool(online), bool(verify), bool(stratify)
+        # How level-0 cohorts are formed. "random" is plain MIDIAN and the default; the rest are labeled variants and are
+        # BUDGET-NEUTRAL: the key reuses the same probes `_level0` would have spent anyway (or, for "declared", none).
+        #   stratify  one member per ability stratum  -> maximally DIVERSE cohorts (pre-existing, == stratify=True)
+        #   block     contiguous ability blocks       -> maximally HOMOGENEOUS cohorts
+        #   specialty grouped by argmax-family of the measured per-family profile -> a cohort owns a category
+        #   declared  grouped by argmax-family of what agents CLAIM (reads the declaration channel; liars move it)
+        self.cohort = str(cohort) if cohort else ("stratify" if self.stratify else "random")
+        if self.cohort not in ("random", "stratify", "block", "specialty", "declared"):
+            raise ValueError(f"unknown cohort mode {self.cohort!r}")
+        if self.cohort == "declared":
+            self.needs = frozenset(self.needs | {"declared"})
         self.observers = int(observers) if observers else self.r - 1          # peers observing each verification probe (V)
         self.b0, self.cached, self.top = b0, bool(cached), int(top)          # V: level-0 probes per cell; cached root pick; forwarded per family
         self.cnt = {}; self.stats = {"observe_charged": 1}                  # rows before 2026-09-03 15:20 lack observe-time charges (analyzer adds them)
 
+    def _cohort_key(self, view, out):
+        """Grouping signal per cohort mode; None means random. `out` is outcomes[n, K, b] when the mode needs probes."""
+        if self.cohort in ("stratify", "block"):
+            return out.mean((1, 2))                                  # scalar measured ability
+        if self.cohort == "specialty":
+            return out.mean(2)                                       # [n, K] measured per-family profile
+        if self.cohort == "declared":
+            return np.asarray(view.declared, np.float32)             # [n, K] as CLAIMED - liars move this
+        return None
+
     def _cohorts(self, view, key=None):
-        """Cohorts of r (-1 pads the last). With key[n]: the last cohort is q random agents, the rest take one random
-        member from each of r equal strata of key."""
+        """Cohorts of r (-1 pads the last). With a 1-D key: stratified (one member per stratum) or, for cohort="block",
+        contiguous blocks of similar key. With a 2-D key[n, K]: agents whose argmax category agrees sit together."""
         c = np.full(-(-view.n // self.r) * self.r, -1, np.int32)
         if key is None:
             c[:view.n] = view.rng.permutation(view.n)
+            return c.reshape(-1, self.r)
+        key = np.asarray(key)
+        if key.ndim == 2:                                            # category grouping: sort by best family, random within
+            c[:view.n] = np.lexsort((view.rng.random(view.n), key.argmax(1)))
+            return c.reshape(-1, self.r)
+        if self.cohort == "block":                                   # homogeneous: sort by ability, random within ties
+            c[:view.n] = np.lexsort((view.rng.random(view.n), key))
             return c.reshape(-1, self.r)
         m = len(c) // self.r; q = view.n - (m - 1) * self.r; perm = view.rng.permutation(view.n)
         band = perm[q:][np.argsort(key[perm[q:]], kind="stable")].reshape(self.r, m - 1)      # stratum j = row j
@@ -74,8 +103,9 @@ class Midian(Method):
     def build(self, view, budget):
         self.view, r, b, K = view, self.r, budget.b, view.K
         self.b = b0 = (max(1, min(b, self.b0 or b - 1))) if self.verify else b   # level 0 keeps b0 (default b-1); the rest buys promotions
-        out = probe_outcomes(view, b0) if self.stratify else None            # stratify: probe first, group by measured mean
-        self._structure(view, None if out is None else out.mean((1, 2)))
+        pre = self.cohort in ("stratify", "block", "specialty")              # these keys are read off probes taken up front
+        out = probe_outcomes(view, b0) if pre else None                      # reused by _level0, so the budget is unchanged
+        self._structure(view, self._cohort_key(view, out))
         ok = self.leaves >= 0; self.leaf_of = np.empty(view.n, np.int32)
         self.leaf_of[self.leaves[ok]] = np.repeat(np.arange(len(self.leaves), dtype=np.int32), r)[ok.ravel()]
         C = self.top * sum((c >= 0).sum() for c in self.children[1:])      # V: candidates re-verified over all upper levels,
