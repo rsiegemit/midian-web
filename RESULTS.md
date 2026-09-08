@@ -416,6 +416,11 @@ embeddings), MODEL-SAT (LLM fine-tune), Avengers voting (needs generations).
 
 Errata and change log against the earlier drafts: `CHANGES_AND_ERRATA.md`.
 
+**Work after the submission deadline** (all post-hoc, none pre-registered in v1-v3, each marked in DEVIATIONS):
+frameworks on RouterEval's m = 1,000 and 5,000 pools (`fw_routereval_1k`, `fw_routereval_5k`), the frameworks at
+n = 10,000 under the low-skill cartel (`fw_live_n10k_cartel`), the `M4_legibility` figure, the live n = 100,000 run
+(`live_n100k`), and the v4 cohort slate (`TARGETS_rte_v4.md` / `RESULTS_rte_v4.md`), which IS pre-registered.
+
 Scripts: `rte.analyze`, `scripts/extra_figs.py`, `scripts/v3_figs.py`, `scripts/energy.py`, `scripts/routerbench_terms.py`,
 `scripts/rivals_routellm.py`, `scripts/routereval_terms.py`, `scripts/rivals_llmrouter.py`. Data and results under
 `$RTE_DATA` (`results/<grid>/`, `results/{routerbench_terms,rivals_routellm,routereval_terms,rivals_llmrouter}/`).

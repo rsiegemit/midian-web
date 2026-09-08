@@ -293,6 +293,7 @@ FINAL (every grid complete as of 2026-09-04; the energy/latency figures are esti
 | `RESULTS.md` | the consolidated dossier: every result, ordered, each tagged with its status |
 | `RESULTS_rte_v2.md` / `RESULTS_rte_v3.md` | the per-grid write-ups for our benchmark and the external comparisons |
 | `CHANGES_AND_ERRATA.md` | what the earlier drafts had wrong or incomplete, and every number that moved |
+| `TARGETS_rte_v4.md` / `RESULTS_rte_v4.md` | v4: non-random MIDIAN cohorts (block / specialty / declared), pre-registered then measured |
 | `LICENSE` / `NOTICE` | MIT for this code; the third-party benchmark data keep their own licenses |
 | `CONTRACT.md` | frozen interfaces, accounting formulas, correctness checks, simplicity directive |
 | `DEVIATIONS.md` | every departure from the spec, dated, with the reason |
@@ -314,6 +315,11 @@ The table is `$RTE_DATA/results/fw_live_n1000/summary.md`, section "HEADLINE: fr
 `fw_live_n100`, `fw_live_n1000_verified`, `fw_live_n1000_verified_va` or `fw_live_n1000_lowskill` for the n = 100,
 verified-shortlist, VA-shortlist and cartel tables; each grid keeps its own summary, and pooling them with `--grids`
 would average over different n.
+**Operating a run.** `scripts/await_fleet.sh` blocks until every model in `configs/models.yaml` answers `/health`
+(never trust `endpoints.d`: two fleets share bare keys, so cancelling one deregisters the other's models);
+`scripts/run_after.sh <job-prefix> <cmd>` chains a stage on the previous one draining; `scripts/progress.py [grid...]`
+reports memo growth and per-grid row counts.
+
 `python scripts/paper_numbers.py` recomputes every number quoted in the write-ups into `paper/NUMBERS.json`
 (value, grid, units, CI per entry); `python scripts/paper_figs.py` redraws the paper figures with a CSV of every
 plotted value beside each one.
