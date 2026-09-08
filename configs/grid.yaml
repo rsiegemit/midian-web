@@ -266,6 +266,84 @@ grids:
       - knn_router
       - random
 
+  cohort_arms: &cohort_arms         # v4: the three non-random cohort modes crossed with MIDIAN / -A / -VA, plus the
+                                    # random baseline and the pre-existing stratify arm on identical cells.
+    - midian
+    - {name: midian, params: {stratify: true}}
+    - {name: midian, params: {cohort: block}}
+    - {name: midian, params: {cohort: specialty}}
+    - {name: midian, params: {cohort: declared}}
+    - midian_a
+    - {name: midian_a, params: {cohort: block}}
+    - {name: midian_a, params: {cohort: specialty}}
+    - {name: midian_a, params: {cohort: declared}}
+    - midian_va
+    - {name: midian_va, params: {cohort: block}}
+    - {name: midian_va, params: {cohort: specialty}}
+    - {name: midian_va, params: {cohort: declared}}
+
+  cohort_routereval:                # TARGETS_rte_v4: cohort modes on RouterEval's REAL m = 1,000 LLM pools.
+                                    # No fleet needed - this backend's probes and executions are recorded-score lookups.
+    backend: routereval
+    backend_kwargs: {dataset: mmlu}
+    n: [1000]
+    K: [16]
+    dist: [strong_to_weak, all_strong, all_weak]
+    beta: [0, 0.5]
+    liar_select: [random, low_skill_first]
+    declared_source: [programmatic]
+    b: [3, 10]
+    seeds: "1-5"
+    Q: 1000
+    methods: [*cohort_arms, random]     # the oracle line is emitted by the runner, not a method module
+
+  cohort_routereval5k:              # TARGETS_rte_v4 on ALL 5,000 leaderboard LLMs. Recorded-score backend: no fleet.
+    mirror_of: routereval_mmlu5k
+    beta: [0, 0.5]
+    b: [3, 10]
+    methods: [*cohort_arms, random]
+
+  cohort_llmrouterbench:            # TARGETS_rte_v4 on LLMRouterBench's 20-model pool. NOTE n = 20 with r = 10 gives two
+                                    # cohorts and a depth-1 tree, so cohort STRUCTURE has almost nothing to act on here;
+                                    # included for completeness and expected to be null.
+    mirror_of: llmrouterbench_pool
+    beta: [0, 0.5]
+    b: [3, 10]
+    methods: [*cohort_arms, random]
+
+  cohort_rte:                       # TARGETS_rte_v4 on our own live benchmark; mirrors variants_f1's cells so the probe
+                                    # worlds are already memoised. b = 10 is the axis the diagnostics say matters.
+    backend: llm
+    n: [1000]
+    K: [16]
+    dist: [specialist, heavy_tail, bimodal]
+    beta: [0, 0.5]
+    liar_select: [random, low_skill_first]
+    declared_source: [self_described]
+    b: [3, 10]
+    seeds: "1-5"
+    Q: 1000
+    methods: [*cohort_arms]              # the oracle line is emitted by the runner, not a method module
+
+  live_n100k:                       # n = 100,000 on the LIVE backend: the design of learned_n10k one decade up, so rows pair
+                                    # directly with the 10^4 arms and with scale_100k's synthetic 10^5 point.
+                                    # COST: the probe build is per (n, dist, seed) - NOT per cell - because _probe_salt and the
+                                    # world RNG depend on the seed only, and lying changes D, never S. So the 18 cell-seeds here
+                                    # cost THREE builds of 48n = 4.8M generations, not eighteen. Warm those three first
+                                    # (stage 1: knn_router alone, one job per seed) or concurrent cold starts duplicate the work.
+    backend: llm
+    n: [100000]
+    K: [16]
+    dist: [specialist]
+    beta: [0, 0.25, 0.5]
+    liar_select: [random, low_skill_first]
+    declared_source: [self_described]
+    b: [3]
+    seeds: "1-3"
+    Q: 300
+    methods: [*frameworks, knn_router, midian, midian_a, midian_va,
+              {name: sequential_halving, params: {peer_reported: true}}, random]
+
   fw_routereval_1k:                 # POST-HOC (2026-09-05): same post-hoc arm as fw_routereval_5k, on RouterEval's m = 1,000
                                     # real-LLM pools. Those pools DO ship real model names, but the adapter reads the same
                                     # declaration-rendered descriptions as the 5k grid so the two pool sizes stay comparable
