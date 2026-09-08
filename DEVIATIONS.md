@@ -794,3 +794,27 @@
   paired delta or carry this note.
 - **Repo hygiene.** The SBATCH log paths now resolve to the submit directory, so a night of runs left 174
   `slurm-*.out/err` files in the repo root. Added to .gitignore and moved to `$RTE_DATA/logs/slurm-2026-09-05/`.
+
+## v4: non-random MIDIAN cohorts, and operational lessons (2026-09-07/08)
+
+- `Midian` gains one parameter, `cohort` (default `random` = plain MIDIAN, unchanged; `stratify` preserves the old
+  `stratify=True`). New modes `block`, `specialty`, `declared`; MIDIAN-A and MIDIAN-VA inherit it. `declared` widens
+  the instance's `needs` to include the declaration channel, which the View enforces. Pre-registered in
+  TARGETS_rte_v4.md (commit 8ed4f47) BEFORE any v4 run; results in RESULTS_rte_v4.md.
+- Budget neutrality is measured, not assumed: `probe_outcomes` probes every agent b times per family before cohorts
+  exist and hands the outcomes to `_level0`, so the cohort key is free. All modes spend identical probes.
+- **Two concurrent plain fleets corrupt the endpoint registry.** Both register the same bare model keys, so cancelling
+  either runs its cleanup trap and deregisters models the survivor is still serving. On 2026-09-06 this silently
+  emptied four of seven entries and a run was launched into it (caught, zero rows written). A second fleet must set
+  `RTE_AS_REPLICA=1` so it registers `model#jobid`. `scripts/await_fleet.sh` now gates on per-model `/health` instead
+  of the registry, which is mutable by other jobs.
+- **Progress signals that lie.** vLLM buffers its logs, so a 45 s `wc -l` window reads as a stall during healthy
+  serving; `du` on the memo moves in SQLite page chunks, so short windows alternate between bursts and zero. Both
+  misled a diagnosis on 2026-09-06 and healthy jobs were cancelled as a result. Measure over >= 30 min or count memo
+  rows (`scripts/progress.py`, whose row counting is opt-in because it is a full scan and contends under write load).
+- **Job time limits must track the current rate estimate.** The 10^5 stage-1 build was submitted with `--time=20:00:00`
+  under a ~15 h estimate; the estimate later moved to ~25 h, fleet coverage was extended, but the JOB cap was not
+  revisited and all three jobs timed out at 64.8%. Nothing was lost (generations are memoised) and a restart finished
+  the remainder in ~6 h, but the run cost a day.
+- One-off wrappers written during these runs were replaced by `scripts/await_fleet.sh`, `scripts/run_after.sh` and
+  `scripts/progress.py` rather than left in a scratch directory.
