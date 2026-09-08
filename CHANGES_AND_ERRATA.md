@@ -187,6 +187,21 @@ shape are what the figures support.
     (`bernoulli_scale`, 10²–10⁷) gives **n^0.112 [0.106, 0.118]**. Both are correct for their grid; any text quoting
     n^0.14 should name `combined_scale`. Flat and declared scans are n^1.000 in both.
 
+18. **v4 first draft (2026-09-08): every cohort delta was a bare point estimate with no interval.** All are now paired
+    seed bootstraps in `paper/NUMBERS.json` (`v4.<pool>.<base>_b<b>_<regime>`). Three of the conclusions do not survive
+    them and are corrected in `RESULTS_rte_v4.md` (items 19-20 and section 7). The point estimates themselves were and
+    remain correct.
+19. **v4 first draft: T4-6 recorded a MISS on the 5,000-model pool** because MIDIAN-VA + `declared` reached 0.8344 under
+    the cartel against VA-random's 0.8167. That delta is **+0.018 [−0.017, +0.043]** on 3 seeds and spans zero, so it
+    never supported a miss. Withdrawn. The related "VA + declared 0.8511, the highest value in the v4 slate" is a true
+    statement about the table but its delta is +0.029 [+0.000, +0.043], which touches zero and is not an effect.
+20. **v4 first draft: "whether the modes help MIDIAN-VA depends on pool size — `specialty` and `declared` both help at
+    m = 5,000".** Only `specialty` survives (+0.029, +0.026, +0.029 at b = 3, all three regimes, all clearing zero).
+    Both `declared` cells span zero (+0.031 [−0.010, +0.067]; −0.014 [−0.037, +0.010]) and it is dropped from the claim.
+21. **v4 first draft never defined its `cartel` column.** It is beta = 0.5 with `liar_select = low_skill_first`; the
+    beta = 0.5 cells with randomly chosen liars are a separate, milder world. Pooling the two roughly halves every
+    cartel effect (MIDIAN block at b = 10 reads −0.028 pooled against the correct −0.054). Now stated in the doc.
+
 ---
 
 ## 5. New experiments since the v2 draft (2026-09-03 19:05), one line each
@@ -235,6 +250,9 @@ shape are what the figures support.
 | T3-21 (VA ≥ V at every budget) | not run | split (VA ≥ V at b = 10, below V at b ≤ 3) |
 | T3-22 / 23 (LLMRouterBench on its terms) | not run | 22 split (within 0.02 of the best learned router; +0.016 vs a pre-registered +0.02 over the best single), 23 MISS (Gap@O just under 0.25) |
 | T3-24 (20-model liar pool) | running | HIT, all three clauses |
+| T4-1 (block ≤ random everywhere) | HIT | MISS on the quantifier — block is significantly positive in 3 cells, all MIDIAN-VA (m = 1,000 b = 3 random-liars +0.013 [+0.004, +0.022]; LLMRouterBench b = 10 cartel +0.018 [+0.004, +0.032], b = 3 cartel +0.008 [+0.000, +0.015]). The b = 10 cartel pattern still holds to −0.288 |
+| T4-4 (declared up at β = 0, down at the cartel) | HIT, "larger than expected" | SPLIT — the cartel half is solid; the β = 0 half holds only on the 5,000-model pool (+0.042 [+0.027, +0.060], 3 seeds), spans zero at m = 1,000 |
+| T4-6 (nothing beats VA at the cartel) | MISS on the 5k pool | NOT CONTRADICTED (the delta spans zero; errata 19) |
 | v1 targets (6), v2 targets (11) | — | unchanged (0 hits / 5 misses / 1 split; 6 hits / 4 misses / 1 cost-split) |
 
 ---
