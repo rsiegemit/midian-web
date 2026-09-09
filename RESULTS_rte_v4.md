@@ -30,7 +30,8 @@ sees S). This is why the b axis is part of the design and why V2-4's b = 3 null 
 | `cohort_routereval` | RouterEval, m = 1,000 real LLMs | 1,800 | COMPLETE |
 | `cohort_routereval5k` | RouterEval, all 5,000 leaderboard LLMs | 360 | COMPLETE |
 | `cohort_llmrouterbench` | LLMRouterBench, 20 models | 600 | COMPLETE |
-| `cohort_rte` | our live benchmark, n = 1,000 | 28 / 1,680 | RUNNING (queued behind the 10^5 stage-2 run) |
+| `cohort_rte` | our live benchmark, n = 1,000 | 1,680 | COMPLETE |
+| `live_n100k_cohort` | our live benchmark, n = 100,000 | 144 / 198 | MIDIAN and MIDIAN-A done; MIDIAN-VA running |
 
 All deltas below are means of the paired difference against the SAME base variant with `cohort=random`, on identical
 cells. **Intervals are now computed** (95% bootstrap over seeds within fixed cells, the convention used everywhere else
@@ -85,6 +86,39 @@ MIDIAN-VA + `declared` at b = 10 reaches **0.8511**, the highest value in the v4
 Almost every delta is within +/-0.008 at beta = 0. With n = 20 and r = 10 there are two cohorts and a depth-1 tree, so
 cohort STRUCTURE has essentially nothing to act on. The only movement is under the cartel for the unaudited arms, which
 is the liar effect, not the cohort effect. Included for completeness; it cannot discriminate between the modes.
+
+## D. Our own benchmark, n = 1,000 (3 shapes x 2 beta x 2 liar-selection x 2 b x 5 seeds)
+
+This is the only pool with a SHAPE axis, so it is where T4-2 and T4-3 are decided. Deltas are paired per (shape, seed)
+against the same base with `cohort=random`; `*` marks a 95% seed-bootstrap interval excluding zero.
+
+| b | base | stratify | block | specialty | declared |
+|---|---|---|---|---|---|
+| 3 | MIDIAN | −0.002 | −0.020* | −0.001 | −0.011* |
+| 3 | MIDIAN-A | -- | −0.019* | −0.000 | −0.010* |
+| 3 | MIDIAN-VA | -- | **+0.015*** | +0.000 | +0.002 |
+| 10 | MIDIAN | −0.001 | −0.003 | −0.001 | −0.001 |
+| 10 | MIDIAN-A | -- | −0.002 | −0.000 | −0.001 |
+| 10 | MIDIAN-VA | -- | −0.002* | +0.001 | +0.002 |
+
+At beta = 0 the modes do essentially nothing: every delta is within 0.02 and most do not clear zero.
+
+**Under the cartel they do real damage, and it grows with b.**
+
+| b | base | stratify | block | specialty | declared |
+|---|---|---|---|---|---|
+| 3 | MIDIAN | −0.034* | −0.172* | −0.027 | −0.071* |
+| 3 | MIDIAN-A | -- | −0.232* | −0.031* | −0.147* |
+| 3 | MIDIAN-VA | -- | **+0.012*** | −0.003 | −0.002 |
+| 10 | MIDIAN | −0.059* | −0.325* | −0.072* | −0.241* |
+| 10 | MIDIAN-A | -- | **−0.413*** | −0.104* | −0.291* |
+| 10 | MIDIAN-VA | -- | −0.011* | +0.000 | −0.008 |
+
+`block` at b = 10 costs MIDIAN-A **0.413** — the largest effect anywhere in the v4 slate, and it is a loss. MIDIAN-VA
+is close to immune in every cell (|delta| <= 0.015), which is the same pattern the RouterEval pools show.
+
+**By shape (b = 10, cartel), the one mode that is not uniformly bad is `stratify`, and it flips sign:**
++0.045 [+0.037, +0.054] on specialist against −0.170 [−0.250, −0.065] on heavy-tail. Same knob, opposite directions.
 
 ## Intervals: which deltas clear zero
 
@@ -147,8 +181,13 @@ exactly, so it is not evidence that `declared` beat `random` there.
   VA + `declared` reached 0.8344 against VA-random's 0.8167. That delta is +0.018 [−0.017, +0.043] on 3 seeds and spans
   zero, so it does not support a MISS. On m = 1,000 the target holds outright: every mode is negative for VA at b = 10
   and all three intervals clear zero.
-- **T4-2, T4-3 — UNTESTED.** They are shape-dependent (specialist vs bimodal) and no RouterEval pool has that axis;
-  they need `cohort_rte`.
+- **T4-2 (specialty > random on specialist at b = 10 by >= +0.010) — MISS, on all six comparisons.** MIDIAN −0.0034
+  [−0.0090, +0.0004], MIDIAN-A −0.0032 [−0.0088, +0.0008], MIDIAN-VA +0.0012 [−0.0038, +0.0076] at beta = 0; under the
+  cartel −0.1032, −0.1386 and +0.0006. It never approaches the threshold and is sharply negative under collusion. This
+  was the central hypothesis of the slate — that a cohort which OWNS a category routes a specialist workload better —
+  and it is falsified on our own benchmark at the registered budget.
+- **T4-3 (specialty null on bimodal at b = 10) — HIT, on all six.** Every |delta| <= 0.003 (largest +0.0006
+  [+0.0000, +0.0014]). Predicted null, observed null.
 
 **Unregistered finding (narrowed by the intervals).** Whether the modes help MIDIAN-VA depends on pool size, but only
 `specialty` survives its interval: on the 5,000-model pool it is positive and clears zero in all three regimes at b = 3

@@ -253,6 +253,8 @@ shape are what the figures support.
 | T4-1 (block ≤ random everywhere) | HIT | MISS on the quantifier — block is significantly positive in 3 cells, all MIDIAN-VA (m = 1,000 b = 3 random-liars +0.013 [+0.004, +0.022]; LLMRouterBench b = 10 cartel +0.018 [+0.004, +0.032], b = 3 cartel +0.008 [+0.000, +0.015]). The b = 10 cartel pattern still holds to −0.288 |
 | T4-4 (declared up at β = 0, down at the cartel) | HIT, "larger than expected" | SPLIT — the cartel half is solid; the β = 0 half holds only on the 5,000-model pool (+0.042 [+0.027, +0.060], 3 seeds), spans zero at m = 1,000 |
 | T4-6 (nothing beats VA at the cartel) | MISS on the 5k pool | NOT CONTRADICTED (the delta spans zero; errata 19) |
+| T4-2 (specialty > random on specialist, b = 10) | untested | **MISS on all six comparisons** — never reaches the +0.010 threshold (−0.003 at β = 0) and is −0.103 / −0.139 under the cartel. The slate's central hypothesis, falsified on our own benchmark |
+| T4-3 (specialty null on bimodal, b = 10) | untested | **HIT on all six** — every abs(delta) <= 0.003 |
 | v1 targets (6), v2 targets (11) | — | unchanged (0 hits / 5 misses / 1 split; 6 hits / 4 misses / 1 cost-split) |
 
 ---
