@@ -151,20 +151,23 @@ def v4_regimes(co):
     for beta in sorted(co.beta.dropna().unique()):
         if np.isclose(beta, 0.0): yield "beta0", beta, "random"
         else: yield from ((f"cartel{beta:g}_{ls}", beta, ls) for ls in sorted(co.liar_select.dropna().unique()))
-for pool, grid in V4_POOLS.items():
-    try: co = rows(grid)
-    except SystemExit: print(f"[v4] {grid}: no rows yet, skipped"); continue
-    for base in ("midian", "midian_a", "midian_va"):
-        labs = [base] + [t.format(b=base) for t in V4_MODES.values()]
-        for bb in sorted(co.b.dropna().unique()):
-            for reg, beta, ls in v4_regimes(co):
-                w = W(co, labs, b=bb, beta=beta, liar_select=ls)
-                if base not in w or w[base].dropna().empty: continue
-                tag, where = f"v4.{pool}.{base}_b{int(bb)}_{reg}", f"{grid} (b = {int(bb)}, β = {beta:g}, liars = {ls})"
-                put(f"{tag}_random", w[base], where)
-                for mode, tmpl in V4_MODES.items():
-                    lab = tmpl.format(b=base)
-                    if lab in w: paired(f"{tag}_{mode}", w, lab, base, where, "paired by cell × seed against cohort=random")
+def v4_cohort_deltas():
+    """Kept in a function so its loop variables cannot shadow the module-level frames the appendix tables below reuse."""
+    for pool, grid in V4_POOLS.items():
+        try: co = rows(grid)
+        except SystemExit: print(f"[v4] {grid}: no rows yet, skipped"); continue
+        for base in ("midian", "midian_a", "midian_va"):
+            labs = [base] + [t.format(b=base) for t in V4_MODES.values()]
+            for bb in sorted(co.b.dropna().unique()):
+                for reg, beta, ls in v4_regimes(co):
+                    w = W(co, labs, b=bb, beta=beta, liar_select=ls)
+                    if base not in w or w[base].dropna().empty: continue
+                    tag, where = f"v4.{pool}.{base}_b{int(bb)}_{reg}", f"{grid} (b = {int(bb)}, β = {beta:g}, liars = {ls})"
+                    put(f"{tag}_random", w[base], where)
+                    for mode, tmpl in V4_MODES.items():
+                        lab = tmpl.format(b=base)
+                        if lab in w: paired(f"{tag}_{mode}", w, lab, base, where, "paired by cell × seed against cohort=random")
+v4_cohort_deltas()
 
 # ------------------------------------------------------------------------------------------------ appendix source tables
 def table(key, df, labels, by, grid, **f):
