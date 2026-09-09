@@ -3,6 +3,8 @@
 # memo shards). Usage: scripts/launch_live.sh [dependency-jobid]
 #   RTE_GRIDS="live_f1_n1000 ..."  grids (default: all live grids)      RTE_ONLY="midian sequential_halving"  methods
 #   RTE_SHARD="dist,beta"  one job per value-combination of these cell axes (--only)   RTE_SEED_SHARD=1  ... and per seed
+#   RTE_TIME=3-00:00:00    walltime (default 2 days; sapphire allows 3). A unit is all-or-nothing, so a job
+#                          holding several param-variants of one method name needs the sum of their times.
 set -uo pipefail
 cd "${RTE_REPO:-$HOME/rte}"; export RTE_DATA="${RTE_DATA:-/scratch/rte}"
 DEP=${1:+--dependency=afterany:$1}
@@ -15,7 +17,7 @@ cfg = yaml.safe_load(open('configs/grid.yaml')); print(' '.join(sorted({s['name'
     [ -n "${RTE_ONLY:-}" ] && [[ " $RTE_ONLY " != *" $m "* ]] && continue
     while read -r only seed; do
       [ "$only" = - ] && only=; [ "$seed" = - ] && seed=
-      sbatch --parsable $DEP ${RTE_PARTITION:+-p $RTE_PARTITION} --job-name="rte_${grid}__${m}" -c ${RTE_CPUS:-2} --mem=${RTE_MEM:-24G} --time=2-00:00:00 --export=ALL,RTE_PYTHON="$PY",RTE_WORKERS=1 \
+      sbatch --parsable $DEP ${RTE_PARTITION:+-p $RTE_PARTITION} --job-name="rte_${grid}__${m}" -c ${RTE_CPUS:-2} --mem=${RTE_MEM:-24G} --time=${RTE_TIME:-2-00:00:00} --export=ALL,RTE_PYTHON="$PY",RTE_WORKERS=1 \
         scripts/run_grid.sbatch "$grid" --methods "$m" ${only:+--only $only} ${seed:+--seeds $seed} ${RTE_RUN_ARGS:-} | sed "s/$/  $grid $m $only $seed/"
     done < <("$PY" -c "
 import sys; sys.path.insert(0,'.'); import yaml
