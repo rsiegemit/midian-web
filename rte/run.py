@@ -159,13 +159,37 @@ def run_unit(cell, seed, specs, rows_dir, grid):
     return failed
 
 
-def consolidate(out):
+def consolidate(out, prune: bool = False):
+    """Merge rows.d INTO rows.csv (additive, deduplicated on `rid`) and optionally delete the files merged.
+
+    Additive because a sweep can write millions of one-row files: pruning keeps rows.d small so this stays cheap and
+    the resume set stays fast to build. `rid` is the rows.d filename, carried into the CSV so resume can read it back.
+    Safe under concurrency: the CSV is written atomically and re-read each call, so the worst a race costs is a
+    duplicate row, which the dedup removes. Files are unlinked only AFTER the CSV that contains them is in place."""
     import pandas as pd
-    df = pd.DataFrame([json.load(open(f"{out}/rows.d/{f}")) for f in sorted(os.listdir(f"{out}/rows.d")) if f.endswith(".json")])
+    csv = f"{out}/rows.csv"
+    names = sorted(f for f in os.listdir(f"{out}/rows.d") if f.endswith(".json"))   # snapshot: later arrivals wait
+    frames = []
+    if os.path.exists(csv):
+        old = pd.read_csv(csv)
+        if "rid" not in old.columns: old["rid"] = pd.NA          # pre-rid CSV: its rows.d files are still present
+        frames.append(old)
+    if names:
+        frames.append(pd.DataFrame([{**json.load(open(f"{out}/rows.d/{f}")), "rid": f[:-5]} for f in names]))
+    if not frames: return 0
+    df = pd.concat(frames, ignore_index=True)
+    df = df.drop_duplicates(subset="rid", keep="last") if df.rid.notna().all() else df
     lead = [c for c in (*CELL, "method", "params", "seed") if c in df.columns]
-    tmp = f"{out}/rows.csv.tmp{os.getpid()}"
+    tmp = f"{csv}.tmp{os.getpid()}"
     df[lead + [c for c in df.columns if c not in lead]].sort_values(lead).to_csv(tmp, index=False)
-    os.replace(tmp, f"{out}/rows.csv"); return len(df)
+    os.replace(tmp, csv)
+    if prune:
+        done = set(df.rid.dropna())
+        for f in names:
+            if f[:-5] in done:
+                try: os.unlink(f"{out}/rows.d/{f}")
+                except FileNotFoundError: pass
+    return len(df)
 
 
 def _star(args):
@@ -181,6 +205,11 @@ def main(argv=None):
     a = p.parse_args(argv)
     cfg = yaml.safe_load(open(a.config)); out = f"{RTE_DATA}/results/{a.grid}"; rows_dir = f"{out}/rows.d"
     have = {f[:-5] for f in os.listdir(rows_dir)} if os.path.isdir(rows_dir) else set()
+    if os.path.exists(f"{out}/rows.csv"):        # rows merged into the CSV and pruned from rows.d are still DONE
+        try:
+            import pandas as pd
+            have |= set(pd.read_csv(f"{out}/rows.csv", usecols=["rid"]).rid.dropna())
+        except (ValueError, KeyError): pass      # pre-rid CSV: its rows.d files are still on disk, so `have` is right
     units = []
     for blk in blocks(cfg, a.grid):
         specs = [s for s in method_specs(blk) if not a.methods or s["name"] in a.methods.split(",")]

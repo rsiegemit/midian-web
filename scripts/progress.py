@@ -4,13 +4,15 @@
     python scripts/progress.py live_n100k cohort_rte # just these grids, with per-method detail
     python scripts/progress.py --memo               # memo stats alone (cheap; use while a build is running)
     python scripts/progress.py --memo --rows        # add row counts (SLOW: full scan; avoid while jobs write)
+    python scripts/progress.py --merge --prune g1 g2       # fold rows.d into rows.csv once, deleting what it folded
+    python scripts/progress.py --merge --prune --every=900 # ... and keep doing it, for a sweep writing millions of rows
 
 Replaces the ad-hoc row counters and `du`-based progress guesses used during the 10^5 build. Two lessons are baked in:
 `du` on the cache is useless as a progress signal (SQLite grows in page chunks, so short windows read as stalls), and a
 live shard must be opened read-only with nolock -- its row count is then a slight UNDER-count while a writer is active,
 so treat single samples as a floor and compare over long windows.
 """
-import glob, json, os, sqlite3, sys
+import glob, json, os, sqlite3, sys, time
 
 RTE_DATA = os.environ.get("RTE_DATA", "/scratch/rte")
 RESULTS = f"{RTE_DATA}/results"
@@ -54,8 +56,33 @@ def grid_rows(grid: str) -> dict:
     return counts
 
 
+def merge(grids: list[str], prune: bool, every: int = 0) -> None:
+    """Fold rows.d into rows.csv (and delete what was folded when `prune`), once or every `every` seconds.
+
+    A million-row sweep writes a million one-row files, which makes both consolidation and the resume scan slow. The
+    CSV carries each row's `rid`, so a pruned row still counts as done -- see rte.run.consolidate / the resume set."""
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))   # repo root, as the other scripts do
+    from rte.run import consolidate
+    while True:
+        for g in grids:
+            d = f"{RESULTS}/{g}"
+            if not os.path.isdir(f"{d}/rows.d"):
+                continue
+            t = time.time(); n = consolidate(d, prune=prune)
+            print(f"[merge {time.strftime('%H:%M')}] {g}: {n:,} rows in csv, "
+                  f"rows.d {len(os.listdir(f'{d}/rows.d')):,} files ({time.time() - t:.0f}s)", flush=True)
+        if not every:
+            return
+        time.sleep(every)
+
+
 def main(argv: list[str]) -> None:
     grids = [a for a in argv if not a.startswith("--")]
+    if "--merge" in argv:
+        every = next((int(a.split("=")[1]) for a in argv if a.startswith("--every=")), 0)
+        if not grids:
+            grids = sorted(d for d in os.listdir(RESULTS) if os.path.isdir(f"{RESULTS}/{d}/rows.d"))
+        return merge(grids, prune="--prune" in argv, every=every)
     m = memo_stats(count_rows="--rows" in argv)
     rows = (f"; rows: {m['compact_rows']:,} compacted + {m['shard_rows']:,} new" if m["compact_rows"] is not None else "")
     print(f"memo: compacted {m['compact_bytes'] / 1e9:.1f} GB, {m['shards']} new shard(s) "
