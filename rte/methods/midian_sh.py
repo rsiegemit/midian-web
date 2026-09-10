@@ -20,6 +20,9 @@ def _schedule(s, b, halving):
     for t, sz in enumerate(sizes[:-1] if halving else sizes):
         p = max(1, rem // (sz * (len(sizes) - 1 - t))) if halving else b
         rounds.append((sz, p)); rem -= sz * p
+    if rem < 0:                                             # b too small for this many halving rounds: the max(1, .)
+        raise ValueError(f"midian_sh: b={b} cannot fund {len(sizes) - 1} halving rounds over a cohort of {s} "
+                         f"(needs b >= {len(sizes) - 1}); the (1e6, 1e7) rungs run b=1")   # floor overspent it
     return rounds + ([(1, rem)] if rem else [])
 
 
