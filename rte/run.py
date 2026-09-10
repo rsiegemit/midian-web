@@ -199,10 +199,12 @@ def consolidate(out, prune: bool = False, force: bool = False):
     os.replace(tmp, csv)
     if prune:
         done = set(df.rid.dropna())
-        for f in names:
-            if f[:-5] in done:
-                try: os.unlink(f"{out}/rows.d/{f}")
-                except FileNotFoundError: pass
+        def _rm(f):
+            try: os.unlink(f"{out}/rows.d/{f}")
+            except FileNotFoundError: pass
+        from concurrent.futures import ThreadPoolExecutor   # NFS unlinks are latency-bound too: ~80/s serial
+        with ThreadPoolExecutor(max_workers=32) as ex:
+            list(ex.map(_rm, [f for f in names if f[:-5] in done], chunksize=256))
     return len(df)
 
 
