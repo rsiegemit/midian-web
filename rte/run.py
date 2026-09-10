@@ -180,7 +180,14 @@ def consolidate(out, prune: bool = False, force: bool = False):
         if "rid" not in old.columns: old["rid"] = pd.NA          # pre-rid CSV: its rows.d files are still present
         frames.append(old)
     if names:
-        frames.append(pd.DataFrame([{**json.load(open(f"{out}/rows.d/{f}")), "rid": f[:-5]} for f in names]))
+        def _read(f):                            # a concurrent merger may unlink between the listing and the read
+            try:
+                with open(f"{out}/rows.d/{f}") as fh: return {**json.load(fh), "rid": f[:-5]}
+            except (FileNotFoundError, json.JSONDecodeError):
+                return None                      # gone, or caught mid-write: it is in the CSV already or will be next pass
+        got = [r for r in (_read(f) for f in names) if r is not None]
+        names = [r["rid"] + ".json" for r in got]        # prune only what was actually read
+        if got: frames.append(pd.DataFrame(got))
     if not frames: return 0
     df = pd.concat(frames, ignore_index=True)
     df = df.drop_duplicates(subset="rid", keep="last") if df.rid.notna().all() else df
