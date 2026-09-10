@@ -77,6 +77,20 @@ def row_id(cell, method, params, seed):
                            digest_size=16).hexdigest()
 
 
+def rid_of_row(r) -> str:
+    """row_id recomputed from a stored row (CSV or rows.d): lets a CSV written without `rid` be re-keyed."""
+    cell = {f: r[f] for f in CELL}
+    for k in ("n", "K", "b", "Q"): cell[k] = int(cell[k])
+    cell["beta"] = float(cell["beta"])
+    for k in list(cell):
+        if hasattr(cell[k], "item"): cell[k] = cell[k].item()         # numpy scalars -> python, so jkey matches
+    bk = r.get("backend_kwargs", "{}"); cell["backend_kwargs"] = json.loads(bk) if isinstance(bk, str) and bk.startswith("{") else (bk or {})
+    ch = r.get("churn", "")
+    if isinstance(ch, str) and ch.startswith("{"): cell["churn"] = json.loads(ch)
+    p = r.get("params", "{}"); params = json.loads(p) if isinstance(p, str) else (p or {})
+    return row_id(cell, r["method"], params, int(r["seed"]))
+
+
 # ------------------------------------------------------------------ one unit
 COMM = ("probes", "reports", "messages", "tasks")      # total communication = these four (CONTRACT)
 
@@ -176,8 +190,9 @@ def consolidate(out, prune: bool = False, force: bool = False):
     names = sorted(f for f in os.listdir(f"{out}/rows.d") if f.endswith(".json"))   # snapshot: later arrivals wait
     frames = []
     if os.path.exists(csv):
-        old = pd.read_csv(csv)
-        if "rid" not in old.columns: old["rid"] = pd.NA          # pre-rid CSV: its rows.d files are still present
+        old = pd.read_csv(csv, low_memory=False)
+        if "rid" not in old.columns or old.rid.isna().any():     # a CSV rebuilt by pre-guard code has no rid: re-key it
+            old["rid"] = [rid_of_row(r) for _, r in old.iterrows()]   # so dedup works and nothing doubles
         frames.append(old)
     if names:
         def _read(f):                            # a concurrent merger may unlink between the listing and the read
