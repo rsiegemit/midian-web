@@ -159,7 +159,7 @@ def run_unit(cell, seed, specs, rows_dir, grid):
     return failed
 
 
-def consolidate(out, prune: bool = False):
+def consolidate(out, prune: bool = False, force: bool = False):
     """Merge rows.d INTO rows.csv (additive, deduplicated on `rid`) and optionally delete the files merged.
 
     Additive because a sweep can write millions of one-row files: pruning keeps rows.d small so this stays cheap and
@@ -168,6 +168,11 @@ def consolidate(out, prune: bool = False):
     duplicate row, which the dedup removes. Files are unlinked only AFTER the CSV that contains them is in place."""
     import pandas as pd
     csv = f"{out}/rows.csv"
+    # A grid whose results dir holds `.merge_owner` has ONE dedicated merger; everyone else must keep its hands off
+    # rows.csv. Read-then-write is not atomic, so concurrent consolidates overwrite each other with stale snapshots --
+    # and with prune that deletes a row's file after a competing write has already dropped it from the CSV.
+    if not force and os.path.exists(f"{out}/.merge_owner"):
+        return 0
     names = sorted(f for f in os.listdir(f"{out}/rows.d") if f.endswith(".json"))   # snapshot: later arrivals wait
     frames = []
     if os.path.exists(csv):

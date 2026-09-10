@@ -68,7 +68,7 @@ def merge(grids: list[str], prune: bool, every: int = 0) -> None:
             d = f"{RESULTS}/{g}"
             if not os.path.isdir(f"{d}/rows.d"):
                 continue
-            t = time.time(); n = consolidate(d, prune=prune)
+            t = time.time(); n = consolidate(d, prune=prune, force=True)   # the merger IS the owner
             print(f"[merge {time.strftime('%H:%M')}] {g}: {n:,} rows in csv, "
                   f"rows.d {len(os.listdir(f'{d}/rows.d')):,} files ({time.time() - t:.0f}s)", flush=True)
         if not every:

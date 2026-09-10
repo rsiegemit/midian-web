@@ -24,4 +24,5 @@ PY="${RTE_PYTHON:-$RTE_DATA/env/rte/bin/python}"
 [ -x "$PY" ] || PY="$HOME/miniconda3/bin/python"
 echo "[$(date -Is)] $(hostname) grid=$1 workers=${RTE_WORKERS:-$SLURM_CPUS_PER_TASK}"
 "$PY" -m rte.run --grid "$@" --workers "${RTE_WORKERS:-$SLURM_CPUS_PER_TASK}"
-"$PY" -m rte.analyze --grid "$1"
+# RTE_CONSOLIDATE=0 for a big sweep: rows.csv then has ONE writer (scripts/progress.py --merge), not one per job.
+[ "${RTE_CONSOLIDATE:-1}" = "0" ] || "$PY" -m rte.analyze --grid "$1"
