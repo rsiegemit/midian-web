@@ -31,7 +31,7 @@ sees S). This is why the b axis is part of the design and why V2-4's b = 3 null 
 | `cohort_routereval5k` | RouterEval, all 5,000 leaderboard LLMs | 360 | COMPLETE |
 | `cohort_llmrouterbench` | LLMRouterBench, 20 models | 600 | COMPLETE |
 | `cohort_rte` | our live benchmark, n = 1,000 | 1,680 | COMPLETE |
-| `live_n100k_cohort` | our live benchmark, n = 100,000 | 144 / 198 | MIDIAN and MIDIAN-A done; MIDIAN-VA running |
+| `live_n100k_cohort` | our live benchmark, n = 100,000 | 198 | COMPLETE |
 
 All deltas below are means of the paired difference against the SAME base variant with `cohort=random`, on identical
 cells. **Intervals are now computed** (95% bootstrap over seeds within fixed cells, the convention used everywhere else
@@ -119,6 +119,28 @@ is close to immune in every cell (|delta| <= 0.015), which is the same pattern t
 
 **By shape (b = 10, cartel), the one mode that is not uniformly bad is `stratify`, and it flips sign:**
 +0.045 [+0.037, +0.054] on specialist against −0.170 [−0.250, −0.065] on heavy-tail. Same knob, opposite directions.
+
+## E. Our own benchmark at n = 100,000 (grid `live_n100k_cohort`, b = 3, 3 seeds)
+
+Cohort arms on `live_n100k`'s exact cells; the `cohort=random` baselines are `live_n100k`'s own MIDIAN / -A / -VA rows,
+so the two grids are loaded together. Only b = 3 exists at this scale.
+
+| base | stratify | block | specialty | declared |
+|---|---|---|---|---|
+| MIDIAN, beta = 0 | −0.003 | +0.028 | +0.012 | +0.019 |
+| MIDIAN-A, beta = 0 | -- | +0.028 | +0.012 | +0.019 |
+| MIDIAN-VA, beta = 0 | -- | −0.014 | −0.016 | **−0.032*** |
+| MIDIAN, cartel | +0.020 | **−0.127*** | −0.012 | −0.056 |
+| MIDIAN-A, cartel | -- | **−0.170*** | −0.009 | **−0.064*** |
+| MIDIAN-VA, cartel | -- | −0.030 | −0.001 | **−0.037*** |
+
+Three seeds, so only the starred cells carry weight. The pattern matches every other pool: nothing clears zero
+positively anywhere, `block` is the worst mode under the cartel (−0.127 / −0.170), and `declared` is significantly
+negative for MIDIAN-VA in BOTH regimes. The positive-looking beta = 0 cells for MIDIAN and MIDIAN-A (+0.028, +0.019)
+all span zero at 3 seeds and must not be quoted.
+
+**Scale does not rescue the mechanism.** Two decades up from n = 1,000 the modes are still neutral-to-harmful, so the
+v4 result is not an artifact of small pools.
 
 ## Intervals: which deltas clear zero
 

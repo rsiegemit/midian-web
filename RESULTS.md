@@ -181,8 +181,51 @@ path update (commit 3415f03). Wall-clock is reported only in the supervisor-late
 | 100,000 | 0.849 | 0.846 → 0.682 | **0.805 → 0.793** | 0.805 → 0.651 | 0.765 → 0.710 | 0.767 | 53 vs 100,000 |
 
 VA − V under low-skill collusion: +0.108 (10k), **+0.143** (100k); VA − peer halving there +0.138 / +0.112; in the
-honest regime VA is 0.04–0.05 below peer halving (T3-18 HIT). Frameworks have no arm at these n (no LLM calls); a live
-100k run would cost 4.8M probe calls per seed and is not launched.
+honest regime VA is 0.04–0.05 below peer halving (T3-18 HIT). Frameworks have no arm on this SYNTHETIC grid (it makes
+no LLM calls). The live 100k run those 4.8M probe calls per seed were said to preclude WAS launched after the deadline
+and is section II.4c below.
+
+### II.4c Live n = 100,000 — post-hoc, POST-DEADLINE (grid `live_n100k`; specialist, Q = 300, 3 seeds)
+
+The same decade on the LIVE llm backend, so the ten frameworks have an arm and the declarations are self-described.
+25 of 27 arms complete (450 / 486 rows); `sequential_halving` and `knn_router[online]` outstanding. Means over 3 seeds,
+95% seed-bootstrap CI. **This is the largest live pool in the programme; RouterEval cannot reach it** — its ceiling is
+the 5,000 real leaderboard LLMs.
+
+| arm | β = 0 | β = 0.25 | β = 0.5 random | cartel (β = 0.5, low-skill) |
+|---|---|---|---|---|
+| oracle (ceiling) | 0.862 [0.840, 0.884] | 0.862 | 0.862 | 0.862 |
+| **MIDIAN-VA** | **0.836** [0.821, 0.851] | 0.803 | 0.834 | **0.828** [0.813, 0.837] |
+| MIDIAN-V | 0.836 [0.822, 0.849] | 0.813 | 0.750 | 0.699 [0.630, 0.760] |
+| MIDIAN-SHA | 0.781 | 0.773 | 0.724 | 0.754 |
+| MIDIAN-SH | 0.781 | 0.749 | 0.556 | 0.552 |
+| MIDIAN-A | 0.752 | 0.752 | 0.730 | 0.749 |
+| MIDIAN | 0.752 | 0.738 | 0.620 | 0.706 |
+| flat probe argmax (online) | 0.749 | 0.749 | 0.749 | 0.749 |
+| warm-start bandit | 0.738 | 0.731 | 0.769 | 0.778 |
+| verify-on-claim | 0.702 | 0.669 | 0.706 | 0.729 |
+| flat probe argmax | 0.707 | 0.707 | 0.707 | 0.707 |
+| KNN router (RouterBench) | 0.692 | 0.692 | 0.692 | 0.692 |
+| declared argmax | 0.622 | 0.561 | 0.567 | 0.578 |
+| random | 0.442 | 0.442 | 0.442 | 0.442 |
+| LinUCB (honest) | 0.386 | 0.386 | 0.386 | 0.386 |
+| ten frameworks | WITHHELD -- see caveat | | | |
+
+**VA − V under the cartel is +0.129** (0.828 vs 0.699), the same effect the synthetic grid reports at +0.143. VA loses
+only 0.008 from honest to cartel while V loses 0.137 and plain MIDIAN 0.046: verification alone buys the honest number,
+the audits are what survive collusion.
+
+**The ten-framework row is WITHHELD.** All ten return byte-identical success (0.34667 at seed 1) in every regime, while
+their other counters differ widely (fallback 0.000-0.366, misroute-to-liar 0.340-0.403, strict success 0.205-0.347), and
+success depends only on the seed -- not on the framework, not on beta. At n = 10,000 the same ten spread 0.256-0.364.
+That is a degenerate shortlist at 10^5, either a real saturation effect or an adapter bug, and it is UNRESOLVED. No
+framework number may be quoted at 10^5 until it is.
+
+**Cost (modelled, not wall-clock -- `scripts/energy.py`, now parametrised by n).** Every probe arm pays the same one-off
+build of 4.8M probes = **7.7-8.1 GPU-hours**, then routes for free: MIDIAN-VA 0.004 s per task against the frameworks'
+0.27-3.26 s, a 65-800x latency gap. MIDIAN's build amortises against Magentic-One after 77,000 tasks, CAMEL 181,000,
+CrewAI 242,000, AutoGen 942,000. Wall-clock per job is recorded but is NOT comparable across arms: it mixes memo hits
+and misses, so plain MIDIAN "takes" 4.6 h at n = 10^4 and 2.1 h at n = 10^5 on ten times the agents.
 
 ### II.5 Robustness axes
 
