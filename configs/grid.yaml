@@ -66,6 +66,36 @@ _sets:
     - {name: fw_camel_workforce, params: {retrieval: midian, r: 10}}
     - {name: fw_camel_workforce, params: {retrieval: midian, r: 5}}
   fw_paired: &fw_paired [midian, {name: midian, params: {r: 5}}, {name: midian, params: {verify: true, cached: true}}, {name: midian, params: {verify: true, cached: true, r: 5}}, random, declared_argmax, flat_probe_argmax, llm_supervisor, midian_a, midian_va]
+  scale_arms: &scale_arms           # v5 (2026-09-10): the FULL comparison set for the many-seed scale sweeps.
+                                    # Frameworks are absent by construction: these backends declare on the PROGRAMMATIC
+                                    # channel, so there are no self-descriptions to shortlist over -- and the live 10^5
+                                    # run shows the framework shortlist going degenerate at that scale anyway.
+                                    # knn/mlp_router are absent too: they embed n*K*b prompts through MiniLM, which is
+                                    # 1.6e8 at n = 10^7.
+    - midian
+    - {name: midian, params: {r: 5}}
+    - {name: midian, params: {verify: true, cached: true}}
+    - {name: midian, params: {verify: true, cached: true, r: 5}}
+    - midian_a
+    - midian_va
+    - midian_sh
+    - midian_sha
+    - flat_probe_argmax
+    - {name: flat_probe_argmax, params: {online: true}}
+    - flat_nsw_router
+    - declared_argmax
+    - declared_softmax
+    - ucb_per_family
+    - thompson_per_family
+    - warm_start_bandit
+    - sequential_halving
+    - {name: sequential_halving, params: {peer_reported: true}}
+    - cnp_self_bid
+    - cluster_head_router
+    - route_to_k_majority
+    - verify_on_claim
+    - random
+
   cost_curve: &cost_curve [midian, {name: midian, params: {r: 5}}, {name: midian, params: {verify: true, cached: true}}, {name: midian, params: {verify: true, cached: true, r: 5}}, flat_probe_argmax, declared_argmax, ucb_per_family, flat_nsw_router, cnp_self_bid, random]
 
 grids:
@@ -143,6 +173,44 @@ grids:
     blocks: [{n: [10000, 100000]}, {n: [1000000], b: [1]}]
   # cheap multi-n twin of bernoulli_scale: exercises F2/F3/F3b and the cost-exponent fits on CPU
   # in minutes, so the message-accounting figures are verified before the fleet is up.
+
+  # ---- v5 many-seed scale sweeps (2026-09-10). SEPARATE grids, not edits to the two above: the published cost
+  # exponents (MIDIAN n^0.112 [0.106, 0.118], flat n^1.000) are fits over exactly those rows, and adding cells would
+  # silently move a quoted number. These add (a) the full arm set, (b) 20 seeds instead of 3, and (c) the LIAR axis --
+  # bernoulli_scale/replay_scale are beta = 0.25 with RANDOM liars only, which is why RESULTS II.4d cannot say whether
+  # declared_argmax's win at 10^6-10^7 survives a cartel. That is the question these exist to answer.
+  bernoulli_scale_v5:
+    K: [16]
+    dist: [specialist]
+    methods: *scale_arms
+    backend_kwargs: {calibrate_from: $RTE_DATA/populations/specialist_n1000_K16_seed1/S.npy}
+    # Seed ladder sized to the MEASURED across-seed std, which GROWS with n (0.005-0.03 at 10^4, 0.03-0.06 at 10^6):
+    # seeds are worth most exactly where they cost most. 1000 seeds up to 10^4 is nearly free; 100 at 10^7 is the
+    # difference between one observation and a real interval. b = 1 above 10^5 as in bernoulli_scale, for comparability.
+    blocks:
+    # FIVE regimes, not six: beta = 0 has no liars, so its two liar-selection cells are bit-identical (verified:
+    # max |difference| = 0 over 690 cells). Each n-rung is therefore two blocks, honest-only and liar-only.
+      - {n: [10, 100, 1000, 10000], seeds: "1-1000", beta: [0], liar_select: [random]}
+      - {n: [10, 100, 1000, 10000], seeds: "1-1000", beta: [0.25, 0.5], liar_select: [random, low_skill_first]}
+      - {n: [100000], seeds: "1-500", beta: [0], liar_select: [random]}
+      - {n: [100000], seeds: "1-500", beta: [0.25, 0.5], liar_select: [random, low_skill_first]}
+      - {n: [1000000], b: [1], seeds: "1-200", beta: [0], liar_select: [random]}
+      - {n: [1000000], b: [1], seeds: "1-200", beta: [0.25, 0.5], liar_select: [random, low_skill_first]}
+      - {n: [10000000], b: [1], seeds: "1-100", beta: [0], liar_select: [random]}
+      - {n: [10000000], b: [1], seeds: "1-100", beta: [0.25, 0.5], liar_select: [random, low_skill_first]}
+
+  replay_scale_v5:
+    backend: replay
+    K: [64]
+    dist: [specialist, heavy_tail, bimodal]
+    methods: *scale_arms
+    blocks:
+      - {n: [10, 100, 1000, 10000], seeds: "1-1000", beta: [0], liar_select: [random]}
+      - {n: [10, 100, 1000, 10000], seeds: "1-1000", beta: [0.25, 0.5], liar_select: [random, low_skill_first]}
+      - {n: [100000], seeds: "1-200", beta: [0], liar_select: [random]}
+      - {n: [100000], seeds: "1-200", beta: [0.25, 0.5], liar_select: [random, low_skill_first]}
+      - {n: [1000000], b: [1], seeds: "1-100", beta: [0], liar_select: [random]}
+      - {n: [1000000], b: [1], seeds: "1-100", beta: [0.25, 0.5], liar_select: [random, low_skill_first]}
   bernoulli_cost_smoke:
     {n: [100, 1000, 10000], dist: [specialist], beta: [0.25], Q: 500, seeds: 1-3, methods: *cost_curve}
 
