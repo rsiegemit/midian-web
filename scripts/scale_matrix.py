@@ -37,20 +37,26 @@ def main():
         piv = {}
         for (lab, n), g in q.groupby(["label", "n"]):
             s = g.set_index(["dist", "seed"])[a.metric].dropna() if "dist" in g else g.set_index("seed")[a.metric].dropna()
-            lo, hi = ci(s); piv[(lab, n)] = (s.mean(), lo, hi, s.index.get_level_values("seed").nunique())
-            out.append(dict(regime=title, beta=beta, liar_select=ls, label=lab, n=n, metric=a.metric,
-                            mean=s.mean(), ci_lo=lo, ci_hi=hi, seeds=piv[(lab, n)][3], units=len(s)))
-        labs = sorted({l for l, _ in piv}, key=lambda l: -piv.get((l, ns[-1]), piv.get((l, ns[0]), (0,)))[0])
+            per_seed = s.groupby(level="seed").mean()                      # one value per seed (shapes averaged)
+            lo, hi = ci(s)
+            st = dict(mean=s.mean(), ci_lo=lo, ci_hi=hi, seeds=per_seed.size, units=len(s),
+                      std_seed=per_seed.std(ddof=1), var_seed=per_seed.var(ddof=1),   # spread OVER SEEDS (the CI's basis)
+                      std_unit=s.std(ddof=1), min=s.min(), max=s.max(),               # spread over every (shape, seed) unit
+                      sem=per_seed.std(ddof=1) / np.sqrt(per_seed.size))
+            piv[(lab, n)] = st
+            out.append(dict(regime=title, beta=beta, liar_select=ls, label=lab, n=n, metric=a.metric, **st))
+        key_n = ns[-1] if any((l, ns[-1]) in piv for l, _ in piv) else ns[0]
+        labs = sorted({l for l, _ in piv}, key=lambda l: -piv.get((l, key_n), piv.get((l, ns[0]), {"mean": 0}))["mean"])
         print(f"\n## {title}\n")
-        print("| arm | " + " | ".join(f"n={n:,}" for n in ns) + " | seeds |")
-        print("|---|" + "---|" * (len(ns) + 1))
+        print("cell = mean ± std over seeds [95% CI] (seeds)  — std is across per-seed means; CSV also has var, unit-level std, min, max, sem\n")
+        print("| arm | " + " | ".join(f"n={n:,}" for n in ns) + " |")
+        print("|---|" + "---|" * len(ns))
         for l in labs:
             cells = []
             for n in ns:
                 v = piv.get((l, n))
-                cells.append("--" if v is None else f"{v[0]:.3f} [{v[1]:.3f},{v[2]:.3f}]")
-            seeds = max(v[3] for (ll, _), v in piv.items() if ll == l)
-            print(f"| {l} | " + " | ".join(cells) + f" | {seeds} |")
+                cells.append("--" if v is None else f"{v['mean']:.3f} ± {v['std_seed']:.3f} [{v['ci_lo']:.3f},{v['ci_hi']:.3f}] ({v['seeds']})")
+            print(f"| {l} | " + " | ".join(cells) + " |")
     pd.DataFrame(out).to_csv(f"{d}/matrix_{a.metric}.csv", index=False)
     print(f"\n(csv: {d}/matrix_{a.metric}.csv)", file=sys.stderr)
 
