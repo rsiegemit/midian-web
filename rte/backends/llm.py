@@ -35,7 +35,7 @@ class LLMBackend:
                  families: list[str] | None = None, measure_probes: int = 200,
                  measure_probes_large: int = 60, max_tokens: int = 512,
                  handicap_max_tokens: int | None = None, declared_noise: float = 0.05,
-                 population_dir: str | None = None, concurrency: int = 64, **_):
+                 population_dir: str | None = None, concurrency: int | None = None, **_):
         from . import families as fam                  # the module; `families` is the kwarg here
         self.n, self.K, self.seed, self.dist = int(n), int(K), int(seed), dist
         self.cfg = ladder()
@@ -46,7 +46,9 @@ class LLMBackend:
         self.max_tokens = int(max_tokens)
         self.handicap_max_tokens = self.max_tokens if handicap_max_tokens is None \
             else int(handicap_max_tokens)
-        self.declared_noise, self.concurrency = float(declared_noise), int(concurrency)
+        # in-flight requests per batch; RTE_CONCURRENCY lets a dedicated warm-up job raise it (was a hard 64 here,
+        # which silently bypassed the same knob on llm_client.complete_batch)
+        self.declared_noise, self.concurrency = float(declared_noise), int(concurrency or llm_client.CONCURRENCY)
         self.profiles = draw_profiles(self.n, self.K, dist, self.seed, self.cfg)
         self.dir = Path(population_dir) if population_dir else \
             POP_DIR / f"{dist}_n{self.n}_K{self.K}_seed{self.seed}"
