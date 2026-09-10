@@ -185,7 +185,9 @@ def consolidate(out, prune: bool = False, force: bool = False):
                 with open(f"{out}/rows.d/{f}") as fh: return {**json.load(fh), "rid": f[:-5]}
             except (FileNotFoundError, json.JSONDecodeError):
                 return None                      # gone, or caught mid-write: it is in the CSV already or will be next pass
-        got = [r for r in (_read(f) for f in names) if r is not None]
+        from concurrent.futures import ThreadPoolExecutor   # NFS small-file reads are latency-bound: fan out
+        with ThreadPoolExecutor(max_workers=32) as ex:
+            got = [r for r in ex.map(_read, names, chunksize=256) if r is not None]
         names = [r["rid"] + ".json" for r in got]        # prune only what was actually read
         if got: frames.append(pd.DataFrame(got))
     if not frames: return 0
