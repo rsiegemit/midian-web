@@ -227,6 +227,56 @@ build of 4.8M probes = **7.7-8.1 GPU-hours**, then routes for free: MIDIAN-VA 0.
 CrewAI 242,000, AutoGen 942,000. Wall-clock per job is recorded but is NOT comparable across arms: it mixes memo hits
 and misses, so plain MIDIAN "takes" 4.6 h at n = 10^4 and 2.1 h at n = 10^5 on ten times the agents.
 
+### II.4d Beyond 10^5: replay at 10^6 and calibrated bernoulli at 10^7 — SUCCESS numbers (previously cost-only)
+
+`replay_scale` and `bernoulli_scale` have been cited only for the cost exponents (MIDIAN ~ n^0.11, flat n^1.00). Their
+SUCCESS columns are reported here for the first time. **Both grids run at beta = 0.25 with RANDOM liars only** — the
+mild regime. Neither has a low-skill-cartel cell, which matters for reading the table below.
+
+**RouterBench replay, n = 1,000,000** (3 shapes x 3 seeds):
+
+| arm | success | comparisons / task |
+|---|---|---|
+| oracle | 0.7881 | 0 |
+| verify-on-claim | 0.7426 | 64,001 |
+| route-to-k-majority | 0.7388 | 1,000,000 |
+| warm-start bandit | 0.7311 | 1,000,000 |
+| declared argmax | 0.7270 | 1,000,000 |
+| flat probe argmax (online) | 0.6527 | 1,000,000 |
+| **MIDIAN** | **0.6220** | **120** |
+| sequential halving | 0.6097 | 1 |
+| random | 0.1884 | 0 |
+
+**Calibrated bernoulli, n = 10,000,000 — ONE SEED, 13 rows. A single observation, not an estimate.**
+
+| arm | success | comparisons / task |
+|---|---|---|
+| oracle | 0.870 | 0 |
+| cnp self-bid | 0.772 | 10,000,000 |
+| declared argmax | 0.744 | 10,000,000 |
+| MIDIAN-A / MIDIAN-VA | 0.705 | 143 / **74** |
+| MIDIAN | 0.701 | 140 |
+| MIDIAN-V | 0.697 | 71 |
+| random | 0.401 | 0 |
+| **flat probe argmax** | **0.386** | 10,000,000 |
+| **flat NSW router** | **0.380** | 50 |
+
+**Two findings, one of which cuts against the headline.**
+
+1. **The flat scans fall BELOW random at 10^7** — 0.386 and 0.380 against random's 0.401, down from 0.718 at 10^5.
+   Scanning every declaration stops working when there are ten million of them: the argmax is drawn from an ever-larger
+   tail of over-claimers. MIDIAN holds 0.70 at 74-143 comparisons per task. This is the strongest scaling result in the
+   programme and it rests on ONE SEED.
+2. **MIDIAN is NOT the success leader at these scales.** `declared_argmax` beats it at every replay scale (0.727 vs
+   0.622 at 10^6) and on bernoulli at 10^6 (0.761 vs 0.676) and 10^7 (0.744 vs 0.701). The defence is cost, not
+   accuracy: MIDIAN trades 0.06-0.10 success for ~10^4x fewer comparisons per task (120 against 1,000,000). That is a
+   real trade and a DIFFERENT claim from the one the n <= 10^5 tables make.
+   **Caveat that likely explains it:** both grids are beta = 0.25 with RANDOM liars, the regime in which reading
+   declarations is nearly safe. At every smaller n the declared arms collapse under the low-skill cartel (Table 2;
+   declared_argmax 0.578 at live 10^5). So this is probably a regime artifact rather than an inversion — but it CANNOT
+   be asserted without cartel cells at 10^6, which do not exist. Until they do, no claim that MIDIAN dominates on
+   success at 10^6-10^7 is supportable.
+
 ### II.5 Robustness axes
 
 **Liars (FINAL, Tables 2–4).** The collusion regime is what MIDIAN-A / VA exist for.
