@@ -18,15 +18,15 @@ call = lambda model, tok: P[model] * (A * tok[0] + B * tok[1])                  
 probe_cost = {d: sum(w * call(m, PROBE_TOK[m]) for m, w in mix.items()) for d, mix in MIX.items()}   # expected GPU-s per probe / per task execution
 SUP = call("Qwen/Qwen2.5-7B-Instruct", SUP_TOK)
 
-def rows(*grids):
-    """Per-method means over the n=1000 self-described cells, read through rte.analyze.load so legacy rows get MIDIAN's
+def rows(*grids, n=1000):
+    """Per-method means over the self-described cells at `n`, read through rte.analyze.load so legacy rows get MIDIAN's
     observe-time recompute charged (commit 3415f03: r comparisons + 1 message per level per task)."""
     from rte.analyze import load
-    df = load(list(grids)); df = df[(df.declared_source == "self_described") & (df.n == 1000)]; df["m"] = df.method + df.params.str.replace("{}", "")
+    df = load(list(grids)); df = df[(df.declared_source == "self_described") & (df.n == n)]; df["m"] = df.method + df.params.str.replace("{}", "")
     return df.groupby("m")[["build_probes", "probes_per_task", "tasks_per_task", "wall_clock_per_task", "build_messages", "messages_per_task", "build_comparisons", "comparisons_per_task", "hops_per_task"]].mean()
 
-def table(dist="specialist", watts=700):
-    c = rows("live_f1_n1000", "variants_f1", "fw_live_n1000"); base = c.loc["fw_autogen", "wall_clock_per_task"]
+def table(dist="specialist", watts=700, grids=("live_f1_n1000", "variants_f1", "fw_live_n1000"), n=1000):
+    c = rows(*grids, n=n); base = c.loc["fw_autogen", "wall_clock_per_task"]
     skip = ("oracle", "random", "gossip_reputation_greedy", "referral_network", "thompson_per_family", "ucb_per_family", "trueskill_per_family", "midian_llm_descent",
             "cluster_head_router", "cnp_self_bid", "declared_softmax", "disrouter_cascade", "route_to_k_majority")
     out = []

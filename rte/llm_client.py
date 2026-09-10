@@ -210,8 +210,12 @@ def complete(model: str, messages: Sequence[dict], max_tokens: int = 512,
     return complete_batch(model, [messages], [cache_key] if cache_key else None, max_tokens, 1)[0]
 
 
+CONCURRENCY = int(os.environ.get("RTE_CONCURRENCY", 64))   # in-flight requests per batch; raise it for a
+                                                            # dedicated warm-up job that has the fleet to itself
+
+
 def complete_batch(model: str, batch: Sequence[Sequence[dict]], keys: Sequence[str] | None = None,
-                   max_tokens: int = 512, concurrency: int = 64) -> list[str]:
+                   max_tokens: int = 512, concurrency: int | None = None) -> list[str]:
     """Fan out over a thread pool — vLLM batches server-side. Results follow `batch` order.
 
     Deduplicates WITHIN the batch as well as against the memo: agents that share a prompt
@@ -236,7 +240,7 @@ def complete_batch(model: str, batch: Sequence[Sequence[dict]], keys: Sequence[s
     _bump("hits", sum(1 for k in keys if k not in todo))
     _bump("misses", len(todo))                    # misses == unique generations, not positions
     if todo:
-        with ThreadPoolExecutor(max_workers=max(1, min(concurrency, len(todo)))) as ex:
+        with ThreadPoolExecutor(max_workers=max(1, min(concurrency or CONCURRENCY, len(todo)))) as ex:
             texts = list(ex.map(lambda i: _generate(model, batch[i], max_tokens), todo.values()))
         rows = list(zip(todo, texts))
         answer.update(rows)
