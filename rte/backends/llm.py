@@ -21,6 +21,7 @@ from pathlib import Path
 
 import numpy as np
 
+from .. import llm_client                      # module-level: __init__ reads llm_client.CONCURRENCY (methods re-import lazily; harmless)
 from ..stable_hash import stable_seed_32
 from . import families, prompts, tools
 from .population import bands, draw_profiles, ladder, signature
