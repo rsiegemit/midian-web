@@ -186,6 +186,23 @@ grids:
       - {n: [100000], b: [1, 3], seeds: "1-5"}      # same n, both budgets: isolates b
       - {n: [1000000], b: [3], seeds: "1-2"}        # the v5 rung at b=3: does VA recover?
 
+  bernoulli_b_sweep:                # The probe-budget axis (2026-09-11): b in {1, 2, 3, 5, 10} at n = 10^3..10^5, five liar
+                                    # regimes, every scale arm EXCEPT MIDIAN-SH/SHA (their halving schedule is unfundable at
+                                    # small b and they are not the question). Motivated by bernoulli_b_probe: at b=1
+                                    # verification gets zero probes (V == plain, VA == A), so the sweep should show V/VA
+                                    # switching on at b=2 and every probe arm improving with b while declaration arms stay flat.
+    K: [16]
+    dist: [specialist]
+    b: [1, 2, 3, 5, 10]
+    methods: *scale_arms
+    exclude: [midian_sh, midian_sha]
+    backend_kwargs: {calibrate_from: $RTE_DATA/populations/specialist_n1000_K16_seed1/S.npy}
+    blocks:
+      - {n: [1000, 10000], seeds: "1-1000", beta: [0], liar_select: [random]}
+      - {n: [1000, 10000], seeds: "1-1000", beta: [0.25, 0.5], liar_select: [random, low_skill_first]}
+      - {n: [100000], seeds: "1-200", beta: [0], liar_select: [random]}
+      - {n: [100000], seeds: "1-200", beta: [0.25, 0.5], liar_select: [random, low_skill_first]}
+
   # ---- v5 many-seed scale sweeps (2026-09-10). SEPARATE grids, not edits to the two above: the published cost
   # exponents (MIDIAN n^0.112 [0.106, 0.118], flat n^1.000) are fits over exactly those rows, and adding cells would
   # silently move a quoted number. These add (a) the full arm set, (b) 20 seeds instead of 3, and (c) the LIAR axis --
