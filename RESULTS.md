@@ -188,7 +188,12 @@ and is section II.4c below.
 ### II.4c Live n = 100,000 — post-hoc, POST-DEADLINE (grid `live_n100k`; specialist, Q = 300, 3 seeds)
 
 The same decade on the LIVE llm backend, so the ten frameworks have an arm and the declarations are self-described.
-25 of 27 arms complete (450 / 486 rows); `sequential_halving` and `knn_router[online]` outstanding. Means over 3 seeds,
+26 of 27 arms complete (468 / 486 rows). **`sequential_halving` is ABSENT at this scale, and the reason is a result in
+itself:** its adaptive probe schedule reaches instance indices past b = 3 that the stage-1 warm-up never generated, so
+where every other arm does 4.8M memo lookups it needs ~4.8M LIVE generations per unit. A dedicated 24 h warm-up job per
+seed (2026-09-10/11, fleet to itself) produced 457k generations and did not complete a single unit before its walltime.
+Every arm in this table is one whose probe stream is index-seeded and therefore cacheable; halving's is not, and at 10^5
+that is the difference between 2 h and infeasible. Means over 3 seeds,
 95% seed-bootstrap CI. **This is the largest live pool in the programme; RouterEval cannot reach it** — its ceiling is
 the 5,000 real leaderboard LLMs.
 
