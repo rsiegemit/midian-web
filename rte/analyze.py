@@ -139,13 +139,15 @@ def fit(n, y, seeds, B=500, seed=7):
 def exponents(df, metrics):
     """Fitted cost/n exponents per (metric, label), plus rows flagging identically-zero costs."""
     out = []
-    for metric in [m for m in metrics if m in df.columns]:
-        for lab, g in df.groupby("label"):
+    keys = ["label", "b"] if "b" in df.columns and df.b.nunique() > 1 else ["label"]   # never fit ACROSS budgets: probe
+    for metric in [m for m in metrics if m in df.columns]:                              # counts are n*K*b, so a rung at
+        for key, g in df.groupby(keys):                                                 # another b bends the n-slope
+            lab, b = (key if len(keys) == 2 else (key, None))
             zero = not (g[metric] > 0).any()
             f = (0.0, 0.0, 0.0) if zero else (fit(g.n, g[metric], g.seed) or (None,))
             if f[0] is not None: out.append(
-                {"metric": metric, "label": lab, "exponent": f[0], "exp_lo": f[1], "exp_hi": f[2],
-                 "note": "identically zero at every n" if zero else f"{g.n.nunique()} values of n"})
+                {"metric": metric, "label": lab, **({"b": int(b)} if b is not None else {}), "exponent": f[0], "exp_lo": f[1],
+                 "exp_hi": f[2], "note": "identically zero at every n" if zero else f"{g.n.nunique()} values of n" + (f" at b={int(b)}" if b is not None else "")})
     return pd.DataFrame(out)
 
 # ------------------------------------------------------------------ plotting (one generic helper)
