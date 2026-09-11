@@ -270,7 +270,7 @@ def _t2(df, fits):
         parts.append(f"midian[online=False] - {FLAT} = {float((d['midian[online=False]'] - d[FLAT]).mean()):+.4f} "
                      f"(the max-tree alone, both frozen after build)")
     f = fits[fits.metric == "comparisons_per_task"] if not fits.empty else pd.DataFrame()
-    if "b" in f.columns and not f.empty: f = f[f.b == f.b.mode()[0]]     # one fit per label: the grid's main budget
+    if "b" in f.columns and not f.empty: f = f[f.b == f.b.mode().max()]   # one fit per label: the main budget (ties -> largest b)
     f = f.set_index("label") if not f.empty else f
     if {REF, FLAT} <= set(f.index):
         m, s = f.loc[REF], f.loc[FLAT]
