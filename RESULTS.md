@@ -276,6 +276,9 @@ argmax, CNP, verify-on-claim, oracle and random move by exactly 0.000, and VA - 
 values at 10^5 match the 10^6 / 10^7 columns to within 0.01. So "declared argmax beats MIDIAN at 10^6-10^7" and "flat
 collapses at 10^7" in the tables below are budget artefacts, not scale effects. The rungs are being rerun at b = 3
 (bernoulli_scale_v5, replay_scale_v5); until they land, the two findings below are WITHDRAWN as scale claims.
+A first b = 3 control at n = 10^6 (2 seeds, cartel) already shows the recovery: **MIDIAN-VA 0.797 ± 0.013** (b = 1 column:
+0.672), MIDIAN-A 0.742, flat-online 0.778, declared argmax 0.722 (unchanged), oracle 0.842. VA at 10^6 with the same
+budget as the rungs below is where 10^5 left it, 0.075 above declared argmax.
 
 **Two findings as originally written — read with the correction above.**
 
