@@ -266,7 +266,18 @@ mild regime. Neither has a low-skill-cartel cell, which matters for reading the 
 | **flat probe argmax** | **0.386** | 10,000,000 |
 | **flat NSW router** | **0.380** | 50 |
 
-**Two findings, one of which cuts against the headline.**
+**CORRECTION (2026-09-11): the 10^6 and 10^7 rungs of BOTH grids run b = 1 — one probe per (agent, family) — where
+every rung below runs b = 3, and at b = 1 MIDIAN's verification is unfunded** (`midian.py`: b0 = max(1, min(b, b-1)) = 1,
+so e = (b - b0) n / C = 0). MIDIAN-V is therefore plain MIDIAN and MIDIAN-VA is MIDIAN-A in those columns — identical
+to three decimals across 100-200 seeds — and neither V nor VA is measured there at all. A control at n = 10^5 with
+b = 1 and b = 3 on the SAME cells (grid `bernoulli_b_probe`, cartel, 5 seeds) reproduces the whole "drop" without
+changing n: VA 0.796 -> 0.679, A 0.770 -> 0.679, plain 0.715 -> 0.622, flat-online 0.778 -> 0.671, while declared
+argmax, CNP, verify-on-claim, oracle and random move by exactly 0.000, and VA - A = V - plain = 0.0000 at b = 1. The b = 1
+values at 10^5 match the 10^6 / 10^7 columns to within 0.01. So "declared argmax beats MIDIAN at 10^6-10^7" and "flat
+collapses at 10^7" in the tables below are budget artefacts, not scale effects. The rungs are being rerun at b = 3
+(bernoulli_scale_v5, replay_scale_v5); until they land, the two findings below are WITHDRAWN as scale claims.
+
+**Two findings as originally written — read with the correction above.**
 
 1. **The flat scans fall BELOW random at 10^7** — 0.386 and 0.380 against random's 0.401, down from 0.718 at 10^5.
    Scanning every declaration stops working when there are ten million of them: the argmax is drawn from an ever-larger

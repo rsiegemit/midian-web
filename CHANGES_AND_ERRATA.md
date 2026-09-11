@@ -202,6 +202,14 @@ shape are what the figures support.
     beta = 0.5 cells with randomly chosen liars are a separate, milder world. Pooling the two roughly halves every
     cartel effect (MIDIAN block at b = 10 reads −0.028 pooled against the correct −0.054). Now stated in the doc.
 
+22. **II.4d (2026-09-10) and the first v5 matrices: "declared argmax beats MIDIAN at 10^6-10^7" and "flat collapses at
+    10^7" were presented as scale effects. They are BUDGET artefacts.** Those rungs run b = 1 (inherited from
+    bernoulli_scale), every rung below runs b = 3, and at b = 1 verification gets zero probes, so the V and VA columns
+    there are plain MIDIAN and MIDIAN-A under other names (identical to three decimals). A same-n control at 10^5
+    (`bernoulli_b_probe`) reproduces the entire drop by changing b alone: VA 0.796 -> 0.679, flat 0.778 -> 0.671,
+    declaration arms 0.000. Withdrawn as scale claims; the rungs are rerunning at b = 3. The reader who caught it was
+    right: MIDIAN-VA had not "collapsed", it had been switched off.
+
 ---
 
 ## 5. New experiments since the v2 draft (2026-09-03 19:05), one line each
