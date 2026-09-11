@@ -30,12 +30,15 @@ def main():
     d = f"{RTE_DATA}/results/{a.grid}"
     df = prepare(pd.read_csv(f"{d}/rows.csv", low_memory=False))
     if a.dist: df = df[df.dist == a.dist]
-    ns = sorted(df.n.unique()); out = []
+    multi_b = df.b.nunique() > 1                                    # top rungs carry b=1 (control) and b=3
+    df["col"] = [f"{n:,}" + (f" (b={b})" if multi_b else "") for n, b in zip(df.n, df.b)]
+    ns = [c for _, c in sorted({(n, b, c) for n, b, c in zip(df.n, df.b, df.col)}, key=lambda t: (t[0], t[1]))]
+    ns = list(dict.fromkeys(ns)); out = []
     print(f"# {a.grid}: {a.metric}, mean [95% seed-bootstrap CI]; seeds per cell in the last column\n")
     for title, beta, ls in regimes(df):
         q = df[np.isclose(df.beta, beta) & (df.liar_select == ls)]
         piv = {}
-        for (lab, n), g in q.groupby(["label", "n"]):
+        for (lab, n), g in q.groupby(["label", "col"]):
             s = g.set_index(["dist", "seed"])[a.metric].dropna() if "dist" in g else g.set_index("seed")[a.metric].dropna()
             per_seed = s.groupby(level="seed").mean()                      # one value per seed (shapes averaged)
             lo, hi = ci(s)
@@ -44,12 +47,12 @@ def main():
                       std_unit=s.std(ddof=1), min=s.min(), max=s.max(),               # spread over every (shape, seed) unit
                       sem=per_seed.std(ddof=1) / np.sqrt(per_seed.size))
             piv[(lab, n)] = st
-            out.append(dict(regime=title, beta=beta, liar_select=ls, label=lab, n=n, metric=a.metric, **st))
+            out.append(dict(regime=title, beta=beta, liar_select=ls, label=lab, n=n, b=int(g.b.iloc[0]), metric=a.metric, **st))
         key_n = ns[-1] if any((l, ns[-1]) in piv for l, _ in piv) else ns[0]
         labs = sorted({l for l, _ in piv}, key=lambda l: -piv.get((l, key_n), piv.get((l, ns[0]), {"mean": 0}))["mean"])
         print(f"\n## {title}\n")
         print("cell = mean ± std over seeds [95% CI] (seeds)  — std is across per-seed means; CSV also has var, unit-level std, min, max, sem\n")
-        print("| arm | " + " | ".join(f"n={n:,}" for n in ns) + " |")
+        print("| arm | " + " | ".join(f"n={n}" for n in ns) + " |")
         print("|---|" + "---|" * len(ns))
         for l in labs:
             cells = []
