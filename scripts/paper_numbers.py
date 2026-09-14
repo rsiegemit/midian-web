@@ -169,6 +169,30 @@ def v4_cohort_deltas():
                         if lab in w: paired(f"{tag}_{mode}", w, lab, base, where, "paired by cell × seed against cohort=random")
 v4_cohort_deltas()
 
+# ------------------------------------------------------------------------------------------------ (v5) scale and budget sweeps
+# Read from the per-grid artefacts (matrix_success.csv from scripts/scale_matrix.py, cost_exponents.csv from rte.analyze),
+# NOT through rows(): these grids hold 1.2-2.2 M rows each and the login node's memory cgroup kills the frame.
+def v5_sweeps():
+    """v5.<grid>.<label>_n<n>_b<b>_<regime> = success mean/CI/seeds; v5.<grid>.exp_<metric>_<label>_b<b> = cost exponent."""
+    reg = {("0.0", "random"): "beta0", ("0.25", "random"): "beta025_random", ("0.25", "low_skill_first"): "beta025_cartel",
+           ("0.5", "random"): "beta05_random", ("0.5", "low_skill_first"): "cartel"}
+    for g in ("bernoulli_scale_v5", "replay_scale_v5", "bernoulli_b_sweep"):
+        m = f"{R}/{g}/matrix_success.csv"
+        if os.path.exists(m):
+            for _, r in pd.read_csv(m).iterrows():
+                if r.get("metric", "success") != "success": continue
+                key = f"v5.{g}.{r.label}_n{int(r.n)}_b{int(r.b)}_{reg.get((f'{float(r.beta):g}', r.liar_select), 'other')}"
+                N[key] = dict(value=round(float(r["mean"]), 4), grid=g, units=int(r.units), ci=[round(float(r.ci_lo), 4), round(float(r.ci_hi), 4)],
+                              note=f"{int(r.seeds)} seeds; std over seeds {float(r.std_seed):.4f}")
+        e = f"{R}/{g}/cost_exponents.csv"
+        if os.path.exists(e):
+            for _, r in pd.read_csv(e).iterrows():
+                b = int(r.b) if "b" in r and pd.notna(r.get("b")) else 0
+                if r.metric in ("comparisons_per_task", "messages_per_task", "build_probes", "hops_per_task"):
+                    N[f"v5.{g}.exp_{r.metric}_{r.label}_b{b}"] = dict(value=round(float(r.exponent), 4), grid=g, units=None,
+                                                                    ci=[round(float(r.exp_lo), 4), round(float(r.exp_hi), 4)], note=str(r.note))
+v5_sweeps()
+
 # ------------------------------------------------------------------------------------------------ appendix source tables
 def table(key, df, labels, by, grid, **f):
     w = W(df, labels, **f); N[key] = dict(value={l: {str(k): round(float(v), 4) for k, v in w[l].groupby(level=by).mean().items()} for l in labels if l in w}, grid=grid, units=int(len(w)), ci=None)
@@ -187,4 +211,5 @@ bud = rows("budget_sweep"); N["D.budget_sweep_by_b"] = dict(value={l: {str(k): r
 
 os.makedirs(os.path.dirname(OUT), exist_ok=True); json.dump(N, open(OUT, "w"), indent=1, ensure_ascii=False); print(f"{len(N)} entries -> {OUT}")
 for k, v in N.items():
+    if k.startswith("v5.") and "exp_" not in k: continue                     # 6,000+ cells; in the JSON, not on stdout
     if not k[:2] in ("T2", "T3", "T5", "T7", "T8", "D.") and not isinstance(v["value"], list) or k.startswith("a.paired_framework") or k.startswith("a.frameworks"): print(f"{k:60s} {v['value']}  ci={v.get('ci')}  [{v['grid']}]" + (f"  {v['note']}" if v.get("note") else ""))
