@@ -193,7 +193,7 @@ grids:
                                     # switching on at b=2 and every probe arm improving with b while declaration arms stay flat.
     K: [16]
     dist: [specialist]
-    b: [1, 2, 3, 5, 10]
+    b: [1, 2, 3, 5, 10, 20, 30]     # 20, 30 added 2026-09-14 (same cells/seeds; VA was still climbing at b=10)
     methods: *scale_arms
     exclude: [midian_sh, midian_sha]
     backend_kwargs: {calibrate_from: $RTE_DATA/populations/specialist_n1000_K16_seed1/S.npy}
