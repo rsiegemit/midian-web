@@ -51,10 +51,15 @@ class FrameworkMethod(Method):
     worker: str = ""
 
     def __init__(self, k: int = 10, supervisor: str = SUPERVISOR, base_url: str | None = None,
-                 retrieval: str = "tfidf", r: int = 10, **params):
+                 retrieval: str = "tfidf", r: int = 10, dedup: bool = False, **params):
         super().__init__(k=k, supervisor=supervisor, retrieval=retrieval, r=r, **params)
         self.k, self.supervisor, self._base_url = int(k), supervisor, base_url
         self.retrieval, self.r = retrieval, int(r)
+        # dedup (2026-09-14, labeled variant): rank DISTINCT description texts and offer one agent per text (the lowest
+        # id). Agents sharing a prompt signature share a memoized self-description AND memoized answers, so the plain
+        # top-k fills with clones once the population exceeds the number of distinct prompts (~3,900 specialist, 5
+        # heavy_tail, 2 bimodal) and the framework's pick stops mattering. See CHANGES_AND_ERRATA.
+        self.dedup = bool(dedup)
         if retrieval in ("midian", "midian_va"):             # verified shortlist: MIDIAN-V's (or MIDIAN-VA's) leaf cohort (k = r)
             self.needs = self.needs | {"probe", "reports"}
         self.stats = {"picks": 0, "fallbacks": 0, "failures": 0, "bad_name": 0, "success_strict": 0.0, "fallback_rate": 0.0}
@@ -83,6 +88,9 @@ class FrameworkMethod(Method):
         self._name2id = {nm: a for a, nm in enumerate(self.names)}
         X = _hash_tfidf(self.desc + self.fdesc)
         self._Xa, self._Xf = X[:view.n], X[view.n:]
+        first = {}
+        for a, t in enumerate(self.desc): first.setdefault(t, a)
+        self._pool = np.array(sorted(first.values()), dtype=np.int64)   # lowest id per distinct description (dedup)
         self.bridge = Bridge(self.env, self.worker)
         self.base_url = self._base_url or _endpoint(self.supervisor)
         view.ledger.message(view.n)                         # every agent sends its description to the registry once
@@ -96,6 +104,8 @@ class FrameworkMethod(Method):
             coh = self.mid.leaves[self.mid.leaf_of[a]]
             return np.concatenate([[a], coh[(coh >= 0) & (coh != a)]])
         sims = self._Xa @ self._Xf[task.family]
+        if self.dedup:                                       # one representative per distinct description text
+            return self._pool[np.argsort(-sims[self._pool], kind="stable")[:min(self.k, len(self._pool))]]
         k = min(self.k, self.view.n)
         return np.argsort(-sims, kind="stable")[:k]
 

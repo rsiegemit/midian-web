@@ -580,3 +580,35 @@ grids:
       - {name: knn_router, params: {online: true}}
       - mlp_router
       - random
+
+  # ---- 2026-09-14: DEDUPLICATED framework shortlist (labeled variant `dedup: true`; CHANGES_AND_ERRATA #25). The
+  # pre-registered adapter ranks agents by TF-IDF over self-descriptions, but agents sharing a prompt signature share a
+  # memoized description AND memoized answers, so its top-k fills with clones once n exceeds the number of distinct
+  # prompts (~3,900 specialist; 5 heavy_tail; 2 bimodal at ANY n) and the framework's pick stops mattering. `dedup`
+  # ranks distinct description texts and offers one agent per text. Every grid below MIRRORS its pre-registered source
+  # cell for cell; separate grid => separate results dir and rids, so old and new rows are never mixed. Verified-shortlist
+  # grids (retrieval: midian) and the RouterEval framework grids (all descriptions unique) are unaffected and not rerun.
+  fw_live_n1000_dd:
+    mirror_of: fw_live_n1000
+    methods: [&fw10_dd [{name: fw_langgraph, params: {dedup: true}}, {name: fw_crewai, params: {dedup: true}},
+                        {name: fw_autogen, params: {dedup: true}}, {name: fw_magentic_one, params: {dedup: true}},
+                        {name: fw_maf, params: {dedup: true}}, {name: fw_openai_agents, params: {dedup: true}},
+                        {name: fw_google_adk, params: {dedup: true}}, {name: fw_llamaindex, params: {dedup: true}},
+                        {name: fw_smolagents, params: {dedup: true}}, {name: fw_camel_workforce, params: {dedup: true}}],
+              &fw14b_dd {name: fw_magentic_one, params: {dedup: true, supervisor: Qwen/Qwen2.5-14B-Instruct}}]
+  fw_live_n100_dd:          {mirror_of: fw_live_n100,          methods: [*fw10_dd, *fw14b_dd]}
+  fw_live_n1000_lowskill_dd: {mirror_of: fw_live_n1000_lowskill, methods: [*fw10_dd, *fw14b_dd]}
+  fw_live_n100_lowskill_dd:  {mirror_of: fw_live_n100_lowskill,  methods: [*fw10_dd, *fw14b_dd]}
+  fw_live_n10k_dd:          {mirror_of: live_n10k_v2,          methods: *fw10_dd}      # the ten framework arms of live_n10k_v2
+  fw_live_n100k_dd:         {mirror_of: live_n100k,            methods: *fw10_dd}      # the ten framework arms of live_n100k (the WITHHELD row)
+  fw_live_n10k_cartel_dd:   {mirror_of: fw_live_n10k_cartel,   methods: [{name: fw_langgraph, params: {dedup: true}}, {name: fw_crewai, params: {dedup: true}},
+                                                                          {name: fw_autogen, params: {dedup: true}}, {name: fw_maf, params: {dedup: true}},
+                                                                          {name: fw_openai_agents, params: {dedup: true}}, {name: fw_google_adk, params: {dedup: true}},
+                                                                          {name: fw_llamaindex, params: {dedup: true}}, {name: fw_smolagents, params: {dedup: true}},
+                                                                          {name: fw_camel_workforce, params: {dedup: true}}]}
+  fw_k_sensitivity_dd:      {mirror_of: fw_k_sensitivity,
+                             methods: [{name: fw_langgraph, params: {k: 5, dedup: true}}, {name: fw_langgraph, params: {k: 10, dedup: true}}, {name: fw_langgraph, params: {k: 20, dedup: true}},
+                                       {name: fw_autogen,   params: {k: 5, dedup: true}}, {name: fw_autogen,   params: {k: 10, dedup: true}}, {name: fw_autogen,   params: {k: 20, dedup: true}}]}
+  fw_appendix_dd:           {mirror_of: fw_appendix,           methods: [{name: fw_agentscope, params: {dedup: true}}]}
+  budget_b10_fw_dd:         {mirror_of: budget_b10_shapes,     methods: [{name: fw_langgraph, params: {dedup: true}}, {name: fw_autogen, params: {dedup: true}}]}
+  churn_n1000_fw_dd:        {mirror_of: churn_n1000,           methods: [{name: fw_langgraph, params: {dedup: true}}, {name: fw_autogen, params: {dedup: true}}]}
