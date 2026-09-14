@@ -250,13 +250,19 @@ shape are what the figures support.
     rows never share a directory or a row id. Until they land, the headline framework numbers are the pre-registered
     adapter's and carry this caveat.
 
+26. **The trusted-observer `sequential_halving` arm is withdrawn from every table and sentence (2026-09-14).** It was
+    quoted in III (RouterEval 1k/5k: 0.608 / 0.882, "trusted halving − oracle −0.020"), in README's summary paragraph and,
+    for a few hours, in II.4e / II.4f. Its tournament is scored by a trusted observer the setting never provides; only
+    the peer-reported variant is a legitimate rival. The rows stay in the raw grids; `scale_matrix.py` and
+    `paper_numbers.py` drop the label, and NUMBERS.json is regenerated without its 194 entries.
+
 ---
 
 ## 5. New experiments since the v2 draft (2026-09-03 19:05), one line each
 
 | part | what | result |
 |---|---|---|
-| b20/30 | `bernoulli_b_sweep` extended to b = 20, 30 (same cells/seeds, 2026-09-14) | VA plateaus 0.005 under the oracle from b = 20; trusted scans reach VA at b = 30 (0.838); plain MIDIAN / A / V fall above b = 10 under the cartel (A 0.777 -> 0.689, liar-misroute 0.15 -> 0.40); per-task cost flat in b |
+| b20/30 | `bernoulli_b_sweep` extended to b = 20, 30 (same cells/seeds, 2026-09-14) | VA plateaus 0.005 under the oracle from b = 20; the O(n) own-probe scans reach VA at b = 30 (0.838); plain MIDIAN / A / V fall above b = 10 under the cartel (A 0.777 -> 0.689, liar-misroute 0.15 -> 0.40); per-task cost flat in b |
 | A | RouterBench on its own protocol (11 models, AIQ) | probe table b = 50 AIQ 0.707 vs their KNN 0.713 with 7× fewer labels ($30 vs $229); T3-1 MISS by 0.006, T3-2 HIT |
 | B | RouteLLM's released bert router on RouterBench outcomes, their APGR / CPT | bert APGR 0.48 < random 0.51; probe table 0.59; their own harness rerun for their routers (ours NOT RUN inside it, T3-5) |
 | C | their KNN / MLP routers as methods in our benchmark, n = 100 / 1k / 10k | KNN = flat frozen exactly; MLP +0.03–0.06 over KNN, below MIDIAN-VA at every β and n; at 10k VA − KNN +0.11…+0.13 |

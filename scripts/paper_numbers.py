@@ -180,6 +180,7 @@ def v5_sweeps():
         m = f"{R}/{g}/matrix_success.csv"
         if os.path.exists(m):
             for _, r in pd.read_csv(m).iterrows():
+                if r.label == "sequential_halving": continue    # trusted-observer halving: never reported (erratum 26)
                 if r.get("metric", "success") != "success": continue
                 key = f"v5.{g}.{r.label}_n{int(r.n)}_b{int(r.b)}_{reg.get((f'{float(r.beta):g}', r.liar_select), 'other')}"
                 N[key] = dict(value=round(float(r["mean"]), 4), grid=g, units=int(r.units), ci=[round(float(r.ci_lo), 4), round(float(r.ci_hi), 4)],

@@ -43,7 +43,7 @@ skill shapes: **specialist** (every agent is good at 3 families), **heavy_tail**
 |---|---|
 | **MIDIAN family** | plain MIDIAN (cohorts of r = 10 build a max-tree by probing; trimmed peer reports; a route descends ⌈log_r n⌉ levels); **V** verified promotion + cached root pick; **A** 5% instance audits, two strikes exclude a reporter; **VA** both; SH in-cohort successive halving; SH+A; stratified cohorts; r = 5 / 20. Plain MIDIAN's parameters never changed; every mechanism is a labelled variant. |
 | **Agent frameworks (10)** | AutoGen, LangGraph, CrewAI, Magentic-One (7B and 14B supervisor), Microsoft Agent Framework, OpenAI Agents SDK, Google ADK, LlamaIndex, smolagents, CAMEL workforce — each as a supervisor choosing from a TF-IDF top-10 shortlist of self-descriptions; strict accounting (`success_strict`, `fallback_rate`). |
-| **Self-contained rivals (18)** | flat probe argmax (frozen / online), sequential halving (trusted observer / peer-reported), warm-start bandit, UCB, Thompson, LinUCB-honest, declared argmax / softmax, verify-on-claim, gossip reputation, referral network, NSW router, cluster-head router, CNP bidding, route-to-k majority, cascade, LLM supervisor over the whole roster. |
+| **Self-contained rivals (18)** | flat probe argmax (frozen / online), sequential halving (peer-reported), warm-start bandit, UCB, Thompson, LinUCB-honest, declared argmax / softmax, verify-on-claim, gossip reputation, referral network, NSW router, cluster-head router, CNP bidding, route-to-k majority, cascade, LLM supervisor over the whole roster. |
 | **Published routers as methods** | RouterBench's KNN and MLP predictive routers on MIDIAN's probe budget (`knn_router`, `mlp_router`). |
 | **External benchmarks / routers (Part III)** | RouterBench, RouteLLM (released BERT router, own harness), RouterEval (pools of 10 / 100 / 1,000 real LLMs; all 5,000 leaderboard LLMs), Avengers (AAAI 2026), EmbedLLM (ICLR 2025), GraphRouter (ICLR 2025, authors' library). |
 
@@ -316,7 +316,7 @@ what the b = 1 rungs of the old grids show; do not cite them.
 
 Both old scale grids ran 3 seeds, 13 arms, beta = 0.25 with random liars only, and b = 1 above 10^5. The v5 sweeps
 supersede them: **every scale arm** (MIDIAN plain / r5 / V / V-r5 / A / VA / SH / SHA; flat frozen and online; NSW; declared
-argmax and softmax; UCB, Thompson, warm-start bandit; trusted and peer halving; CNP; cluster-head; route-to-k;
+argmax and softmax; UCB, Thompson, warm-start bandit; peer halving; CNP; cluster-head; route-to-k;
 verify-on-claim; random; oracle), **five liar regimes** (beta = 0; beta = 0.25 and 0.5 each with random and low-skill-first
 liars), **b = 3 at every rung**, and **1000 seeds** at n <= 10^4, 500 (bernoulli) / 200 (replay) at 10^5, 200 / 100 at
 10^6, 100 at 10^7 (bernoulli only; replay's backend tops out at 10^6). 2.16 M rows on bernoulli, 1.58 M on replay.
@@ -329,7 +329,6 @@ means; full matrices with CIs: `results/<grid>/matrix_success.{md,csv}` (`script
 | arm | 10 | 10² | 10³ | 10⁴ | 10⁵ | 10⁶ | 10⁷ |
 |---|---|---|---|---|---|---|---|
 | oracle | 0.728 ± 0.042 | 0.839 | 0.845 | 0.845 | 0.845 | 0.845 | 0.846 ± 0.011 |
-| sequential halving (trusted, own probes) | 0.642 ± 0.053 | 0.800 | 0.840 | 0.845 | 0.846 | 0.845 | 0.846 ± 0.012 |
 | sequential halving (peer-reported) | 0.466 ± 0.086 | 0.547 | 0.610 | 0.667 | 0.690 | 0.700 | 0.708 ± 0.017 |
 | MIDIAN-SHA | 0.675 ± 0.048 | 0.770 | 0.767 | 0.750 | 0.747 | 0.748 | 0.750 ± 0.018 |
 | MIDIAN-SH | 0.624 ± 0.063 | 0.590 | 0.570 | 0.571 | 0.570 | 0.572 | 0.575 ± 0.051 |
@@ -341,12 +340,10 @@ means; full matrices with CIs: `results/<grid>/matrix_success.{md,csv}` (`script
 | MIDIAN-V | 0.635 | 0.685 ± 0.071 | 0.689 | 0.678 | 0.670 | 0.665 | 0.670 |
 | random | 0.419 | 0.418 | 0.419 | 0.419 | 0.419 | 0.420 | 0.418 |
 
-Halving rows added 2026-09-14 after the 10^7 b = 3 refill (uint32 fix, 500 units, 100 seeds) landed: **trusted halving
-ties the oracle at every n >= 10^4** (it probes for itself, so no liar touches it; halving − oracle is within 0.002
-from 10^4 up, inside two standard errors; −0.005 at 10^3, −0.039 at 10^2) at the same n·K·b build and one comparison
-per task; **peer-reported halving collapses under the cartel** to 0.708 at 10^7 (0.846 with no liars, 0.842 with
-random liars). MIDIAN-SH / SHA sit below plain MIDIAN / A at every n >= 10^3. What halving cannot do is the subject of II.5 (churn) and II.4c (live scale: its
-adaptive schedule needs uncached generation); on a static population with trusted probes it is the ceiling.
+Peer halving / SH / SHA rows added 2026-09-14 after the 10^7 b = 3 refill (uint32 fix, 500 units, 100 seeds) landed:
+**peer-reported halving collapses under the cartel** to 0.708 at 10^7 (0.846 with no liars, 0.842 with random liars),
+and MIDIAN-SH / SHA sit below plain MIDIAN / A at every n >= 10^3. The `sequential_halving` arm WITHOUT peer reports
+(a trusted observer scoring the tournament) is not reported anywhere: the setting has no trusted observer.
 
 **Replay (RouterBench outcomes), cartel, b = 3, three shapes pooled:**
 
@@ -399,7 +396,6 @@ messages_per_task,hops_per_task}.{md,csv}`.
 | arm | b=1 | b=2 | b=3 | b=5 | b=10 | b=20 | b=30 | |
 |---|---|---|---|---|---|---|---|---|
 | oracle | 0.844 | 0.844 | 0.844 | 0.844 | 0.844 | 0.844 | 0.844 | ± 0.012 |
-| sequential halving (trusted, own probes) | 0.572 | 0.817 | 0.846 | 0.845 | 0.845 | 0.846 | 0.846 | ± 0.012 |
 | **MIDIAN-VA** | 0.673 | 0.725 | **0.789** | **0.818** | **0.834** | **0.839** | 0.837 | ± 0.015 |
 | flat probe argmax (online) | 0.679 | 0.734 | 0.768 | 0.796 | 0.818 | 0.831 | **0.838** | ± 0.011 |
 | warm-start bandit | 0.754 | 0.764 | 0.771 | 0.791 | 0.813 | 0.827 | **0.838** | ± 0.011 |
@@ -426,15 +422,14 @@ messages_per_task,hops_per_task}.{md,csv}`.
   promotions rest on those reports; VA's audits cap the damage, A's 5% audit rate does not keep up. The decline deepens
   with n (A at b = 30: 0.815 at 10^3, 0.732 at 10^4, 0.689 at 10^5), so the 10^3 grids understate it. The exact code
   path (which report-channel weight grows with b) is listed under "still open" in CHANGES_AND_ERRATA; the numbers stand.
-- **VA plateaus 0.005-0.007 under the oracle** (0.839 at b = 20, 0.837 at b = 30) and the trusted-probe scans reach the
+- **VA plateaus 0.005-0.007 under the oracle** (0.839 at b = 20, 0.837 at b = 30) and the O(n) own-probe scans reach the
   same level at b = 30 (flat online 0.838, warm-start bandit 0.838, frozen flat 0.834). At 48M probes a full O(n) scan of
   honest measurements is as accurate as the tree; VA's case from b = 20 up is per-task cost (51 comparisons and 7
   messages against 100,000 comparisons), not accuracy. Below b = 20 VA is the best report-channel arm and beats every
   scan by 0.016-0.021 (b = 3-10).
-- **Trusted sequential halving ties the oracle from b = 3** (0.846 vs 0.844, within two standard errors) at the same
-  n·K·b build and one comparison per task; peer-reported halving collapses to 0.69 under the cartel (99.9% of its routes
-  go to a liar: the cartel wins every peer-scored tournament). At b = 1 halving is flat frozen (0.572 = 0.572): one probe
-  per cell is one probe per cell whoever schedules it.
+- **Peer-reported halving collapses to 0.69 under the cartel at every b >= 2** (99.9% of its routes go to a liar: the
+  cartel wins every peer-scored tournament); more budget does not help it. At b = 1 every halving schedule is flat
+  frozen (0.572 = 0.572): one probe per cell is one probe per cell whoever schedules it.
 - In the honest regime the whole MIDIAN family rises together (VA = V 0.677 -> 0.842 at b = 30, plain = A 0.677 -> 0.837)
   and meets the declaration arms (0.836-0.838) at b = 20-30; audits cost nothing there (VA = V at every b).
 
@@ -567,7 +562,6 @@ n = 5,000: all leaderboard LLMs (3 seeds, Q = 300).*
 | arm | n=1000 β=0 | n=1000 β=.5 low-skill | n=5000 β=0 | n=5000 β=.5 low-skill |
 |---|---|---|---|---|
 | oracle | 0.747 | 0.748 | 0.902 | 0.902 |
-| trusted-observer halving | 0.608 | 0.608 | 0.882 | 0.882 |
 | peer halving | 0.608 | **0.483** | 0.882 | **0.564** |
 | declared argmax (honest, noisy) | 0.710 | 0.470 | 0.864 | 0.614 |
 | warm-start bandit | 0.646 | 0.516 | 0.822 | 0.634 |
@@ -591,8 +585,8 @@ n = 5,000: all leaderboard LLMs (3 seeds, Q = 300).*
   −0.028 [−0.051, −0.004] at β = 0.25, −0.019 at β = 0.5 random, −0.007 at β = 0.5 low-skill) while being immune to
   liars by construction; it does not fit at 5,000 (one-hot over 240k probes) or 10,000 and pays n comparisons per task.
 - Paired at n = 1,000: VA − KNN +0.22 at every β; VA − flat online +0.09…+0.11; MLP − flat online +0.117.
-  At n = 5,000: VA − flat online +0.084 / +0.090 / +0.089; VA − V +0.000 / +0.020 / **+0.168**; trusted halving − oracle
-  −0.020. T3-15 HIT; T3-17 four of six clauses HIT (misses: VA − flat +0.09 vs pre-registered +0.10; LinUCB equals flat
+  At n = 5,000: VA − flat online +0.084 / +0.090 / +0.089; VA − V +0.000 / +0.020 / **+0.168**.
+  T3-15 HIT; T3-17 four of six clauses HIT (misses: VA − flat +0.09 vs pre-registered +0.10; LinUCB equals flat
   frozen rather than falling below random).
 
 ### III.6 GraphRouter (ICLR 2025) through the authors' library — **FINAL**

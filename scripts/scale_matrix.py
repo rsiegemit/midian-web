@@ -39,6 +39,7 @@ def main():
         q = df[np.isclose(df.beta, beta) & (df.liar_select == ls)]
         piv = {}
         for (lab, col), g in q.groupby(["label", "col"]):
+            if lab == "sequential_halving": continue          # trusted-observer halving: never reported (erratum 26)
             n = int(g.n.iloc[0])                                        # numeric n and b go to the CSV; `col` is display only
             s = g.set_index(["dist", "seed"])[a.metric].dropna() if "dist" in g else g.set_index("seed")[a.metric].dropna()
             per_seed = s.groupby(level="seed").mean()                      # one value per seed (shapes averaged)

@@ -235,8 +235,7 @@ Per-grid machine summaries are `$RTE_DATA/results/<grid>/summary.md`. The figure
 
 In one paragraph: the frameworks' only signal is self-description, which overclaims by +0.27 and correlates 0.36 with
 true skill, so they sit at 0.5 regardless of β and fall to 0.4 on specialist populations; handing them MIDIAN's
-verified cohort lifts every one by 0.04–0.12. Among mechanisms that verify, adaptive sequential halving with a trusted
-observer sits on the oracle, and its peer-reported version still beats MIDIAN-V by 0.04 at β ≤ 0.25 in every cell,
+verified cohort lifts every one by 0.04–0.12. Among mechanisms that verify, peer-reported sequential halving beats MIDIAN-V by 0.04 at β ≤ 0.25 in every cell
 but collapses at β = 0.5 with low-skill liars (0.41) where MIDIAN holds 0.60: the tree's per-cohort trimming survives
 poisoned reports that early elimination does not. Adding audits (MIDIAN-A) makes MIDIAN flat in β at 5% more probes
 (+0.07 at β = 0.5, +0.10 with low-skill liars, nothing lost at β ≤ 0.25); adding verification on top (MIDIAN-VA) loses
