@@ -317,8 +317,17 @@ verified-shortlist, VA-shortlist and cartel tables; each grid keeps its own summ
 would average over different n.
 **Operating a run.** `scripts/await_fleet.sh` blocks until every model in `configs/models.yaml` answers `/health`
 (never trust `endpoints.d`: two fleets share bare keys, so cancelling one deregisters the other's models);
-`scripts/run_after.sh <job-prefix> <cmd>` chains a stage on the previous one draining; `scripts/progress.py [grid...]`
-reports memo growth and per-grid row counts.
+`scripts/run_after.sh <job-prefix> <cmd>` chains a stage on the previous one draining (prefer a SLURM
+`--dependency=afterany:<ids>` when the ids are known: login-node pollers die with the session); `scripts/progress.py [grid...]`
+reports memo growth and per-grid row counts, and `scripts/progress.py --merge --prune [--every=N] <grids>` is the ONE
+process allowed to fold `rows.d` into `rows.csv` for a grid that holds `<results>/<grid>/.merge_owner` (every job runs
+with `RTE_CONSOLIDATE=0` there). Rules that each cost a day in September 2026 (details in DEVIATIONS): `run_grid.sbatch`
+defaults to the project env (`$RTE_DATA/env/rte`, the only one with torch/sentence-transformers); above n = 10^5 use
+`RTE_WORKERS=1` with one or two seeds per job (`Pool(fork)` deadlocks on long multi-wave jobs); anything that loads a
+million-row CSV runs as a SLURM job (the login node's memory cgroup kills it); `RTE_CONCURRENCY` raises in-flight
+requests for a warm-up job that has the fleet to itself; `RTE_TIME` sets `launch_live.sh`'s walltime; never run b = 1
+beside b = 3 in one table (verification is unfunded at b = 1). Tables: `scripts/scale_matrix.py <grid>` (every arm x every
+(n, b), one table per liar regime, mean ± std and CI) and `scripts/cohort_table.py` (the v4 cohort modes across pools).
 
 `python scripts/paper_numbers.py` recomputes every number quoted in the write-ups into `paper/NUMBERS.json`
 (value, grid, units, CI per entry); `python scripts/paper_figs.py` redraws the paper figures with a CSV of every
