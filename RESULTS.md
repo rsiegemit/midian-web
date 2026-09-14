@@ -188,12 +188,15 @@ and is section II.4c below.
 ### II.4c Live n = 100,000 — post-hoc, POST-DEADLINE (grid `live_n100k`; specialist, Q = 300, 3 seeds)
 
 The same decade on the LIVE llm backend, so the ten frameworks have an arm and the declarations are self-described.
-26 of 27 arms complete (468 / 486 rows). **`sequential_halving` is ABSENT at this scale, and the reason is a result in
-itself:** its adaptive probe schedule reaches instance indices past b = 3 that the stage-1 warm-up never generated, so
+26 of 27 arms complete (468 / 486 rows; `knn_router[online]` landed 2026-09-11 after a resubmission at 256 GB).
+**`sequential_halving` is ABSENT at this scale, and the reason is a result in itself:** its adaptive probe schedule reaches instance indices past b = 3 that the stage-1 warm-up never generated, so
 where every other arm does 4.8M memo lookups it needs ~4.8M LIVE generations per unit. A dedicated 24 h warm-up job per
 seed (2026-09-10/11, fleet to itself) produced 457k generations and did not complete a single unit before its walltime.
 Every arm in this table is one whose probe stream is index-seeded and therefore cacheable; halving's is not, and at 10^5
-that is the difference between 2 h and infeasible. Means over 3 seeds,
+that is the difference between 2 h and infeasible. A second attempt was launched 2026-09-13 22:00 with three fixes in
+place (the backend now honours RTE_CONCURRENCY, which the first attempt silently capped at 64; a NameError that killed
+the first attempt's follow-on jobs; a uint16 probe counter that would have overflowed) -- fleet 46327112, three 48 h
+warm-ups, 15 chained follow-ons. This paragraph is updated when it lands or times out. Means over 3 seeds,
 95% seed-bootstrap CI. **This is the largest live pool in the programme; RouterEval cannot reach it** — its ceiling is
 the 5,000 real leaderboard LLMs.
 
@@ -275,10 +278,11 @@ changing n: VA 0.796 -> 0.679, A 0.770 -> 0.679, plain 0.715 -> 0.622, flat-onli
 argmax, CNP, verify-on-claim, oracle and random move by exactly 0.000, and VA - A = V - plain = 0.0000 at b = 1. The b = 1
 values at 10^5 match the 10^6 / 10^7 columns to within 0.01. So "declared argmax beats MIDIAN at 10^6-10^7" and "flat
 collapses at 10^7" in the tables below are budget artefacts, not scale effects. The rungs are being rerun at b = 3
-(bernoulli_scale_v5, replay_scale_v5); until they land, the two findings below are WITHDRAWN as scale claims.
-A first b = 3 control at n = 10^6 (2 seeds, cartel) already shows the recovery: **MIDIAN-VA 0.797 ± 0.013** (b = 1 column:
-0.672), MIDIAN-A 0.742, flat-online 0.778, declared argmax 0.722 (unchanged), oracle 0.842. VA at 10^6 with the same
-budget as the rungs below is where 10^5 left it, 0.075 above declared argmax.
+(bernoulli_scale_v5, replay_scale_v5) and the reruns LANDED 2026-09-11/13 (section II.4e). At b = 3, under the cartel,
+**MIDIAN-VA is 0.792 ± 0.017 at 10^6 (200 seeds) and 0.794 ± 0.017 at 10^7 (100 seeds) on bernoulli, and 0.760 ± 0.014
+at 10^6 (100 seeds) on replay** -- within 0.005 of its 10^5 values in both grids -- while declared argmax is 0.721 / 0.724
+/ 0.672 there. The two "findings" that follow are therefore FALSE as scale claims and are kept only as the record of
+what the b = 1 rungs of the old grids show; do not cite them.
 
 **Two findings as originally written — read with the correction above.**
 
@@ -295,6 +299,101 @@ budget as the rungs below is where 10^5 left it, 0.075 above declared argmax.
    declared_argmax 0.578 at live 10^5). So this is probably a regime artifact rather than an inversion — but it CANNOT
    be asserted without cartel cells at 10^6, which do not exist. Until they do, no claim that MIDIAN dominates on
    success at 10^6-10^7 is supportable.
+
+### II.4e The many-seed scale sweeps — post-hoc, 2026-09-10/13 (grids `bernoulli_scale_v5`, `replay_scale_v5`)
+
+Both old scale grids ran 3 seeds, 13 arms, beta = 0.25 with random liars only, and b = 1 above 10^5. The v5 sweeps
+supersede them: **every scale arm** (MIDIAN plain / r5 / V / V-r5 / A / VA / SH / SHA; flat frozen and online; NSW; declared
+argmax and softmax; UCB, Thompson, warm-start bandit; trusted and peer halving; CNP; cluster-head; route-to-k;
+verify-on-claim; random; oracle), **five liar regimes** (beta = 0; beta = 0.25 and 0.5 each with random and low-skill-first
+liars), **b = 3 at every rung**, and **1000 seeds** at n <= 10^4, 500 (bernoulli) / 200 (replay) at 10^5, 200 / 100 at
+10^6, 100 at 10^7 (bernoulli only; replay's backend tops out at 10^6). 2.16 M rows on bernoulli, 1.58 M on replay.
+MIDIAN-SH/SHA are absent at the b = 1 control rungs by construction (their halving schedule cannot be funded at b = 1);
+the b = 1 rows remain in the grids as a documented control and are never pooled with b = 3. Seed std is across per-seed
+means; full matrices with CIs: `results/<grid>/matrix_success.{md,csv}` (`scripts/scale_matrix.py`).
+
+**Bernoulli (calibrated to the measured live S), cartel (beta = 0.5, low-skill-first), b = 3:**
+
+| arm | 10 | 10² | 10³ | 10⁴ | 10⁵ | 10⁶ | 10⁷ |
+|---|---|---|---|---|---|---|---|
+| oracle | 0.728 ± 0.042 | 0.839 | 0.845 | 0.845 | 0.845 | 0.845 | 0.846 ± 0.011 |
+| **MIDIAN-VA** | 0.664 ± 0.047 | 0.764 | **0.783** | **0.788** | **0.789** | **0.792** | **0.794 ± 0.017** |
+| flat probe argmax (online) | 0.685 | 0.764 | 0.767 | 0.768 | 0.767 | 0.769 | 0.769 |
+| MIDIAN-A | 0.677 | 0.758 | 0.764 | 0.763 | 0.762 | 0.764 | 0.765 |
+| declared argmax | 0.601 | 0.690 | 0.719 | 0.719 | 0.719 | 0.721 | 0.724 |
+| MIDIAN | 0.633 | 0.699 | 0.715 | 0.713 | 0.711 | 0.713 | 0.716 |
+| MIDIAN-V | 0.635 | 0.685 ± 0.071 | 0.689 | 0.678 | 0.670 | 0.665 | 0.670 |
+| random | 0.419 | 0.418 | 0.419 | 0.419 | 0.419 | 0.420 | 0.418 |
+
+**Replay (RouterBench outcomes), cartel, b = 3, three shapes pooled:**
+
+| arm | 10 | 10² | 10³ | 10⁴ | 10⁵ | 10⁶ |
+|---|---|---|---|---|---|---|
+| oracle | 0.487 | 0.752 | 0.789 | 0.790 | 0.791 | 0.790 |
+| **MIDIAN-VA** | 0.443 | 0.691 | **0.742** | **0.754** | **0.759** | **0.760 ± 0.014** |
+| flat probe argmax (online) | 0.456 | 0.684 | 0.704 | 0.705 | 0.707 | 0.707 |
+| MIDIAN-A | 0.455 | 0.681 | 0.697 | 0.695 | 0.696 | 0.691 |
+| declared argmax | 0.429 | 0.662 | 0.672 | 0.672 | 0.672 | 0.672 |
+| MIDIAN | 0.357 | 0.513 | 0.567 | 0.561 | 0.570 | 0.561 |
+| MIDIAN-V | 0.371 | 0.461 ± 0.117 | 0.481 | 0.470 | 0.457 | 0.458 |
+| random | 0.192 | 0.192 | 0.192 | 0.192 | 0.192 | 0.191 |
+
+**Honest regime (beta = 0), b = 3, 10^5:** bernoulli -- oracle 0.845, declared argmax 0.838, warm-start bandit 0.837,
+MIDIAN-VA = MIDIAN-V 0.797, MIDIAN = MIDIAN-A 0.769, flat-online 0.767; replay -- oracle 0.791, declared 0.789,
+bandit 0.785, VA = V 0.760, MIDIAN = A 0.707. With no liars the two audit variants collapse onto their un-audited
+twins (audits have nothing to catch), and reading declarations is near-optimal on both backends.
+
+**Four results, each on 200-1000 seeds.**
+1. **Under the cartel MIDIAN-VA is the best non-oracle arm at every n from 10^3 to 10^7 on bernoulli and 10^3 to 10^6 on
+   replay**, and its value is flat across four decades (bernoulli 0.783 -> 0.794, replay 0.742 -> 0.760). The old
+   n = 10^6 / 10^7 tables (II.4d) showed it "collapsing" only because those rungs ran b = 1; see erratum 22.
+2. **Collusion makes the un-audited variants erratic, not just worse.** Under the cartel the seed std is ~0.015 for the
+   oracle, VA, flat and declared arms (the world's own variance) but 0.03-0.07 for plain MIDIAN and 0.05-0.12 for
+   MIDIAN-V (replay: 0.117 at 10^2). VA's std is 0.013-0.017 everywhere. It is not merely the highest arm under attack;
+   it is the only MIDIAN variant that is *stable* under attack.
+3. **Verification without audits is worse than no verification under collusion**: MIDIAN-V sits 0.04-0.11 below plain
+   MIDIAN in the cartel column of both grids at every n >= 10^3. The audits are the whole mechanism.
+4. **Cost exponents on 1000 seeds** (per-b fits; `results/<grid>/cost_exponents.csv`). MIDIAN's comparisons per task grow as
+   **n^0.158 [0.157, 0.160]** over 10..10^7 on bernoulli (20, 40, 60, ..., 140 comparisons per decade: 2r log_r n) and
+   **n^0.178 [0.176, 0.180]** over 10..10^6 on replay (K = 64); flat and declared scans are n^1.000 [1.000, 1.000] in
+   both, and every probe arm's build is n^1.000 exactly. The exponent depends on the fitted range because the
+   underlying law is logarithmic, not a power: on the old grid's range 10^2..10^7 the same rows give **n^0.121 [0.120,
+   0.122]**, superseding the 3-seed **n^0.112 [0.106, 0.118]** quoted in II.6 and erratum 17; on 10^3..10^7 it is
+   n^0.100. Any text quoting an exponent must name the range. MIDIAN-VA's messages per task grow as n^0.090 (its cached
+   root skips a level).
+
+### II.4f The probe-budget axis — post-hoc, 2026-09-11/13 (grid `bernoulli_b_sweep`)
+
+b in {1, 2, 3, 5, 10} at n in {10^3, 10^4, 10^5}, five liar regimes, 22 arms (MIDIAN-SH/SHA excluded: unfundable at small b),
+1000 seeds at 10^3 and 10^4, 200 at 10^5 -- 55,000 cells, 1.21 M rows. Motivated by the b = 1 control
+(`bernoulli_b_probe`, erratum 22). **The b-dependence is identical at all three n** (every cell within 0.005 across the
+decade), so one n suffices:
+
+**n = 10^5, cartel, mean ± std over 200 seeds:**
+
+| arm | b=1 | b=2 | b=3 | b=5 | b=10 |
+|---|---|---|---|---|---|
+| oracle | 0.844 | 0.844 | 0.844 | 0.844 | 0.844 |
+| **MIDIAN-VA** | 0.673 ± 0.023 | 0.725 | **0.789** | **0.818** | **0.834 ± 0.014** |
+| flat probe argmax (online) | 0.679 | 0.734 | 0.768 | 0.796 | 0.818 |
+| warm-start bandit | 0.754 | 0.764 | 0.771 | 0.791 | 0.813 |
+| flat probe argmax (frozen) | 0.572 ± 0.071 | 0.647 | 0.705 | 0.764 | 0.804 |
+| MIDIAN-A | 0.673 | 0.732 | 0.762 | 0.777 | 0.770 |
+| MIDIAN | 0.624 ± 0.043 | 0.681 | 0.712 | 0.756 | 0.762 |
+| declared argmax | 0.723 | 0.723 | 0.723 | 0.723 | 0.723 |
+| MIDIAN-V | 0.624 | 0.668 | 0.669 | 0.659 | 0.648 |
+| random | 0.420 | 0.420 | 0.420 | 0.420 | 0.420 |
+| VA − A | 0.000 | −0.007 | +0.027 | +0.042 | +0.063 |
+| V − plain | 0.000 | −0.014 | −0.043 | −0.096 | −0.113 |
+
+- **Verification switches on at b = 2** (the first b at which (b − b0) n / C >= 1): VA − A and V − plain are exactly 0.000 at
+  b = 1 and non-zero from b = 2. The b = 1 columns of any grid measure plain MIDIAN and MIDIAN-A under other names.
+- **VA's advantage over every probe arm grows with b** under the cartel (VA − A: 0 -> +0.063; VA − flat-online: −0.006 -> +0.016),
+  while declaration arms are flat by construction and every probe arm rises.
+- **Verification without audits gets WORSE with budget under collusion**: V − plain falls from 0 to −0.113 as b goes 1 -> 10.
+  More probes make an unaudited verifier more confidently wrong. This is the sharpest statement of result 3 in II.4e.
+- In the honest regime the whole MIDIAN family rises together (VA 0.677 -> 0.834) and declared argmax (0.837) is matched
+  only at b = 10; audits cost nothing there (VA = V at every b).
 
 ### II.5 Robustness axes
 
@@ -531,7 +630,9 @@ Errata and change log against the earlier drafts: `CHANGES_AND_ERRATA.md`.
 **Work after the submission deadline** (all post-hoc, none pre-registered in v1-v3, each marked in DEVIATIONS):
 frameworks on RouterEval's m = 1,000 and 5,000 pools (`fw_routereval_1k`, `fw_routereval_5k`), the frameworks at
 n = 10,000 under the low-skill cartel (`fw_live_n10k_cartel`), the `M4_legibility` figure, the live n = 100,000 run
-(`live_n100k`), and the v4 cohort slate (`TARGETS_rte_v4.md` / `RESULTS_rte_v4.md`), which IS pre-registered.
+(`live_n100k`), the v4 cohort slate (`TARGETS_rte_v4.md` / `RESULTS_rte_v4.md`), which IS pre-registered, the many-seed
+scale sweeps (`bernoulli_scale_v5`, `replay_scale_v5`, II.4e), the probe-budget sweep (`bernoulli_b_sweep`, II.4f) and
+its control (`bernoulli_b_probe`).
 
 Scripts: `rte.analyze`, `scripts/extra_figs.py`, `scripts/v3_figs.py`, `scripts/energy.py`, `scripts/routerbench_terms.py`,
 `scripts/rivals_routellm.py`, `scripts/routereval_terms.py`, `scripts/rivals_llmrouter.py`. Data and results under

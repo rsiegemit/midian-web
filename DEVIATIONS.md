@@ -818,3 +818,29 @@
   the remainder in ~6 h, but the run cost a day.
 - One-off wrappers written during these runs were replaced by `scripts/await_fleet.sh`, `scripts/run_after.sh` and
   `scripts/progress.py` rather than left in a scratch directory.
+
+- 2026-09-10/13 (operations, the v5 sweeps). Everything below cost time and is recorded so it is not re-learned.
+  - **rows.csv has one writer.** `run_grid.sbatch` consolidated at the end of every job; a 135-job sweep had 135
+    processes doing read-csv -> write-csv on one file, and with `--prune` a stale write deleted rows' files after a
+    competing write had dropped them. ~168k rows recomputed (every row is a deterministic f(cell, method, seed)).
+    Fix: `<results>/<grid>/.merge_owner` makes `consolidate()` a no-op unless forced; `RTE_CONSOLIDATE=0` for sweeps;
+    `scripts/progress.py --merge --prune` is the sole merger; the CSV carries `rid` and the resume set reads it.
+  - **Jobs that started before a code fix keep the old code.** Pre-guard jobs rebuilt rows.csv from rows.d alone at
+    their end, dropping pruned rows. Never prune while any pre-fix job is alive.
+  - **`multiprocessing.Pool(fork)` deadlocked** on long multi-wave jobs (bernoulli 10^7, replay 10^6): every worker
+    in futex on one shared lock, 22% CPU, zero I/O, zero progress for hours. `RTE_WORKERS=1` (serial, no Pool) above
+    10^5, one or two seeds per job.
+  - **The login node's memory cgroup OOM-kills ~4-8 GB processes** (dmesg "Memory cgroup out of memory"). Anything that
+    loads a million-row CSV (merges, dry-runs, matrices, `rte.analyze`) runs as a SLURM job. Persistent mergers there die.
+  - **Import-test != instantiate-test.** `a9b2251` referenced `llm_client.CONCURRENCY` in the llm backend's __init__
+    with no module-level import; the module imported fine, every live World died with NameError (15 jobs). `d5d796b`.
+  - **`world._probe_idx` was uint16** (erratum 23). `ed9671a`.
+  - **b = 1 above 10^5 was inherited from `bernoulli_scale` for probe-count reasons**, and at b = 1 verification is
+    unfunded (`midian.py`: e = (b − b0) n / C = 0), so V == plain and VA == A. Erratum 22; b = 3 reruns 2026-09-11.
+  - A fold wrapper discarded `scale_matrix.py`'s stderr for two days; the (n, b) column change had a two-vs-three-tuple
+    unpack error and every matrix regenerated since was a zero-line file. Fixed `acb0c81`; the wrapper now captures stderr.
+  - `kill $(pgrep -f <pattern>)` inline matches the invoking shell and kills it (three times). Find the PID in one
+    command, kill in another.
+  - `sequential_halving` at live 10^5: three 24 h warm-ups, 457k generations, zero units (its adaptive schedule reaches
+    instance indices the stage-1 warm-up never generated, so it needs live generation). Recorded absent in II.4c;
+    second attempt 2026-09-13 with concurrency honoured.

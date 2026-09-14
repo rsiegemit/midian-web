@@ -43,6 +43,13 @@ a live-LLM run at n = 100k (4.8M fresh probe calls per seed). AgentsNet is not a
 
 ---
 
+**Added 2026-09-10/13 (post-deadline):** the many-seed scale sweeps — `bernoulli_scale_v5` (n = 10..10^7, 24 arms, five
+liar regimes, b = 3 at every rung plus b = 1 controls at 10^6/10^7, 1000 seeds to 10^4, 100 at 10^7; 2.16 M rows) and
+`replay_scale_v5` (n = 10..10^6, three shapes, same design; 1.58 M rows); the probe-budget sweep `bernoulli_b_sweep`
+(b in {1, 2, 3, 5, 10} x n in {10^3, 10^4, 10^5}, 22 arms, 1.21 M rows) and its control `bernoulli_b_probe`; and
+`knn_router[online]` at live n = 10^5. RESULTS II.4e / II.4f. Only `sequential_halving` at live 10^5 remains open
+(second attempt running).
+
 ## 2. Headline numbers — before → after
 
 *n = 1,000, self-described channel, mean success; paired Δ vs MIDIAN over the 120 cell × seed pairs.*
@@ -78,6 +85,12 @@ a live-LLM run at n = 100k (4.8M fresh probe calls per seed). AgentsNet is not a
   LangGraph −0.118 → −0.123, CAMEL −0.133 → −0.127); VA − MIDIAN (+0.021) did not move.
 
 ---
+
+**Scale, 1000 seeds (II.4e), supersedes II.4b's 3-seed synthetic points and II.4d entirely.** MIDIAN-VA under the
+low-skill cartel at b = 3: bernoulli 0.783 / 0.788 / 0.789 / 0.792 / 0.794 at 10^3..10^7 (II.4b had 0.798 / 0.805 at
+10^4 / 10^5 on 3 seeds); replay 0.742 / 0.754 / 0.759 / 0.760 at 10^3..10^6. Declared argmax 0.719-0.724 (bernoulli),
+0.672 (replay) at every n. "Declared beats MIDIAN at 10^6-10^7" and "flat collapses at 10^7" (II.4d, 2026-09-10) were
+b = 1 artefacts: erratum 22. Seed std under the cartel: VA 0.013-0.017, plain MIDIAN 0.03-0.07, MIDIAN-V 0.05-0.12.
 
 ## 3. Minor numbers that changed (v2 draft / dossier → final)
 
@@ -210,6 +223,17 @@ shape are what the figures support.
     declaration arms 0.000. Withdrawn as scale claims; the rungs are rerunning at b = 3. The reader who caught it was
     right: MIDIAN-VA had not "collapsed", it had been switched off.
 
+23. **`world._probe_idx` was a uint16 counter.** It seeds each (agent, family)'s next probe instance and capped at 65,535;
+    sequential_halving at n = 10^7, b = 3 hands its winner 146,452 pulls and overflowed, so all 500 units at that rung
+    lacked the halving arm (and MIDIAN-SH's "-10 out of bounds for uint16" at b = 1 was the same counter). uint32 since
+    `ed9671a`; no existing result changes (the instance sequence is identical). Halving at 10^7 rerun 2026-09-13.
+24. **Erratum 17's exponents are superseded.** On 1000 seeds (`bernoulli_scale_v5`, b = 3) MIDIAN's comparisons per task fit
+    **n^0.121 [0.120, 0.122]** on the old grid's range 10^2..10^7 (old: n^0.112 [0.106, 0.118], 3 seeds) and
+    **n^0.158 [0.157, 0.160]** on the full 10..10^7. The law is 2r log_r n (20, 40, ..., 140 comparisons per decade), so
+    the fitted exponent depends on the range; every quotation must name it. Replay: n^0.178 over 10..10^6. Flat and
+    declared: n^1.000 [1.000, 1.000] everywhere; the earlier n^0.958 for build probes was a fit across two budgets (fixed:
+    `analyze.exponents` fits per b, `268e25d`).
+
 ---
 
 ## 5. New experiments since the v2 draft (2026-09-03 19:05), one line each
@@ -231,6 +255,16 @@ shape are what the figures support.
 | v2 | §4 restructured as MIDIAN → +A → +VA (audits first) | monotone; V first gives a regression then a fix |
 
 ---
+
+**Post-deadline (2026-09-10/13):**
+
+| part | what | result |
+|---|---|---|
+| v5 sweeps | 24 arms x 5 regimes x n = 10..10^7 (bernoulli) / 10..10^6 (replay), up to 1000 seeds, b = 3 | VA best non-oracle arm under the cartel at every n >= 10^3, flat across decades; V worse than plain under collusion; exponents n^0.121 (old range) / n^0.158 (full) |
+| b = 1 controls | same n, b in {1, 3} (`bernoulli_b_probe`) | the 10^6/10^7 "drop" reproduces at 10^5 from b alone; VA − A = V − plain = 0 at b = 1 |
+| b sweep | b in {1, 2, 3, 5, 10} x 3 n x 5 regimes, 22 arms | verification switches on at b = 2; VA − A grows 0 -> +0.063 with b; V − plain falls 0 -> −0.113 |
+| live 10^5 knn online | resubmitted at 256 GB after OOM at 64 GB | 26 / 27 arms at live 10^5 |
+| live 10^5 halving, attempt 2 | fleet 46327112, concurrency honoured, 48 h warm-ups | running |
 
 ## 6. Figures
 
@@ -276,6 +310,11 @@ specialist); every external comparison in RESULTS_rte_v3.md; H8 / H9; the MIDIAN
 ---
 
 ## 9. Still open (not results)
+
+- `sequential_halving` at live 10^5, attempt 2 (fleet 46327112, 2026-09-13): update II.4c when it lands or times out.
+- Halving at bernoulli 10^7 b = 3 (uint32 fix): 500 units refilling 2026-09-13 night; the chained fold regenerates the matrix.
+- MIDIAN-SH/SHA are absent at every b = 1 rung by construction; `units_todo` for those grids never reaches 0 for that reason.
+
 
 - Memo compaction (`python -m rte.llm_client compact`) runs automatically once the last two duplicate Magentic-One
   units exit (they re-write rows that already exist); log `$RTE_DATA/logs/compact_when_idle.log`.
