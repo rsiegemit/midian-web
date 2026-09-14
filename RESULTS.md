@@ -342,10 +342,10 @@ means; full matrices with CIs: `results/<grid>/matrix_success.{md,csv}` (`script
 | random | 0.419 | 0.418 | 0.419 | 0.419 | 0.419 | 0.420 | 0.418 |
 
 Halving rows added 2026-09-14 after the 10^7 b = 3 refill (uint32 fix, 500 units, 100 seeds) landed: **trusted halving
-ties the oracle at every n >= 10^3** (it probes for itself, so no liar touches it; halving − oracle is within 0.002 at
-every rung, inside two standard errors) at the same n·K·b build and one comparison per task; **peer-reported halving
-collapses under the cartel** to 0.708 at 10^7 (0.846 with no liars, 0.842 with random liars). MIDIAN-SH / SHA sit
-below plain MIDIAN / A at every n. What halving cannot do is the subject of II.5 (churn) and II.4c (live scale: its
+ties the oracle at every n >= 10^4** (it probes for itself, so no liar touches it; halving − oracle is within 0.002
+from 10^4 up, inside two standard errors; −0.005 at 10^3, −0.039 at 10^2) at the same n·K·b build and one comparison
+per task; **peer-reported halving collapses under the cartel** to 0.708 at 10^7 (0.846 with no liars, 0.842 with
+random liars). MIDIAN-SH / SHA sit below plain MIDIAN / A at every n >= 10^3. What halving cannot do is the subject of II.5 (churn) and II.4c (live scale: its
 adaptive schedule needs uncached generation); on a static population with trusted probes it is the ceiling.
 
 **Replay (RouterBench outcomes), cartel, b = 3, three shapes pooled:**
