@@ -385,38 +385,69 @@ twins (audits have nothing to catch), and reading declarations is near-optimal o
    n^0.100. Any text quoting an exponent must name the range. MIDIAN-VA's messages per task grow as n^0.090 (its cached
    root skips a level).
 
-### II.4f The probe-budget axis — post-hoc, 2026-09-11/13 (grid `bernoulli_b_sweep`)
+### II.4f The probe-budget axis — post-hoc, 2026-09-11/14 (grid `bernoulli_b_sweep`)
 
-b in {1, 2, 3, 5, 10} at n in {10^3, 10^4, 10^5}, five liar regimes, 22 arms (MIDIAN-SH/SHA excluded: unfundable at small b),
-1000 seeds at 10^3 and 10^4, 200 at 10^5 -- 55,000 cells, 1.21 M rows. Motivated by the b = 1 control
-(`bernoulli_b_probe`, erratum 22). **The b-dependence is identical at all three n** (every cell within 0.005 across the
-decade), so one n suffices:
+b in {1, 2, 3, 5, 10, 20, 30} (20 and 30 added 2026-09-14) at n in {10^3, 10^4, 10^5}, five liar regimes, 22 arms
+(MIDIAN-SH/SHA excluded: unfundable at small b), 1000 seeds at 10^3 and 10^4, 200 at 10^5 -- 77,000 cells, 1.69 M rows.
+Motivated by the b = 1 control (`bernoulli_b_probe`, erratum 22). Up to b = 10 the b-dependence is the same at all three
+n (every cell within 0.005 across the decade); above b = 10 the plain-tree arms DIVERGE by n (below). Full matrices for
+success and every cost counter: `results/bernoulli_b_sweep/matrix_{success,build_probes,comparisons_per_task,
+messages_per_task,hops_per_task}.{md,csv}`.
 
-**n = 10^5, cartel, mean ± std over 200 seeds:**
+**n = 10^5, cartel (beta = 0.5, low-skill-first), mean over 200 seeds (± std at b = 30):**
 
-| arm | b=1 | b=2 | b=3 | b=5 | b=10 |
-|---|---|---|---|---|---|
-| oracle | 0.844 | 0.844 | 0.844 | 0.844 | 0.844 |
-| **MIDIAN-VA** | 0.673 ± 0.023 | 0.725 | **0.789** | **0.818** | **0.834 ± 0.014** |
-| flat probe argmax (online) | 0.679 | 0.734 | 0.768 | 0.796 | 0.818 |
-| warm-start bandit | 0.754 | 0.764 | 0.771 | 0.791 | 0.813 |
-| flat probe argmax (frozen) | 0.572 ± 0.071 | 0.647 | 0.705 | 0.764 | 0.804 |
-| MIDIAN-A | 0.673 | 0.732 | 0.762 | 0.777 | 0.770 |
-| MIDIAN | 0.624 ± 0.043 | 0.681 | 0.712 | 0.756 | 0.762 |
-| declared argmax | 0.723 | 0.723 | 0.723 | 0.723 | 0.723 |
-| MIDIAN-V | 0.624 | 0.668 | 0.669 | 0.659 | 0.648 |
-| random | 0.420 | 0.420 | 0.420 | 0.420 | 0.420 |
-| VA − A | 0.000 | −0.007 | +0.027 | +0.042 | +0.063 |
-| V − plain | 0.000 | −0.014 | −0.043 | −0.096 | −0.113 |
+| arm | b=1 | b=2 | b=3 | b=5 | b=10 | b=20 | b=30 | |
+|---|---|---|---|---|---|---|---|---|
+| oracle | 0.844 | 0.844 | 0.844 | 0.844 | 0.844 | 0.844 | 0.844 | ± 0.012 |
+| sequential halving (trusted, own probes) | 0.572 | 0.817 | 0.846 | 0.845 | 0.845 | 0.846 | 0.846 | ± 0.012 |
+| **MIDIAN-VA** | 0.673 | 0.725 | **0.789** | **0.818** | **0.834** | **0.839** | 0.837 | ± 0.015 |
+| flat probe argmax (online) | 0.679 | 0.734 | 0.768 | 0.796 | 0.818 | 0.831 | **0.838** | ± 0.011 |
+| warm-start bandit | 0.754 | 0.764 | 0.771 | 0.791 | 0.813 | 0.827 | **0.838** | ± 0.011 |
+| flat probe argmax (frozen) | 0.572 | 0.647 | 0.705 | 0.764 | 0.804 | 0.824 | 0.834 | ± 0.013 |
+| UCB / Thompson per family | 0.561 | 0.642 | 0.700 | 0.761 | 0.802 | 0.825 | 0.833 | ± 0.012 |
+| MIDIAN-A | 0.673 | 0.732 | 0.762 | 0.777 | 0.770 | 0.739 | 0.689 | ± 0.029 |
+| MIDIAN | 0.624 | 0.681 | 0.712 | 0.756 | 0.762 | 0.729 | 0.682 | ± 0.029 |
+| declared argmax | 0.723 | 0.723 | 0.723 | 0.723 | 0.723 | 0.723 | 0.723 | ± 0.024 |
+| sequential halving (peer-reported) | 0.403 | 0.678 | 0.688 | 0.689 | 0.690 | 0.692 | 0.689 | ± 0.024 |
+| MIDIAN-V | 0.624 | 0.668 | 0.669 | 0.659 | 0.648 | 0.628 | 0.609 | ± 0.044 |
+| random | 0.420 | 0.420 | 0.420 | 0.420 | 0.420 | 0.420 | 0.420 | ± 0.015 |
+| VA − A | 0.000 | −0.007 | +0.027 | +0.042 | +0.063 | +0.100 | +0.148 | |
+| V − plain | 0.000 | −0.014 | −0.043 | −0.096 | −0.113 | −0.101 | −0.073 | |
+| **tasks routed to a liar**: MIDIAN / A / V / VA | .368/.223/.368/.223 | .329/.161/.421/.193 | .303/.145/.456/.130 | .259/.151/.504/.100 | .278/.204/.548/.085 | .363/.286/.583/.084 | .459/.404/.622/.092 | |
 
 - **Verification switches on at b = 2** (the first b at which (b − b0) n / C >= 1): VA − A and V − plain are exactly 0.000 at
   b = 1 and non-zero from b = 2. The b = 1 columns of any grid measure plain MIDIAN and MIDIAN-A under other names.
-- **VA's advantage over every probe arm grows with b** under the cartel (VA − A: 0 -> +0.063; VA − flat-online: −0.006 -> +0.016),
-  while declaration arms are flat by construction and every probe arm rises.
-- **Verification without audits gets WORSE with budget under collusion**: V − plain falls from 0 to −0.113 as b goes 1 -> 10.
-  More probes make an unaudited verifier more confidently wrong. This is the sharpest statement of result 3 in II.4e.
-- In the honest regime the whole MIDIAN family rises together (VA 0.677 -> 0.834) and declared argmax (0.837) is matched
-  only at b = 10; audits cost nothing there (VA = V at every b).
+- **Above b = 10 the un-audited tree is captured by the cartel** (new, 2026-09-14). Plain MIDIAN peaks at b = 10 (0.762)
+  and falls to 0.682 at b = 30; MIDIAN-A peaks at b = 5 (0.777) and falls to 0.689; V falls monotonically to 0.609. The
+  liar counter says why: the fraction of tasks routed to a liar RISES with budget for the three un-audited or
+  under-audited arms (MIDIAN 0.259 -> 0.459, A 0.145 -> 0.404, V 0.504 -> 0.622 from b = 5 to 30) while it falls for every
+  arm that trusts only its own probes (flat online 0.106 -> 0.081, halving 0.072 -> 0.066) and stays flat for VA (0.100
+  -> 0.092). More probes per pair sharpen the cartel's inflated reports as much as the honest ones, and the tree's
+  promotions rest on those reports; VA's audits cap the damage, A's 5% audit rate does not keep up. The decline deepens
+  with n (A at b = 30: 0.815 at 10^3, 0.732 at 10^4, 0.689 at 10^5), so the 10^3 grids understate it. The exact code
+  path (which report-channel weight grows with b) is listed under "still open" in CHANGES_AND_ERRATA; the numbers stand.
+- **VA plateaus 0.005-0.007 under the oracle** (0.839 at b = 20, 0.837 at b = 30) and the trusted-probe scans reach the
+  same level at b = 30 (flat online 0.838, warm-start bandit 0.838, frozen flat 0.834). At 48M probes a full O(n) scan of
+  honest measurements is as accurate as the tree; VA's case from b = 20 up is per-task cost (51 comparisons and 7
+  messages against 100,000 comparisons), not accuracy. Below b = 20 VA is the best report-channel arm and beats every
+  scan by 0.016-0.021 (b = 3-10).
+- **Trusted sequential halving ties the oracle from b = 3** (0.846 vs 0.844, within two standard errors) at the same
+  n·K·b build and one comparison per task; peer-reported halving collapses to 0.69 under the cartel (99.9% of its routes
+  go to a liar: the cartel wins every peer-scored tournament). At b = 1 halving is flat frozen (0.572 = 0.572): one probe
+  per cell is one probe per cell whoever schedules it.
+- In the honest regime the whole MIDIAN family rises together (VA = V 0.677 -> 0.842 at b = 30, plain = A 0.677 -> 0.837)
+  and meets the declaration arms (0.836-0.838) at b = 20-30; audits cost nothing there (VA = V at every b).
+
+**Cost along the b axis (measured ledger counts, identical in every liar regime).** Build probes are exactly n·K·b for
+every probe arm (VA and A add 5% audits; halving's adaptive schedule stays 3-6% under). Every per-task counter is FLAT in
+b: probes per task 0 for every arm; comparisons and messages per task identical across b for 20 of 22 arms (MIDIAN 100 /
+15, V 51 / 7, flat and the bandits 100,000 / 0, halving 1 / 0, declaration arms 100,000 / 0); the two exceptions, A and
+VA, get slightly CHEAPER with b (VA 57 comparisons and 7.6 messages at b = 1 -> 51 and 7.0 from b = 5; A 106 / 15.6 ->
+100 / 15.0) because audit-triggered corrections are rarer once the build is well funded. So b buys accuracy with a
+one-off linear build and leaves the per-task bill untouched. In `scripts/energy.py`'s model (0.00577 GPU-s per specialist
+probe, 700 W): at n = 10^5 the build is 7.7 GPU-h / 5.4 kWh at b = 3, 25.6 / 17.9 at b = 10, 51.3 / 35.9 at b = 20, 76.9 /
+53.9 at b = 30 -- each unit of b costs 2.6 GPU-h, the energy of ~314,000 framework supervisor calls (20.6 J each) -- and
+the per-task energy stays at 0.007 J (VA), 0.001 J (flat), 1e-8 J (halving), 20.6 J (a framework).
 
 ### II.5 Robustness axes
 

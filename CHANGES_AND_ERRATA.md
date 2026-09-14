@@ -256,6 +256,7 @@ shape are what the figures support.
 
 | part | what | result |
 |---|---|---|
+| b20/30 | `bernoulli_b_sweep` extended to b = 20, 30 (same cells/seeds, 2026-09-14) | VA plateaus 0.005 under the oracle from b = 20; trusted scans reach VA at b = 30 (0.838); plain MIDIAN / A / V fall above b = 10 under the cartel (A 0.777 -> 0.689, liar-misroute 0.15 -> 0.40); per-task cost flat in b |
 | A | RouterBench on its own protocol (11 models, AIQ) | probe table b = 50 AIQ 0.707 vs their KNN 0.713 with 7× fewer labels ($30 vs $229); T3-1 MISS by 0.006, T3-2 HIT |
 | B | RouteLLM's released bert router on RouterBench outcomes, their APGR / CPT | bert APGR 0.48 < random 0.51; probe table 0.59; their own harness rerun for their routers (ours NOT RUN inside it, T3-5) |
 | C | their KNN / MLP routers as methods in our benchmark, n = 100 / 1k / 10k | KNN = flat frozen exactly; MLP +0.03–0.06 over KNN, below MIDIAN-VA at every β and n; at 10k VA − KNN +0.11…+0.13 |
@@ -328,6 +329,9 @@ specialist); every external comparison in RESULTS_rte_v3.md; H8 / H9; the MIDIAN
 ## 9. Still open (not results)
 
 - `sequential_halving` at live 10^5, attempt 2 (fleet 46327112, 2026-09-13): update II.4c when it lands or times out.
+- `bernoulli_b_sweep` b = 20, 30 (2026-09-14): plain MIDIAN / A / V DECLINE above b = 10 under the cartel while their
+  liar-misroute rate rises (RESULTS II.4f). The numbers are on 200-1000 seeds and the counters are unambiguous; the code
+  path (which report-channel weight in `midian.py` grows with b, and why A's 5% audits stop keeping up) is not yet traced.
 - Deduplicated framework reruns (`*_dd` grids, erratum 25): gate `fwdd_gate` on the same fleet, three supervisor
   replicas, chained fold `fwdd_fold`; report beside (never merged into) the pre-registered framework rows.
 - Halving at bernoulli 10^7 b = 3 (uint32 fix): 500 units refilling 2026-09-13 night; the chained fold regenerates the matrix.
