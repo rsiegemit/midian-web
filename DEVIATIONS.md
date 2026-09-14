@@ -866,5 +866,7 @@
 - **Run.** 3,389 units, one per job, sharded (dist, beta) x seed, `RTE_CONSOLIDATE=0`; gate job `fwdd_gate` waits for
   fleet 46327112's /health; two extra 7B and one 14B supervisor replicas (`serve_replica.sbatch`) start with the fleet;
   `fwdd_fold` folds and analyzes all eleven grids after the last `rte_fw_*` job. The first `launch.sh` pass was cut off
-  by a tool timeout after 1,114 submissions; `resume.sh` submitted the remainder from the accounting log without
-  duplicates (`$RTE_DATA/logs/fw_dedup/`).
+  by a tool timeout after 1,114 submissions; `resume.sh` submitted the remainder, but its accounting-log check missed the first pass's
+  `fw_live_n1000_dd` jobs, so that grid was queued twice; the 937 duplicates were cancelled from the launch logs
+  (`cancelled_duplicates.txt`) and the queue holds exactly one job per unit (`$RTE_DATA/logs/fw_dedup/`). The fold gate
+  waits on all three job-name prefixes (`rte_fw_`, `rte_budget_b10_fw_dd`, `rte_churn_n1000_fw_dd`).
