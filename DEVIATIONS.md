@@ -844,3 +844,27 @@
   - `sequential_halving` at live 10^5: three 24 h warm-ups, 457k generations, zero units (its adaptive schedule reaches
     instance indices the stage-1 warm-up never generated, so it needs live generation). Recorded absent in II.4c;
     second attempt 2026-09-13 with concurrency honoured.
+
+## Framework shortlist clones and the deduplicated reruns (2026-09-14, POST-HOC)
+
+- **What was found.** The withheld ten-framework row at live 10^5 (all ten byte-identical in every regime) was traced by
+  recomputing the adapter's shortlist offline from `populations/*/descriptions.json` and `draw_profiles`: at 10^5 every
+  family's TF-IDF top-10 is ten copies of one description (19-39 copies exist of each text; 16/16 families, 3 seeds),
+  hence one prompt signature and one memoized answer per task. The same recomputation shows heavy_tail (5 distinct
+  descriptions) and bimodal (2) are clone-filled at n = 100 and 1,000 too, which is why the recorded rows have all ten
+  frameworks identical in every heavy_tail / bimodal cell of `fw_live_n1000` (80 of 120 cells) and `fw_live_n100`
+  (bimodal). Specialist 10^3 is the only live shape where the frameworks chose among different agents (~4.4 signatures
+  per top-10; dedup would still change 7-13 of 16 shortlists per seed). RouterEval descriptions are all unique.
+- **The change.** `FrameworkMethod(dedup=True)` (`rte/methods/frameworks/_common.py`, `ffa2a31`): rank distinct
+  description texts, offer the lowest id of each; the plain adapter is byte-for-byte unchanged. Test
+  `tests/test_fw_dedup.py`. Not pre-registered; a labeled variant, never a silent replacement.
+- **Separation of old and new.** Each affected grid gets a `_dd` mirror (`fw_live_n{100,1000}_dd`, their `_lowskill_dd`,
+  `fw_live_n10k_dd`, `fw_live_n10k_cartel_dd`, `fw_live_n100k_dd`, `fw_k_sensitivity_dd`, `fw_appendix_dd`,
+  `budget_b10_fw_dd`, `churn_n1000_fw_dd`): same cells, seeds, Q and b, only the framework arms, `dedup: true` in the
+  params so the rid differs. Separate results directories; nothing is overwritten and no analysis merges the two.
+  Verified-shortlist grids (`retrieval: midian`) and `fw_routereval_*` are not rerun.
+- **Run.** 3,389 units, one per job, sharded (dist, beta) x seed, `RTE_CONSOLIDATE=0`; gate job `fwdd_gate` waits for
+  fleet 46327112's /health; two extra 7B and one 14B supervisor replicas (`serve_replica.sbatch`) start with the fleet;
+  `fwdd_fold` folds and analyzes all eleven grids after the last `rte_fw_*` job. The first `launch.sh` pass was cut off
+  by a tool timeout after 1,114 submissions; `resume.sh` submitted the remainder from the accounting log without
+  duplicates (`$RTE_DATA/logs/fw_dedup/`).

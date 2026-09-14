@@ -234,6 +234,22 @@ shape are what the figures support.
     declared: n^1.000 [1.000, 1.000] everywhere; the earlier n^0.958 for build probes was a fit across two budgets (fixed:
     `analyze.exponents` fits per b, `268e25d`).
 
+25. **The framework shortlist is clone-filled, and two headline sentences explained it wrongly.** II.2 said frameworks
+    sit on the oracle on bimodal "because strong agents are strong everywhere", and section 2 noted heavy_tail's ten
+    frameworks "identical" without a cause. The cause: an agent's self-description is generated from its prompt and
+    memoized, and its answers are memoized per prompt signature, so agents sharing a signature are indistinguishable
+    clones; the adapter's TF-IDF top-10 (stable sort, lowest ids) fills with copies of the best-matching text once the
+    population has more copies than shortlist slots. Exact recomputation from the population files: bimodal has 2
+    distinct descriptions and heavy_tail 5 at ANY n, so every 10^3 top-10 there is ONE signature (all 100 heavy_tail /
+    bimodal headline cells: ten identical frameworks); specialist has 3,920 distinct prompts, so the top-10 holds ~4.4
+    signatures at 10^3, ~2.6 at 10^4 and exactly ONE at 10^5 (the withheld II.4c row, 16/16 families, 3 seeds). The
+    framework's choice among clones cannot matter; those cells measured the retriever. RouterEval's rendered
+    descriptions are all unique (1,000/1,000; 5,000/5,000) -- `fw_routereval_*` are unaffected. Fix (2026-09-14,
+    `ffa2a31`): labeled variant `dedup: true` offers one agent per distinct text; every affected live framework grid is
+    rerun into a separate `_dd` grid (11 grids, 3,389 units, ~3.5M supervisor calls), so pre-registered and deduplicated
+    rows never share a directory or a row id. Until they land, the headline framework numbers are the pre-registered
+    adapter's and carry this caveat.
+
 ---
 
 ## 5. New experiments since the v2 draft (2026-09-03 19:05), one line each
@@ -312,6 +328,8 @@ specialist); every external comparison in RESULTS_rte_v3.md; H8 / H9; the MIDIAN
 ## 9. Still open (not results)
 
 - `sequential_halving` at live 10^5, attempt 2 (fleet 46327112, 2026-09-13): update II.4c when it lands or times out.
+- Deduplicated framework reruns (`*_dd` grids, erratum 25): gate `fwdd_gate` on the same fleet, three supervisor
+  replicas, chained fold `fwdd_fold`; report beside (never merged into) the pre-registered framework rows.
 - Halving at bernoulli 10^7 b = 3 (uint32 fix): 500 units refilling 2026-09-13 night; the chained fold regenerates the matrix.
 - MIDIAN-SH/SHA are absent at every b = 1 rung by construction; `units_todo` for those grids never reaches 0 for that reason.
 

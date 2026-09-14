@@ -326,7 +326,8 @@ defaults to the project env (`$RTE_DATA/env/rte`, the only one with torch/senten
 `RTE_WORKERS=1` with one or two seeds per job (`Pool(fork)` deadlocks on long multi-wave jobs); anything that loads a
 million-row CSV runs as a SLURM job (the login node's memory cgroup kills it); `RTE_CONCURRENCY` raises in-flight
 requests for a warm-up job that has the fleet to itself; `RTE_TIME` sets `launch_live.sh`'s walltime; never run b = 1
-beside b = 3 in one table (verification is unfunded at b = 1). Tables: `scripts/scale_matrix.py <grid>` (every arm x every
+beside b = 3 in one table (verification is unfunded at b = 1); framework arms with `dedup: true` live in `*_dd` grids
+and are reported beside, never merged with, the pre-registered framework rows (erratum 25). Tables: `scripts/scale_matrix.py <grid>` (every arm x every
 (n, b), one table per liar regime, mean ± std and CI) and `scripts/cohort_table.py` (the v4 cohort modes across pools).
 
 `python scripts/paper_numbers.py` recomputes every number quoted in the write-ups into `paper/NUMBERS.json`

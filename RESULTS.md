@@ -95,14 +95,18 @@ path update (commit 3415f03). Wall-clock is reported only in the supervisor-late
   the 14B orchestrator turns those into named fallbacks and is 0.013 below the 7B arm on lenient success.
 - By shape (n = 1,000): specialist frameworks 0.390 vs MIDIAN 0.778 / VA 0.802 (0 of 400 pairs won); heavy_tail 0.630
   vs 0.643 / 0.679; bimodal 0.573 = oracle vs 0.540 / 0.544 (all 400 pairs won). Frameworks are flat in β (0.530–0.532).
+  **Caveat (2026-09-14, erratum 25):** on heavy_tail and bimodal the ten frameworks are identical in every one of the
+  100 headline cells because the adapter's top-10 is ten clones of one agent (5 and 2 distinct descriptions in those
+  populations); only the specialist cells measure a framework choosing among different agents. Deduplicated reruns
+  (`fw_live_n1000_dd`, `fw_live_n100_dd`, ...) are in flight; the numbers above are the pre-registered adapter's.
 - Phase-1 replication (Q = 300, 3 seeds, 60 cells, earlier adapters): frameworks 0.51–0.54 vs MIDIAN 0.637 / V 0.659.
 
 ### II.2 Why the frameworks lose, and what repairs them — **FINAL**
 
 - The frameworks' only signal is the self-description, which over-claims by +0.4 (clipped) and correlates with true
   skill at Spearman **0.443** (specialist), **0.194** (heavy_tail), **0.295** (bimodal).
-- On **bimodal** populations every framework sits on the oracle (strong agents are strong everywhere, so description ≈
-  skill). On **specialist** populations they collapse to **0.39 vs MIDIAN's 0.75**. The framework − MIDIAN gap is
+- On **bimodal** populations every framework sits on the oracle -- but not because description ≈ skill: the top-10 is
+  ten copies of the one big-model description, so any pick is the oracle's (erratum 25). On **specialist** populations they collapse to **0.39 vs MIDIAN's 0.75**. The framework − MIDIAN gap is
   monotone in within-family legibility (Fig. H2).
 - **Verified shortlist (Fig. H7) — FINAL.** Given MIDIAN-V's verified leaf cohort (r = 10) instead of the TF-IDF
   top-10, nine of ten frameworks gain +0.03 to +0.09 at n = 1,000 (Magentic-One +0.087 [+0.069, +0.104] → 0.633;
@@ -223,11 +227,19 @@ the 5,000 real leaderboard LLMs.
 only 0.008 from honest to cartel while V loses 0.137 and plain MIDIAN 0.046: verification alone buys the honest number,
 the audits are what survive collusion.
 
-**The ten-framework row is WITHHELD.** All ten return byte-identical success (0.34667 at seed 1) in every regime, while
-their other counters differ widely (fallback 0.000-0.366, misroute-to-liar 0.340-0.403, strict success 0.205-0.347), and
-success depends only on the seed -- not on the framework, not on beta. At n = 10,000 the same ten spread 0.256-0.364.
-That is a degenerate shortlist at 10^5, either a real saturation effect or an adapter bug, and it is UNRESOLVED. No
-framework number may be quoted at 10^5 until it is.
+**The ten-framework row is WITHHELD, and the cause is now known (2026-09-14; erratum 25, DEVIATIONS).** All ten
+return byte-identical success (0.34667 at seed 1) in every regime while their pick / fallback / misroute counters differ.
+Recomputing the adapter's TF-IDF shortlist from the population files shows why: an agent's prompt is fixed by (model,
+specialty triple, tool), its self-description is generated from that prompt and memoized, and its answers are memoized
+per (model, handicapped?, tool) -- so the 10^5 population holds only 3,920 distinct descriptions (25 copies each) and
+every family's top-10 is ten copies of ONE description, one prompt signature, one true skill (16/16 families, all
+three seeds). Whatever the framework picks, or falls back to, the same memoized answer is scored; success depends only
+on which description best matches each family's text, i.e. on the seed. The same clone effect gives ~2.6 distinct
+agents per shortlist at 10^4 and ONE at 10^3 on the heavy_tail (5 distinct descriptions) and bimodal (2) shapes -- see
+the caveat under II.1. Fix: the labeled `dedup: true` adapter variant ranks distinct description texts and offers one
+agent per text (2 to 6 signatures per shortlist at 10^5, true-skill spread up to 0.01-1.00); every affected live
+framework grid is being rerun into its own `_dd` grid (`fw_live_n100k_dd` here). The pre-registered rows stay as they
+are; no framework number may be quoted at 10^5 until `fw_live_n100k_dd` lands.
 
 **Cost (modelled, not wall-clock -- `scripts/energy.py`, now parametrised by n).** Every probe arm pays the same one-off
 build of 4.8M probes = **7.7-8.1 GPU-hours**, then routes for free: MIDIAN-VA 0.004 s per task against the frameworks'
@@ -632,7 +644,8 @@ frameworks on RouterEval's m = 1,000 and 5,000 pools (`fw_routereval_1k`, `fw_ro
 n = 10,000 under the low-skill cartel (`fw_live_n10k_cartel`), the `M4_legibility` figure, the live n = 100,000 run
 (`live_n100k`), the v4 cohort slate (`TARGETS_rte_v4.md` / `RESULTS_rte_v4.md`), which IS pre-registered, the many-seed
 scale sweeps (`bernoulli_scale_v5`, `replay_scale_v5`, II.4e), the probe-budget sweep (`bernoulli_b_sweep`, II.4f) and
-its control (`bernoulli_b_probe`).
+its control (`bernoulli_b_probe`), and the deduplicated-shortlist framework reruns (`*_dd` grids, 2026-09-14, erratum 25;
+in flight, reported separately from the pre-registered rows when they land).
 
 Scripts: `rte.analyze`, `scripts/extra_figs.py`, `scripts/v3_figs.py`, `scripts/energy.py`, `scripts/routerbench_terms.py`,
 `scripts/rivals_routellm.py`, `scripts/routereval_terms.py`, `scripts/rivals_llmrouter.py`. Data and results under
