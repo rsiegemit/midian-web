@@ -32,7 +32,7 @@ def main():
     if a.dist: df = df[df.dist == a.dist]
     multi_b = df.b.nunique() > 1                                    # top rungs carry b=1 (control) and b=3
     df["col"] = [f"{n:,}" + (f" (b={b})" if multi_b else "") for n, b in zip(df.n, df.b)]
-    ns = [c for _, c in sorted({(n, b, c) for n, b, c in zip(df.n, df.b, df.col)}, key=lambda t: (t[0], t[1]))]
+    ns = [c for _, _, c in sorted({(n, b, c) for n, b, c in zip(df.n, df.b, df.col)}, key=lambda t: (t[0], t[1]))]
     ns = list(dict.fromkeys(ns)); out = []
     print(f"# {a.grid}: {a.metric}, mean [95% seed-bootstrap CI]; seeds per cell in the last column\n")
     for title, beta, ls in regimes(df):
