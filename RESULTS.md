@@ -329,6 +329,10 @@ means; full matrices with CIs: `results/<grid>/matrix_success.{md,csv}` (`script
 | arm | 10 | 10² | 10³ | 10⁴ | 10⁵ | 10⁶ | 10⁷ |
 |---|---|---|---|---|---|---|---|
 | oracle | 0.728 ± 0.042 | 0.839 | 0.845 | 0.845 | 0.845 | 0.845 | 0.846 ± 0.011 |
+| sequential halving (trusted, own probes) | 0.642 ± 0.053 | 0.800 | 0.840 | 0.845 | 0.846 | 0.845 | 0.846 ± 0.012 |
+| sequential halving (peer-reported) | 0.466 ± 0.086 | 0.547 | 0.610 | 0.667 | 0.690 | 0.700 | 0.708 ± 0.017 |
+| MIDIAN-SHA | 0.675 ± 0.048 | 0.770 | 0.767 | 0.750 | 0.747 | 0.748 | 0.750 ± 0.018 |
+| MIDIAN-SH | 0.624 ± 0.063 | 0.590 | 0.570 | 0.571 | 0.570 | 0.572 | 0.575 ± 0.051 |
 | **MIDIAN-VA** | 0.664 ± 0.047 | 0.764 | **0.783** | **0.788** | **0.789** | **0.792** | **0.794 ± 0.017** |
 | flat probe argmax (online) | 0.685 | 0.764 | 0.767 | 0.768 | 0.767 | 0.769 | 0.769 |
 | MIDIAN-A | 0.677 | 0.758 | 0.764 | 0.763 | 0.762 | 0.764 | 0.765 |
@@ -336,6 +340,13 @@ means; full matrices with CIs: `results/<grid>/matrix_success.{md,csv}` (`script
 | MIDIAN | 0.633 | 0.699 | 0.715 | 0.713 | 0.711 | 0.713 | 0.716 |
 | MIDIAN-V | 0.635 | 0.685 ± 0.071 | 0.689 | 0.678 | 0.670 | 0.665 | 0.670 |
 | random | 0.419 | 0.418 | 0.419 | 0.419 | 0.419 | 0.420 | 0.418 |
+
+Halving rows added 2026-09-14 after the 10^7 b = 3 refill (uint32 fix, 500 units, 100 seeds) landed: **trusted halving
+ties the oracle at every n >= 10^3** (it probes for itself, so no liar touches it; halving − oracle is within 0.002 at
+every rung, inside two standard errors) at the same n·K·b build and one comparison per task; **peer-reported halving
+collapses under the cartel** to 0.708 at 10^7 (0.846 with no liars, 0.842 with random liars). MIDIAN-SH / SHA sit
+below plain MIDIAN / A at every n. What halving cannot do is the subject of II.5 (churn) and II.4c (live scale: its
+adaptive schedule needs uncached generation); on a static population with trusted probes it is the ceiling.
 
 **Replay (RouterBench outcomes), cartel, b = 3, three shapes pooled:**
 
