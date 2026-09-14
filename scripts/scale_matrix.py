@@ -38,7 +38,8 @@ def main():
     for title, beta, ls in regimes(df):
         q = df[np.isclose(df.beta, beta) & (df.liar_select == ls)]
         piv = {}
-        for (lab, n), g in q.groupby(["label", "col"]):
+        for (lab, col), g in q.groupby(["label", "col"]):
+            n = int(g.n.iloc[0])                                        # numeric n and b go to the CSV; `col` is display only
             s = g.set_index(["dist", "seed"])[a.metric].dropna() if "dist" in g else g.set_index("seed")[a.metric].dropna()
             per_seed = s.groupby(level="seed").mean()                      # one value per seed (shapes averaged)
             lo, hi = ci(s)
@@ -46,7 +47,7 @@ def main():
                       std_seed=per_seed.std(ddof=1), var_seed=per_seed.var(ddof=1),   # spread OVER SEEDS (the CI's basis)
                       std_unit=s.std(ddof=1), min=s.min(), max=s.max(),               # spread over every (shape, seed) unit
                       sem=per_seed.std(ddof=1) / np.sqrt(per_seed.size))
-            piv[(lab, n)] = st
+            piv[(lab, col)] = st
             out.append(dict(regime=title, beta=beta, liar_select=ls, label=lab, n=n, b=int(g.b.iloc[0]), metric=a.metric, **st))
         key_n = ns[-1] if any((l, ns[-1]) in piv for l, _ in piv) else ns[0]
         labs = sorted({l for l, _ in piv}, key=lambda l: -piv.get((l, key_n), piv.get((l, ns[0]), {"mean": 0}))["mean"])
