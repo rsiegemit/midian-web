@@ -256,7 +256,7 @@ class World:
         self.D = apply_lying(D_honest, self.liars, lie_mode, self.demand)
         self.D_view = self.D.copy(); self.D_view.setflags(write=False)
         self._obs: dict[int, dict[int, list]] = {}    # reporter j -> {a: [sum, cnt]} (scalar report path)
-        self._probe_idx = np.zeros((self.n, self.K), np.uint16)    # probes drawn so far per (agent, family)
+        self._probe_idx = np.zeros((self.n, self.K), np.uint32)    # probes drawn so far per (agent, family); uint16 capped at 65,535 and halving hands one winner 146k at n=1e7 b=3
         self._probe_salt = stable_seed_32(seed, "probes")
         self.epoch = np.zeros(self.n, np.int32); self.seen_epoch = np.zeros(self.n, np.int32); self.churn_events = 0
         self._snap = (self.S.copy(), self.D.copy(), self.liars.copy(), self.backend.snapshot())
