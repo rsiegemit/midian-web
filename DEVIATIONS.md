@@ -870,3 +870,22 @@
   `fw_live_n1000_dd` jobs, so that grid was queued twice; the 937 duplicates were cancelled from the launch logs
   (`cancelled_duplicates.txt`) and the queue holds exactly one job per unit (`$RTE_DATA/logs/fw_dedup/`). The fold gate
   waits on all three job-name prefixes (`rte_fw_`, `rte_budget_b10_fw_dd`, `rte_churn_n1000_fw_dd`).
+
+## Dense-retrieval framework shortlist (2026-09-15, POST-HOC, labeled variant)
+
+- **Why.** With the clone-free (`dedup`) shortlist the 10^5 framework row became a real measurement, and it is below random
+  for seven of ten frameworks. The cause is the retriever, not the orchestrators: the hashed-TF-IDF top-10's mean TRUE
+  skill is 0.31 at 10^5 (0.36 at 10^3) against a population mean of 0.43, because Qwen2.5-0.5B's self-descriptions
+  parrot the family vocabulary and rank first in 7-12 of 16 families at every slot from rank 2 down; the best of the
+  ten per family would score 0.65. `logs/diag/fw_shortlist_skill.py`. The pre-registered adapter was the cheapest
+  member of the "embed the descriptions, then let the LLM pick among k" family every deployed stack uses at scale.
+- **The change.** `FrameworkMethod(retrieval="embed")`: cosine over all-MiniLM-L6-v2 embeddings of the same descriptions
+  (`rte/methods/_learned.py`, the encoder knn_router uses), cached per population as `descriptions_minilm.npy`; always
+  combined with `dedup: true`. Test in `tests/test_fw_dedup.py`. Plain and dedup arms untouched (`5620ae5`).
+- **Grids.** `fw_live_n{100,1000}_em`, their `_lowskill_em`, `fw_live_n10k_em`, `fw_live_n10k_cartel_em`, `fw_live_n100k_em`:
+  same cells, seeds, frameworks and Q as the `_dd` grids (3,267 units); the four small extras (k-sensitivity, appendix,
+  b = 10 shapes, churn) are not repeated. Submitted to sapphire directly (serial_requeue fairshare stalled the `_dd`
+  campaign overnight at 2 running jobs), 32 G per 10^2-10^3 unit, 96 G at 10^5; `fwem_fold` waits on the `_em__` job
+  names, `fwdd_fold` now waits only on `_dd__` (the first version's `rte_fw_` prefix would have waited on both).
+- **Reporting.** Three framework rows per cell, never pooled: pre-registered TF-IDF, dedup, embed. The comparison script
+  `scripts/dedup_compare.py` pairs any `_dd`/`_em` grid with its source row by row.

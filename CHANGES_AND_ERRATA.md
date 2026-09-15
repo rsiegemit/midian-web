@@ -338,6 +338,9 @@ specialist); every external comparison in RESULTS_rte_v3.md; H8 / H9; the MIDIAN
 - `bernoulli_b_sweep` b = 20, 30 (2026-09-14): plain MIDIAN / A / V DECLINE above b = 10 under the cartel while their
   liar-misroute rate rises (RESULTS II.4f). The numbers are on 200-1000 seeds and the counters are unambiguous; the code
   path (which report-channel weight in `midian.py` grows with b, and why A's 5% audits stop keeping up) is not yet traced.
+- Dense-retrieval framework reruns (`*_em` grids, 2026-09-15, DEVIATIONS): MiniLM cosine instead of hashed TF-IDF over the
+  deduped descriptions; answers whether a real retriever recovers the shortlist (TF-IDF top-10 mean true skill 0.31 vs
+  population 0.43 at 10^5). `fwem_fold` chains the analysis.
 - Deduplicated framework reruns (`*_dd` grids, erratum 25): gate `fwdd_gate` on the same fleet, three supervisor
   replicas, chained fold `fwdd_fold`; report beside (never merged into) the pre-registered framework rows.
 - Halving at bernoulli 10^7 b = 3 (uint32 fix): 500 units refilling 2026-09-13 night; the chained fold regenerates the matrix.
