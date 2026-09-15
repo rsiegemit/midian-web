@@ -204,6 +204,14 @@ warm-ups, 15 chained follow-ons. This paragraph is updated when it lands or time
 95% seed-bootstrap CI. **This is the largest live pool in the programme; RouterEval cannot reach it** — its ceiling is
 the 5,000 real leaderboard LLMs.
 
+**Update 2026-09-15 (attempt 2, concurrency honoured, 96 cores of warm-up):** the first unit landed. Peer-reported
+sequential halving at live n = 100,000, beta = 0, seed 1: **success 0.830 = the oracle's 0.830** in that cell (MIDIAN-VA
+0.810, plain MIDIAN 0.753, flat online 0.703), 4,649,984 build probes (3% under the n·K·b = 4.8M every other probe arm
+pays), 1 comparison per task, 19.5 h of wall-clock for the build against a fleet it shared with 1,200 framework jobs.
+With honest reports the peer-scored tournament finds the true best agent per family, exactly as on the calibrated
+backend (II.4e: 0.846 vs oracle 0.846 at 10^7). The two remaining seeds and the cartel cells (where the same arm
+collapses to 0.69-0.71 on bernoulli) are running; the row is filled in when they land.
+
 | arm | β = 0 | β = 0.25 | β = 0.5 random | cartel (β = 0.5, low-skill) |
 |---|---|---|---|---|
 | oracle (ceiling) | 0.862 [0.840, 0.884] | 0.862 | 0.862 | 0.862 |
