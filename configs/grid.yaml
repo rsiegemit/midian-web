@@ -612,3 +612,27 @@ grids:
   fw_appendix_dd:           {mirror_of: fw_appendix,           methods: [{name: fw_agentscope, params: {dedup: true}}]}
   budget_b10_fw_dd:         {mirror_of: budget_b10_shapes,     methods: [{name: fw_langgraph, params: {dedup: true}}, {name: fw_autogen, params: {dedup: true}}]}
   churn_n1000_fw_dd:        {mirror_of: churn_n1000,           methods: [{name: fw_langgraph, params: {dedup: true}}, {name: fw_autogen, params: {dedup: true}}]}
+
+  # ---- 2026-09-15: DENSE-RETRIEVAL framework shortlist (labeled variant `retrieval: embed, dedup: true`): cosine over
+  # all-MiniLM-L6-v2 embeddings of the same self-descriptions (knn_router's encoder) instead of hashed TF-IDF -- the
+  # retriever a deployed stack would put in front of a framework. Same cells/seeds/frameworks as the _dd grids; separate
+  # results dirs and rids. Answers "would a real retriever recover the shortlist?" (the TF-IDF top-10's mean true skill
+  # is 0.31 at 10^5 against a population mean of 0.43: the smallest model's descriptions parrot the family vocabulary).
+  fw_live_n1000_em:
+    mirror_of: fw_live_n1000
+    methods: [&fw10_em [{name: fw_langgraph, params: {retrieval: embed, dedup: true}}, {name: fw_crewai, params: {retrieval: embed, dedup: true}},
+                        {name: fw_autogen, params: {retrieval: embed, dedup: true}}, {name: fw_magentic_one, params: {retrieval: embed, dedup: true}},
+                        {name: fw_maf, params: {retrieval: embed, dedup: true}}, {name: fw_openai_agents, params: {retrieval: embed, dedup: true}},
+                        {name: fw_google_adk, params: {retrieval: embed, dedup: true}}, {name: fw_llamaindex, params: {retrieval: embed, dedup: true}},
+                        {name: fw_smolagents, params: {retrieval: embed, dedup: true}}, {name: fw_camel_workforce, params: {retrieval: embed, dedup: true}}],
+              &fw14b_em {name: fw_magentic_one, params: {retrieval: embed, dedup: true, supervisor: Qwen/Qwen2.5-14B-Instruct}}]
+  fw_live_n100_em:          {mirror_of: fw_live_n100,          methods: [*fw10_em, *fw14b_em]}
+  fw_live_n1000_lowskill_em: {mirror_of: fw_live_n1000_lowskill, methods: [*fw10_em, *fw14b_em]}
+  fw_live_n100_lowskill_em:  {mirror_of: fw_live_n100_lowskill,  methods: [*fw10_em, *fw14b_em]}
+  fw_live_n10k_em:          {mirror_of: live_n10k_v2,          methods: *fw10_em}
+  fw_live_n100k_em:         {mirror_of: live_n100k,            methods: *fw10_em}
+  fw_live_n10k_cartel_em:   {mirror_of: fw_live_n10k_cartel,   methods: [{name: fw_langgraph, params: {retrieval: embed, dedup: true}}, {name: fw_crewai, params: {retrieval: embed, dedup: true}},
+                                                                          {name: fw_autogen, params: {retrieval: embed, dedup: true}}, {name: fw_maf, params: {retrieval: embed, dedup: true}},
+                                                                          {name: fw_openai_agents, params: {retrieval: embed, dedup: true}}, {name: fw_google_adk, params: {retrieval: embed, dedup: true}},
+                                                                          {name: fw_llamaindex, params: {retrieval: embed, dedup: true}}, {name: fw_smolagents, params: {retrieval: embed, dedup: true}},
+                                                                          {name: fw_camel_workforce, params: {retrieval: embed, dedup: true}}]}

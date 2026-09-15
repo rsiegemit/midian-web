@@ -60,6 +60,9 @@ class FrameworkMethod(Method):
         # top-k fills with clones once the population exceeds the number of distinct prompts (~3,900 specialist, 5
         # heavy_tail, 2 bimodal) and the framework's pick stops mattering. See CHANGES_AND_ERRATA.
         self.dedup = bool(dedup)
+        # retrieval="embed" (2026-09-15, labeled variant): rank by cosine over all-MiniLM-L6-v2 embeddings of the same
+        # descriptions (the encoder knn_router uses) instead of hashed TF-IDF -- the dense retriever a deployed stack
+        # would put in front of a framework. Embeddings are cached per population dir (descriptions_minilm.npy).
         if retrieval in ("midian", "midian_va"):             # verified shortlist: MIDIAN-V's (or MIDIAN-VA's) leaf cohort (k = r)
             self.needs = self.needs | {"probe", "reports"}
         self.stats = {"picks": 0, "fallbacks": 0, "failures": 0, "bad_name": 0, "success_strict": 0.0, "fallback_rate": 0.0}
@@ -81,13 +84,33 @@ class FrameworkMethod(Method):
         fdesc = [f"Tasks of family {fn}" for fn in fams]
         return desc, fdesc, (lambda task: f"A task of family {fams[task.family]} (instance {task.instance}).")
 
+    def _embeddings(self, view):
+        """MiniLM rows for the agent and family descriptions; the agent block is cached next to the population."""
+        from .._learned import embed
+        cache = None
+        try:
+            from rte.backends import llm as L
+            be = L.current_backend()
+            if be is not None and be.n == view.n: cache = be.dir / "descriptions_minilm.npy"
+        except Exception:
+            pass
+        Ea = np.load(cache) if cache is not None and cache.exists() else None
+        if Ea is None or Ea.shape[0] != view.n:
+            Ea = embed(self.desc)
+            if cache is not None:                            # atomic: concurrent jobs may race to write the same file
+                tmp = cache.with_suffix(f".{os.getpid()}.tmp.npy"); np.save(tmp, Ea); os.replace(tmp, cache)
+        return Ea, embed(self.fdesc)
+
     def build(self, view, budget):
         super().build(view, budget)
         self.desc, self.fdesc, self._task_text = self._texts(view)
         self.names = [f"agent_{a:06d}" for a in range(view.n)]
         self._name2id = {nm: a for a, nm in enumerate(self.names)}
-        X = _hash_tfidf(self.desc + self.fdesc)
-        self._Xa, self._Xf = X[:view.n], X[view.n:]
+        if self.retrieval == "embed":
+            self._Xa, self._Xf = self._embeddings(view)
+        else:
+            X = _hash_tfidf(self.desc + self.fdesc)
+            self._Xa, self._Xf = X[:view.n], X[view.n:]
         first = {}
         for a, t in enumerate(self.desc): first.setdefault(t, a)
         self._pool = np.array(sorted(first.values()), dtype=np.int64)   # lowest id per distinct description (dedup)
@@ -103,7 +126,7 @@ class FrameworkMethod(Method):
             a = self.mid.fetch(task)
             coh = self.mid.leaves[self.mid.leaf_of[a]]
             return np.concatenate([[a], coh[(coh >= 0) & (coh != a)]])
-        sims = self._Xa @ self._Xf[task.family]
+        sims = self._Xa @ self._Xf[task.family]              # cosine: rows are L2-normalised in both modes
         if self.dedup:                                       # one representative per distinct description text
             return self._pool[np.argsort(-sims[self._pool], kind="stable")[:min(self.k, len(self._pool))]]
         k = min(self.k, self.view.n)

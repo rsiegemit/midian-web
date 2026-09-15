@@ -46,3 +46,16 @@ def test_plain_topk_is_unchanged_and_clone_filled():
         sims = m._Xa @ m._Xf[task.family]
         assert list(top) == list(np.argsort(-sims, kind="stable")[:m.k])
         assert len({m.desc[a] for a in top}) < len(top)      # the pre-registered adapter does return clones here
+
+
+def test_embed_retrieval_ranks_by_minilm_cosine():
+    """retrieval='embed' ranks the deduped pool by cosine over MiniLM embeddings of the same descriptions."""
+    from rte.methods._learned import embed
+    m = _built(dedup=True, retrieval="embed")
+    Ea, Ef = embed(m.desc), embed(m.fdesc)
+    for task in World(N, K, "specialist", 0.0, seed=1).tasks(4):
+        top = m.retrieve(task)
+        assert len({m.desc[a] for a in top}) == len(top) == min(m.k, len(set(m.desc)))
+        sims = Ea @ Ef[task.family]
+        ref = list(dict.fromkeys(m.desc[a] for a in np.argsort(-sims, kind="stable")))[:len(top)]
+        assert [m.desc[a] for a in top] == ref
