@@ -11,6 +11,7 @@ SRC = {"fw_live_n1000_dd": "fw_live_n1000", "fw_live_n100_dd": "fw_live_n100", "
        "fw_live_n100_lowskill_dd": "fw_live_n100_lowskill", "fw_live_n10k_dd": "live_n10k_v2", "fw_live_n100k_dd": "live_n100k",
        "fw_live_n10k_cartel_dd": "fw_live_n10k_cartel", "fw_k_sensitivity_dd": "fw_k_sensitivity", "fw_appendix_dd": "fw_appendix",
        "budget_b10_fw_dd": "budget_b10_shapes", "churn_n1000_fw_dd": "churn_n1000"}
+SRC.update({k.replace("_dd", "_em"): v for k, v in SRC.items() if k.startswith("fw_live")})   # embed grids pair with the same sources
 CELL = ["n", "dist", "beta", "liar_select", "seed"]
 
 def load(grid):
@@ -22,7 +23,7 @@ def load(grid):
     if "rid" in df: df = df.drop_duplicates("rid")
     df = df[df.method.astype(str).str.startswith("fw_")].copy()
     df["params"] = df.params.astype(str)
-    df["key"] = df.params.str.replace(r'"dedup":\s*true,?\s*', "", regex=True).str.replace(r',\s*}', "}", regex=True).str.replace("{}", "{}")
+    df["key"] = df.params.str.replace(r'"(dedup|retrieval)":\s*("embed"|true),?\s*', "", regex=True).str.replace(r',\s*}', "}", regex=True).str.replace("{}", "{}")
     return df
 
 def regime(r):
