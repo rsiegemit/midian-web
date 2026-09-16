@@ -194,6 +194,10 @@ def v5_sweeps():
                                                                     ci=[round(float(r.exp_lo), 4), round(float(r.exp_hi), 4)], note=str(r.note))
 v5_sweeps()
 
+# ------------------------------------------------------------------------------------------------ (v6) framework shortlist variants + live halving
+from fw_variant_numbers import collect as _v6      # small grids, read directly from rows (scripts/fw_variant_numbers.py)
+_v6(N)
+
 # ------------------------------------------------------------------------------------------------ appendix source tables
 def table(key, df, labels, by, grid, **f):
     w = W(df, labels, **f); N[key] = dict(value={l: {str(k): round(float(v), 4) for k, v in w[l].groupby(level=by).mean().items()} for l in labels if l in w}, grid=grid, units=int(len(w)), ci=None)
