@@ -658,3 +658,5 @@ grids:
                                                                              {name: fw_openai_agents, params: {retrieval: midian_va, r: 10}}, {name: fw_google_adk, params: {retrieval: midian_va, r: 10}},
                                                                              {name: fw_llamaindex, params: {retrieval: midian_va, r: 10}}, {name: fw_smolagents, params: {retrieval: midian_va, r: 10}},
                                                                              {name: fw_camel_workforce, params: {retrieval: midian_va, r: 10}}]}
+  fw_live_n100_verified_va:          {mirror_of: fw_live_n100,          methods: *fw10_va}   # 2026-09-16: the VA cohort at n = 100 (honest + random liars)
+  fw_live_n100_verified_va_lowskill: {mirror_of: fw_live_n100_lowskill, methods: *fw10_va}   # ... and its cartel cell
