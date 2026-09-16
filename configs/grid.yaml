@@ -640,3 +640,21 @@ grids:
   # ---- 2026-09-16: the missing cartel cell for the VA-cohort frameworks (the verified-cohort grids ran random liars
   # only). Same ten frameworks holding MIDIAN-VA's leaf cohort (r = 10), beta = 0.5 low-skill-first, 3 shapes, seeds 1-10.
   fw_live_n1000_verified_va_lowskill: {mirror_of: fw_live_n1000_verified_va, beta: [0.5], liar_select: [low_skill_first]}
+
+  # ---- 2026-09-16: the VA-cohort frameworks at scale. The verified-cohort grids stopped at 10^3; these hand the same
+  # ten frameworks MIDIAN-VA's leaf cohort (r = 10) on live_n10k_v2's, fw_live_n10k_cartel's and live_n100k's exact
+  # cells, so rows pair with the TF-IDF / dedup / MiniLM framework rows and with MIDIAN-VA's own row there. A 10^5 unit
+  # rebuilds VA (15-20 h on memo hits) before its 300 supervisor calls.
+  fw_live_n10k_verified_va:
+    mirror_of: live_n10k_v2
+    methods: [&fw10_va [{name: fw_langgraph, params: {retrieval: midian_va, r: 10}}, {name: fw_crewai, params: {retrieval: midian_va, r: 10}},
+                        {name: fw_autogen, params: {retrieval: midian_va, r: 10}}, {name: fw_magentic_one, params: {retrieval: midian_va, r: 10}},
+                        {name: fw_maf, params: {retrieval: midian_va, r: 10}}, {name: fw_openai_agents, params: {retrieval: midian_va, r: 10}},
+                        {name: fw_google_adk, params: {retrieval: midian_va, r: 10}}, {name: fw_llamaindex, params: {retrieval: midian_va, r: 10}},
+                        {name: fw_smolagents, params: {retrieval: midian_va, r: 10}}, {name: fw_camel_workforce, params: {retrieval: midian_va, r: 10}}]]
+  fw_live_n100k_verified_va:      {mirror_of: live_n100k, methods: *fw10_va}
+  fw_live_n10k_cartel_verified_va: {mirror_of: fw_live_n10k_cartel, methods: [{name: fw_langgraph, params: {retrieval: midian_va, r: 10}}, {name: fw_crewai, params: {retrieval: midian_va, r: 10}},
+                                                                             {name: fw_autogen, params: {retrieval: midian_va, r: 10}}, {name: fw_maf, params: {retrieval: midian_va, r: 10}},
+                                                                             {name: fw_openai_agents, params: {retrieval: midian_va, r: 10}}, {name: fw_google_adk, params: {retrieval: midian_va, r: 10}},
+                                                                             {name: fw_llamaindex, params: {retrieval: midian_va, r: 10}}, {name: fw_smolagents, params: {retrieval: midian_va, r: 10}},
+                                                                             {name: fw_camel_workforce, params: {retrieval: midian_va, r: 10}}]}
