@@ -39,7 +39,7 @@ for g in grids:
     old = old[~old.params.str.contains("retrieval")]                        # tfidf arms only
     for d in (new, old):
         d["regime"] = d.apply(regime, axis=1)
-        if "churn" in d: d["key"] = d.key + d.churn.astype(str)
+        if "churn" in d: d["key"] = d.key + d.churn.where(d.churn.notna() & ~d.churn.astype(str).isin(["None", "nan", "{}"]), "").astype(str)
     keys = CELL + ["method", "key", "regime"]
     new, old = new.drop_duplicates(keys), old.drop_duplicates(keys)   # rows.d and rows.csv may both hold a row
     m = new.merge(old, on=keys, suffixes=("_new", "_old"))

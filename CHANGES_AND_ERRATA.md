@@ -247,8 +247,11 @@ shape are what the figures support.
     descriptions are all unique (1,000/1,000; 5,000/5,000) -- `fw_routereval_*` are unaffected. Fix (2026-09-14,
     `ffa2a31`): labeled variant `dedup: true` offers one agent per distinct text; every affected live framework grid is
     rerun into a separate `_dd` grid (11 grids, 3,389 units, ~3.5M supervisor calls), so pre-registered and deduplicated
-    rows never share a directory or a row id. Until they land, the headline framework numbers are the pre-registered
-    adapter's and carry this caveat.
+    rows never share a directory or a row id. **Landed 2026-09-15:** the ten frameworks differ in every cell; by shape at
+    10^3 they move 0.390 -> 0.381 (specialist), 0.630 -> 0.614, 0.573 -> 0.558; at 10^5 the row becomes 0.363 honest /
+    0.344 cartel (best ADK = CrewAI 0.561 / 0.504) against MIDIAN-VA 0.836 / 0.828. The below-random frameworks are a
+    RETRIEVER effect (the top-10's mean true skill is 0.31 vs population 0.43); a MiniLM retriever (`*_em` grids) lifts
+    the 10^5 row to 0.493 / 0.459. RESULTS II.4c has the table; the pre-registered numbers stay as quoted.
 
 26. **The trusted-observer `sequential_halving` arm is withdrawn from every table and sentence (2026-09-14).** It was
     quoted in III (RouterEval 1k/5k: 0.608 / 0.882, "trusted halving − oracle −0.020"), in README's summary paragraph and,
@@ -262,6 +265,8 @@ shape are what the figures support.
 
 | part | what | result |
 |---|---|---|
+| dedup | `*_dd` grids: framework shortlist without clones (erratum 25), 11 grids, 3,389 units | ten frameworks now distinct in every cell; 10^3 means move <= 0.02 (heavy_tail 10^2 +0.05); 10^5 row 0.363 / 0.344 vs VA 0.836 / 0.828; seven of ten below random because the TF-IDF top-10's true skill averages 0.31 |
+| embed | `*_em` grids: MiniLM cosine retriever over the deduped descriptions, 7 grids, 3,267 units (10^3/10^2 in flight) | 10^5 row 0.493 / 0.459 (best 0.633 / 0.503); 10^4 0.475 / 0.434; frameworks sit at their shortlist's mean true skill (0.455); VA +0.20 / +0.32 over the best framework |
 | b20/30 | `bernoulli_b_sweep` extended to b = 20, 30 (same cells/seeds, 2026-09-14) | VA plateaus 0.005 under the oracle from b = 20; the O(n) own-probe scans reach VA at b = 30 (0.838); plain MIDIAN / A / V fall above b = 10 under the cartel (A 0.777 -> 0.689, liar-misroute 0.15 -> 0.40); per-task cost flat in b |
 | A | RouterBench on its own protocol (11 models, AIQ) | probe table b = 50 AIQ 0.707 vs their KNN 0.713 with 7× fewer labels ($30 vs $229); T3-1 MISS by 0.006, T3-2 HIT |
 | B | RouteLLM's released bert router on RouterBench outcomes, their APGR / CPT | bert APGR 0.48 < random 0.51; probe table 0.59; their own harness rerun for their routers (ours NOT RUN inside it, T3-5) |
@@ -341,8 +346,8 @@ specialist); every external comparison in RESULTS_rte_v3.md; H8 / H9; the MIDIAN
 - Dense-retrieval framework reruns (`*_em` grids, 2026-09-15, DEVIATIONS): MiniLM cosine instead of hashed TF-IDF over the
   deduped descriptions; answers whether a real retriever recovers the shortlist (TF-IDF top-10 mean true skill 0.31 vs
   population 0.43 at 10^5). `fwem_fold` chains the analysis.
-- Deduplicated framework reruns (`*_dd` grids, erratum 25): gate `fwdd_gate` on the same fleet, three supervisor
-  replicas, chained fold `fwdd_fold`; report beside (never merged into) the pre-registered framework rows.
+- Dense-retrieval reruns (`*_em`): 10^5, 10^4 and 10^4-cartel done and in II.4c; 10^3 and 10^2 in flight (`fwem_fold` chains
+  the analysis); fill the MiniLM column of the II.1 shape note when they land.
 - Halving at bernoulli 10^7 b = 3 (uint32 fix): 500 units refilling 2026-09-13 night; the chained fold regenerates the matrix.
 - MIDIAN-SH/SHA are absent at every b = 1 rung by construction; `units_todo` for those grids never reaches 0 for that reason.
 

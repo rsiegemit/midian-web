@@ -889,3 +889,7 @@
   names, `fwdd_fold` now waits only on `_dd__` (the first version's `rte_fw_` prefix would have waited on both).
 - **Reporting.** Three framework rows per cell, never pooled: pre-registered TF-IDF, dedup, embed. The comparison script
   `scripts/dedup_compare.py` pairs any `_dd`/`_em` grid with its source row by row.
+- **Result (2026-09-15, both campaigns).** Dedup: every clone cell now has ten distinct numbers; 10^3 shape means move
+  by at most 0.02 (heavy_tail at 10^2 +0.05); 10^5 mean 0.363 honest / 0.344 cartel. Embed at 10^5: 0.493 / 0.459, at
+  10^4: 0.475 / 0.434 (cartel). The shortlists' TRUE skill: TF-IDF 0.31 (10^5) / 0.36 (10^3), MiniLM 0.455 / 0.52,
+  population 0.43 / 0.42, best-of-ten 0.70 / 0.74. RESULTS II.1, II.2, II.4c.

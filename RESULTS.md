@@ -95,16 +95,23 @@ path update (commit 3415f03). Wall-clock is reported only in the supervisor-late
   the 14B orchestrator turns those into named fallbacks and is 0.013 below the 7B arm on lenient success.
 - By shape (n = 1,000): specialist frameworks 0.390 vs MIDIAN 0.778 / VA 0.802 (0 of 400 pairs won); heavy_tail 0.630
   vs 0.643 / 0.679; bimodal 0.573 = oracle vs 0.540 / 0.544 (all 400 pairs won). Frameworks are flat in β (0.530–0.532).
-  **Caveat (2026-09-14, erratum 25):** on heavy_tail and bimodal the ten frameworks are identical in every one of the
-  100 headline cells because the adapter's top-10 is ten clones of one agent (5 and 2 distinct descriptions in those
-  populations); only the specialist cells measure a framework choosing among different agents. Deduplicated reruns
-  (`fw_live_n1000_dd`, `fw_live_n100_dd`, ...) are in flight; the numbers above are the pre-registered adapter's.
+  **Shortlist reruns (2026-09-15, erratum 25).** The pre-registered heavy_tail and bimodal cells had all ten frameworks
+  identical because the TF-IDF top-10 was ten clones of one agent (5 and 2 distinct descriptions in those populations).
+  Paired reruns on the same cells and seeds: frameworks by shape, pre-registered -> deduplicated shortlist -> MiniLM
+  shortlist: specialist 0.390 -> 0.381 -> 0.52 (MiniLM one third in); heavy_tail 0.630 -> 0.614 -> 0.656; bimodal
+  0.573 -> 0.558 -> 0.556 (MIDIAN-VA 0.802 / 0.679 / 0.544). The ten frameworks now differ in every cell; no
+  conclusion moves. The pre-registered numbers stay as quoted; the two variants are reported beside them, never pooled.
 - Phase-1 replication (Q = 300, 3 seeds, 60 cells, earlier adapters): frameworks 0.51–0.54 vs MIDIAN 0.637 / V 0.659.
 
 ### II.2 Why the frameworks lose, and what repairs them — **FINAL**
 
 - The frameworks' only signal is the self-description, which over-claims by +0.4 (clipped) and correlates with true
   skill at Spearman **0.443** (specialist), **0.194** (heavy_tail), **0.295** (bimodal).
+- **The retriever, not the orchestrator, sets the framework number** (2026-09-15). The true skill of the adapter's
+  top-10 averages 0.36 at 10^3 and 0.31 at 10^5 against population means of 0.42 / 0.43 (TF-IDF over
+  self-descriptions ranks Qwen2.5-0.5B's family-word-heavy texts first); a MiniLM retriever lifts it to 0.52 / 0.455,
+  and the best of the ten would give 0.74 / 0.70. Every framework lands near its shortlist's MEAN: given ten distinct
+  candidates the orchestrators choose no better than uniformly. II.4c has the per-framework table.
 - On **bimodal** populations every framework sits on the oracle -- but not because description ≈ skill: the top-10 is
   ten copies of the one big-model description, so any pick is the oracle's (erratum 25). On **specialist** populations they collapse to **0.39 vs MIDIAN's 0.75**. The framework − MIDIAN gap is
   monotone in within-family legibility (Fig. H2).
@@ -205,13 +212,12 @@ warm-ups, 15 chained follow-ons. This paragraph is updated when it lands or time
 the 5,000 real leaderboard LLMs.
 
 **Update 2026-09-15 (attempt 2, concurrency honoured, 96 cores of warm-up):** the first unit landed. Peer-reported
-sequential halving at live n = 100,000, beta = 0: **seed 1 success 0.830 = the oracle's 0.830** (MIDIAN-VA 0.810, plain
-MIDIAN 0.753, flat online 0.703); **seed 2 0.860 = the oracle's 0.860** (VA 0.840, MIDIAN 0.713); 4,649,984 build
-probes per seed (3% under the n·K·b = 4.8M every other probe arm pays), 1 comparison per task, 19.5 h and 28.7 h of
-wall-clock for the two builds against a fleet shared with 1,200 framework jobs.
-With honest reports the peer-scored tournament finds the true best agent per family, exactly as on the calibrated
-backend (II.4e: 0.846 vs oracle 0.846 at 10^7). Seed 3 and the cartel cells (where the same arm collapses to
-0.69-0.71 on bernoulli) are running; the row is filled in when they land.
+sequential halving at live n = 100,000, beta = 0: **seed 1 0.830, seed 2 0.860, seed 3 0.900 -- the oracle's 0.830,
+0.860, 0.897 in the same cells** (MIDIAN-VA 0.810 / 0.840 / 0.857, plain MIDIAN 0.753 / 0.713 / 0.790); 4,649,984 build
+probes per seed (3% under the n·K·b = 4.8M every other probe arm pays), 1 comparison per task; builds of 19.5 h, 28.7 h
+and 6.7 h (the third with a replica fleet). With honest reports the peer-scored tournament finds the true best agent
+per family, exactly as on the calibrated backend (II.4e: 0.846 vs oracle 0.846 at 10^7). The cartel and random-liar
+cells (where the same arm collapses to 0.69-0.71 on bernoulli) are running; the row is filled in when they land.
 
 | arm | β = 0 | β = 0.25 | β = 0.5 random | cartel (β = 0.5, low-skill) |
 |---|---|---|---|---|
@@ -230,25 +236,46 @@ backend (II.4e: 0.846 vs oracle 0.846 at 10^7). Seed 3 and the cartel cells (whe
 | declared argmax | 0.622 | 0.561 | 0.567 | 0.578 |
 | random | 0.442 | 0.442 | 0.442 | 0.442 |
 | LinUCB (honest) | 0.386 | 0.386 | 0.386 | 0.386 |
-| ten frameworks | WITHHELD -- see caveat | | | |
+| ten frameworks, pre-registered TF-IDF shortlist (all ten identical: clones, erratum 25) | 0.379 | 0.379 | 0.379 | 0.379 |
+| ten frameworks, deduplicated shortlist: mean (best = ADK = CrewAI) | 0.363 (0.561) | 0.362 | 0.355 | 0.344 (0.504) |
+| ten frameworks, MiniLM shortlist: mean (best) | 0.493 (0.633) | 0.481 | 0.470 | 0.459 (0.503) |
+| peer-reported sequential halving (seeds 1 / 2 / 3) | 0.830 / 0.860 / 0.900 = oracle per seed | running | running | running |
 
 **VA − V under the cartel is +0.129** (0.828 vs 0.699), the same effect the synthetic grid reports at +0.143. VA loses
 only 0.008 from honest to cartel while V loses 0.137 and plain MIDIAN 0.046: verification alone buys the honest number,
 the audits are what survive collusion.
 
-**The ten-framework row is WITHHELD, and the cause is now known (2026-09-14; erratum 25, DEVIATIONS).** All ten
-return byte-identical success (0.34667 at seed 1) in every regime while their pick / fallback / misroute counters differ.
-Recomputing the adapter's TF-IDF shortlist from the population files shows why: an agent's prompt is fixed by (model,
-specialty triple, tool), its self-description is generated from that prompt and memoized, and its answers are memoized
-per (model, handicapped?, tool) -- so the 10^5 population holds only 3,920 distinct descriptions (25 copies each) and
-every family's top-10 is ten copies of ONE description, one prompt signature, one true skill (16/16 families, all
-three seeds). Whatever the framework picks, or falls back to, the same memoized answer is scored; success depends only
-on which description best matches each family's text, i.e. on the seed. The same clone effect gives ~2.6 distinct
-agents per shortlist at 10^4 and ONE at 10^3 on the heavy_tail (5 distinct descriptions) and bimodal (2) shapes -- see
-the caveat under II.1. Fix: the labeled `dedup: true` adapter variant ranks distinct description texts and offers one
-agent per text (2 to 6 signatures per shortlist at 10^5, true-skill spread up to 0.01-1.00); every affected live
-framework grid is being rerun into its own `_dd` grid (`fw_live_n100k_dd` here). The pre-registered rows stay as they
-are; no framework number may be quoted at 10^5 until `fw_live_n100k_dd` lands.
+**The ten-framework row, resolved (2026-09-15; erratum 25, DEVIATIONS).** The pre-registered row (0.379 for all ten
+in every regime) was a clone artefact: an agent's self-description is generated from its prompt and memoized, its
+answers are memoized per prompt signature, so the 10^5 population holds 3,920 distinct descriptions (25 copies each)
+and the adapter's TF-IDF top-10 was ten copies of ONE agent in every family (16/16, 3 seeds). Two labeled reruns of
+the same cells, seeds and frameworks fix the shortlist: **dedup** (one agent per distinct text) and **embed** (cosine
+over all-MiniLM-L6-v2 embeddings of the deduped descriptions, the retriever a deployed stack would use). Per framework,
+mean of 3 seeds:
+
+| framework | TF-IDF (pre-reg.) | dedup, honest | dedup, cartel | MiniLM, honest | MiniLM, cartel |
+|---|---|---|---|---|---|
+| Google ADK = CrewAI | 0.379 | 0.561 | 0.504 | 0.633 | 0.503 |
+| Magentic-One | 0.379 | 0.432 | 0.391 | 0.601 | 0.498 |
+| MAF / CAMEL | 0.379 | 0.279 / 0.277 | 0.273 / 0.274 | 0.485 / 0.484 | 0.488 / 0.486 |
+| OpenAI Agents | 0.379 | 0.324 | 0.313 | 0.456 | 0.454 |
+| LangGraph / smolagents / LlamaIndex | 0.379 | 0.31-0.32 | 0.27-0.31 | 0.40-0.43 | 0.42-0.43 |
+| AutoGen | 0.379 | 0.292 | 0.292 | 0.380 | 0.378 |
+| **mean of ten** | 0.379 | 0.363 | 0.344 | 0.493 | 0.459 |
+| for reference: random / declared argmax / flat online / **MIDIAN-VA** / oracle | | 0.442 / 0.622 / 0.749 / **0.836** / 0.862 | 0.442 / 0.578 / 0.749 / **0.828** / 0.862 | | |
+
+Three facts. (1) With the clone-free TF-IDF shortlist seven of ten frameworks are BELOW random -- because the shortlist
+is: its ten agents' mean TRUE skill is 0.31 against a population mean of 0.43 (best of the ten 0.65), since
+Qwen2.5-0.5B's self-descriptions parrot the family vocabulary and fill ranks 2-10 in most families. The same effect is
+in the pre-registered 10^3 row (frameworks 0.389 vs random 0.432) and in the 10^4 row (below random, II.1). (2) A real
+dense retriever lifts the shortlist to mean true skill 0.455 (best of ten 0.70) and every framework with it, mean 0.363
+-> 0.493 honest, 0.344 -> 0.459 cartel; the frameworks then sit at the shortlist's mean, i.e. they choose among the
+ten no better than uniformly, and the best of them (ADK, CrewAI: 0.633 / 0.503) get there because their frequent
+delegation failures fall back to the declared-skill argmax among the ten. ADK and CrewAI are identical in every cell
+for the same reason. (3) Against the best framework under any retriever, MIDIAN-VA is +0.20 honest and +0.32 under the
+cartel at 10^5, at 51 comparisons per task against a supervisor call; declared argmax alone (0.622 / 0.578) beats every
+framework under every retriever. The retriever-skill numbers: `$RTE_DATA/logs/diag/fw_shortlist_skill.py`; the paired
+comparison: `scripts/dedup_compare.py`.
 
 **Cost (modelled, not wall-clock -- `scripts/energy.py`, now parametrised by n).** Every probe arm pays the same one-off
 build of 4.8M probes = **7.7-8.1 GPU-hours**, then routes for free: MIDIAN-VA 0.004 s per task against the frameworks'
