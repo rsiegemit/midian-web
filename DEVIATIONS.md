@@ -893,3 +893,13 @@
   by at most 0.02 (heavy_tail at 10^2 +0.05); 10^5 mean 0.363 honest / 0.344 cartel. Embed at 10^5: 0.493 / 0.459, at
   10^4: 0.475 / 0.434 (cartel). The shortlists' TRUE skill: TF-IDF 0.31 (10^5) / 0.36 (10^3), MiniLM 0.455 / 0.52,
   population 0.43 / 0.42, best-of-ten 0.70 / 0.74. RESULTS II.1, II.2, II.4c.
+
+## VA-cohort frameworks at scale and under the cartel (2026-09-16, POST-HOC, labeled variant)
+
+- The verified-cohort grids (`fw_live_n{100,1000}_verified`, `fw_live_n1000_verified_va`) stopped at 10^3 and ran random
+  liars only. Four mirror grids fill the gaps on the existing cells and seeds: `fw_live_n1000_verified_va_lowskill`
+  (300 units), `fw_live_n10k_verified_va` (60), `fw_live_n10k_cartel_verified_va` (27), `fw_live_n100k_verified_va` (180;
+  each unit rebuilds VA at 10^5 on memoized probes, ~7 h, 22-24 GB). Params `retrieval: midian_va, r: 10` as in the 10^3
+  grid; sapphire, one unit per job; folds `fwva_fold` / `fwva_fold2`. Results in RESULTS II.2 (table) and II.4c.
+- The VA build in a framework unit spends VA's 5% audit probes on top of the n·K·b budget (the "build spent 49380
+  probes > budget 48000" warning): identical to the standalone VA arm's accounting, recorded, not corrected.

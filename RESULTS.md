@@ -128,6 +128,27 @@ path update (commit 3415f03). Wall-clock is reported only in the supervisor-late
   clause holds, the β = 0.5 clause (≥ +0.03) holds for LangGraph, AutoGen and smolagents only. The audited cohort
   protects the supervisor less than MIDIAN-VA's own pick because the frameworks re-rank the ten candidates by their
   inflated self-descriptions.
+- **VA's cohort at every scale, and under the cartel (2026-09-16; grids `fw_live_n1000_verified_va_lowskill`,
+  `fw_live_n10k_verified_va`, `fw_live_n10k_cartel_verified_va`, `fw_live_n100k_verified_va`).** Handing the frameworks
+  MIDIAN-VA's probed cohort is the best shortlist at every n, and it does not close the gap to VA routing by itself.
+  Frameworks pooled (best single framework), specialist:
+
+  | n | regime | TF-IDF shortlist | MiniLM shortlist | **VA cohort** | VA itself | oracle |
+  |---|---|---|---|---|---|---|
+  | 10^3 | cartel | 0.378 | 0.513 | **0.569** (0.621) | 0.807 | 0.861 |
+  | 10^4 | honest | 0.292 | 0.475 | **0.621** (0.747) | 0.811 | 0.859 |
+  | 10^4 | cartel | 0.284 | 0.434 | **0.568** (0.642) | -- | 0.859 |
+  | 10^5 | honest | 0.379 | 0.493 | **0.593** (0.693) | 0.836 | 0.862 |
+  | 10^5 | cartel | 0.379 | 0.459 | **0.567** (0.667) | 0.828 | 0.862 |
+
+  The VA cohort beats the best text retriever by +0.06 to +0.15 and the gap grows with n; yet the frameworks holding
+  VA's ten probed agents, with VA's own pick first in the list, stay 0.22-0.26 below VA at every n and in every regime.
+  That loss is the orchestrator's choice among ten verified candidates, and it is constant in n: retrieval quality
+  moves the framework number, orchestration quality caps it. Per framework at 10^5 (honest / cartel): CrewAI = ADK
+  0.693 / 0.626, AutoGen 0.669 / 0.667, Magentic-One 0.651 / 0.620, LlamaIndex 0.611 / 0.593, smolagents 0.553 /
+  0.537, LangGraph 0.564 / 0.536, MAF 0.547 / 0.524, OpenAI Agents 0.483 / 0.459, CAMEL 0.468 / 0.480. On heavy_tail
+  and bimodal every shortlist source is within 0.03 of VA itself (10^3 cartel: VA cohort 0.647 / 0.539 vs VA 0.686 /
+  0.545), as before.
 
 ### II.3 The MIDIAN family: add audits first, then verification — **FINAL**
 
@@ -239,6 +260,7 @@ cells (where the same arm collapses to 0.69-0.71 on bernoulli) are running; the 
 | ten frameworks, pre-registered TF-IDF shortlist (all ten identical: clones, erratum 25) | 0.379 | 0.379 | 0.379 | 0.379 |
 | ten frameworks, deduplicated shortlist: mean (best = ADK = CrewAI) | 0.363 (0.561) | 0.362 | 0.355 | 0.344 (0.504) |
 | ten frameworks, MiniLM shortlist: mean (best) | 0.493 (0.633) | 0.481 | 0.470 | 0.459 (0.503) |
+| ten frameworks, MIDIAN-VA cohort shortlist: mean (best) | 0.593 (0.693) | 0.578 | 0.595 | 0.567 (0.667) |
 | peer-reported sequential halving (seeds 1 / 2 / 3) | 0.830 / 0.860 / 0.900 = oracle per seed | running | running | running |
 
 **VA − V under the cartel is +0.129** (0.828 vs 0.699), the same effect the synthetic grid reports at +0.143. VA loses
@@ -274,8 +296,11 @@ ten no better than uniformly, and the best of them (ADK, CrewAI: 0.633 / 0.503) 
 delegation failures fall back to the declared-skill argmax among the ten. ADK and CrewAI are identical in every cell
 for the same reason. (3) Against the best framework under any retriever, MIDIAN-VA is +0.20 honest and +0.32 under the
 cartel at 10^5, at 51 comparisons per task against a supervisor call; declared argmax alone (0.622 / 0.578) beats every
-framework under every retriever. The retriever-skill numbers: `$RTE_DATA/logs/diag/fw_shortlist_skill.py`; the paired
-comparison: `scripts/dedup_compare.py`.
+framework under every retriever. (4) With MIDIAN-VA's own probed cohort as the shortlist (`fw_live_n100k_verified_va`)
+the ten frameworks reach 0.593 honest / 0.567 cartel (best CrewAI = ADK 0.693 / 0.626), the best shortlist by +0.10,
+and still 0.24-0.26 below VA routing to its own pick: at 10^5 as at 10^3 the orchestrator's choice among ten verified
+candidates costs a quarter of the success. The retriever-skill numbers: `$RTE_DATA/logs/diag/fw_shortlist_skill.py`;
+the paired comparison: `scripts/dedup_compare.py`.
 
 **Cost (modelled, not wall-clock -- `scripts/energy.py`, now parametrised by n).** Every probe arm pays the same one-off
 build of 4.8M probes = **7.7-8.1 GPU-hours**, then routes for free: MIDIAN-VA 0.004 s per task against the frameworks'
