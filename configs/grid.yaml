@@ -636,3 +636,7 @@ grids:
                                                                           {name: fw_openai_agents, params: {retrieval: embed, dedup: true}}, {name: fw_google_adk, params: {retrieval: embed, dedup: true}},
                                                                           {name: fw_llamaindex, params: {retrieval: embed, dedup: true}}, {name: fw_smolagents, params: {retrieval: embed, dedup: true}},
                                                                           {name: fw_camel_workforce, params: {retrieval: embed, dedup: true}}]}
+
+  # ---- 2026-09-16: the missing cartel cell for the VA-cohort frameworks (the verified-cohort grids ran random liars
+  # only). Same ten frameworks holding MIDIAN-VA's leaf cohort (r = 10), beta = 0.5 low-skill-first, 3 shapes, seeds 1-10.
+  fw_live_n1000_verified_va_lowskill: {mirror_of: fw_live_n1000_verified_va, beta: [0.5], liar_select: [low_skill_first]}
