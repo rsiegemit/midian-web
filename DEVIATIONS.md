@@ -903,3 +903,10 @@
   grid; sapphire, one unit per job; folds `fwva_fold` / `fwva_fold2`. Results in RESULTS II.2 (table) and II.4c.
 - The VA build in a framework unit spends VA's 5% audit probes on top of the n·K·b budget (the "build spent 49380
   probes > budget 48000" warning): identical to the standalone VA arm's accounting, recorded, not corrected.
+- **Embed campaign complete (2026-09-16 16:00).** 10^3: specialist +0.14 (0.390 -> 0.530), heavy_tail +0.03, bimodal -0.02;
+  10^2: specialist +0.06, heavy_tail +0.10, bimodal -0.01; cartel 10^3 specialist 0.375 -> 0.515; Magentic-One +0.05
+  everywhere. Every framework ordering vs MIDIAN unchanged (RESULTS II.1 note, II.4c).
+- **Live 10^5 halving liar cells timed out at 24 h** (the honest cells took 6.7-28.7 h; liar cells generate more, since
+  the cartel changes which agents survive each round). Resubmitted with 3-day limits; the memo returns every generation
+  already made, so the rerun resumes from where the first attempt stopped. The four seed-3 cells still inside their 24 h
+  have 3-day successors chained on `afterany`.

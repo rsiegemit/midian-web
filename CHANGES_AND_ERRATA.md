@@ -266,7 +266,7 @@ shape are what the figures support.
 | part | what | result |
 |---|---|---|
 | dedup | `*_dd` grids: framework shortlist without clones (erratum 25), 11 grids, 3,389 units | ten frameworks now distinct in every cell; 10^3 means move <= 0.02 (heavy_tail 10^2 +0.05); 10^5 row 0.363 / 0.344 vs VA 0.836 / 0.828; seven of ten below random because the TF-IDF top-10's true skill averages 0.31 |
-| embed | `*_em` grids: MiniLM cosine retriever over the deduped descriptions, 7 grids, 3,267 units (10^3/10^2 in flight) | 10^5 row 0.493 / 0.459 (best 0.633 / 0.503); 10^4 0.475 / 0.434; frameworks sit at their shortlist's mean true skill (0.455); VA +0.20 / +0.32 over the best framework |
+| embed | `*_em` grids: MiniLM cosine retriever over the deduped descriptions, 7 grids, 3,267 units (complete 2026-09-16) | 10^5 row 0.493 / 0.459 (best 0.633 / 0.503); 10^4 0.475 / 0.434; 10^3 specialist 0.530 (+0.14), cartel 0.515; heavy_tail / bimodal within 0.03 of before; frameworks sit at their shortlist's mean true skill; VA +0.20 to +0.32 over the best framework at every n |
 | VA-cohort at scale | frameworks holding MIDIAN-VA's leaf cohort at 10^3 cartel, 10^4 (+cartel), 10^5 (all cells); 4 grids, 567 units | best shortlist at every n (10^5: 0.593 / 0.567 vs MiniLM 0.493 / 0.459) and still 0.22-0.26 below VA itself everywhere: orchestration, not retrieval, caps the frameworks (RESULTS II.2, II.4c) |
 | b20/30 | `bernoulli_b_sweep` extended to b = 20, 30 (same cells/seeds, 2026-09-14) | VA plateaus 0.005 under the oracle from b = 20; the O(n) own-probe scans reach VA at b = 30 (0.838); plain MIDIAN / A / V fall above b = 10 under the cartel (A 0.777 -> 0.689, liar-misroute 0.15 -> 0.40); per-task cost flat in b |
 | A | RouterBench on its own protocol (11 models, AIQ) | probe table b = 50 AIQ 0.707 vs their KNN 0.713 with 7× fewer labels ($30 vs $229); T3-1 MISS by 0.006, T3-2 HIT |
@@ -347,8 +347,9 @@ specialist); every external comparison in RESULTS_rte_v3.md; H8 / H9; the MIDIAN
 - Dense-retrieval framework reruns (`*_em` grids, 2026-09-15, DEVIATIONS): MiniLM cosine instead of hashed TF-IDF over the
   deduped descriptions; answers whether a real retriever recovers the shortlist (TF-IDF top-10 mean true skill 0.31 vs
   population 0.43 at 10^5). `fwem_fold` chains the analysis.
-- Dense-retrieval reruns (`*_em`): 10^5, 10^4 and 10^4-cartel done and in II.4c; 10^3 and 10^2 in flight (`fwem_fold` chains
-  the analysis); fill the MiniLM column of the II.1 shape note when they land.
+- Live 10^5 peer-halving liar cells: the first attempt's 12 follow-ons hit the 24 h limit (cartel cells generate fresh
+  probes wherever liars change the survivors); rerun with 3-day limits from the memo (2026-09-16 16:10). II.4c when they land.
+- VA-cohort frameworks at n = 100 (`fw_live_n100_verified_va[_lowskill]`, 1,500 units): running; `fwva_fold3` chains it.
 - Halving at bernoulli 10^7 b = 3 (uint32 fix): 500 units refilling 2026-09-13 night; the chained fold regenerates the matrix.
 - MIDIAN-SH/SHA are absent at every b = 1 rung by construction; `units_todo` for those grids never reaches 0 for that reason.
 

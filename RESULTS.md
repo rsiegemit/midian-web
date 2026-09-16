@@ -98,9 +98,13 @@ path update (commit 3415f03). Wall-clock is reported only in the supervisor-late
   **Shortlist reruns (2026-09-15, erratum 25).** The pre-registered heavy_tail and bimodal cells had all ten frameworks
   identical because the TF-IDF top-10 was ten clones of one agent (5 and 2 distinct descriptions in those populations).
   Paired reruns on the same cells and seeds: frameworks by shape, pre-registered -> deduplicated shortlist -> MiniLM
-  shortlist: specialist 0.390 -> 0.381 -> 0.52 (MiniLM one third in); heavy_tail 0.630 -> 0.614 -> 0.656; bimodal
-  0.573 -> 0.558 -> 0.556 (MIDIAN-VA 0.802 / 0.679 / 0.544). The ten frameworks now differ in every cell; no
-  conclusion moves. The pre-registered numbers stay as quoted; the two variants are reported beside them, never pooled.
+  shortlist: specialist 0.390 -> 0.383 -> **0.530**; heavy_tail 0.630 -> 0.613 -> 0.657; bimodal 0.573 -> 0.558 ->
+  0.557 (MIDIAN-VA 0.802 / 0.679 / 0.544); at n = 100: specialist 0.479 -> 0.488 -> 0.546, heavy_tail 0.557 -> 0.610
+  -> 0.657, bimodal 0.561 -> 0.556 -> 0.556. Under the 10^3 cartel: specialist 0.375 -> 0.376 -> 0.515 (VA 0.807).
+  The ten frameworks now differ in every cell; the dense retriever lifts specialist by +0.14 at 10^3 and +0.06 at
+  10^2 and leaves the other shapes within 0.03; no ranking against MIDIAN moves. The pre-registered numbers stay as
+  quoted; the two variants are reported beside them, never pooled. Frameworks holding MIDIAN-VA's probed cohort
+  instead: see II.2.
 - Phase-1 replication (Q = 300, 3 seeds, 60 cells, earlier adapters): frameworks 0.51–0.54 vs MIDIAN 0.637 / V 0.659.
 
 ### II.2 Why the frameworks lose, and what repairs them — **FINAL**
