@@ -6,7 +6,8 @@ One panel and one row per figure, always. Families: live (RTE live backend, 10^2
 pre-registered TF-IDF adapter -- at 10^5 that row is the clone artefact of erratum 25, see M6 for the other shortlists),
 bernoulli (calibrated synthetic, 10..10^7, 1000 seeds, b = 3), replay (RouterBench outcomes, 10..10^6, shapes pooled),
 routereval (real LLM pools 10 / 100 / 1,000 per pool config and the 5,000-LLM leaderboard pool), llmrouterbench (20 models).
-Do-not-add list (extra_figs.excluded): MIDIAN with r != 10, MIDIAN-SH, MIDIAN-SHA, the trusted-observer halving arm."""
+Do-not-add list (extra_figs.excluded): MIDIAN with r != 10, MIDIAN-SH, MIDIAN-SHA, the trusted-observer halving arm.
+route_to_k_majority executes THREE agents per task and majority-votes, so it can sit above the single-agent oracle: it is drawn hatched and named so."""
 from __future__ import annotations
 import os, sys
 import numpy as np, pandas as pd, matplotlib
@@ -38,7 +39,11 @@ def rows(g):
     return _mem[g]
 
 
+MULTI = {"route_to_k_majority": "route-to-3 majority (3 executions per task)"}   # route-to-many arms: not comparable at equal per-task cost, hatched
+
+
 def name(label):
+    if label in MULTI: return MULTI[label]
     if label in _NAME: return _NAME[label]
     if label.startswith("fw_") and "[" not in label: return ABBR.get(label, label[3:])
     return label.replace("_", " ")
@@ -94,9 +99,13 @@ def _panel(ax, labels, series, oracle, ns, ylim, legend=True):
         for i, l in enumerate(present):
             m, lo, hi, _ = series[l][n]
             ax.bar(x[j] - 0.42 + w * (i + 0.5), m, w, color=color(l, ci[l]), label=name(l) if j == ns.index(max(n_ for n_ in ns if n_ in series[l])) else None,
-                   yerr=[[m - lo], [hi - m]], capsize=0.6, error_kw=dict(elinewidth=0.35, ecolor="#333"))
-    ox = [x[j] for j, n in enumerate(ns) if n in oracle]; oy = [oracle[n] for n in ns if n in oracle]
-    if ox: ax.plot(ox, oy, ls=":", color=_COLOR.get("oracle", "#7f8c8d"), marker="o", ms=3, lw=1.2, label="oracle", zorder=5)
+                   yerr=[[m - lo], [hi - m]], capsize=0.6, error_kw=dict(elinewidth=0.35, ecolor="#333"), hatch="////" if l in MULTI else None, edgecolor="white" if l in MULTI else None, lw=0.3)
+    # oracle: one continuous dotted piecewise line -- flat across each n cluster at that cluster's oracle, joined between clusters
+    pts = [(x[j], oracle[n]) for j, n in enumerate(ns) if n in oracle]
+    if pts:
+        px, py = [], []
+        for xj, y in pts: px += [xj - 0.42, xj + 0.42]; py += [y, y]
+        ax.plot(px, py, ls=":", color=_COLOR.get("oracle", "#7f8c8d"), lw=1.3, label="oracle", zorder=5)
     ax.set_xticks(x); ax.set_xticklabels([f"n = {n:,}" for n in ns]); ax.set_ylim(*ylim); ax.set_ylabel("success"); ax.grid(axis="y", alpha=.3, lw=0.4)
     h, l = ax.get_legend_handles_labels(); seen = {}; [seen.setdefault(b, a) for a, b in zip(h, l)]
     order = ["oracle"] + [name(x) for x in labels if name(x) in seen]                      # legend in bar order (best at n_max first)
