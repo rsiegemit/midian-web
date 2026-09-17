@@ -447,6 +447,27 @@ MIDIAN-VA = MIDIAN-V 0.797, MIDIAN = MIDIAN-A 0.769, flat-online 0.767; replay -
 bandit 0.785, VA = V 0.760, MIDIAN = A 0.707. With no liars the two audit variants collapse onto their un-audited
 twins (audits have nothing to catch), and reading declarations is near-optimal on both backends.
 
+**The coverage-fill arms (2026-09-17; COVERAGE.md §6/§7).** Five rivals that the sweeps had never carried were run on
+every rung and regime of both backends. Bernoulli, b = 3 (replay in brackets where it differs):
+
+| arm | reads | 10 | 10^3 | 10^5 | 10^7 | under the cartel at 10^5 |
+|---|---|---|---|---|---|---|
+| disrouter cascade | declared | 0.684 | 0.726 | 0.680 | 0.640 | 0.720 (rises: the cartel deflates the declarations it skips) |
+| gossip reputation (EigenTrust) | probe + reports + bus | 0.621 | 0.669 | 0.671 | -- | **0.415 = random** |
+| referral network | probe + reports + bus | 0.536 | 0.555 | 0.556 | -- | **0.431 = random** |
+| LinUCB-honest | probe (own history only) | 0.680 | 0.726 | 0.437 | **0.261** | 0.261 (identical: it reads no reports) |
+| TrueSkill per family | probe | 0.579 | 0.627 | -- | -- | 0.627 (10^4 ceiling: pure-Python update loop) |
+| MIDIAN-VA / oracle / random | | 0.664 / 0.728 / 0.419 | 0.783 / 0.845 / 0.419 | 0.789 / 0.845 / 0.419 | 0.794 / 0.846 / 0.418 | |
+
+Two findings. (1) **Both decentralised report-reading arms collapse to random under the cartel** (gossip 0.671 -> 0.415,
+referral 0.556 -> 0.431, against random 0.419) while MIDIAN-VA, which reads the same channel through trimmed cohorts and
+audits, holds 0.789. EigenTrust's power iteration and a d-regular referral walk have no per-cohort trimming, so a
+colluding low-skill majority owns the reputation graph. (2) **LinUCB-honest falls BELOW random from 10^5 up**
+(0.437 -> 0.321 -> 0.261 against random 0.418) and its numbers are **bit-identical in all five regimes**: it reads only
+its own probe outcomes, so no liar can touch it, and the collapse is pure scale. A 4-dimensional arm context
+([1, mean, sqrt(count), mean-over-families]) cannot separate 10^7 arms from b = 3 pulls each; the exploration bonus then
+dominates the estimate. This is the cleanest scale failure in the benchmark and it is not a robustness failure at all.
+
 **Four results, each on 200-1000 seeds.**
 1. **Under the cartel MIDIAN-VA is the best non-oracle arm at every n from 10^3 to 10^7 on bernoulli and 10^3 to 10^6 on
    replay**, and its value is flat across four decades (bernoulli 0.783 -> 0.794, replay 0.742 -> 0.760). The old
