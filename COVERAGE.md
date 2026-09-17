@@ -88,3 +88,11 @@ The same 18-arm subset at n = 20, five regimes. Same verdicts as RouterEval for 
 Everything else missing is justified by backend (no LLM / no descriptions), by documented cost (MLP one-hot, TrueSkill
 ≥ 10^5, KNN/MLP on synthetic prompts, 10^5 worlds per shape), by pre-registered scope (n sets, β sets, MMLU), or is an
 ablation that belongs in an appendix.
+
+## 7. Fill campaign (launched 2026-09-17 03:00; `logs/fill/launch.sh`)
+
+Every item in §6 except the replay per-shape matrices: `fill_arms` (LinUCB, cascade, referral, gossip, TrueSkill ≤ 10^4) on
+both v5 sweeps at every rung and regime (referral / gossip to 10^6); the twelve missing rivals on `routereval_mmlu`,
+`routereval_mmlu5k` (+ KNN online) and `llmrouterbench_pool`; `fw_routereval_small` (nine frameworks at m = 10 / 100);
+`learned_n100_fill`, `learned_n10k_fill` (+ `llm_supervisor`), `live_n100k_fill` (+ `llm_supervisor`). Chained folds
+`fill_fold_synth` and `fill_fold_live`; the bar figures and matrices regenerate after them.

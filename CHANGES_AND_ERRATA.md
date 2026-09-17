@@ -344,6 +344,8 @@ specialist); every external comparison in RESULTS_rte_v3.md; H8 / H9; the MIDIAN
 
 ## 9. Still open (not results)
 
+- Coverage fill (COVERAGE.md §7, 2026-09-17): the cheap, previously unscheduled rivals on every family are running; matrices,
+  bar figures and NUMBERS.json regenerate when the two chained folds land.
 - Live 10^5 peer-halving liar cells: β = 0.25 seeds 2-3 and β = 0.5 (both liar sets) seeds 1-3, rerunning with 3-day
   limits from the memo (the first follow-ons hit 24 h); II.4c carries * until they land. The halving row is otherwise
   complete (honest cells = the oracle, 3 seeds).
