@@ -1,6 +1,6 @@
 # RTE / MIDIAN — Consolidated Results Dossier
 
-**Snapshot:** 2026-09-17 (v6 sync: every grid folded; the 10^2 VA-cohort Magentic-One units and the live 10^5 halving liar cells still running, marked *) · **Purpose:** the single ordered source for the
+**Snapshot:** 2026-09-17 18:30 (v7: the coverage-fill campaign is folded on both synthetic backends and on every live rung; still running and marked * -- the live 10^5 halving β = 0.5 cells, the live 10^4 heavy_tail/bimodal campaign, and the RouterEval small-pool framework variants) · **Purpose:** the single ordered source for the
 manuscript. Detailed protocols, per-grid tables and figure captions are in the linked documents; this file carries every
 number a paper needs, each tagged with its status.
 
@@ -271,7 +271,7 @@ largest live pool in the programme; RouterEval cannot reach it** — its ceiling
 | ten frameworks, deduplicated shortlist: mean (best = ADK = CrewAI) | 0.363 (0.561) | 0.362 | 0.355 | 0.344 (0.504) |
 | ten frameworks, MiniLM shortlist: mean (best) | 0.493 (0.633) | 0.481 | 0.470 | 0.459 (0.503) |
 | ten frameworks, MIDIAN-VA cohort shortlist: mean (best) | 0.593 (0.693) | 0.578 | 0.595 | 0.567 (0.667) |
-| peer-reported sequential halving (honest cells: 3 seeds; liar cells: see the table below, *) | 0.830 / 0.860 / 0.900 = the oracle per seed | * | * | * |
+| peer-reported sequential halving (per-seed table below; * = cell incomplete) | 0.830 / 0.860 / 0.900 = the oracle per seed | 0.830 / 0.860 / 0.900 = oracle | 0.820 / 0.850* | no seed yet* |
 
 **VA − V under the cartel is +0.129** (0.828 vs 0.699), the same effect the synthetic grid reports at +0.143. VA loses
 only 0.008 from honest to cartel while V loses 0.137 and plain MIDIAN 0.046: verification alone buys the honest number,
@@ -314,16 +314,19 @@ landed; the missing cells are running with 3-day limits after the first follow-o
 |---|---|---|---|---|
 | β = 0, low-skill cartel | 3 / 3 | 0.830 / 0.860 / 0.900 | 0.830 / 0.860 / 0.897 | 0.00 / 0.00 / 0.00 |
 | β = 0, random liars | 3 / 3 | 0.830 / 0.860 / 0.900 | 0.830 / 0.860 / 0.897 | 0.00 / 0.00 / 0.00 |
-| β = 0.25, low-skill cartel | 1 / 3* | 0.830 | 0.830 | 0.00 |
-| β = 0.25, random liars | 2 / 3* | 0.827 / 0.860 | 0.830 / 0.860 | 1.00 / 1.00 |
+| β = 0.25, low-skill cartel | 3 / 3 | 0.830 / 0.860 / 0.900 | 0.830 / 0.860 / 0.897 | 0.00 / 0.00 / 0.00 |
+| β = 0.25, random liars | 3 / 3 | 0.827 / 0.860 / 0.900 | 0.830 / 0.860 / 0.897 | 1.00 / 1.00 / 0.93 |
+| β = 0.5, random liars | 2 / 3* | 0.820 / 0.850 | 0.830 / 0.860 | 1.00 / 1.00 |
 <!-- /doc_tables -->
 
 With honest reports the peer-scored tournament finds the true best agent per family at 4,649,984 build probes (3% under
 the n·K·b every other probe arm pays) and one comparison per task, exactly as on the calibrated backend (II.4e). The first
 liar cells say two things the synthetic grids could not: a random liar set at 10^5 contains the true best agents, so
 halving routes to liars 100% of the time and still scores the oracle's number (lying about reports does not lower skill);
-and the low-skill cartel at β = 0.25 does not capture a 100,000-agent tournament (0.830 = oracle, no liar routed to). The
-β = 0.5 cells, where the same arm falls to 0.69-0.71 on bernoulli, are the ones still out.
+and the low-skill cartel at β = 0.25 does not capture a 100,000-agent tournament (0.830 = oracle, no liar routed to). At β = 0.5 with random liars (2 of 3 seeds*) it is 0.820 / 0.850 against the oracle's 0.830 / 0.860 -- the first cells
+where peer halving is measurably below the oracle, by 0.010, with every route going to a liar. **The β = 0.5 low-skill
+cartel cell, where the calibrated backend puts this arm at 0.69-0.71, has no seed yet*** and is the one live cell that
+still matters.
 
 **Cost (modelled, not wall-clock -- `scripts/energy.py`, now parametrised by n).** Every probe arm pays the same one-off
 build of 4.8M probes = **7.7-8.1 GPU-hours**, then routes for free: MIDIAN-VA 0.004 s per task against the frameworks'
@@ -746,12 +749,21 @@ declaration reader 0.15 while A / VA hold (T3-24 HIT). With one cohort per level
 
 ---
 
-## Part VI — Outstanding work (2026-09-17)
+## Part VI — Outstanding work (2026-09-17 18:30)
 
-Running: the 10^2 VA-cohort Magentic-One units (`fw_live_n100_verified_va[_lowskill]`, marked * in II.2) and the live
-10^5 peer-halving liar cells (β = 0.5 random and cartel, seeds 1-3; β = 0.25 seeds 2-3; marked * in II.4c). Every other
-grid cited here is complete and folded. Figures are regenerated after those land (Part VII). Not traced yet: which
-report-channel weight in `midian.py` grows with b, behind the cartel capture of the un-audited tree above b = 10 (II.4f).
+Everything cited in this dossier is complete and folded EXCEPT the three items below, each marked * where it appears.
+
+| * item | state | what it changes when it lands |
+|---|---|---|
+| live 10^5 peer-halving at β = 0.5 | random liars 2 of 3 seeds (0.820 / 0.850 against the oracle's 0.830 / 0.860, every route to a liar); **the low-skill cartel cell has no seed yet** | II.4c's halving row. This is the cell where the calibrated backend puts peer halving at 0.69-0.71, so it is the one that tests whether a low-skill cartel can capture a 100,000-agent peer tournament. At β = 0.25 it cannot (0.830 = oracle, no liar routed to) |
+| live 10^4 on heavy_tail and bimodal | six populations built; ~400 of 966 units done | the by-shape rows at 10^4 (today they stop at 10^3); no headline number |
+| RouterEval frameworks on the m = 10 / 100 pools (pre-registered, MiniLM and VA-cohort shortlists) | 1,000 and 5,000 complete; the small pools ~60% done | extends II.2's shortlist table to the two smallest real pools |
+
+Folded and final since the last snapshot: the coverage fill on both synthetic sweeps (II.4e), the b-sweep fill, the
+real-pool arms, the live 10^2 / 10^4 / 10^5 fills, live β = 0.1 at 10^4 and 10^5, the RouterEval framework variants at
+m = 1,000 and 5,000. Chained folds `fill_fold_live` and `fill_fold_expand` are waiting on the three * items; the per-shape
+replay matrices (`matrix_success_<dist>.md`) are generating. Not traced yet: which report-channel weight in `midian.py`
+grows with b, behind the cartel capture of the un-audited tree above b = 10 (II.4f).
 
 Not planned without a decision: RouterDC (GPU fine-tune), RouteLLM causal_llm (gated Llama-3), mf / sw_ranking (OpenAI
 embeddings), MODEL-SAT (LLM fine-tune), Avengers voting (needs generations).
@@ -901,7 +913,8 @@ description); MiniLM cosine over the deduped descriptions; MIDIAN-V's leaf cohor
 |---|---|---|---|---|
 | β = 0, low-skill cartel | 3 / 3 | 0.830 / 0.860 / 0.900 | 0.830 / 0.860 / 0.897 | 0.00 / 0.00 / 0.00 |
 | β = 0, random liars | 3 / 3 | 0.830 / 0.860 / 0.900 | 0.830 / 0.860 / 0.897 | 0.00 / 0.00 / 0.00 |
-| β = 0.25, low-skill cartel | 1 / 3* | 0.830 | 0.830 | 0.00 |
-| β = 0.25, random liars | 2 / 3* | 0.827 / 0.860 | 0.830 / 0.860 | 1.00 / 1.00 |
+| β = 0.25, low-skill cartel | 3 / 3 | 0.830 / 0.860 / 0.900 | 0.830 / 0.860 / 0.897 | 0.00 / 0.00 / 0.00 |
+| β = 0.25, random liars | 3 / 3 | 0.827 / 0.860 / 0.900 | 0.830 / 0.860 / 0.897 | 1.00 / 1.00 / 0.93 |
+| β = 0.5, random liars | 2 / 3* | 0.820 / 0.850 | 0.830 / 0.860 | 1.00 / 1.00 |
 <!-- /doc_tables -->
 

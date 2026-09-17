@@ -109,3 +109,24 @@ both v5 sweeps at every rung and regime (referral / gossip to 10^6); the twelve 
 - Speed: every job of §7 and §8 is one unit (or one seed) and is submitted to `sapphire,serial_requeue`; §7's already-queued
   jobs were widened to both partitions by `logs/fill/spread.sh`. `kempner_requeue` refuses multi-partition submissions.
 - Fold `fill_fold_expand`; then matrices, tables, NUMBERS.json, bar figures (M-figures gain the 10^4 shapes and β = 0.1 cells).
+
+## 9. Status of the fill and expansion campaigns (2026-09-17 18:30)
+
+| campaign | state |
+|---|---|
+| bernoulli fill (LinUCB, cascade, referral, gossip, TrueSkill ≤ 10^4), all 7 rungs × 5 regimes | **complete, folded**, in the matrices and RESULTS II.4e |
+| replay fill, all 6 rungs × 5 regimes × 3 shapes | **complete, folded**; per-shape matrices generating |
+| b-sweep fill (b = 1 … 30) | **complete** |
+| real-pool arms (RouterEval 10/100/1,000 and 5,000, LLMRouterBench) | **complete** |
+| live 10^2 fill (12 rivals), 10^4 fill (11), 10^5 fill (10 incl. llm_supervisor) | **complete** |
+| live β = 0.1 at 10^4 and 10^5 (arms + frameworks + fill arms) | **complete** |
+| RouterEval frameworks, MiniLM and VA-cohort shortlists, m = 1,000 and 5,000 | **complete** |
+| RouterEval frameworks on m = 10 / 100 (three shortlists) | * ~60% |
+| live 10^4 heavy_tail / bimodal (arms, fill arms, frameworks, cartel frameworks) | * ~40%; the six populations are built |
+| live 10^5 peer halving, β = 0.5 | * random liars 2/3 seeds; cartel 0/3 |
+| folds `fill_fold_live`, `fill_fold_expand` | waiting on the three * items |
+
+Findings already in the docs from this campaign (RESULTS II.4e): gossip reputation and the referral network collapse to
+random under the low-skill cartel (0.415 / 0.431 against random 0.419) while MIDIAN-VA holds 0.789 on the same channel;
+LinUCB-honest falls below random from 10^5 up (0.437 → 0.261 at 10^7) with bit-identical numbers in all five regimes,
+a pure scale failure rather than a robustness one.

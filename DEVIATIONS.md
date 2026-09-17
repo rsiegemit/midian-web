@@ -925,3 +925,22 @@
   erratum 23); the test now asserts the guard. `check_methods.py` and the three selfchecks ran clean.
 - Still running at sync time, marked * in RESULTS: Magentic-One at 10^2 with the VA cohort; the live 10^5 halving liar
   cells (β = 0.5 both liar sets, β = 0.25 seeds 2-3). Figures regenerate after them.
+
+## Coverage fill and expansions (2026-09-17, POST-HOC)
+
+- **Why.** COVERAGE.md audited every arm × n × regime × family against the method inventory and separated justified gaps
+  (backend has no LLM, documented cost, pre-registered scope) from gaps that were merely never scheduled. §6 listed the
+  latter; §7 and §8 ran all of them.
+- **Grids.** `fill_arms` (linucb_honest, disrouter_cascade, referral_network, gossip_reputation_greedy,
+  trueskill_per_family) added to `bernoulli_scale_v5`, `replay_scale_v5` and `bernoulli_b_sweep`, with per-rung excludes
+  (TrueSkill ≥ 10^5 raises NotImplementedError by design; referral/gossip excluded at 10^7 only). Twelve rivals added to
+  `routereval_mmlu`, `routereval_mmlu5k` (+ knn_router online) and `llmrouterbench_pool`. New grids: `learned_n100_fill`,
+  `learned_n10k_fill`, `live_n100k_fill`, `fw_routereval_small`, the `_beta01` set, the `_shapes` set, and the RouterEval
+  framework `_em` / `_va` variants. Commits `276df2a`, `8fb7010`.
+- **Operational.** `rte.run --methods` takes ONE comma-separated value; the first launcher passed several names as separate
+  arguments, so 269 queued multi-arm jobs would have died on start -- cancelled and resubmitted with commas
+  (`logs/fill/launch_fixed_methods.txt`), one job that had already started failed and was resubmitted. Every job was
+  submitted to `sapphire,serial_requeue`: `kempner_requeue` and `kempner` refuse CPU-only work and `test` cannot join a
+  multi-partition submission. The six new 10^4 populations (2 shapes × 3 seeds, ~480k generations each) were built by one
+  warm-up job apiece before a gate released the other 966 units, so no two jobs raced to generate the same population.
+- **Result.** RESULTS II.4e carries the two findings; COVERAGE.md §9 carries the per-campaign state and the three * items.

@@ -271,6 +271,7 @@ shape are what the figures support.
 |---|---|---|
 | dedup | `*_dd` grids: framework shortlist without clones (erratum 25), 11 grids, 3,389 units | ten frameworks now distinct in every cell; 10^3 means move <= 0.02 (heavy_tail 10^2 +0.05); 10^5 row 0.363 / 0.344 vs VA 0.836 / 0.828; seven of ten below random because the TF-IDF top-10's true skill averages 0.31 |
 | embed | `*_em` grids: MiniLM cosine retriever over the deduped descriptions, 7 grids, 3,267 units (complete 2026-09-16) | 10^5 row 0.493 / 0.459 (best 0.633 / 0.503); 10^4 0.475 / 0.434; 10^3 specialist 0.530 (+0.14), cartel 0.515; heavy_tail / bimodal within 0.03 of before; frameworks sit at their shortlist's mean true skill; VA +0.20 to +0.32 over the best framework at every n |
+| coverage fill | five rivals never scheduled on the sweeps (LinUCB, cascade, referral, gossip, TrueSkill) on bernoulli 10..10^7 and replay 10..10^6, 5 regimes | gossip 0.671 → 0.415 and referral 0.556 → 0.431 under the cartel (= random 0.419) while MIDIAN-VA holds 0.789: decentralised report reading without trimming is owned by a colluding majority. LinUCB-honest 0.726 → 0.261 from 10^3 to 10^7, identical in all five regimes: a pure scale failure (RESULTS II.4e) |
 | VA-cohort at scale | frameworks holding MIDIAN-VA's leaf cohort at 10^3 cartel, 10^4 (+cartel), 10^5 (all cells); 4 grids, 567 units | best shortlist at every n (10^5: 0.593 / 0.567 vs MiniLM 0.493 / 0.459) and still 0.22-0.26 below VA itself everywhere: orchestration, not retrieval, caps the frameworks (RESULTS II.2, II.4c) |
 | b20/30 | `bernoulli_b_sweep` extended to b = 20, 30 (same cells/seeds, 2026-09-14) | VA plateaus 0.005 under the oracle from b = 20; the O(n) own-probe scans reach VA at b = 30 (0.838); plain MIDIAN / A / V fall above b = 10 under the cartel (A 0.777 -> 0.689, liar-misroute 0.15 -> 0.40); per-task cost flat in b |
 | A | RouterBench on its own protocol (11 models, AIQ) | probe table b = 50 AIQ 0.707 vs their KNN 0.713 with 7× fewer labels ($30 vs $229); T3-1 MISS by 0.006, T3-2 HIT |
@@ -344,8 +345,11 @@ specialist); every external comparison in RESULTS_rte_v3.md; H8 / H9; the MIDIAN
 
 ## 9. Still open (not results)
 
-- Coverage fill (COVERAGE.md §7, 2026-09-17): the cheap, previously unscheduled rivals on every family are running; matrices,
-  bar figures and NUMBERS.json regenerate when the two chained folds land.
+- Coverage fill and expansions (COVERAGE.md §7-§9, 2026-09-17): the synthetic and live fills are complete and folded; three
+  items remain and are marked * in RESULTS Part VI -- the live 10^5 peer-halving β = 0.5 cells (the cartel cell has no seed),
+  the live 10^4 heavy_tail / bimodal campaign, and the RouterEval small-pool framework variants. `fill_fold_live` and
+  `fill_fold_expand` fire when they drain; then re-run `scripts/doc_tables.py --sync --verify`, `scripts/paper_numbers.py`
+  and `scripts/bar_figs.py`, and update COVERAGE §9.
 - Live 10^5 peer-halving liar cells: β = 0.25 seeds 2-3 and β = 0.5 (both liar sets) seeds 1-3, rerunning with 3-day
   limits from the memo (the first follow-ons hit 24 h); II.4c carries * until they land. The halving row is otherwise
   complete (honest cells = the oracle, 3 seeds).
