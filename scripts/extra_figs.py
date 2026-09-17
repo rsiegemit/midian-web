@@ -171,7 +171,7 @@ def H4():
 def H5():
     """Cost scaling on bernoulli_scale (K=16; b=3 to 1e5, b=1 above) + supervisor latency from the fw rows only."""
     d = rows("bernoulli_scale"); d = d[d.beta.isin([0.0, 0.25])] if len(d) else d
-    keep = {"midian": "-", "midian_v": "-", FLAT: "-", "declared_argmax": "--", "cnp_self_bid": ":", HAL: "-"}
+    keep = {"midian": "-", "midian_v": "-", FLAT: "-", "declared_argmax": "--", "cnp_self_bid": ":", HALP: "-"}
     fig, axes = plt.subplots(1, 4, figsize=(22, 5))
     for ax, (c, ttl) in zip(axes[:3], [("comparisons_per_task", "comparisons per task"), ("messages_per_task", "messages per task"), ("build_probes", "build probes (b=1 above 1e5)")]):
         for l, ls in keep.items():
@@ -188,7 +188,7 @@ def H5():
 def H6():
     """MIDIAN vs halving by beta x liar selection, self-described, with the Phase-1 variants; second row = replay twin."""
     live = selfdesc(rows("live_f1_n1000", "variants_f1")); rep = rows("replay_mirror_live_f1_n1000")
-    arms = ["oracle", HAL, HALP, "midian_v", "midian", "midian_sh", "midian_a", "midian_sha", "midian_va", FLAT_ON]
+    arms = ["oracle", HALP, "midian_v", "midian", "midian_sh", "midian_a", "midian_sha", "midian_va", FLAT_ON]   # no trusted-observer halving (erratum 26)
     fig, axes = plt.subplots(2, 2, figsize=(13, 9), sharey="row")
     for r_, (df, name) in enumerate([(live, "live LLM population, self-described channel"), (rep, "RouterBench replay twin")]):
         w = piv(df, ("dist", "beta", "liar_select", "seed")) if len(df) else pd.DataFrame()
@@ -221,7 +221,7 @@ def H8():
     """Budget sweep split by declaration channel (budget_sweep: b=1,3,10 programmatic; budget_b10_shapes adds b=10 on both channels)."""
     df = rows("budget_sweep", "budget_b10_shapes")
     if not len(df): return print("[H8] waiting on data")
-    arms = ["oracle", HAL, HALP, "midian_v", "midian", FLAT, FLAT_ON, "warm_start_bandit", "declared_argmax", "linucb_honest", "fw_langgraph", "fw_autogen"]
+    arms = ["oracle", HALP, "midian_v", "midian", FLAT, FLAT_ON, "warm_start_bandit", "declared_argmax", "linucb_honest", "fw_langgraph", "fw_autogen"]
     chans = sorted(df.declared_source.unique()); fig, axes = plt.subplots(1, len(chans), figsize=(7 * len(chans), 5.5), sharey=True)
     for ax, ch in zip(np.atleast_1d(axes), chans):
         w = piv(df[df.declared_source == ch], ("dist", "seed", "b"))
@@ -289,7 +289,7 @@ def A_replay():
     w = piv(rows("replay_mirror_live_f1_n1000"), ("dist", "beta", "liar_select", "declared_source", "seed"))
     if not len(w): return print("[A_replay] waiting on data")
     fig, ax = plt.subplots(figsize=(9, 5.5))
-    for l in need(w, ["oracle", HAL, HALP, "declared_argmax", "midian_v", "midian", FLAT_ON, FLAT, "random"], "A_replay"): line(ax, w[l].groupby(level="beta"), l, lw=2.5 if l == "midian" else 1.2)
+    for l in need(w, ["oracle", HALP, "declared_argmax", "midian_v", "midian", FLAT_ON, FLAT, "random"], "A_replay"): line(ax, w[l].groupby(level="beta"), l, lw=2.5 if l == "midian" else 1.2)
     ax.set_xlabel("β"); ax.set_ylabel("success (RouterBench replay, n=1000, K=64, 10 seeds)"); ax.grid(alpha=.3); ax.legend(fontsize=7); ax.set_title("Appendix  replay twin of the F1 sweep"); save(fig, "A_replay_mirror")
 
 

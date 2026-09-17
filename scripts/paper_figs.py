@@ -63,7 +63,7 @@ def save(fig, name):
 # ----------------------------------------------------------------------------------------------------- M1
 M1_SERIES = ["oracle", HALP, "midian_va", "midian_a", "midian", FLAT_ON, "knn_router", "declared_argmax", "random"]
 SIM_SKIP = {"knn_router",            # not run on the calibrated backend
-            "declared_argmax"}       # scale_100k declares on the PROGRAMMATIC channel (honest S + noise); the live points are
+            "declared_argmax"}       # the calibrated sweep declares on the PROGRAMMATIC channel (honest S + noise); the live points are
                                      # self-described (over-claiming), so one curve across both would read a channel change as scale
 STYLE = {"oracle": dict(ls=":", color=COLOR["oracle"]), "random": dict(ls="--", color=COLOR["random"]), "midian_va": dict(lw=2.0),
          "declared_argmax": dict(ls="--"), "knn_router": dict(ls="--"),    # dashed = reads no reports
@@ -90,17 +90,27 @@ def m1_points(cartel):
     d = rows("learned_n10k"); w = units(d, M1_SERIES, "specialist", beta, liar)
     for s in M1_SERIES:
         if s != "random": put(s, 10000, "live", w, "learned_n10k")
-    v2 = rows("live_n10k_v2"); wv = units(v2, FWS + ["random"], "specialist", beta, liar)
-    put("random", 10000, "live", wv, "live_n10k_v2")
+    g10 = "fw_live_n10k_cartel" if cartel else "live_n10k_v2"          # the cartel cell's frameworks live in their own grid (nine of ten: no Magentic-One there)
+    v2 = rows(g10); wv = units(v2, FWS + ["random"], "specialist", beta, liar)
+    put("random", 10000, "live", wv if "random" in wv else w, g10 if "random" in wv else "learned_n10k")
     if len(wv) and any(c in wv for c in FWS):
-        fm = wv[[c for c in FWS if c in wv]].mean(); band[10000] = dict(min=float(fm.min()), max=float(fm.max()), grid="live_n10k_v2", units=int(len(wv)))
-    else: miss.append(f"ten frameworks n=10000 live (live_n10k_v2 has β = 0 random-liar cells only)")
-    # simulation: scale_100k specialist cells
-    d = rows("scale_100k")
-    for n in (10000, 100000):
-        w = units(d, M1_SERIES, "specialist", beta, liar, n); wa = units(d, M1_SERIES, None, beta, liar, n)
-        for s in M1_SERIES:
-            if s not in SIM_SKIP: put(s, n, "sim", w, "scale_100k", allshape=float(wa[s].mean()) if s in wa else None)
+        fm = wv[[c for c in FWS if c in wv]].mean(); band[10000] = dict(min=float(fm.min()), max=float(fm.max()), grid=g10, units=int(len(wv)))
+    else: miss.append(f"ten frameworks n=10000 live ({g10})")
+    # n = 100,000 live (live_n100k: specialist, Q = 300, 3 seeds; the frameworks' band from the clone-free dedup grid, erratum 25)
+    d = rows("live_n100k"); w = units(d, M1_SERIES, "specialist", beta, liar)
+    for s in M1_SERIES: put(s, 100000, "live", w, "live_n100k")
+    fd = rows("fw_live_n100k_dd"); wf = units(fd, [f + "[dedup=True]" for f in FWS], "specialist", beta, liar)
+    if len(wf.columns): fm = wf.mean(); band[100000] = dict(min=float(fm.min()), max=float(fm.max()), grid="fw_live_n100k_dd (clone-free shortlist)", units=int(len(wf)))
+    else: miss.append("ten frameworks n=100000 (fw_live_n100k_dd)")
+    # simulation: the 1000-seed calibrated sweep (bernoulli_scale_v5, b = 3, n = 10..10^7) read from its matrix, not through rows()
+    m = pd.read_csv(f"{RTE_DATA_RESULTS}/bernoulli_scale_v5/matrix_success.csv")
+    reg = "beta=0.5 CARTEL (low-skill-first)" if cartel else "beta=0 (no liars)"
+    m = m[(m.regime == reg) & (m.b == 3)]; lab = {FLAT_ON: "flat_probe_argmax_online", HALP: "sequential_halving_peer"}
+    for s in M1_SERIES:
+        if s in SIM_SKIP: continue
+        q = m[m.label == lab.get(s, s)]
+        for _, r in q.iterrows(): pts[(s, int(r.n), "sim")] = dict(mean=float(r["mean"]), lo=float(r.ci_lo), hi=float(r.ci_hi), units=int(r.units), seeds=int(r.seeds), grid="bernoulli_scale_v5", all_shape=None)
+        if q.empty: miss.append(f"{s} sim (bernoulli_scale_v5)")
     return pts, band, miss
 
 
@@ -124,22 +134,22 @@ def draw_m1(ax, pts, band, legend):
     ax.set_xscale("log"); ax.set_xlabel("n (agents)"); ax.set_ylim(0.2, 0.9); ax.grid(alpha=.3, lw=0.4)
     if legend:
         hs = [handles[s] for s in M1_SERIES if s in handles] + ([h for h in ax.collections if h.get_label() == "ten frameworks"][:1] if band else [])
-        ax.legend(hs, [h.get_label() for h in hs], loc="lower right", ncol=3, fontsize=5.6, frameon=False, handlelength=1.1, columnspacing=0.5, labelspacing=0.12, handletextpad=0.35, borderaxespad=0.12)
+        ax.figure.legend(hs, [h.get_label() for h in hs], loc="outside lower center", ncol=5, fontsize=5.6, frameon=False, handlelength=1.1, columnspacing=0.8, labelspacing=0.12, handletextpad=0.35, borderaxespad=0.12)
 
 
 def M1():
-    fig, axes = plt.subplots(1, 2, figsize=(cm(13.97), cm(4.6)), sharey=True); recs = []
+    fig, axes = plt.subplots(1, 2, figsize=(cm(13.97), cm(5.4)), sharey=True); recs = []
     for ax, cartel, ttl in zip(axes, (False, True), ("honest, β = 0", "colluding low-skill cartel, β = 0.5")):
-        pts, band, miss = m1_points(cartel); draw_m1(ax, pts, band, legend=cartel)          # legend in panel 2: its lower right is free (the framework band has no 10k cartel cell)
+        pts, band, miss = m1_points(cartel); draw_m1(ax, pts, band, legend=cartel); ax.set_title(ttl)
         for (s, n, src), p in pts.items(): recs.append(dict(panel=ttl, series=NAME[s], n=n, source=src, mean=p["mean"], ci_lo=p["lo"], ci_hi=p["hi"], units=p["units"], seeds=p["seeds"], grid=p["grid"], all_shape_mean=p["all_shape"]))
         for s in sorted(SIM_SKIP): recs.append(dict(panel=ttl, series=NAME[s], n="10000, 100000", source="sim", mean=None,
-                                                    grid="scale_100k", note="not plotted at the simulated points: knn_router was not run there; declared_argmax there reads the programmatic (honest) channel, not the self-described one"))
+                                                    grid="bernoulli_scale_v5", note="not plotted at the simulated points: knn_router was not run there; declared_argmax there reads the programmatic (honest) channel, not the self-described one"))
         for n, b in band.items(): recs.append(dict(panel=ttl, series="ten frameworks (min)", n=n, source="live", mean=b["min"], grid=b["grid"], units=b["units"])); recs.append(dict(panel=ttl, series="ten frameworks (max)", n=n, source="live", mean=b["max"], grid=b["grid"], units=b["units"]))
         if miss: print(f"[M1 {ttl}] cells that do not exist (omitted): " + "; ".join(miss))
     axes[0].set_ylabel("success"); csv("M1_success_vs_n", recs); save(fig, "M1_success_vs_n")
 
 
-M1F_SERIES = ["oracle", HAL, HALP, "declared_argmax", "warm_start_bandit", "midian_va", "midian_v", "midian", "mlp_router", FLAT_ON, "knn_router", "random"]
+M1F_SERIES = ["oracle", HALP, "declared_argmax", "warm_start_bandit", "midian_va", "midian_v", "midian", "mlp_router", FLAT_ON, "knn_router", "random"]
 
 
 def M1_full():
@@ -246,6 +256,57 @@ def F1_shortlist():
     ax.grid(axis="y", alpha=.25, lw=0.3); ax.legend(loc="upper left", ncol=2, fontsize=5.5, frameon=True, framealpha=0.7, edgecolor="none", handlelength=1.0, labelspacing=0.15, columnspacing=0.5, borderpad=0.15, handletextpad=0.4); csv("F1_shortlist_lift_n1000", recs); save(fig, "F1_shortlist_lift_n1000")
 
 
+# ----------------------------------------------------------------------------------------------------- M5 (probe budget)
+M5_SERIES = ["oracle", "midian_va", "midian_a", "midian", "midian_v", FLAT_ON, "warm_start_bandit", "declared_argmax", "random"]
+M5_LAB = {FLAT_ON: "flat_probe_argmax_online"}
+
+
+def M5():
+    """Success vs probe budget b at n = 10^5 (bernoulli_b_sweep, 200 seeds): honest and cartel panels. Read from the grid's matrix."""
+    m = pd.read_csv(f"{RTE_DATA_RESULTS}/bernoulli_b_sweep/matrix_success.csv"); m = m[m.n == 100000]
+    fig, axes = plt.subplots(1, 2, figsize=(cm(13.97), cm(4.6)), sharey=True); recs = []
+    for ax, reg, ttl in zip(axes, ("beta=0 (no liars)", "beta=0.5 CARTEL (low-skill-first)"), ("honest, β = 0", "colluding low-skill cartel, β = 0.5")):
+        q = m[m.regime == reg]
+        for s in M5_SERIES:
+            r = q[q.label == M5_LAB.get(s, s)].sort_values("b")
+            if r.empty: print(f"[M5 {ttl}] no series {s}"); continue
+            st = dict(color=COLOR.get(s, "#555555"), lw=1.0); st.update(STYLE.get(s, {})); mk = st.pop("marker", "o")
+            ax.errorbar(r.b, r["mean"], yerr=[r["mean"] - r.ci_lo, r.ci_hi - r["mean"]], marker=mk, ms=3.0, capsize=1.5, elinewidth=0.6, label=SHORT.get(s, s), **st)
+            for _, x in r.iterrows(): recs.append(dict(panel=ttl, series=SHORT.get(s, s), b=int(x.b), mean=x["mean"], ci_lo=x.ci_lo, ci_hi=x.ci_hi, seeds=int(x.seeds), grid="bernoulli_b_sweep"))
+        ax.set_xscale("log"); ax.set_xticks([1, 2, 3, 5, 10, 20, 30]); ax.set_xticklabels(["1", "2", "3", "5", "10", "20", "30"]); ax.set_xlabel("b (probes per agent per family)"); ax.set_ylim(0.4, 0.9); ax.grid(alpha=.3, lw=0.4); ax.set_title(ttl)
+    axes[0].set_ylabel("success (n = 100,000)"); axes[1].legend(loc="lower right", ncol=2, fontsize=5.6, frameon=False, handlelength=1.1, columnspacing=0.5, labelspacing=0.12)
+    csv("M5_success_vs_budget", recs); save(fig, "M5_success_vs_budget")
+
+
+# ----------------------------------------------------------------------------------------------------- M6 (shortlist sources)
+def M6():
+    """Frameworks pooled by shortlist source vs n, specialist, honest and cartel; MIDIAN-VA itself and the oracle beside. Data via scripts/doc_tables.py."""
+    from doc_tables import SOURCES, NINE, fw_rows, cell, ref
+    fig, axes = plt.subplots(1, 2, figsize=(cm(13.97), cm(5.6)), sharey=True); recs = []
+    colors = {"TF-IDF (pre-registered)": "#7f8c8d", "dedup": "#95a5a6", "MiniLM": "#2980b9", "MIDIAN-V cohort": "#e67e22", "MIDIAN-VA cohort": "#c0392b"}
+    for ax, reg, ttl in zip(axes, ("beta0", "cartel"), ("honest, β = 0", "colluding low-skill cartel, β = 0.5")):
+        for name, kind, honest, cartel in SOURCES:
+            xs, ys, lo, hi = [], [], [], []
+            for n in (100, 1000, 10000, 100000):
+                g = (cartel if reg == "cartel" else honest).get(n)
+                if not g: continue
+                c = cell(fw_rows(g, kind), "specialist", reg, 9 if g in NINE else 10)
+                if c is None: continue
+                xs.append(n); ys.append(c[0]); lo.append(c[0]); hi.append(c[1])
+                recs.append(dict(panel=ttl, source=name, n=n, frameworks_mean=c[0], best=c[1], best_framework=c[2], partial=c[3], grid=g))
+            if xs:
+                ax.plot(xs, ys, marker="o", ms=3.2, lw=1.0, color=colors[name], label=name)
+                ax.fill_between(xs, lo, hi, color=colors[name], alpha=0.12, lw=0)
+        for arm, st in (("midian_va", dict(color=COLOR["midian_va"], lw=2.0, marker="o")), ("oracle", dict(color=COLOR["oracle"], ls=":", marker="o"))):
+            xs = [n for n in (100, 1000, 10000, 100000)]; ys = [ref(n, reg, "specialist", arm) for n in xs]
+            ax.plot(xs, ys, ms=3.2, label=SHORT[arm] + (" itself" if arm == "midian_va" else ""), **st)
+            for n, y in zip(xs, ys): recs.append(dict(panel=ttl, source=arm, n=n, frameworks_mean=y, best=None, best_framework=None, partial="", grid="reference"))
+        ax.set_xscale("log"); ax.set_xlabel("n (agents)"); ax.set_ylim(0.2, 0.9); ax.grid(alpha=.3, lw=0.4); ax.set_title(ttl)
+    axes[0].set_ylabel("success (specialist)"); h, l = axes[1].get_legend_handles_labels()
+    fig.legend(h, l, loc="outside lower center", ncol=4, fontsize=5.6, frameon=False, handlelength=1.1, columnspacing=0.8, labelspacing=0.12, title="frameworks pooled by shortlist source (line) with a band up to the best single framework", title_fontsize=5.6)
+    csv("M6_frameworks_by_shortlist", recs); save(fig, "M6_frameworks_by_shortlist")
+
+
 # ----------------------------------------------------------------------------------------------------- M4
 SHAPES = ["bimodal", "heavy_tail", "specialist"]
 SHAPE_LABEL = {"bimodal": "bimodal", "heavy_tail": "heavy-tail", "specialist": "specialist"}
@@ -337,6 +398,6 @@ def M4():
     save(fig, "M4_legibility")
 
 
-FIGS = {f.__name__: f for f in (M1, M1_full, M2, M3, M4, F1_energy, F1_shortlist)}
+FIGS = {f.__name__: f for f in (M1, M1_full, M2, M3, M4, M5, M6, F1_energy, F1_shortlist)}
 if __name__ == "__main__":
     for name in (sys.argv[1:] or FIGS): FIGS[name]()

@@ -67083,14 +67083,14 @@
   "ci": null
  },
  "v6.va_cohort.n100.bimodal.beta0.frameworks_mean": {
-  "value": 0.5512,
+  "value": 0.5531,
   "grid": "fw_live_n100_verified_va",
   "units": 10,
   "ci": [
-   0.5433,
-   0.5594
+   0.5453,
+   0.561
   ],
-  "note": "9 frameworks, seed means"
+  "note": "10 frameworks, seed means"
  },
  "v6.va_cohort.n100.bimodal.beta0.frameworks_best": {
   "value": 0.5707,
@@ -67165,6 +67165,15 @@
    0.5387
   ]
  },
+ "v6.va_cohort.n100.bimodal.beta0.fw_magentic_one": {
+  "value": 0.5697,
+  "grid": "fw_live_n100_verified_va",
+  "units": 10,
+  "ci": [
+   0.5625,
+   0.5762
+  ]
+ },
  "v6.va_cohort.n100.bimodal.beta0.fw_openai_agents": {
   "value": 0.5638,
   "grid": "fw_live_n100_verified_va",
@@ -67184,14 +67193,14 @@
   ]
  },
  "v6.va_cohort.n100.bimodal.beta01_random.frameworks_mean": {
-  "value": 0.5403,
+  "value": 0.5407,
   "grid": "fw_live_n100_verified_va",
   "units": 10,
   "ci": [
-   0.5295,
-   0.5507
+   0.53,
+   0.551
   ],
-  "note": "9 frameworks, seed means"
+  "note": "10 frameworks, seed means"
  },
  "v6.va_cohort.n100.bimodal.beta01_random.frameworks_best": {
   "value": 0.5682,
@@ -67266,6 +67275,15 @@
    0.5407
   ]
  },
+ "v6.va_cohort.n100.bimodal.beta01_random.fw_magentic_one": {
+  "value": 0.5442,
+  "grid": "fw_live_n100_verified_va",
+  "units": 10,
+  "ci": [
+   0.5309,
+   0.5566
+  ]
+ },
  "v6.va_cohort.n100.bimodal.beta01_random.fw_openai_agents": {
   "value": 0.5531,
   "grid": "fw_live_n100_verified_va",
@@ -67285,14 +67303,14 @@
   ]
  },
  "v6.va_cohort.n100.bimodal.beta025_random.frameworks_mean": {
-  "value": 0.5417,
+  "value": 0.5418,
   "grid": "fw_live_n100_verified_va",
   "units": 10,
   "ci": [
-   0.5326,
-   0.5511
+   0.5329,
+   0.551
   ],
-  "note": "9 frameworks, seed means"
+  "note": "10 frameworks, seed means"
  },
  "v6.va_cohort.n100.bimodal.beta025_random.frameworks_best": {
   "value": 0.57,
@@ -67367,6 +67385,15 @@
    0.5419
   ]
  },
+ "v6.va_cohort.n100.bimodal.beta025_random.fw_magentic_one": {
+  "value": 0.5432,
+  "grid": "fw_live_n100_verified_va",
+  "units": 10,
+  "ci": [
+   0.5328,
+   0.5544
+  ]
+ },
  "v6.va_cohort.n100.bimodal.beta025_random.fw_openai_agents": {
   "value": 0.5565,
   "grid": "fw_live_n100_verified_va",
@@ -67386,14 +67413,14 @@
   ]
  },
  "v6.va_cohort.n100.bimodal.beta05_random.frameworks_mean": {
-  "value": 0.5443,
+  "value": 0.5449,
   "grid": "fw_live_n100_verified_va",
   "units": 10,
   "ci": [
-   0.5358,
-   0.5529
+   0.5367,
+   0.5534
   ],
-  "note": "9 frameworks, seed means"
+  "note": "10 frameworks, seed means"
  },
  "v6.va_cohort.n100.bimodal.beta05_random.frameworks_best": {
   "value": 0.5682,
@@ -67468,6 +67495,15 @@
    0.5393
   ]
  },
+ "v6.va_cohort.n100.bimodal.beta05_random.fw_magentic_one": {
+  "value": 0.5499,
+  "grid": "fw_live_n100_verified_va",
+  "units": 10,
+  "ci": [
+   0.5403,
+   0.5593
+  ]
+ },
  "v6.va_cohort.n100.bimodal.beta05_random.fw_openai_agents": {
   "value": 0.5629,
   "grid": "fw_live_n100_verified_va",
@@ -67487,14 +67523,14 @@
   ]
  },
  "v6.va_cohort.n100.heavy_tail.beta0.frameworks_mean": {
-  "value": 0.6443,
+  "value": 0.6466,
   "grid": "fw_live_n100_verified_va",
   "units": 10,
   "ci": [
-   0.6177,
-   0.6646
+   0.6199,
+   0.6665
   ],
-  "note": "9 frameworks, seed means"
+  "note": "10 frameworks, seed means"
  },
  "v6.va_cohort.n100.heavy_tail.beta0.frameworks_best": {
   "value": 0.6763,
@@ -67569,6 +67605,15 @@
    0.6526
   ]
  },
+ "v6.va_cohort.n100.heavy_tail.beta0.fw_magentic_one": {
+  "value": 0.6672,
+  "grid": "fw_live_n100_verified_va",
+  "units": 10,
+  "ci": [
+   0.6384,
+   0.6894
+  ]
+ },
  "v6.va_cohort.n100.heavy_tail.beta0.fw_openai_agents": {
   "value": 0.6409,
   "grid": "fw_live_n100_verified_va",
@@ -67588,14 +67633,14 @@
   ]
  },
  "v6.va_cohort.n100.heavy_tail.beta01_random.frameworks_mean": {
-  "value": 0.6412,
+  "value": 0.6428,
   "grid": "fw_live_n100_verified_va",
   "units": 10,
   "ci": [
-   0.6197,
-   0.6591
+   0.6215,
+   0.6607
   ],
-  "note": "9 frameworks, seed means"
+  "note": "10 frameworks, seed means"
  },
  "v6.va_cohort.n100.heavy_tail.beta01_random.frameworks_best": {
   "value": 0.6628,
@@ -67670,6 +67715,15 @@
    0.6468
   ]
  },
+ "v6.va_cohort.n100.heavy_tail.beta01_random.fw_magentic_one": {
+  "value": 0.6573,
+  "grid": "fw_live_n100_verified_va",
+  "units": 10,
+  "ci": [
+   0.6355,
+   0.6766
+  ]
+ },
  "v6.va_cohort.n100.heavy_tail.beta01_random.fw_openai_agents": {
   "value": 0.6439,
   "grid": "fw_live_n100_verified_va",
@@ -67689,14 +67743,14 @@
   ]
  },
  "v6.va_cohort.n100.heavy_tail.beta025_random.frameworks_mean": {
-  "value": 0.6318,
+  "value": 0.6335,
   "grid": "fw_live_n100_verified_va",
   "units": 10,
   "ci": [
-   0.6164,
-   0.647
+   0.618,
+   0.6486
   ],
-  "note": "9 frameworks, seed means"
+  "note": "10 frameworks, seed means"
  },
  "v6.va_cohort.n100.heavy_tail.beta025_random.frameworks_best": {
   "value": 0.6599,
@@ -67771,6 +67825,15 @@
    0.6466
   ]
  },
+ "v6.va_cohort.n100.heavy_tail.beta025_random.fw_magentic_one": {
+  "value": 0.6484,
+  "grid": "fw_live_n100_verified_va",
+  "units": 10,
+  "ci": [
+   0.6286,
+   0.6671
+  ]
+ },
  "v6.va_cohort.n100.heavy_tail.beta025_random.fw_openai_agents": {
   "value": 0.6401,
   "grid": "fw_live_n100_verified_va",
@@ -67790,24 +67853,24 @@
   ]
  },
  "v6.va_cohort.n100.heavy_tail.beta05_random.frameworks_mean": {
-  "value": 0.6376,
+  "value": 0.6397,
   "grid": "fw_live_n100_verified_va",
   "units": 10,
   "ci": [
-   0.6115,
-   0.659
+   0.6134,
+   0.6615
   ],
-  "note": "9 frameworks, seed means"
+  "note": "10 frameworks, seed means"
  },
  "v6.va_cohort.n100.heavy_tail.beta05_random.frameworks_best": {
-  "value": 0.6585,
+  "value": 0.6592,
   "grid": "fw_live_n100_verified_va",
   "units": 10,
   "ci": [
-   0.6326,
-   0.6826
+   0.6306,
+   0.6836
   ],
-  "note": "best = fw_smolagents"
+  "note": "best = fw_magentic_one"
  },
  "v6.va_cohort.n100.heavy_tail.beta05_random.fw_autogen": {
   "value": 0.6469,
@@ -67872,6 +67935,15 @@
    0.6474
   ]
  },
+ "v6.va_cohort.n100.heavy_tail.beta05_random.fw_magentic_one": {
+  "value": 0.6592,
+  "grid": "fw_live_n100_verified_va",
+  "units": 10,
+  "ci": [
+   0.6306,
+   0.6836
+  ]
+ },
  "v6.va_cohort.n100.heavy_tail.beta05_random.fw_openai_agents": {
   "value": 0.6389,
   "grid": "fw_live_n100_verified_va",
@@ -67891,14 +67963,14 @@
   ]
  },
  "v6.va_cohort.n100.specialist.beta0.frameworks_mean": {
-  "value": 0.5819,
+  "value": 0.5885,
   "grid": "fw_live_n100_verified_va",
   "units": 10,
   "ci": [
-   0.5592,
-   0.6016
+   0.5681,
+   0.6071
   ],
-  "note": "9 frameworks, seed means"
+  "note": "10 frameworks, seed means"
  },
  "v6.va_cohort.n100.specialist.beta0.frameworks_best": {
   "value": 0.6792,
@@ -67973,6 +68045,15 @@
    0.5813
   ]
  },
+ "v6.va_cohort.n100.specialist.beta0.fw_magentic_one": {
+  "value": 0.6482,
+  "grid": "fw_live_n100_verified_va",
+  "units": 10,
+  "ci": [
+   0.6275,
+   0.6698
+  ]
+ },
  "v6.va_cohort.n100.specialist.beta0.fw_openai_agents": {
   "value": 0.5259,
   "grid": "fw_live_n100_verified_va",
@@ -67992,14 +68073,14 @@
   ]
  },
  "v6.va_cohort.n100.specialist.beta01_random.frameworks_mean": {
-  "value": 0.5742,
+  "value": 0.5784,
   "grid": "fw_live_n100_verified_va",
   "units": 10,
   "ci": [
-   0.5529,
-   0.5927
+   0.558,
+   0.5964
   ],
-  "note": "9 frameworks, seed means"
+  "note": "10 frameworks, seed means"
  },
  "v6.va_cohort.n100.specialist.beta01_random.frameworks_best": {
   "value": 0.6247,
@@ -68074,6 +68155,15 @@
    0.5865
   ]
  },
+ "v6.va_cohort.n100.specialist.beta01_random.fw_magentic_one": {
+  "value": 0.6165,
+  "grid": "fw_live_n100_verified_va",
+  "units": 10,
+  "ci": [
+   0.5982,
+   0.6366
+  ]
+ },
  "v6.va_cohort.n100.specialist.beta01_random.fw_openai_agents": {
   "value": 0.5263,
   "grid": "fw_live_n100_verified_va",
@@ -68093,14 +68183,14 @@
   ]
  },
  "v6.va_cohort.n100.specialist.beta025_random.frameworks_mean": {
-  "value": 0.5687,
+  "value": 0.5732,
   "grid": "fw_live_n100_verified_va",
   "units": 10,
   "ci": [
-   0.5444,
-   0.5882
+   0.5497,
+   0.5923
   ],
-  "note": "9 frameworks, seed means"
+  "note": "10 frameworks, seed means"
  },
  "v6.va_cohort.n100.specialist.beta025_random.frameworks_best": {
   "value": 0.6268,
@@ -68175,6 +68265,15 @@
    0.576
   ]
  },
+ "v6.va_cohort.n100.specialist.beta025_random.fw_magentic_one": {
+  "value": 0.6141,
+  "grid": "fw_live_n100_verified_va",
+  "units": 10,
+  "ci": [
+   0.589,
+   0.6379
+  ]
+ },
  "v6.va_cohort.n100.specialist.beta025_random.fw_openai_agents": {
   "value": 0.5121,
   "grid": "fw_live_n100_verified_va",
@@ -68194,14 +68293,14 @@
   ]
  },
  "v6.va_cohort.n100.specialist.beta05_random.frameworks_mean": {
-  "value": 0.5647,
+  "value": 0.5714,
   "grid": "fw_live_n100_verified_va",
   "units": 10,
   "ci": [
-   0.531,
-   0.5916
+   0.5399,
+   0.5965
   ],
-  "note": "9 frameworks, seed means"
+  "note": "10 frameworks, seed means"
  },
  "v6.va_cohort.n100.specialist.beta05_random.frameworks_best": {
   "value": 0.6587,
@@ -68274,6 +68373,15 @@
   "ci": [
    0.4802,
    0.5666
+  ]
+ },
+ "v6.va_cohort.n100.specialist.beta05_random.fw_magentic_one": {
+  "value": 0.6318,
+  "grid": "fw_live_n100_verified_va",
+  "units": 10,
+  "ci": [
+   0.6071,
+   0.6549
   ]
  },
  "v6.va_cohort.n100.specialist.beta05_random.fw_openai_agents": {
@@ -68367,24 +68475,24 @@
   "ci": null
  },
  "v6.va_cohort.n100.bimodal.cartel.frameworks_mean": {
-  "value": 0.5352,
+  "value": 0.5385,
   "grid": "fw_live_n100_verified_va_lowskill",
   "units": 10,
   "ci": [
-   0.5262,
-   0.5443
+   0.5302,
+   0.5467
   ],
-  "note": "8 frameworks, seed means"
+  "note": "10 frameworks, seed means"
  },
  "v6.va_cohort.n100.bimodal.cartel.frameworks_best": {
-  "value": 0.5664,
+  "value": 0.5695,
   "grid": "fw_live_n100_verified_va_lowskill",
   "units": 10,
   "ci": [
-   0.5581,
-   0.5746
+   0.563,
+   0.576
   ],
-  "note": "best = fw_smolagents"
+  "note": "best = fw_camel_workforce"
  },
  "v6.va_cohort.n100.bimodal.cartel.fw_autogen": {
   "value": 0.5635,
@@ -68393,6 +68501,15 @@
   "ci": [
    0.5555,
    0.5708
+  ]
+ },
+ "v6.va_cohort.n100.bimodal.cartel.fw_camel_workforce": {
+  "value": 0.5695,
+  "grid": "fw_live_n100_verified_va_lowskill",
+  "units": 10,
+  "ci": [
+   0.563,
+   0.576
   ]
  },
  "v6.va_cohort.n100.bimodal.cartel.fw_crewai": {
@@ -68440,6 +68557,15 @@
    0.5405
   ]
  },
+ "v6.va_cohort.n100.bimodal.cartel.fw_magentic_one": {
+  "value": 0.5339,
+  "grid": "fw_live_n100_verified_va_lowskill",
+  "units": 10,
+  "ci": [
+   0.5261,
+   0.5408
+  ]
+ },
  "v6.va_cohort.n100.bimodal.cartel.fw_openai_agents": {
   "value": 0.5652,
   "grid": "fw_live_n100_verified_va_lowskill",
@@ -68459,14 +68585,14 @@
   ]
  },
  "v6.va_cohort.n100.heavy_tail.cartel.frameworks_mean": {
-  "value": 0.6265,
+  "value": 0.6297,
   "grid": "fw_live_n100_verified_va_lowskill",
   "units": 10,
   "ci": [
-   0.5985,
-   0.6491
+   0.6017,
+   0.6521
   ],
-  "note": "8 frameworks, seed means"
+  "note": "10 frameworks, seed means"
  },
  "v6.va_cohort.n100.heavy_tail.cartel.frameworks_best": {
   "value": 0.6604,
@@ -68485,6 +68611,15 @@
   "ci": [
    0.6062,
    0.6715
+  ]
+ },
+ "v6.va_cohort.n100.heavy_tail.cartel.fw_camel_workforce": {
+  "value": 0.6483,
+  "grid": "fw_live_n100_verified_va_lowskill",
+  "units": 10,
+  "ci": [
+   0.6199,
+   0.6747
   ]
  },
  "v6.va_cohort.n100.heavy_tail.cartel.fw_crewai": {
@@ -68532,6 +68667,15 @@
    0.6481
   ]
  },
+ "v6.va_cohort.n100.heavy_tail.cartel.fw_magentic_one": {
+  "value": 0.6368,
+  "grid": "fw_live_n100_verified_va_lowskill",
+  "units": 10,
+  "ci": [
+   0.6051,
+   0.6637
+  ]
+ },
  "v6.va_cohort.n100.heavy_tail.cartel.fw_openai_agents": {
   "value": 0.6304,
   "grid": "fw_live_n100_verified_va_lowskill",
@@ -68551,24 +68695,24 @@
   ]
  },
  "v6.va_cohort.n100.specialist.cartel.frameworks_mean": {
-  "value": 0.5673,
+  "value": 0.5678,
   "grid": "fw_live_n100_verified_va_lowskill",
   "units": 10,
   "ci": [
-   0.5382,
-   0.5894
+   0.5392,
+   0.5898
   ],
-  "note": "8 frameworks, seed means"
+  "note": "10 frameworks, seed means"
  },
  "v6.va_cohort.n100.specialist.cartel.frameworks_best": {
-  "value": 0.6053,
+  "value": 0.6103,
   "grid": "fw_live_n100_verified_va_lowskill",
   "units": 10,
   "ci": [
-   0.5688,
-   0.6354
+   0.581,
+   0.6366
   ],
-  "note": "best = fw_crewai"
+  "note": "best = fw_magentic_one"
  },
  "v6.va_cohort.n100.specialist.cartel.fw_autogen": {
   "value": 0.5982,
@@ -68577,6 +68721,15 @@
   "ci": [
    0.5684,
    0.6221
+  ]
+ },
+ "v6.va_cohort.n100.specialist.cartel.fw_camel_workforce": {
+  "value": 0.5296,
+  "grid": "fw_live_n100_verified_va_lowskill",
+  "units": 10,
+  "ci": [
+   0.4921,
+   0.5617
   ]
  },
  "v6.va_cohort.n100.specialist.cartel.fw_crewai": {
@@ -68622,6 +68775,15 @@
   "ci": [
    0.5011,
    0.5786
+  ]
+ },
+ "v6.va_cohort.n100.specialist.cartel.fw_magentic_one": {
+  "value": 0.6103,
+  "grid": "fw_live_n100_verified_va_lowskill",
+  "units": 10,
+  "ci": [
+   0.581,
+   0.6366
   ]
  },
  "v6.va_cohort.n100.specialist.cartel.fw_openai_agents": {
@@ -74138,11 +74300,18 @@
   "ci": null,
   "note": "oracle same cell 0.830; misroute_to_liar 1.000"
  },
+ "v6.halving_live.n100000.beta025_random.seed2": {
+  "value": 0.86,
+  "grid": "live_n100k",
+  "units": 1,
+  "ci": null,
+  "note": "oracle same cell 0.860; misroute_to_liar 1.000"
+ },
  "v6.halving_live.n100000.cells_done": {
   "value": {
    "beta0": 3,
    "beta025_cartel": 1,
-   "beta025_random": 1
+   "beta025_random": 2
   },
   "grid": "live_n100k",
   "units": null,
