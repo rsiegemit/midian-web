@@ -302,7 +302,7 @@ def M6():
             ax.plot(xs, ys, ms=3.2, label=SHORT[arm] + (" itself" if arm == "midian_va" else ""), **st)
             for n, y in zip(xs, ys): recs.append(dict(panel=ttl, source=arm, n=n, frameworks_mean=y, best=None, best_framework=None, partial="", grid="reference"))
         ax.set_xscale("log"); ax.set_xlabel("n (agents)"); ax.set_ylim(0.2, 0.9); ax.grid(alpha=.3, lw=0.4); ax.set_title(ttl)
-    axes[0].set_ylabel("success (specialist)"); h, l = axes[1].get_legend_handles_labels()
+    axes[0].set_ylabel("success (specialist)"); h, l = axes[0].get_legend_handles_labels()      # the honest panel carries every source (V cohort exists at 10^2-10^3 only)
     fig.legend(h, l, loc="outside lower center", ncol=4, fontsize=5.6, frameon=False, handlelength=1.1, columnspacing=0.8, labelspacing=0.12, title="frameworks pooled by shortlist source (line) with a band up to the best single framework", title_fontsize=5.6)
     csv("M6_frameworks_by_shortlist", recs); save(fig, "M6_frameworks_by_shortlist")
 

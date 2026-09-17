@@ -756,8 +756,11 @@ embeddings), MODEL-SAT (LLM fine-tune), Avengers voting (needs generations).
 | X4 | RouterEval on its terms by pool size, defaults and tuned | final |
 | X5 | every arm with liars on real pools, n = 10 / 100 / 1,000 / 5,000 | final |
 | X6 | every arm at n = 10,000 and 100,000 (synthetic, calibrated) | final |
-| M1-M4 | success vs n (10..10^7, 1000 seeds), β profile, cost exponents, legibility | to regenerate: 10^5 live point, b = 20/30 panel, halving row without the trusted arm |
-| (new) | frameworks by shortlist source × n (the II.2 table) | to draw |
+| M1 | success vs n: live points 10^2-10^5 (frameworks' band at 10^5 from the clone-free shortlist) and the 1000-seed calibrated curve 10..10^7 | final (regenerated 2026-09-17) |
+| M2-M4 | β profile, cost exponents, legibility | regenerated 2026-09-17 |
+| M5 | success vs probe budget b = 1..30 at n = 10^5, honest and cartel (II.4f) | final |
+| M6 | frameworks pooled by shortlist source × n, specialist, honest and cartel; VA itself and the oracle (II.2) | final |
+| H6, H7 | redrawn without the trusted-observer halving arm (erratum 26); H7 remains the 10^2/10^3 V-cohort lift, M6 is the five-source view | regenerated 2026-09-17 |
 
 Errata and change log against the earlier drafts: `CHANGES_AND_ERRATA.md`.
 
