@@ -21,10 +21,18 @@ def run(cls, n=100, beta=0.25, seed=1, b=3, Q=300, **kw):
     return w, m, build, float(np.mean(s))
 
 
-@pytest.mark.parametrize("s,b", [(10, 3), (10, 1), (3, 3), (7, 2), (2, 5)])
+@pytest.mark.parametrize("s,b", [(10, 3), (10, 4), (3, 3), (7, 2), (2, 5)])
 def test_schedule_spends_exactly_s_times_b(s, b):
     assert sum(sz * p for sz, p in _schedule(s, b, True)) == s * b
     assert _schedule(s, b, False) == [(s, b)]
+
+
+def test_schedule_refuses_a_budget_that_cannot_fund_the_rounds():
+    """A cohort of 10 halves in 4 rounds; b = 1 cannot pay one pull per survivor per round (erratum 23: the guard
+    replaced a silent negative pull count). Halving off is unaffected."""
+    with pytest.raises(ValueError):
+        _schedule(10, 1, True)
+    assert _schedule(10, 1, False) == [(10, 1)]
 
 
 def test_midian_sh_budget_equal():

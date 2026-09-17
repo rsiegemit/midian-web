@@ -1,4 +1,22 @@
-# STATUS.md — RTE handoff (written 2026-09-02 13:55 ET, for context compaction)
+# STATUS.md — RTE handoff
+
+**Current (2026-09-17, v6 sync).** Read `RESULTS.md` first (the dossier; every number in `paper/NUMBERS.json`), then
+`CHANGES_AND_ERRATA.md` (errata 1-26, still-open list) and `DEVIATIONS.md` (dated log). Repo pushed to `origin/main`.
+- Complete and written: the 1000-seed scale sweeps 10..10^7 (II.4e), the probe-budget axis b = 1..30 (II.4f), live n = 10^5
+  (II.4c), the v4 cohort modes (RESULTS_rte_v4.md), and the framework shortlist campaign — five shortlist sources at
+  10^2-10^5 (II.2 table, Appendix S), erratum 25 (clone-filled TF-IDF top-10), erratum 26 (trusted-observer halving
+  withdrawn everywhere).
+- Still running, marked * in RESULTS: Magentic-One at 10^2 with the VA cohort (`fw_live_n100_verified_va[_lowskill]`);
+  the live 10^5 peer-halving liar cells (3-day jobs, memo-resumed). When they land: `python scripts/doc_tables.py --sync
+  && python scripts/doc_tables.py --verify`, regenerate `paper/NUMBERS.json` (SLURM job, `scripts/paper_numbers.py`),
+  then the figures (M1-M4, H6, H7 and the shortlist-source panel).
+- Operating rules that cost real time are in README §6 and DEVIATIONS (fleet readiness, replica aliases, one unit per
+  job, sapphire for >1,000-job campaigns, 3-day limits for live halving cells, never `kill $(pgrep -f ...)`).
+
+---
+
+*The sections below are the 2026-09-02/03 handoff, kept for the record.*
+
 
 Read with `SPEC.md` (the experiment), `CONTRACT.md` (interfaces + directives), `TARGETS_rte.md` (pre-registration),
 `DEVIATIONS.md` (every departure, dated). 

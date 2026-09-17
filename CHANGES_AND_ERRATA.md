@@ -36,6 +36,10 @@ Sections: 1 coverage, 2 headline numbers, 3 minor numbers, 4 errata (claims that
 | scale_100k (n = 10k / 100k, every arm) | did not exist | complete | II.4b, X6, T3-18 |
 | RouteLLM's own harness | running | done (metrics recomputed from its per-threshold prints; it crashes at its metrics step) | part B, T3-5 |
 | GraphRouter via the LLMRouter library | NOT RUN | run with defaults and with a validation-selected sweep | D3, T3-16 |
+| `bernoulli_scale_v5`, `replay_scale_v5` (1000-seed sweeps, 10..10^7) | did not exist | complete, b = 3 everywhere, halving at 10^7 refilled (uint32) | II.4e, matrices, erratum 22-24 |
+| `bernoulli_b_sweep` b ∈ {1,2,3,5,10,20,30} | did not exist | complete (1.69 M rows) | II.4f, the cartel capture above b = 10 |
+| framework shortlist reruns: `*_dd` (11 grids), `*_em` (7), VA-cohort at 10^2-10^5 (7) | did not exist | complete except Magentic-One at 10^2 with the VA cohort (*) | II.2 five-source table, II.4c 10^5 row, erratum 25 |
+| live 10^5 peer-reported halving | absent | honest cells complete (= oracle, 3 seeds); liar cells partial (*) | II.4c |
 
 Not run, by decision (unchanged): RouterDC (GPU fine-tune), RouteLLM causal_llm (gated Llama-3), mf / sw_ranking
 (OpenAI embeddings), MODEL-SAT (LLM fine-tune), Avengers voting (needs generations), RouterArena (paid API inference),
@@ -340,21 +344,15 @@ specialist); every external comparison in RESULTS_rte_v3.md; H8 / H9; the MIDIAN
 
 ## 9. Still open (not results)
 
-- `sequential_halving` at live 10^5, attempt 2 (fleet 46327112, 2026-09-13): update II.4c when it lands or times out.
-- `bernoulli_b_sweep` b = 20, 30 (2026-09-14): plain MIDIAN / A / V DECLINE above b = 10 under the cartel while their
-  liar-misroute rate rises (RESULTS II.4f). The numbers are on 200-1000 seeds and the counters are unambiguous; the code
-  path (which report-channel weight in `midian.py` grows with b, and why A's 5% audits stop keeping up) is not yet traced.
-- Dense-retrieval framework reruns (`*_em` grids, 2026-09-15, DEVIATIONS): MiniLM cosine instead of hashed TF-IDF over the
-  deduped descriptions; answers whether a real retriever recovers the shortlist (TF-IDF top-10 mean true skill 0.31 vs
-  population 0.43 at 10^5). `fwem_fold` chains the analysis.
-- Live 10^5 peer-halving liar cells: the first attempt's 12 follow-ons hit the 24 h limit (cartel cells generate fresh
-  probes wherever liars change the survivors); rerun with 3-day limits from the memo (2026-09-16 16:10). II.4c when they land.
-- VA-cohort frameworks at n = 100 (`fw_live_n100_verified_va[_lowskill]`, 1,500 units): running; `fwva_fold3` chains it.
-- Halving at bernoulli 10^7 b = 3 (uint32 fix): 500 units refilling 2026-09-13 night; the chained fold regenerates the matrix.
+- Live 10^5 peer-halving liar cells: β = 0.25 seeds 2-3 and β = 0.5 (both liar sets) seeds 1-3, rerunning with 3-day
+  limits from the memo (the first follow-ons hit 24 h); II.4c carries * until they land. The halving row is otherwise
+  complete (honest cells = the oracle, 3 seeds).
+- 10^2 VA-cohort frameworks: Magentic-One units still running (`fw_live_n100_verified_va[_lowskill]`); the S1 / S6 cells
+  carry * and `scripts/doc_tables.py --sync` refreshes them.
+- Figures: M1-M4 and H6 / H7 regenerate after the two items above (10^5 live point; b = 20 / 30 panel; halving without
+  the trusted-observer arm; the five-shortlist-source panel).
+- `bernoulli_b_sweep` b = 20, 30: plain MIDIAN / A / V DECLINE above b = 10 under the cartel while their liar-misroute
+  rate rises (RESULTS II.4f). The numbers are on 200-1000 seeds and the counters are unambiguous; the code path (which
+  report-channel weight in `midian.py` grows with b, and why A's 5% audits stop keeping up) is not yet traced.
 - MIDIAN-SH/SHA are absent at every b = 1 rung by construction; `units_todo` for those grids never reaches 0 for that reason.
-
-
-- Memo compaction (`python -m rte.llm_client compact`) runs automatically once the last two duplicate Magentic-One
-  units exit (they re-write rows that already exist); log `$RTE_DATA/logs/compact_when_idle.log`.
-- Remove the hand-made bare `endpoints.d` entries once the serving fleet exits (2026-09-05).
 - The not-run rivals in section 1 stay not run without a decision.

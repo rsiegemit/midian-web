@@ -119,8 +119,12 @@ to a worker running inside the framework's own virtual environment (`workers/*_w
 `_bridge.py`) and returns the agent the framework's *own* selection primitive chose. The shared adapter
 (`_common.FrameworkMethod`) does what a practitioner would: hashed TF-IDF over the agents' self-descriptions picks the
 top k = 10, the framework's supervisor (Qwen2.5-7B) picks one, with declared-argmax over the shortlist as a counted
-fallback when the framework returns no valid name. `retrieval="midian"` is the labeled variant that gives the framework
-MIDIAN-V's verified cohort as its shortlist instead. Interception notes per framework are in `NOTES_*.md`; MetaGPT has
+fallback when the framework returns no valid name. Four labeled shortlist variants, each its own grid and never pooled
+with the pre-registered rows: `dedup=True` ranks distinct description texts (agents sharing a prompt share a memoized
+description and memoized answers, so above ~3,900 distinct prompts the plain top-10 is ten clones of one agent — erratum
+25); `retrieval="embed"` is MiniLM cosine over the deduped descriptions, the retriever a deployed stack would use;
+`retrieval="midian"` / `"midian_va"` hand the framework MIDIAN-V's / MIDIAN-VA's probed leaf cohort. RESULTS II.2 has
+the five-source table at every n; `scripts/doc_tables.py` generates and verifies it. Interception notes per framework are in `NOTES_*.md`; MetaGPT has
 no selection primitive to intercept and AgentScope is an appendix.
 
 ## 3. Accounting: what every method pays for
@@ -221,8 +225,8 @@ Per-grid machine summaries are `$RTE_DATA/results/<grid>/summary.md`. The figure
 - **H3** consistency vs robustness: success at β=0 vs β=0.5 with colluding low-skill liars
 - **H4** cost–quality Pareto with break-even Q
 - **H5** cost scaling 10² to 10⁷, plus supervisor latency
-- **H6** MIDIAN, MIDIAN-A, MIDIAN-VA (and V, SH, SH+A) vs sequential halving by β and liar selection; replay twin below
-- **H7** frameworks given MIDIAN's verified shortlist
+- **H6** MIDIAN, MIDIAN-A, MIDIAN-VA (and V, SH, SH+A) vs peer-reported sequential halving by β and liar selection; replay twin below (to be redrawn without the trusted-observer arm, erratum 26)
+- **H7** frameworks given MIDIAN's verified shortlist (to be redrawn with the five shortlist sources × n, RESULTS II.2)
 - **H8** budget sweep by declaration channel
 - **H9** churn: success and cumulative probes across churn events
 - **H10** runtime and energy estimate (GPU-seconds and Wh per 1,000 tasks)
@@ -234,8 +238,11 @@ Per-grid machine summaries are `$RTE_DATA/results/<grid>/summary.md`. The figure
   RouterEval's real pools (10 / 100 / 1,000 and all 5,000 leaderboard LLMs)
 
 In one paragraph: the frameworks' only signal is self-description, which overclaims by +0.27 and correlates 0.36 with
-true skill, so they sit at 0.5 regardless of β and fall to 0.4 on specialist populations; handing them MIDIAN's
-verified cohort lifts every one by 0.04–0.12. Among mechanisms that verify, peer-reported sequential halving beats MIDIAN-V by 0.04 at β ≤ 0.25 in every cell
+true skill, so they sit at 0.5 regardless of β and fall to 0.4 on specialist populations. The retriever sets that
+number and the orchestrator caps it: the pre-registered TF-IDF top-10 has lower true skill than a random agent (0.31 vs
+0.43 at 10^5), a MiniLM retriever lifts the specialist frameworks from 0.39 to 0.54 at 10^3, MIDIAN's probed cohort to
+0.57, and every framework then sits at its shortlist's mean, 0.19-0.26 below MIDIAN-VA routing to its own pick, at every
+n from 10^2 to 10^5 (RESULTS II.2). Among mechanisms that verify, peer-reported sequential halving beats MIDIAN-V by 0.04 at β ≤ 0.25 in every cell
 but collapses at β = 0.5 with low-skill liars (0.41) where MIDIAN holds 0.60: the tree's per-cohort trimming survives
 poisoned reports that early elimination does not. Adding audits (MIDIAN-A) makes MIDIAN flat in β at 5% more probes
 (+0.07 at β = 0.5, +0.10 with low-skill liars, nothing lost at β ≤ 0.25); adding verification on top (MIDIAN-VA) loses
@@ -339,7 +346,12 @@ plotted value beside each one.
   raw probes picks among them blindly; this is what verification and adaptive halving fix.
 - True skill is measured once per prompt signature and shared across seeds; the seed CIs cover population and stream
   variation, not the ±0.035 / ±0.065 binomial error of S itself.
-- Framework grids use 300 tasks and 3 seeds; CrewAI's rows mostly measure its fallback (it delegates on ~20% of tasks).
+- Framework grids at 10^4-10^5 use 300 tasks and 3 seeds; CrewAI's and ADK's rows partly measure their fallback (declared
+  argmax over the shortlist), which is why the two are identical under every text retriever.
+- The live population has ~3,900 distinct prompt signatures (7 models × 560 specialty triples): agents sharing one are
+  clones (same memoized description, same memoized answers). Every method routes over the same clones; the text
+  retriever's top-10 is the only place it mattered (erratum 25). The two β = 0 cells (random and low-skill liar sets)
+  are the same world and differ only by the frameworks' run-to-run noise (≤ 0.01, Magentic-One ≤ 0.03).
 - Plain MIDIAN charges one report per probe per peer as the spec reads; MIDIAN-V and peer-reported halving charge one
   per peer (its mean), so their report counts are ~3× lower for the same information.
 - Wall-clock columns mix cache hits and misses; use the counters for cost claims.

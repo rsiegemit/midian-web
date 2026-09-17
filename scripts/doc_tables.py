@@ -1,11 +1,12 @@
 """The framework-shortlist tables the write-ups quote, generated from the rows so the docs can be verified against them.
     python scripts/doc_tables.py             # print every table (markdown)
     python scripts/doc_tables.py --verify    # every generated table row must appear verbatim in RESULTS.md; exit 1 otherwise
+    python scripts/doc_tables.py --sync      # rewrite every <!-- doc_tables:NAME --> ... <!-- /doc_tables --> block in RESULTS.md
 Sources: the pre-registered TF-IDF rows (source grids), dedup (_dd), MiniLM (_em), MIDIAN-V cohort (_verified), MIDIAN-VA cohort
 (_verified_va*). Cells: frameworks pooled (mean of per-framework seed means) and the best single framework. Asterisks mark
 cells whose framework set is incomplete (a framework with fewer seeds than the cell has)."""
 from __future__ import annotations
-import os, sys
+import os, re, sys
 import numpy as np, pandas as pd
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from fw_variant_numbers import load, select, regime, RTE_DATA
@@ -111,7 +112,19 @@ TABLES = {"shortlist_specialist": lambda: shortlist_table("specialist"), "shortl
           "shortlist_bimodal": lambda: shortlist_table("bimodal"), "per_framework_1e5": lambda: per_framework_table(100000),
           "per_framework_1e3": lambda: per_framework_table(1000), "per_framework_1e2": lambda: per_framework_table(100), "halving_live": halving_table}
 
+DOC = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "RESULTS.md")
+
+
+def sync():
+    doc = open(DOC).read(); n = 0
+    for name, fn in TABLES.items():
+        pat = re.compile(rf"(<!-- doc_tables:{name} -->\n).*?(\n<!-- /doc_tables -->)", re.S)
+        doc, k = pat.subn(lambda m: m.group(1) + fn() + m.group(2), doc); n += k
+    open(DOC, "w").write(doc); print(f"synced {n} table blocks in RESULTS.md")
+
+
 if __name__ == "__main__":
+    if "--sync" in sys.argv: sync(); sys.exit(0)
     verify = "--verify" in sys.argv
     doc = open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "RESULTS.md")).read() if verify else ""
     bad = 0
