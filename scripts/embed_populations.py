@@ -1,7 +1,8 @@
 """Precompute the dense description embeddings the frameworks' SOTA retrieval stack reads, one .npy per population.
     python scripts/embed_populations.py [--model M] [--dists ...] [--ns ...] [--seeds K] [--list]
 Writes <population>/descriptions_<slug>.npy (n x d) and families_<slug>.npy (K x d), exactly the files
-FrameworkMethod._embeddings looks for, so the routing jobs never load the embedder. Needs a GPU for anything
+FrameworkMethod._embeddings looks for, so the routing jobs never load the embedder. --sota also pre-warms the reranked (K, k) shortlist, which is what
+keeps the sota routing jobs off the GPU entirely. Needs a GPU for anything
 larger than MiniLM; run it as a SLURM job, never on the login node. Re-running is free: finished populations
 are skipped, and each file is written atomically so concurrent array tasks cannot corrupt one another."""
 from __future__ import annotations
@@ -10,6 +11,7 @@ import numpy as np
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from rte.backends import families
 from rte.methods._learned import embed, resolve
+from rte.methods.frameworks._common import _bm25, sota_cache_name, sota_shortlist
 
 RTE_DATA = os.environ.get("RTE_DATA", "/scratch/rte"); POP = f"{RTE_DATA}/populations"
 
@@ -46,6 +48,9 @@ def main():
     ap.add_argument("--seeds", type=int, default=0, help="keep seeds 1..S (0 = all)")
     ap.add_argument("--shard", type=int, default=0); ap.add_argument("--shards", type=int, default=1)
     ap.add_argument("--list", action="store_true")
+    ap.add_argument("--sota", action="store_true", help="also pre-warm the (K, k) SOTA shortlist (needs the reranker)")
+    ap.add_argument("--rerank-model", default="Qwen/Qwen3-Reranker-4B")
+    ap.add_argument("--k", type=int, default=10); ap.add_argument("--rerank-pool", type=int, default=50)
     a = ap.parse_args()
     sl = slug(a.model)
     dirs = population_dirs(a.dists, a.ns, a.seeds)[a.shard::a.shards]
@@ -55,14 +60,31 @@ def main():
         for p in todo: print("  ", os.path.basename(p), len(json.load(open(f"{p}/descriptions.json"))))
         return
     fam = [families.describe(f) for f in families.FAMILIES_16]      # every live grid is K = 16
+    ce = None
     for i, p in enumerate(todo, 1):
         desc = json.load(open(f"{p}/descriptions.json"))
-        t0 = time.time(); E = embed(desc, a.model)
+        t0 = time.time()
+        E = np.load(f"{p}/descriptions_{sl}.npy") if os.path.exists(f"{p}/descriptions_{sl}.npy") else embed(desc, a.model)
         save(f"{p}/descriptions_{sl}.npy", E)
         dt = time.time() - t0
         print(f"[{i}/{len(todo)}] {os.path.basename(p):38s} {len(desc):7,d} texts  {dt:7.1f}s  {len(desc)/max(dt,1e-9):7.1f}/s", flush=True)
         if not os.path.exists(f"{p}/families_{sl}.npy"):
             save(f"{p}/families_{sl}.npy", embed(fam, a.model, prompt_name="query"))
+        if not a.sota: continue
+        out = f"{p}/{sota_cache_name(a.model, a.rerank_model, a.k, a.rerank_pool, True)}"
+        if os.path.exists(out): continue
+        if ce is None:
+            import torch
+            from sentence_transformers import CrossEncoder
+            ce = CrossEncoder(resolve(a.rerank_model), device="cuda" if torch.cuda.is_available() else "cpu")
+        first = {}                                          # dedup pool: lowest id per distinct description, as the adapter builds it
+        for idx, t in enumerate(desc): first.setdefault(t, idx)
+        pool = np.array(sorted(first.values()), dtype=np.int64)
+        t0 = time.time()
+        T = sota_shortlist(_bm25(desc, fam), E, np.load(f"{p}/families_{sl}.npy"), pool, desc, fam,
+                           lambda q, d: np.asarray(ce.predict([(q, x) for x in d]), dtype=np.float32), a.k, a.rerank_pool)
+        save(out, T)
+        print(f"        sota table {T.shape} in {time.time()-t0:.1f}s ({len(pool):,} distinct texts)", flush=True)
     print("EMBED_POPULATIONS_DONE", flush=True)
 
 

@@ -66,6 +66,25 @@ def _rrf(*ranks: np.ndarray, k: float = 60.0) -> np.ndarray:
     return out
 
 
+def sota_shortlist(B, Xa, Xf, pool, desc, fdesc, rerank, k: int = 10, rerank_pool: int = 50) -> np.ndarray:
+    """(K, k) SOTA shortlist: reciprocal-rank fusion of BM25 with the dense scores, the top `rerank_pool` reranked by
+    the cross-encoder, the top k kept (-1 pads a family with fewer than k distinct candidates). Shared by the method
+    and by scripts/embed_populations.py, which pre-warms the cache -- they must never drift apart."""
+    rows = []
+    for f in range(len(fdesc)):
+        fused = _rrf(B[f][pool], (Xa @ Xf[f])[pool])
+        cand = pool[np.argsort(-fused, kind="stable")][:min(rerank_pool, len(pool))]
+        cand = cand[np.argsort(-rerank(fdesc[f], [desc[a] for a in cand]), kind="stable")]
+        rows.append(np.pad(cand[:k], (0, max(0, k - len(cand))), constant_values=-1))
+    return np.stack(rows).astype(np.int64)
+
+
+def sota_cache_name(embed_model: str, rerank_model: str, k: int, rerank_pool: int, dedup: bool) -> str:
+    """The cache filename carries every input that changes the table, so a changed setting can never read a stale one."""
+    sl = lambda m: "minilm" if m == MINILM else re.sub(r"[^a-z0-9]+", "_", m.lower()).strip("_")
+    return f"shortlist_sota_{sl(embed_model)}_{sl(rerank_model)}_k{k}p{rerank_pool}{'_dd' if dedup else ''}.npy"
+
+
 def _endpoint(model: str) -> str:
     import json
     p = os.path.join(RTE_DATA, "endpoints.json")
@@ -139,23 +158,15 @@ class FrameworkMethod(Method):
     def _slug(self, model): return "minilm" if model == MINILM else re.sub(r"[^a-z0-9]+", "_", model.lower()).strip("_")
 
     def _sota_table(self, view):
-        """(K, k) shortlist for retrieval='sota': fuse BM25 with the dense scores, rerank the top `rerank_pool` with the
-        cross-encoder, keep k. It depends only on the population, so it is computed once and cached beside it -- the
-        reranker never runs inside a routing job on a population that scripts/embed_populations.py has warmed."""
+        """The (K, k) shortlist for retrieval='sota'. It depends only on the population, so it is computed once and
+        cached beside it; scripts/embed_populations.py pre-warms it, which is what keeps routing jobs off the GPU."""
         d = self._popdir(view)
-        tag = f"{self._slug(self.embed_model)}_{self._slug(self.rerank_model)}_k{self.k}p{self.rerank_pool}{'_dd' if self.dedup else ''}"
-        path = (d / f"shortlist_sota_{tag}.npy") if d is not None else None
+        path = (d / sota_cache_name(self.embed_model, self.rerank_model, self.k, self.rerank_pool, self.dedup)) if d is not None else None
         if path is not None and path.exists():
             T = np.load(path)
             if T.shape[0] == len(self.fdesc): return T
-        pool0 = self._pool if self.dedup else np.arange(view.n)
-        rows = []
-        for f in range(len(self.fdesc)):
-            fused = _rrf(self._B[f][pool0], (self._Xa @ self._Xf[f])[pool0])
-            cand = pool0[np.argsort(-fused, kind="stable")][:min(self.rerank_pool, len(pool0))]
-            cand = cand[np.argsort(-self._rerank(self.fdesc[f], [self.desc[a] for a in cand]), kind="stable")]
-            rows.append(np.pad(cand[:self.k], (0, max(0, self.k - len(cand))), constant_values=-1))
-        T = np.stack(rows).astype(np.int64)
+        pool = self._pool if self.dedup else np.arange(view.n)
+        T = sota_shortlist(self._B, self._Xa, self._Xf, pool, self.desc, self.fdesc, self._rerank, self.k, self.rerank_pool)
         if path is not None:                                 # atomic: concurrent jobs may race to write the same file
             tmp = path.with_suffix(f".{os.getpid()}.tmp.npy"); np.save(tmp, T); os.replace(tmp, path)
         return T
@@ -174,6 +185,11 @@ class FrameworkMethod(Method):
         def cached(path, texts, rows, **kw):
             E = np.load(path) if path is not None and path.exists() else None
             if E is not None and E.shape[0] == rows: return E
+            if self.embed_model != MINILM:                   # a strong embedder on a CPU routing node is a 100x stall,
+                import torch                                 # not a slow path worth taking silently
+                if not torch.cuda.is_available():
+                    raise RuntimeError(f"{self.embed_model} has no cached block for {d} and no GPU is visible; "
+                                       f"run: python scripts/embed_populations.py --model {self.embed_model}")
             E = embed(texts, self.embed_model, **kw)
             if path is not None:                             # atomic: concurrent jobs may race to write the same file
                 tmp = path.with_suffix(f".{os.getpid()}.tmp.npy"); np.save(tmp, E); os.replace(tmp, path)
@@ -183,36 +199,16 @@ class FrameworkMethod(Method):
         return cached(cache, self.desc, view.n), cached(fcache, self.fdesc, len(self.fdesc), prompt_name=qp)
 
     def _rerank(self, query: str, docs: list[str]) -> np.ndarray:
-        """Cross-encoder relevance for one family against the fused pool. Qwen3-Reranker scores as a causal LM -- the
-        yes/no logit gap at the final position -- so it is driven directly; any other name loads as a CrossEncoder."""
+        """Cross-encoder relevance for one family against the fused pool. Qwen3-Reranker ships modules.json and a
+        1_LogitScore module, so sentence-transformers drives its yes/no scoring itself. Do NOT hand-build the chat
+        prompt: the model's template owns the <Instruct>/<Query>/<Document> scaffold and silently drops content
+        passed any other way, which scores every document as empty and returns one constant for the whole pool.
+        Higher is better; only the induced order is used."""
         if self._rr is None:
             import torch
-            if "Qwen3-Reranker" in self.rerank_model:
-                from transformers import AutoModelForCausalLM, AutoTokenizer
-                rp = _resolve(self.rerank_model)
-                tok = AutoTokenizer.from_pretrained(rp, padding_side="left")
-                dev = "cuda" if torch.cuda.is_available() else "cpu"
-                mdl = AutoModelForCausalLM.from_pretrained(rp, dtype=torch.bfloat16).to(dev).eval()
-                self._rr = ("qwen", tok, mdl, dev, tok.convert_tokens_to_ids("yes"), tok.convert_tokens_to_ids("no"))
-            else:
-                from sentence_transformers import CrossEncoder
-                self._rr = ("ce", CrossEncoder(_resolve(self.rerank_model), device="cuda" if torch.cuda.is_available() else "cpu"))
-        if self._rr[0] == "ce":
-            return np.asarray(self._rr[1].predict([(query, d) for d in docs]), dtype=np.float32)
-        import torch
-        _, tok, mdl, dev, yes, no = self._rr
-        ins = "Given a task family, judge whether the agent described is competent at that family."
-        prompts = [tok.apply_chat_template(
-            [{"role": "system", "content": 'Judge whether the Document meets the requirements based on the Query and the Instruct provided. Note that the answer can only be "yes" or "no".'},
-             {"role": "user", "content": f"<Instruct>: {ins}\n<Query>: {query}\n<Document>: {d}"}],
-            tokenize=False, add_generation_prompt=True) + "<think>\n\n</think>\n\n" for d in docs]
-        out = np.zeros(len(docs), dtype=np.float32)
-        with torch.no_grad():
-            for lo in range(0, len(prompts), 16):
-                bt = tok(prompts[lo:lo + 16], return_tensors="pt", padding=True, truncation=True, max_length=1024).to(dev)
-                lg = mdl(**bt).logits[:, -1, :].float()
-                out[lo:lo + 16] = torch.log_softmax(torch.stack([lg[:, no], lg[:, yes]], dim=1), dim=1)[:, 1].cpu().numpy()
-        return out
+            from sentence_transformers import CrossEncoder
+            self._rr = CrossEncoder(_resolve(self.rerank_model), device="cuda" if torch.cuda.is_available() else "cpu")
+        return np.asarray(self._rr.predict([(query, d) for d in docs]), dtype=np.float32)
 
     def build(self, view, budget):
         super().build(view, budget)
