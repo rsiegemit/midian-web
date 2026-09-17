@@ -21,7 +21,7 @@ never drawn (`extra_figs.excluded`); *never reported* = withdrawn from every tab
 |---|---|---|---|---|
 | `midian` (plain) | SPEC §5 | probe, reports | Agents in random cohorts of r = 10. Level 0: each member is probed b times per family; the r−1 cohort peers report what they saw; the cohort's estimate of a member is a trimmed mean over reporters (drop ⌊δ(r−1)⌋ from each end, δ = 1/3), so up to that many liars per cohort are absorbed. Each node keeps, per family, the best estimate in its subtree and which child holds it; nodes are regrouped at random up a tree of depth ⌈log_r n⌉. A route descends from the root: r comparisons and 2 messages per level. After each outcome the routed agent's estimate and its path are updated (`online=True`). Build O(n) probes, reports and messages; route O(log n). Parameters never changed. | reported |
 | `midian` r ≠ 10 (`r=5`, `r=20`) | v2 1.4 | as plain | the same tree with cohorts of 5 or 20; r-sweep control | **do-not-add** |
-| `midian` δ sweep (`delta=0`) | v2 2.5 (`internals_v2`) | as plain | trimming off; internals ablation | do-not-add (r ≠ 10 arms) / appendix only |
+| `midian` δ sweep (`delta=0`, r = 10) | v2 2.5 (`internals_v2`) | as plain | trimming off; internals ablation (Fig. A_internals) | appendix only |
 | `midian_v` = `midian(verify=True, cached=True)` | post-hoc 2026-09-02, replicated as v2 V2-8 | probe, reports | verification at promotion: level 0 spends b0 = b−1 probes per cell; the saved n·K·(b−b0) probes re-probe, budget-exactly, every candidate a child forwards to its parent, by reporters drawn from sibling subtrees, and the verified value is written back. The root's per-family pick is cached: a route costs 1 comparison and 2 messages. Zero probes to verify at b = 1 (erratum 22). | reported (MIDIAN-V) |
 | `midian_a` | v2 1.1 | probe, reports | plain MIDIAN plus report audits: 5% of level-0 probe instances are re-run by the auditor (same index-seeded instance), each peer's report about it is compared with the truth, and a reporter with two mismatches is excluded from every later aggregation; online, 5% of routed outcomes are audited the same way. Cost 1.05× build probes, nothing per task. | reported (MIDIAN-A) |
 | `midian_va` | v2 V2-11 | probe, reports | MIDIAN-A's audited level 0 + MIDIAN-V's verified promotion and cached root pick; excluded reporters are also dropped from verification. The robust arm: flat in β at 10^3–10^7. | reported (MIDIAN-VA) |
@@ -112,7 +112,7 @@ so a top-10 is put in front of them). Five, never pooled, each its own grid (RES
 | `dedup=True` | post-hoc 2026-09-14 | the same ranking over DISTINCT description texts, one agent per text | reported beside |
 | `retrieval="embed"` (+dedup) | post-hoc 2026-09-15 | all-MiniLM-L6-v2 cosine over the deduped descriptions: the dense retriever a deployed stack would use | reported beside |
 | `retrieval="midian"` (r = 10) | v2 (T3-19 lineage; H7) | MIDIAN-V's probed leaf cohort, V's pick first | reported beside |
-| `retrieval="midian_va"` (r = 10) | v2 V2-? / post-hoc at 10^2, 10^4, 10^5 (2026-09-16) | MIDIAN-VA's audited leaf cohort, VA's pick first | reported beside |
+| `retrieval="midian_va"` (r = 10) | v3 T3-19 at 10^3; post-hoc at 10^2, 10^4, 10^5 and the cartel cells (2026-09-16) | MIDIAN-VA's audited leaf cohort, VA's pick first | reported beside |
 
 ## 6. The do-not-add list (`scripts/extra_figs.py`, `excluded()`), applied to every figure
 

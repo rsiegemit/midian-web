@@ -1,6 +1,6 @@
 # Bar figures: every arm by n, one per (family, regime, grouping)
 
-Oracle = dotted line; error bars = 95% seed bootstrap; the trusted-observer halving arm is never drawn (erratum 26). Data: `<family>.csv` beside each set. `route_to_k_majority` (hatched, "route-to-3 majority (3 executions per task)") executes three agents per task and majority-votes, so it can exceed the single-agent oracle; it is not comparable at equal per-task cost.
+Oracle = dotted line; error bars = 95% seed bootstrap; the trusted-observer halving arm is never drawn (erratum 26). Data: `<family>.csv` beside each set.
 
 - `live__beta0__specialist.png` (live)
 - `live__beta0__heavy_tail.png` (live)
