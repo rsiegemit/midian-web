@@ -208,10 +208,16 @@ grids:
   # silently move a quoted number. These add (a) the full arm set, (b) 20 seeds instead of 3, and (c) the LIAR axis --
   # bernoulli_scale/replay_scale are beta = 0.25 with RANDOM liars only, which is why RESULTS II.4d cannot say whether
   # declared_argmax's win at 10^6-10^7 survives a cartel. That is the question these exist to answer.
+  fill_arms: &fill_arms             # 2026-09-17 coverage fill (COVERAGE.md §6): rivals that were cheap and simply never scheduled on the sweeps
+    - linucb_honest
+    - disrouter_cascade
+    - referral_network
+    - gossip_reputation_greedy
+    - trueskill_per_family            # pure-Python TrueSkill: <= 10^4 only (NotImplemented at >= 10^5 by the file itself)
   bernoulli_scale_v5:
     K: [16]
     dist: [specialist]
-    methods: *scale_arms
+    methods: [*scale_arms, *fill_arms]
     backend_kwargs: {calibrate_from: $RTE_DATA/populations/specialist_n1000_K16_seed1/S.npy}
     # Seed ladder sized to the MEASURED across-seed std, which GROWS with n (0.005-0.03 at 10^4, 0.03-0.06 at 10^6):
     # seeds are worth most exactly where they cost most. 1000 seeds up to 10^4 is nearly free; 100 at 10^7 is the
@@ -221,29 +227,29 @@ grids:
     # max |difference| = 0 over 690 cells). Each n-rung is therefore two blocks, honest-only and liar-only.
       - {n: [10, 100, 1000, 10000], seeds: "1-1000", beta: [0], liar_select: [random]}
       - {n: [10, 100, 1000, 10000], seeds: "1-1000", beta: [0.25, 0.5], liar_select: [random, low_skill_first]}
-      - {n: [100000], seeds: "1-500", beta: [0], liar_select: [random]}
-      - {n: [100000], seeds: "1-500", beta: [0.25, 0.5], liar_select: [random, low_skill_first]}
+      - {n: [100000], seeds: "1-500", beta: [0], liar_select: [random], exclude: [trueskill_per_family]}
+      - {n: [100000], seeds: "1-500", beta: [0.25, 0.5], liar_select: [random, low_skill_first], exclude: [trueskill_per_family]}
       # b = [1, 3] at the top two rungs (2026-09-11): b=1 was inherited from bernoulli_scale and starves verification
       # (midian.py: e = (b - b0) n / C = 0 at b=1, so V == plain and VA == A). The b=1 rows stay as the documented
       # control; b=3 is the row that belongs in the table with the rungs below.
-      - {n: [1000000], b: [1, 3], seeds: "1-200", beta: [0], liar_select: [random]}
-      - {n: [1000000], b: [1, 3], seeds: "1-200", beta: [0.25, 0.5], liar_select: [random, low_skill_first]}
-      - {n: [10000000], b: [1, 3], seeds: "1-100", beta: [0], liar_select: [random]}
-      - {n: [10000000], b: [1, 3], seeds: "1-100", beta: [0.25, 0.5], liar_select: [random, low_skill_first]}
+      - {n: [1000000], b: [1, 3], seeds: "1-200", beta: [0], liar_select: [random], exclude: [trueskill_per_family]}
+      - {n: [1000000], b: [1, 3], seeds: "1-200", beta: [0.25, 0.5], liar_select: [random, low_skill_first], exclude: [trueskill_per_family]}
+      - {n: [10000000], b: [1, 3], seeds: "1-100", beta: [0], liar_select: [random], exclude: [trueskill_per_family, referral_network, gossip_reputation_greedy]}
+      - {n: [10000000], b: [1, 3], seeds: "1-100", beta: [0.25, 0.5], liar_select: [random, low_skill_first], exclude: [trueskill_per_family, referral_network, gossip_reputation_greedy]}
 
   replay_scale_v5:
     backend: replay
     K: [64]
     dist: [specialist, heavy_tail, bimodal]
-    methods: *scale_arms
+    methods: [*scale_arms, *fill_arms]
     blocks:
       - {n: [10, 100, 1000, 10000], seeds: "1-1000", beta: [0], liar_select: [random]}
       - {n: [10, 100, 1000, 10000], seeds: "1-1000", beta: [0.25, 0.5], liar_select: [random, low_skill_first]}
-      - {n: [100000], seeds: "1-200", beta: [0], liar_select: [random]}
-      - {n: [100000], seeds: "1-200", beta: [0.25, 0.5], liar_select: [random, low_skill_first]}
+      - {n: [100000], seeds: "1-200", beta: [0], liar_select: [random], exclude: [trueskill_per_family]}
+      - {n: [100000], seeds: "1-200", beta: [0.25, 0.5], liar_select: [random, low_skill_first], exclude: [trueskill_per_family]}
       # b = [1, 3] at 10^6 (2026-09-11), same reason as bernoulli_scale_v5: b=1 gives verification zero probes.
-      - {n: [1000000], b: [1, 3], seeds: "1-100", beta: [0], liar_select: [random]}
-      - {n: [1000000], b: [1, 3], seeds: "1-100", beta: [0.25, 0.5], liar_select: [random, low_skill_first]}
+      - {n: [1000000], b: [1, 3], seeds: "1-100", beta: [0], liar_select: [random], exclude: [trueskill_per_family]}
+      - {n: [1000000], b: [1, 3], seeds: "1-100", beta: [0.25, 0.5], liar_select: [random, low_skill_first], exclude: [trueskill_per_family]}
   bernoulli_cost_smoke:
     {n: [100, 1000, 10000], dist: [specialist], beta: [0.25], Q: 500, seeds: 1-3, methods: *cost_curve}
 
@@ -337,6 +343,18 @@ grids:
       - {name: knn_router, params: {online: true}}
       - mlp_router
       - random
+      - cnp_self_bid                  # 2026-09-17 coverage fill (COVERAGE.md §4): the declared-channel and bandit rivals the grid's "every arm" promised
+      - cluster_head_router
+      - declared_softmax
+      - disrouter_cascade
+      - route_to_k_majority
+      - ucb_per_family
+      - thompson_per_family
+      - verify_on_claim
+      - flat_nsw_router
+      - referral_network
+      - gossip_reputation_greedy
+      - trueskill_per_family
 
   routereval_mmlu5k:                # TARGETS_rte_v3 D2 at scale: ALL 5,000 leaderboard LLMs on MMLU (16 largest subjects), liars, no embeddings shipped
     backend: routereval
@@ -366,6 +384,19 @@ grids:
       - declared_argmax
       - knn_router
       - random
+      - cnp_self_bid                  # 2026-09-17 coverage fill (COVERAGE.md §4): the declared-channel and bandit rivals the grid's "every arm" promised
+      - cluster_head_router
+      - declared_softmax
+      - disrouter_cascade
+      - route_to_k_majority
+      - ucb_per_family
+      - thompson_per_family
+      - verify_on_claim
+      - flat_nsw_router
+      - referral_network
+      - gossip_reputation_greedy
+      - trueskill_per_family
+      - {name: knn_router, params: {online: true}}   # 2026-09-17: was never listed here (COVERAGE.md §4)
 
   cohort_arms: &cohort_arms         # v4: the three non-random cohort modes crossed with MIDIAN / -A / -VA, plus the
                                     # random baseline and the pre-existing stratify arm on identical cells.
@@ -580,6 +611,18 @@ grids:
       - {name: knn_router, params: {online: true}}
       - mlp_router
       - random
+      - cnp_self_bid                  # 2026-09-17 coverage fill (COVERAGE.md §4): the declared-channel and bandit rivals the grid's "every arm" promised
+      - cluster_head_router
+      - declared_softmax
+      - disrouter_cascade
+      - route_to_k_majority
+      - ucb_per_family
+      - thompson_per_family
+      - verify_on_claim
+      - flat_nsw_router
+      - referral_network
+      - gossip_reputation_greedy
+      - trueskill_per_family
 
   # ---- 2026-09-14: DEDUPLICATED framework shortlist (labeled variant `dedup: true`; CHANGES_AND_ERRATA #25). The
   # pre-registered adapter ranks agents by TF-IDF over self-descriptions, but agents sharing a prompt signature share a
@@ -660,3 +703,20 @@ grids:
                                                                              {name: fw_camel_workforce, params: {retrieval: midian_va, r: 10}}]}
   fw_live_n100_verified_va:          {mirror_of: fw_live_n100,          methods: *fw10_va}   # 2026-09-16: the VA cohort at n = 100 (honest + random liars)
   fw_live_n100_verified_va_lowskill: {mirror_of: fw_live_n100_lowskill, methods: *fw10_va}   # ... and its cartel cell
+
+  # ---- 2026-09-17 coverage fill (COVERAGE.md §6): every arm that was cheap and simply never scheduled. Mirrors keep the
+  # source cells, seeds and Q; only the arm lists differ. Live units execute their routed tasks live, so they wait on
+  # fleet health like every live grid.
+  fw_routereval_small: {mirror_of: fw_routereval_1k, n: [10, 100]}     # the nine frameworks on RouterEval's m = 10 and 100 pools
+  learned_n100_fill:                                                    # live n = 100: the rivals that only the n = 1,000 grid carried
+    mirror_of: learned_n100
+    methods: [cnp_self_bid, cluster_head_router, declared_softmax, disrouter_cascade, ucb_per_family, thompson_per_family, verify_on_claim,
+              linucb_honest, flat_nsw_router, referral_network, gossip_reputation_greedy, trueskill_per_family]
+  learned_n10k_fill:                                                    # live n = 10,000, both liar selections
+    mirror_of: learned_n10k
+    methods: [cnp_self_bid, cluster_head_router, declared_softmax, disrouter_cascade, ucb_per_family, thompson_per_family,
+              flat_nsw_router, referral_network, gossip_reputation_greedy, trueskill_per_family, llm_supervisor]
+  live_n100k_fill:                                                      # live n = 100,000 (no TrueSkill: NotImplemented there)
+    mirror_of: live_n100k
+    methods: [cnp_self_bid, cluster_head_router, declared_softmax, disrouter_cascade, ucb_per_family, thompson_per_family,
+              flat_nsw_router, referral_network, gossip_reputation_greedy, llm_supervisor]
