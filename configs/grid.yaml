@@ -186,6 +186,12 @@ grids:
       - {n: [100000], b: [1, 3], seeds: "1-5"}      # same n, both budgets: isolates b
       - {n: [1000000], b: [3], seeds: "1-2"}        # the v5 rung at b=3: does VA recover?
 
+  fill_arms: &fill_arms             # 2026-09-17 coverage fill (COVERAGE.md §6): rivals that were cheap and simply never scheduled on the sweeps
+    - linucb_honest
+    - disrouter_cascade
+    - referral_network
+    - gossip_reputation_greedy
+    - trueskill_per_family            # pure-Python TrueSkill: <= 10^4 only (NotImplemented at >= 10^5 by the file itself)
   bernoulli_b_sweep:                # The probe-budget axis (2026-09-11): b in {1, 2, 3, 5, 10} at n = 10^3..10^5, five liar
                                     # regimes, every scale arm EXCEPT MIDIAN-SH/SHA (their halving schedule is unfundable at
                                     # small b and they are not the question). Motivated by bernoulli_b_probe: at b=1
@@ -194,26 +200,20 @@ grids:
     K: [16]
     dist: [specialist]
     b: [1, 2, 3, 5, 10, 20, 30]     # 20, 30 added 2026-09-14 (same cells/seeds; VA was still climbing at b=10)
-    methods: *scale_arms
+    methods: [*scale_arms, *fill_arms]   # fill_arms added 2026-09-17 (COVERAGE.md §7)
     exclude: [midian_sh, midian_sha]
     backend_kwargs: {calibrate_from: $RTE_DATA/populations/specialist_n1000_K16_seed1/S.npy}
     blocks:
       - {n: [1000, 10000], seeds: "1-1000", beta: [0], liar_select: [random]}
       - {n: [1000, 10000], seeds: "1-1000", beta: [0.25, 0.5], liar_select: [random, low_skill_first]}
-      - {n: [100000], seeds: "1-200", beta: [0], liar_select: [random]}
-      - {n: [100000], seeds: "1-200", beta: [0.25, 0.5], liar_select: [random, low_skill_first]}
+      - {n: [100000], seeds: "1-200", beta: [0], liar_select: [random], exclude: [midian_sh, midian_sha, trueskill_per_family]}
+      - {n: [100000], seeds: "1-200", beta: [0.25, 0.5], liar_select: [random, low_skill_first], exclude: [midian_sh, midian_sha, trueskill_per_family]}
 
   # ---- v5 many-seed scale sweeps (2026-09-10). SEPARATE grids, not edits to the two above: the published cost
   # exponents (MIDIAN n^0.112 [0.106, 0.118], flat n^1.000) are fits over exactly those rows, and adding cells would
   # silently move a quoted number. These add (a) the full arm set, (b) 20 seeds instead of 3, and (c) the LIAR axis --
   # bernoulli_scale/replay_scale are beta = 0.25 with RANDOM liars only, which is why RESULTS II.4d cannot say whether
   # declared_argmax's win at 10^6-10^7 survives a cartel. That is the question these exist to answer.
-  fill_arms: &fill_arms             # 2026-09-17 coverage fill (COVERAGE.md §6): rivals that were cheap and simply never scheduled on the sweeps
-    - linucb_honest
-    - disrouter_cascade
-    - referral_network
-    - gossip_reputation_greedy
-    - trueskill_per_family            # pure-Python TrueSkill: <= 10^4 only (NotImplemented at >= 10^5 by the file itself)
   bernoulli_scale_v5:
     K: [16]
     dist: [specialist]
@@ -720,3 +720,33 @@ grids:
     mirror_of: live_n100k
     methods: [cnp_self_bid, cluster_head_router, declared_softmax, disrouter_cascade, ucb_per_family, thompson_per_family,
               flat_nsw_router, referral_network, gossip_reputation_greedy, llm_supervisor]
+
+  # ---- 2026-09-17 expansions (COVERAGE.md §8): live β = 0.1 above 10^3; live heavy_tail / bimodal at 10^4; the frameworks on
+  # RouterEval with the MiniLM and VA-cohort shortlists (dedup is a no-op there: every rendered description is unique).
+  learned_n10k_beta01:      {mirror_of: learned_n10k,      beta: [0.1]}
+  learned_n10k_fill_beta01: {mirror_of: learned_n10k_fill, beta: [0.1]}
+  fw_live_n10k_beta01:      {mirror_of: live_n10k_v2,      beta: [0.1], methods: *frameworks}
+  live_n100k_beta01:        {mirror_of: live_n100k,        beta: [0.1]}
+  live_n100k_fill_beta01:   {mirror_of: live_n100k_fill,   beta: [0.1]}
+  learned_n10k_shapes:      {mirror_of: learned_n10k,      dist: [heavy_tail, bimodal]}     # stage 1 warms each (shape, seed) population with flat_probe_argmax
+  learned_n10k_fill_shapes: {mirror_of: learned_n10k_fill, dist: [heavy_tail, bimodal]}
+  fw_live_n10k_shapes:      {mirror_of: live_n10k_v2,      dist: [heavy_tail, bimodal], methods: *frameworks}
+  fw_live_n10k_cartel_shapes: {mirror_of: fw_live_n10k_cartel, dist: [heavy_tail, bimodal]}
+  fw_routereval_1k_em:
+    mirror_of: fw_routereval_1k
+    methods: [&fw9_em [{name: fw_langgraph, params: {retrieval: embed, dedup: true}}, {name: fw_crewai, params: {retrieval: embed, dedup: true}},
+                       {name: fw_autogen, params: {retrieval: embed, dedup: true}}, {name: fw_maf, params: {retrieval: embed, dedup: true}},
+                       {name: fw_openai_agents, params: {retrieval: embed, dedup: true}}, {name: fw_google_adk, params: {retrieval: embed, dedup: true}},
+                       {name: fw_llamaindex, params: {retrieval: embed, dedup: true}}, {name: fw_smolagents, params: {retrieval: embed, dedup: true}},
+                       {name: fw_camel_workforce, params: {retrieval: embed, dedup: true}}]]
+  fw_routereval_5k_em:      {mirror_of: fw_routereval_5k,    methods: *fw9_em}
+  fw_routereval_small_em:   {mirror_of: fw_routereval_small, methods: *fw9_em}
+  fw_routereval_1k_va:
+    mirror_of: fw_routereval_1k
+    methods: [&fw9_va [{name: fw_langgraph, params: {retrieval: midian_va, r: 10}}, {name: fw_crewai, params: {retrieval: midian_va, r: 10}},
+                       {name: fw_autogen, params: {retrieval: midian_va, r: 10}}, {name: fw_maf, params: {retrieval: midian_va, r: 10}},
+                       {name: fw_openai_agents, params: {retrieval: midian_va, r: 10}}, {name: fw_google_adk, params: {retrieval: midian_va, r: 10}},
+                       {name: fw_llamaindex, params: {retrieval: midian_va, r: 10}}, {name: fw_smolagents, params: {retrieval: midian_va, r: 10}},
+                       {name: fw_camel_workforce, params: {retrieval: midian_va, r: 10}}]]
+  fw_routereval_5k_va:      {mirror_of: fw_routereval_5k,    methods: *fw9_va}
+  fw_routereval_small_va:   {mirror_of: fw_routereval_small, methods: *fw9_va}
