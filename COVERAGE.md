@@ -96,3 +96,16 @@ both v5 sweeps at every rung and regime (referral / gossip to 10^6); the twelve 
 `routereval_mmlu5k` (+ KNN online) and `llmrouterbench_pool`; `fw_routereval_small` (nine frameworks at m = 10 / 100);
 `learned_n100_fill`, `learned_n10k_fill` (+ `llm_supervisor`), `live_n100k_fill` (+ `llm_supervisor`). Chained folds
 `fill_fold_synth` and `fill_fold_live`; the bar figures and matrices regenerate after them.
+
+## 8. Expansions (launched 2026-09-17 02:00; `logs/fill/launch2.sh`)
+
+- `fill_arms` on `bernoulli_b_sweep` (b = 1 … 30 at 10^3–10^5; TrueSkill ≤ 10^4).
+- Live β = 0.1 at 10^4 (`learned_n10k_beta01`, `learned_n10k_fill_beta01`, `fw_live_n10k_beta01`) and 10^5 (`live_n100k_beta01`,
+  `live_n100k_fill_beta01`): every arm the 10^4 / 10^5 tables carry, both liar sets.
+- Live heavy_tail and bimodal at 10^4 (`learned_n10k_shapes`, `learned_n10k_fill_shapes`, `fw_live_n10k_shapes`,
+  `fw_live_n10k_cartel_shapes`): six new populations (2 shapes × 3 seeds, ~480k generations each) warmed by one
+  flat_probe_argmax job apiece (`warm10k_*`), the 950 other units launched by `shapes_gate` behind them.
+- The nine frameworks on RouterEval (10 / 100, 1,000, 5,000) with the MiniLM (`_em`) and VA-cohort (`_va`) shortlists.
+- Speed: every job of §7 and §8 is one unit (or one seed) and is submitted to `sapphire,serial_requeue`; §7's already-queued
+  jobs were widened to both partitions by `logs/fill/spread.sh`. `kempner_requeue` refuses multi-partition submissions.
+- Fold `fill_fold_expand`; then matrices, tables, NUMBERS.json, bar figures (M-figures gain the 10^4 shapes and β = 0.1 cells).
