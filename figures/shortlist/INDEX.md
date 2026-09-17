@@ -1,0 +1,80 @@
+# figures/shortlist -- every framework under every shortlist source, per condition
+
+One figure per (family, n, population shape, liar regime); one panel and one row. The oracle is the dotted bar (and a dotted
+guide across the panel); MIDIAN-VA routing the whole population is the solid bar; each framework group carries one bar per
+shortlist source. Error bars are the 95% seed bootstrap. Do-not-add arms (extra_figs.excluded) are never drawn.
+
+Shortlist sources: `tfidf` = hashed TF-IDF (pre-registered); `dedup` = dedup (one per distinct text); `embed` = MiniLM cosine; `v_cohort` = MIDIAN-V leaf cohort; `va_cohort` = MIDIAN-VA leaf cohort.
+
+
+## live
+- `live__n100__bimodal__beta0.png`
+- `live__n100__bimodal__beta01_random.png`
+- `live__n100__bimodal__beta025_random.png`
+- `live__n100__bimodal__beta05_random.png`
+- `live__n100__bimodal__cartel.png`
+- `live__n100__heavy_tail__beta0.png`
+- `live__n100__heavy_tail__beta01_random.png`
+- `live__n100__heavy_tail__beta025_random.png`
+- `live__n100__heavy_tail__beta05_random.png`
+- `live__n100__heavy_tail__cartel.png`
+- `live__n100__specialist__beta0.png`
+- `live__n100__specialist__beta01_random.png`
+- `live__n100__specialist__beta025_random.png`
+- `live__n100__specialist__beta05_random.png`
+- `live__n100__specialist__cartel.png`
+- `live__n1000__bimodal__beta0.png`
+- `live__n1000__bimodal__beta01_random.png`
+- `live__n1000__bimodal__beta025_random.png`
+- `live__n1000__bimodal__beta05_random.png`
+- `live__n1000__bimodal__cartel.png`
+- `live__n1000__heavy_tail__beta0.png`
+- `live__n1000__heavy_tail__beta01_random.png`
+- `live__n1000__heavy_tail__beta025_random.png`
+- `live__n1000__heavy_tail__beta05_random.png`
+- `live__n1000__heavy_tail__cartel.png`
+- `live__n1000__specialist__beta0.png`
+- `live__n1000__specialist__beta01_random.png`
+- `live__n1000__specialist__beta025_random.png`
+- `live__n1000__specialist__beta05_random.png`
+- `live__n1000__specialist__cartel.png`
+- `live__n10000__specialist__beta0.png`
+- `live__n10000__specialist__beta025_random.png`
+- `live__n10000__specialist__cartel.png`
+- `live__n100000__specialist__beta0.png`
+- `live__n100000__specialist__beta025_cartel.png`
+- `live__n100000__specialist__beta025_random.png`
+- `live__n100000__specialist__beta05_random.png`
+- `live__n100000__specialist__cartel.png`
+
+## routereval
+- `routereval__n10__all_strong__beta0.png`
+- `routereval__n10__all_strong__beta05_random.png`
+- `routereval__n10__all_strong__cartel.png`
+- `routereval__n10__all_weak__beta0.png`
+- `routereval__n10__all_weak__beta05_random.png`
+- `routereval__n10__all_weak__cartel.png`
+- `routereval__n10__strong_to_weak__beta0.png`
+- `routereval__n10__strong_to_weak__beta05_random.png`
+- `routereval__n10__strong_to_weak__cartel.png`
+- `routereval__n100__all_strong__beta0.png`
+- `routereval__n100__all_strong__beta05_random.png`
+- `routereval__n100__all_strong__cartel.png`
+- `routereval__n100__all_weak__beta0.png`
+- `routereval__n100__all_weak__beta05_random.png`
+- `routereval__n100__all_weak__cartel.png`
+- `routereval__n100__strong_to_weak__beta0.png`
+- `routereval__n100__strong_to_weak__beta05_random.png`
+- `routereval__n100__strong_to_weak__cartel.png`
+- `routereval__n1000__all_strong__beta0.png`
+- `routereval__n1000__all_strong__beta05_random.png`
+- `routereval__n1000__all_strong__cartel.png`
+- `routereval__n1000__all_weak__beta0.png`
+- `routereval__n1000__all_weak__beta05_random.png`
+- `routereval__n1000__all_weak__cartel.png`
+- `routereval__n1000__strong_to_weak__beta0.png`
+- `routereval__n1000__strong_to_weak__beta05_random.png`
+- `routereval__n1000__strong_to_weak__cartel.png`
+- `routereval__n5000__all__beta0.png`
+- `routereval__n5000__all__beta05_random.png`
+- `routereval__n5000__all__cartel.png`

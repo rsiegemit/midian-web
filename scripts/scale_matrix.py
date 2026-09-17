@@ -62,8 +62,9 @@ def main():
                 v = piv.get((l, n))
                 cells.append("--" if v is None else f"{v['mean']:.3f} ± {v['std_seed']:.3f} [{v['ci_lo']:.3f},{v['ci_hi']:.3f}] ({v['seeds']})")
             print(f"| {l} | " + " | ".join(cells) + " |")
-    pd.DataFrame(out).to_csv(f"{d}/matrix_{a.metric}.csv", index=False)
-    print(f"\n(csv: {d}/matrix_{a.metric}.csv)", file=sys.stderr)
+    csv = f"{d}/matrix_{a.metric}" + (f"_{a.dist}" if a.dist else "") + ".csv"   # --dist must not clobber the pooled CSV
+    pd.DataFrame(out).to_csv(csv, index=False)
+    print(f"\n(csv: {csv})", file=sys.stderr)
 
 
 if __name__ == "__main__":
