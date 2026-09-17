@@ -760,6 +760,7 @@ embeddings), MODEL-SAT (LLM fine-tune), Avengers voting (needs generations).
 | M2-M4 | β profile, cost exponents, legibility | regenerated 2026-09-17 |
 | M5 | success vs probe budget b = 1..30 at n = 10^5, honest and cartel (II.4f) | final |
 | M6 | frameworks pooled by shortlist source × n, specialist, honest and cartel; VA itself and the oracle (II.2) | final |
+| bars/ | every arm as bars by n, one figure per (family, liar regime, grouping): live RTE 10^2-10^5 by shape (18), calibrated bernoulli 10..10^7 (5), RouterBench replay 10..10^6 (5), RouterEval real pools 10..5,000 by pool (15), LLMRouterBench (5); oracle dotted on top; colours fixed per arm across all 48 (`figures/bars/COLOURS.json`, `scripts/bar_figs.py`) | final |
 | H6, H7 | redrawn without the trusted-observer halving arm (erratum 26); H7 remains the 10^2/10^3 V-cohort lift, M6 is the five-source view | regenerated 2026-09-17 |
 
 Errata and change log against the earlier drafts: `CHANGES_AND_ERRATA.md`.
