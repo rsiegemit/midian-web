@@ -59,7 +59,8 @@ def line(ax, s, label, **kw):
 # DO-NOT-ADD list for EVERY figure (2026-09-17, user directive): MIDIAN variants with r != 10 (midian[r=5], midian_v_r5,
 # midian[r=20,...], ...), MIDIAN-SH, MIDIAN-SHA, and the trusted-observer halving arm (erratum 26). Applied by need() here,
 # by bar_figs.py, and by paper_figs.py through excluded().
-DO_NOT_ADD = {"midian_sh", "midian_sha", "sequential_halving"}
+DO_NOT_ADD = {"midian_sh", "midian_sha", "sequential_halving",
+              "route_to_k_majority"}          # 2026-09-17: executes THREE agents per task (majority vote) -- not one execution per task like every other arm
 _R = re.compile(r"(?:\[|,)r=(\d+)|_r(\d+)$")
 
 
