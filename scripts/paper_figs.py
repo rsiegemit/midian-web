@@ -9,7 +9,7 @@ matplotlib.use("Agg"); import matplotlib.pyplot as plt
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__)))); sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from rte.analyze import RTE_DATA as _RD, load as _load, FLAT_ON
 RTE_DATA_RESULTS = f"{_RD}/results"
-from extra_figs import COLOR, HAL, HALP, MAG14, ci as _ci, stat
+from extra_figs import COLOR, HAL, HALP, MAG14, ci as _ci, stat, excluded
 
 OUT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "figures"); os.makedirs(OUT, exist_ok=True)
 CACHE = os.environ.get("PAPER_CACHE")                                   # optional dir of <grid>.pkl from rte.analyze.load
@@ -40,6 +40,7 @@ def rows(*grids):
 
 def units(df, labels, dist=None, beta=None, liar=None, n=None):
     """Success per (dist, beta, liar_select, seed) unit for the requested labels, on the cells where EVERY label exists."""
+    labels = [l for l in labels if not excluded(l)]                      # the do-not-add list (extra_figs)
     q = df[df.label.isin(labels)]
     for k, v in (("dist", dist), ("beta", beta), ("liar_select", liar), ("n", n)):
         if v is not None: q = q[np.isclose(q[k], v) if k == "beta" else q[k] == v]

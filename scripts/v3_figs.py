@@ -6,7 +6,9 @@ import os, sys, numpy as np, pandas as pd, matplotlib; matplotlib.use("Agg"); im
 sys.path.insert(0, os.path.dirname(__file__)); from extra_figs import rows, ci, COLOR, O
 from rte.analyze import load
 
-ARMS = ["oracle", "sequential_halving_peer", "midian_va", "midian_v", "midian_a", "midian", "flat_probe_argmax_online", "mlp_router", "knn_router", "fw_autogen"]
+from extra_figs import excluded
+_ARMS0 = ["oracle", "sequential_halving_peer", "midian_va", "midian_v", "midian_a", "midian", "flat_probe_argmax_online", "mlp_router", "knn_router", "fw_autogen"]
+ARMS = [a for a in _ARMS0 if not excluded(a)]
 COLOR.update({"mlp_router": "#2ecc71", "knn_router": "#16a085", "knn_router_online": "#1abc9c", "fw_autogen": "#2980b9"})
 
 

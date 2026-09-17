@@ -6,20 +6,20 @@ One panel and one row per figure, always. Families: live (RTE live backend, 10^2
 pre-registered TF-IDF adapter -- at 10^5 that row is the clone artefact of erratum 25, see M6 for the other shortlists),
 bernoulli (calibrated synthetic, 10..10^7, 1000 seeds, b = 3), replay (RouterBench outcomes, 10..10^6, shapes pooled),
 routereval (real LLM pools 10 / 100 / 1,000 per pool config and the 5,000-LLM leaderboard pool), llmrouterbench (20 models).
-The trusted-observer halving arm is never drawn (erratum 26)."""
+Do-not-add list (extra_figs.excluded): MIDIAN with r != 10, MIDIAN-SH, MIDIAN-SHA, the trusted-observer halving arm."""
 from __future__ import annotations
 import os, sys
 import numpy as np, pandas as pd, matplotlib
 matplotlib.use("Agg"); import matplotlib.pyplot as plt
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__)))); sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from rte.analyze import RTE_DATA as _RD, load as _load, FLAT_ON
-from extra_figs import COLOR as _COLOR, HALP, ci as _ci
+from extra_figs import COLOR as _COLOR, HALP, ci as _ci, excluded
 from paper_figs import NAME as _NAME, ABBR, cm
 
 R = f"{_RD}/results"; OUT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "figures", "bars"); os.makedirs(OUT, exist_ok=True)
 plt.rcParams.update({"pdf.fonttype": 42, "font.family": "DejaVu Sans", "font.size": 7, "axes.labelsize": 7, "axes.titlesize": 7.5, "xtick.labelsize": 6.5,
                      "ytick.labelsize": 6.5, "legend.fontsize": 6, "axes.linewidth": 0.6, "figure.constrained_layout.use": True})
-NEVER = {"sequential_halving", "oracle"}                        # oracle is the dotted line, trusted halving is never reported
+NEVER = {"oracle"}                                             # oracle is the dotted line; the do-not-add list (extra_figs.excluded) drops the rest
 REGIMES = [("beta0", 0.0, "random", "honest (β = 0)"), ("beta01_random", 0.1, "random", "β = 0.1, random liars"),
            ("beta025_random", 0.25, "random", "β = 0.25, random liars"), ("beta025_cartel", 0.25, "low_skill_first", "β = 0.25, low-skill cartel"),
            ("beta05_random", 0.5, "random", "β = 0.5, random liars"), ("cartel", 0.5, "low_skill_first", "β = 0.5, low-skill cartel")]
@@ -107,7 +107,7 @@ def draw(series, oracle, title, fname, ns, ylim=(0.2, 1.0), _jobs=None):
     """series: label -> {n: (mean, lo, hi, seeds)}; oracle: {n: mean}. ONE panel, ONE row, always (every n group side by side,
     every arm as a bar); the figure widens with the number of bars."""
     if _jobs is not None: _jobs.append((series, oracle, title, fname, ns, ylim)); return fname      # deferred: colours are assigned once all labels are known
-    labels = [l for l in series if l not in NEVER]
+    labels = [l for l in series if l not in NEVER and not excluded(l)]
     nmax = max(ns); labels.sort(key=lambda l: -series[l].get(nmax, series[l][max(series[l])])[0])
     nbars = sum(1 for l in labels for n in ns if n in series[l])
     fig, ax = plt.subplots(figsize=(cm(max(14.0, 0.28 * nbars + 5)), cm(7.0)))

@@ -2,6 +2,7 @@
 Every figure renders from whatever rows exist and skips (with a note) what is missing. Labels come from rte.analyze
 (one name per arm). No wall-clock anywhere except H5's supervisor-latency panel (framework calls are never memoised)."""
 import ast, json, os, sys
+import re
 import numpy as np, pandas as pd, matplotlib
 matplotlib.use("Agg"); import matplotlib.pyplot as plt
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -55,7 +56,21 @@ def line(ax, s, label, **kw):
     ax.errorbar(xs, ys, yerr=[np.nan_to_num(lo), np.nan_to_num(hi)], label=label, color=col(label) if "color" not in kw else kw.pop("color"), **STYLE, **kw)
 
 
+# DO-NOT-ADD list for EVERY figure (2026-09-17, user directive): MIDIAN variants with r != 10 (midian[r=5], midian_v_r5,
+# midian[r=20,...], ...), MIDIAN-SH, MIDIAN-SHA, and the trusted-observer halving arm (erratum 26). Applied by need() here,
+# by bar_figs.py, and by paper_figs.py through excluded().
+DO_NOT_ADD = {"midian_sh", "midian_sha", "sequential_halving"}
+_R = re.compile(r"(?:\[|,)r=(\d+)|_r(\d+)$")
+
+
+def excluded(label):
+    if label in DO_NOT_ADD: return True
+    m = _R.search(str(label))
+    return bool(m) and int(m.group(1) or m.group(2)) != 10 and str(label).startswith("midian")
+
+
 def need(w, labels, fig):
+    labels = [l for l in labels if not excluded(l)]
     miss = [l for l in labels if l not in w]
     if miss: print(f"[{fig}] waiting on data: {', '.join(miss)}")
     return [l for l in labels if l in w]
