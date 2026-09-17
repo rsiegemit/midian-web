@@ -1,17 +1,27 @@
 # STATUS.md — RTE handoff
 
-**Current (2026-09-17, v6 sync).** Read `RESULTS.md` first (the dossier; every number in `paper/NUMBERS.json`), then
-`CHANGES_AND_ERRATA.md` (errata 1-26, still-open list) and `DEVIATIONS.md` (dated log). Repo pushed to `origin/main`.
-- Complete and written: the 1000-seed scale sweeps 10..10^7 (II.4e), the probe-budget axis b = 1..30 (II.4f), live n = 10^5
-  (II.4c), the v4 cohort modes (RESULTS_rte_v4.md), and the framework shortlist campaign — five shortlist sources at
-  10^2-10^5 (II.2 table, Appendix S), erratum 25 (clone-filled TF-IDF top-10), erratum 26 (trusted-observer halving
-  withdrawn everywhere).
-- Still running, marked * in RESULTS: Magentic-One at 10^2 with the VA cohort (`fw_live_n100_verified_va[_lowskill]`);
-  the live 10^5 peer-halving liar cells (3-day jobs, memo-resumed). When they land: `python scripts/doc_tables.py --sync
-  && python scripts/doc_tables.py --verify`, regenerate `paper/NUMBERS.json` (SLURM job, `scripts/paper_numbers.py`),
-  then the figures (M1-M4, H6, H7 and the shortlist-source panel).
-- Operating rules that cost real time are in README §6 and DEVIATIONS (fleet readiness, replica aliases, one unit per
-  job, sapphire for >1,000-job campaigns, 3-day limits for live halving cells, never `kill $(pgrep -f ...)`).
+**Current (2026-09-17 18:30, v7 sync).** Read `RESULTS.md` first (the dossier; every number in `paper/NUMBERS.json`),
+then `METHODS.md` (every method: origin, what it is, what it does), `COVERAGE.md` (what exists, what is missing, whether
+the gap is justified, and the campaign state), `CHANGES_AND_ERRATA.md` (errata 1-26) and `DEVIATIONS.md` (dated log).
+Repo pushed to `origin/main`.
+
+- **Complete and written**: the 1000-seed scale sweeps 10..10^7 (II.4e), the probe-budget axis b = 1..30 (II.4f), live
+  n = 10^5 (II.4c), the v4 cohort modes, the framework shortlist campaign at 10^2-10^5 across five shortlist sources
+  (II.2, Appendix S), and the 2026-09-17 coverage fill: five previously unscheduled rivals on both synthetic sweeps and
+  every live rung, the missing rivals on all three real-pool grids, live β = 0.1 at 10^4 / 10^5, and the RouterEval
+  framework variants at m = 1,000 / 5,000.
+- **Still running, marked * in RESULTS Part VI**: the live 10^5 peer-halving β = 0.5 cells (the low-skill cartel cell has
+  no seed yet -- the one live cell that still matters), the live 10^4 heavy_tail / bimodal campaign, and the RouterEval
+  framework variants on the m = 10 / 100 pools. Chained folds `fill_fold_live` and `fill_fold_expand` fire when they drain.
+- **When they land**: `python scripts/doc_tables.py --sync && python scripts/doc_tables.py --verify`; regenerate
+  `paper/NUMBERS.json` (SLURM, `scripts/paper_numbers.py`); regenerate figures (`scripts/bar_figs.py`, `paper_figs.py`,
+  `extra_figs.py`, `v3_figs.py`); update COVERAGE §9 and RESULTS Part VI; push.
+- **Figure rules**: one panel and one row per figure, always; the oracle is a piecewise dotted line; one persistent colour
+  per arm (`figures/bars/COLOURS.json`); every script filters through the do-not-add list in `extra_figs.excluded`
+  (MIDIAN with r ≠ 10 or δ ≠ 1/3, SH, SHA, LLM-descent, online-off, cohort/churn variants, route-to-k, trusted halving).
+- **Operating rules** that cost real time are in README §6, DEVIATIONS and the memory file: fleet readiness, replica
+  aliases, one unit per job, `sapphire,serial_requeue` for large campaigns, `--methods` takes ONE comma-separated value,
+  3-day limits for live halving cells, never `kill $(pgrep -f ...)`.
 
 ---
 

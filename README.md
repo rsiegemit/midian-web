@@ -227,6 +227,8 @@ Per-grid machine summaries are `$RTE_DATA/results/<grid>/summary.md`. The figure
 - **H5** cost scaling 10² to 10⁷, plus supervisor latency
 - **H6** MIDIAN, MIDIAN-A, MIDIAN-VA (and V, SH, SH+A) vs peer-reported sequential halving by β and liar selection; replay twin below (no trusted-observer arm, erratum 26)
 - **H7** frameworks given MIDIAN's verified shortlist at 10^2 / 10^3; **M6** the five shortlist sources × n at 10^2-10^5 (RESULTS II.2)
+- `METHODS.md` describes every method (origin, what it is, what it does) and `COVERAGE.md` audits what exists per
+  family with justification verdicts and the campaign state.
 - Every figure script filters its arms through one do-not-add list (`extra_figs.excluded`): MIDIAN variants with r ≠ 10, MIDIAN-SH, MIDIAN-SHA, the trusted-observer halving arm. Extend it there, never per figure.
 - **bars/** (48 figures, `scripts/bar_figs.py`): every arm as bars grouped by n, one figure per experiment family × liar regime × grouping, oracle dotted on top, one colour per arm across all of them
 - **M1** success vs n with the live 10^2-10^5 points and the 1000-seed calibrated curve to 10^7; **M5** success vs probe budget b = 1..30 (RESULTS II.4e / II.4f)
