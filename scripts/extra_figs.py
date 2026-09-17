@@ -60,14 +60,26 @@ def line(ax, s, label, **kw):
 # midian[r=20,...], ...), MIDIAN-SH, MIDIAN-SHA, and the trusted-observer halving arm (erratum 26). Applied by need() here,
 # by bar_figs.py, and by paper_figs.py through excluded().
 DO_NOT_ADD = {"midian_sh", "midian_sha", "sequential_halving",
-              "route_to_k_majority"}          # 2026-09-17: executes THREE agents per task (majority vote) -- not one execution per task like every other arm
+              "route_to_k_majority",          # 2026-09-17: executes THREE agents per task (majority vote) -- not one execution per task like every other arm
+              "midian_llm_descent",           # SPEC §9 descent ablation: appendix only
+              "midian[online=False]"}         # online updates off: internals ablation
 _R = re.compile(r"(?:\[|,)r=(\d+)|_r(\d+)$")
+_DELTA = re.compile(r"delta=([0-9.]+)")
+_VARIANT = re.compile(r"cohort=|stratify=True|churn_mode=|online=False")   # v4 cohort modes (their own tables), churn-mode arms (H9), online-off ablations
 
 
 def excluded(label):
+    """The do-not-add list for every figure: MIDIAN with r != 10 or delta != 1/3, SH / SHA, the LLM-descent ablation, online-off,
+    the v4 cohort-mode and churn-mode variants, route-to-many, and the trusted-observer halving arm (erratum 26)."""
+    label = str(label)
     if label in DO_NOT_ADD: return True
-    m = _R.search(str(label))
-    return bool(m) and int(m.group(1) or m.group(2)) != 10 and str(label).startswith("midian")
+    if label.startswith("midian") or label.startswith("sequential_halving"):
+        if _VARIANT.search(label): return True
+        m = _R.search(label)
+        if m and int(m.group(1) or m.group(2)) != 10: return True
+        d = _DELTA.search(label)
+        if d and abs(float(d.group(1)) - 1 / 3) > 1e-6: return True
+    return False
 
 
 def need(w, labels, fig):

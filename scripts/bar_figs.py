@@ -157,7 +157,8 @@ def family_matrix(fam, grid, index, recs, group="all shapes pooled"):
 
 
 def family_routereval(index, recs):
-    small, big = rows("routereval_mmlu"), rows("routereval_mmlu5k")
+    small = pd.concat([rows("routereval_mmlu"), rows("fw_routereval_1k")], ignore_index=True)      # the nine frameworks ran on the m = 1,000 pools (fw_routereval_1k)
+    big = pd.concat([rows("routereval_mmlu5k"), rows("fw_routereval_5k")], ignore_index=True)      # ... and on the 5,000-LLM pool (fw_routereval_5k)
     for reg, beta, liar, rtitle in REGIMES:
         if reg == "beta01_random": continue
         for pool in ("strong_to_weak", "all_strong", "all_weak"):
