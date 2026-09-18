@@ -151,3 +151,30 @@ def test_declared_retrieval_ranks_by_the_declared_claim():
         top = m.retrieve(task)
         assert list(top) == list(m._pool[np.argsort(-D[m._pool, f], kind="stable")][:m.k])
         assert m._B is None and m._sota is None              # no BM25 block, no reranked table
+
+
+def test_shuffle_permutes_the_midian_cohort_without_changing_its_members():
+    """The position control: shuffle must keep the SAME shortlist (so only ordering differs from the reported arm),
+    move MIDIAN's pick off position 1 for most families, and be deterministic across calls and instances."""
+    import numpy as np
+    from rte.budget import Budget
+    from rte.world import World
+
+    class _M(_Fw):
+        needs = frozenset({"declared", "probe", "reports"})
+
+    def built(**kw):
+        m = _M(base_url="http://127.0.0.1:1/v1", retrieval="midian_va", r=10, **kw)
+        m.build(World(N, K, "specialist", 0.0, seed=1).view(m.needs), Budget(3))
+        m.bridge.select = lambda *a, **k: {"choice": None, "error": None, "raw": None}
+        return m
+
+    plain, shuf, shuf2 = built(), built(shuffle=True), built(shuffle=True)
+    first_is_pick = 0
+    for task in _tasks(K):
+        a, b, c = plain.retrieve(task), shuf.retrieve(task), shuf2.retrieve(task)
+        assert sorted(a.tolist()) == sorted(b.tolist())       # identical members, ordering only
+        assert b.tolist() == c.tolist()                       # deterministic: two instances agree
+        assert b.tolist() == shuf.retrieve(task).tolist()     # and stable across repeated calls
+        first_is_pick += int(b[0] == a[0])
+    assert first_is_pick < len(list(_tasks(K)))               # the pick is not always first any more

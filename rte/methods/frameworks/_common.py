@@ -11,6 +11,7 @@ import re
 
 import numpy as np
 
+from ...stable_hash import stable_seed_32
 from .._learned import MINILM, resolve as _resolve
 from ..base import Method
 from ._bridge import Bridge, RTE_DATA
@@ -110,7 +111,7 @@ class FrameworkMethod(Method):
     def __init__(self, k: int = 10, supervisor: str = SUPERVISOR, base_url: str | None = None,
                  retrieval: str = "tfidf", r: int = 10, dedup: bool = False,
                  embed_model: str = MINILM, rerank_model: str = RERANKER, rerank_pool: int = 50,
-                 embed_instruct: str = "", **params):
+                 embed_instruct: str = "", shuffle: bool = False, **params):
         super().__init__(k=k, supervisor=supervisor, retrieval=retrieval, r=r, **params)
         self.k, self.supervisor, self._base_url = int(k), supervisor, base_url
         self.retrieval, self.r = retrieval, int(r)
@@ -124,6 +125,10 @@ class FrameworkMethod(Method):
         # description, the document side carries none. Empty means the model's stock web-search instruction. Only the
         # family (query) block depends on it, so a probe re-embeds 16 texts per population, never the n descriptions.
         self.embed_instruct = str(embed_instruct or "")
+        # shuffle (position control): the midian modes hand the framework [MIDIAN's pick] + its leaf cohort, so the
+        # best agent sits in position 1 and a supervisor with position bias gets it for free. Shuffling permutes that
+        # list deterministically per cohort, which separates "the cohort is better material" from "the pick was first".
+        self.shuffle = bool(shuffle)
         self._rr = None
         # dedup (2026-09-14, labeled variant): rank DISTINCT description texts and offer one agent per text (the lowest
         # id). Agents sharing a prompt signature share a memoized self-description AND memoized answers, so the plain
@@ -250,7 +255,10 @@ class FrameworkMethod(Method):
         if self.retrieval in ("midian", "midian_va"):         # MIDIAN's pick first, then the rest of its leaf cohort
             a = self.mid.fetch(task)
             coh = self.mid.leaves[self.mid.leaf_of[a]]
-            return np.concatenate([[a], coh[(coh >= 0) & (coh != a)]])
+            out = np.concatenate([[a], coh[(coh >= 0) & (coh != a)]])
+            if self.shuffle:                                 # position control: same members, pick no longer first
+                out = out[np.random.default_rng(stable_seed_32(int(a), "fw_shuffle", int(task.family))).permutation(len(out))]
+            return out
         f = int(task.family)
         if self.retrieval == "sota":
             row = self._sota[f]
