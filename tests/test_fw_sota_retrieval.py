@@ -127,3 +127,15 @@ def test_preregistered_and_embed_paths_are_untouched(mode):
         sims = X @ m._Xf[task.family]
         assert list(m.retrieve(task)) == list(m._pool[np.argsort(-sims[m._pool], kind="stable")][:m.k])
     assert m._B is None and m._sota is None      # the new blocks are not even built for these modes
+
+
+def test_embed_instruct_changes_only_the_query_side_cache_names():
+    """The instruction is a QUERY-side prefix: it must change the family and sota cache names (so a probe cannot read
+    a stock-instruction cache) and must NOT change the document cache name (the n descriptions are reused as-is)."""
+    from rte.methods.frameworks._common import sota_cache_name
+    E, R2 = "Qwen/Qwen3-Embedding-8B", "Qwen/Qwen3-Reranker-4B"
+    assert sota_cache_name(E, R2, 10, 50, True) != sota_cache_name(E, R2, 10, 50, True, "some task instruction")
+    a = _built(dedup=True, retrieval="embed")
+    b = _built(dedup=True, retrieval="embed", embed_instruct="some task instruction")
+    assert a._itag() == "" and b._itag().startswith("_i")
+    assert a._slug(a.embed_model) == b._slug(b.embed_model)          # document block is shared, never re-embedded

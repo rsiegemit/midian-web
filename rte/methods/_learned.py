@@ -19,9 +19,10 @@ def resolve(model: str) -> str:
     return p if os.path.isdir(p) else model
 
 
-def embed(texts, model: str = MINILM, prompt_name: str | None = None) -> np.ndarray:
+def embed(texts, model: str = MINILM, prompt_name: str | None = None, prompt: str | None = None) -> np.ndarray:
     """Unit-norm float32 embeddings. Default all-MiniLM-L6-v2 on CPU (384-d, unchanged); a larger `model` (the SOTA
-    retrieval stack passes Qwen3-Embedding) runs on GPU when one is visible and in bf16 to fit."""
+    retrieval stack passes Qwen3-Embedding) runs on GPU when one is visible and in bf16 to fit. `prompt` is a raw
+    prefix (an asymmetric model's query instruction); `prompt_name` selects one the model ships."""
     if model not in _models:
         import torch
         from sentence_transformers import SentenceTransformer
@@ -31,7 +32,7 @@ def embed(texts, model: str = MINILM, prompt_name: str | None = None) -> np.ndar
         _models[model] = SentenceTransformer(resolve(model), device=dev, **kw)
     m = _models[model]
     bs = 256 if model == MINILM else 32
-    kw = {"prompt_name": prompt_name} if prompt_name else {}
+    kw = {"prompt": prompt} if prompt else ({"prompt_name": prompt_name} if prompt_name else {})
     return m.encode(list(texts), batch_size=bs, show_progress_bar=False, normalize_embeddings=True, **kw).astype(np.float32)
 
 

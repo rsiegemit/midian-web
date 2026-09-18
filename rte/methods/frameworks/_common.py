@@ -79,10 +79,12 @@ def sota_shortlist(B, Xa, Xf, pool, desc, fdesc, rerank, k: int = 10, rerank_poo
     return np.stack(rows).astype(np.int64)
 
 
-def sota_cache_name(embed_model: str, rerank_model: str, k: int, rerank_pool: int, dedup: bool) -> str:
+def sota_cache_name(embed_model: str, rerank_model: str, k: int, rerank_pool: int, dedup: bool, instruct: str = "") -> str:
     """The cache filename carries every input that changes the table, so a changed setting can never read a stale one."""
+    import hashlib
     sl = lambda m: "minilm" if m == MINILM else re.sub(r"[^a-z0-9]+", "_", m.lower()).strip("_")
-    return f"shortlist_sota_{sl(embed_model)}_{sl(rerank_model)}_k{k}p{rerank_pool}{'_dd' if dedup else ''}.npy"
+    it = "" if not instruct else "_i" + hashlib.blake2b(instruct.encode(), digest_size=4).hexdigest()
+    return f"shortlist_sota_{sl(embed_model)}_{sl(rerank_model)}_k{k}p{rerank_pool}{'_dd' if dedup else ''}{it}.npy"
 
 
 def _endpoint(model: str) -> str:
@@ -106,7 +108,8 @@ class FrameworkMethod(Method):
 
     def __init__(self, k: int = 10, supervisor: str = SUPERVISOR, base_url: str | None = None,
                  retrieval: str = "tfidf", r: int = 10, dedup: bool = False,
-                 embed_model: str = MINILM, rerank_model: str = RERANKER, rerank_pool: int = 50, **params):
+                 embed_model: str = MINILM, rerank_model: str = RERANKER, rerank_pool: int = 50,
+                 embed_instruct: str = "", **params):
         super().__init__(k=k, supervisor=supervisor, retrieval=retrieval, r=r, **params)
         self.k, self.supervisor, self._base_url = int(k), supervisor, base_url
         self.retrieval, self.r = retrieval, int(r)
@@ -116,6 +119,10 @@ class FrameworkMethod(Method):
         # `rerank_pool` with a cross-encoder. Shortlists are per FAMILY (K = 16 live), so the reranker costs
         # K * rerank_pool pairs per population -- the embedder is the only real cost, and it is cached on disk.
         self.embed_model, self.rerank_model, self.rerank_pool = embed_model, rerank_model, int(rerank_pool)
+        # embed_instruct: Qwen3-Embedding is instruction-tuned and asymmetric -- the QUERY side carries a task
+        # description, the document side carries none. Empty means the model's stock web-search instruction. Only the
+        # family (query) block depends on it, so a probe re-embeds 16 texts per population, never the n descriptions.
+        self.embed_instruct = str(embed_instruct or "")
         self._rr = None
         # dedup (2026-09-14, labeled variant): rank DISTINCT description texts and offer one agent per text (the lowest
         # id). Agents sharing a prompt signature share a memoized self-description AND memoized answers, so the plain
@@ -155,13 +162,18 @@ class FrameworkMethod(Method):
         except Exception:
             return None
 
+    def _itag(self):
+        import hashlib
+        return "" if not self.embed_instruct else "_i" + hashlib.blake2b(self.embed_instruct.encode(), digest_size=4).hexdigest()
+
     def _slug(self, model): return "minilm" if model == MINILM else re.sub(r"[^a-z0-9]+", "_", model.lower()).strip("_")
 
     def _sota_table(self, view):
         """The (K, k) shortlist for retrieval='sota'. It depends only on the population, so it is computed once and
         cached beside it; scripts/embed_populations.py pre-warms it, which is what keeps routing jobs off the GPU."""
         d = self._popdir(view)
-        path = (d / sota_cache_name(self.embed_model, self.rerank_model, self.k, self.rerank_pool, self.dedup)) if d is not None else None
+        name = sota_cache_name(self.embed_model, self.rerank_model, self.k, self.rerank_pool, self.dedup, self.embed_instruct)
+        path = (d / name) if d is not None else None
         if path is not None and path.exists():
             T = np.load(path)
             if T.shape[0] == len(self.fdesc): return T
@@ -179,8 +191,9 @@ class FrameworkMethod(Method):
         slug = self._slug(self.embed_model)
         d = self._popdir(view)
         cache = (d / f"descriptions_{slug}.npy") if d is not None else None
-        fcache = cache.with_name(f"families_{slug}.npy") if cache is not None else None
+        fcache = cache.with_name(f"families_{slug}{self._itag()}.npy") if cache is not None else None
         qp = None if self.embed_model == MINILM else "query"
+        qprompt = f"Instruct: {self.embed_instruct}\nQuery:" if self.embed_instruct else None
 
         def cached(path, texts, rows, **kw):
             E = np.load(path) if path is not None and path.exists() else None
@@ -196,7 +209,7 @@ class FrameworkMethod(Method):
             return E
 
         # both blocks are cached, so a routing job on a precomputed population never loads the embedder at all
-        return cached(cache, self.desc, view.n), cached(fcache, self.fdesc, len(self.fdesc), prompt_name=qp)
+        return cached(cache, self.desc, view.n), cached(fcache, self.fdesc, len(self.fdesc), prompt_name=qp, prompt=qprompt)
 
     def _rerank(self, query: str, docs: list[str]) -> np.ndarray:
         """Cross-encoder relevance for one family against the fused pool. Qwen3-Reranker ships modules.json and a

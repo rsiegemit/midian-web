@@ -755,6 +755,45 @@ grids:
               {name: fw_smolagents, params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B}},
               {name: fw_camel_workforce, params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B}}]]
 
+  # ---- 2026-09-17: instruction probe for the SOTA dense half. Qwen3-Embedding is instruction-tuned and asymmetric;
+  # the main sota grids use its STOCK instruction ("Given a web search query, retrieve relevant passages..."), which a
+  # reviewer could fairly call untuned. Only the K = 16 family (query) texts depend on the instruction, so a probe
+  # re-embeds 16 texts per population and reuses the n document embeddings untouched. Two wordings, so the probe can
+  # tell "the wording matters" apart from "an instruction does not help here". 10^5 only: that is where the dense
+  # arms lose to MiniLM, so it is where a tuned instruction would have to show up.
+  fw_live_n100k_sota_instruct:
+    mirror_of: live_n100k
+    methods: [[{name: fw_langgraph, params: {retrieval: hybrid, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, embed_instruct: "Given a task family, retrieve agents that are competent at solving tasks of that family"}},
+              {name: fw_crewai, params: {retrieval: hybrid, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, embed_instruct: "Given a task family, retrieve agents that are competent at solving tasks of that family"}},
+              {name: fw_autogen, params: {retrieval: hybrid, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, embed_instruct: "Given a task family, retrieve agents that are competent at solving tasks of that family"}},
+              {name: fw_magentic_one, params: {retrieval: hybrid, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, embed_instruct: "Given a task family, retrieve agents that are competent at solving tasks of that family"}},
+              {name: fw_maf, params: {retrieval: hybrid, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, embed_instruct: "Given a task family, retrieve agents that are competent at solving tasks of that family"}},
+              {name: fw_openai_agents, params: {retrieval: hybrid, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, embed_instruct: "Given a task family, retrieve agents that are competent at solving tasks of that family"}},
+              {name: fw_google_adk, params: {retrieval: hybrid, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, embed_instruct: "Given a task family, retrieve agents that are competent at solving tasks of that family"}},
+              {name: fw_llamaindex, params: {retrieval: hybrid, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, embed_instruct: "Given a task family, retrieve agents that are competent at solving tasks of that family"}},
+              {name: fw_smolagents, params: {retrieval: hybrid, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, embed_instruct: "Given a task family, retrieve agents that are competent at solving tasks of that family"}},
+              {name: fw_camel_workforce, params: {retrieval: hybrid, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, embed_instruct: "Given a task family, retrieve agents that are competent at solving tasks of that family"}}],
+              [{name: fw_langgraph, params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B, embed_instruct: "Given a task family, retrieve agents that are competent at solving tasks of that family"}},
+              {name: fw_crewai, params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B, embed_instruct: "Given a task family, retrieve agents that are competent at solving tasks of that family"}},
+              {name: fw_autogen, params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B, embed_instruct: "Given a task family, retrieve agents that are competent at solving tasks of that family"}},
+              {name: fw_magentic_one, params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B, embed_instruct: "Given a task family, retrieve agents that are competent at solving tasks of that family"}},
+              {name: fw_maf, params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B, embed_instruct: "Given a task family, retrieve agents that are competent at solving tasks of that family"}},
+              {name: fw_openai_agents, params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B, embed_instruct: "Given a task family, retrieve agents that are competent at solving tasks of that family"}},
+              {name: fw_google_adk, params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B, embed_instruct: "Given a task family, retrieve agents that are competent at solving tasks of that family"}},
+              {name: fw_llamaindex, params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B, embed_instruct: "Given a task family, retrieve agents that are competent at solving tasks of that family"}},
+              {name: fw_smolagents, params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B, embed_instruct: "Given a task family, retrieve agents that are competent at solving tasks of that family"}},
+              {name: fw_camel_workforce, params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B, embed_instruct: "Given a task family, retrieve agents that are competent at solving tasks of that family"}}],
+              [{name: fw_langgraph, params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B, embed_instruct: "Given a task family, retrieve agents whose demonstrated skill at that family is highest"}},
+              {name: fw_crewai, params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B, embed_instruct: "Given a task family, retrieve agents whose demonstrated skill at that family is highest"}},
+              {name: fw_autogen, params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B, embed_instruct: "Given a task family, retrieve agents whose demonstrated skill at that family is highest"}},
+              {name: fw_magentic_one, params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B, embed_instruct: "Given a task family, retrieve agents whose demonstrated skill at that family is highest"}},
+              {name: fw_maf, params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B, embed_instruct: "Given a task family, retrieve agents whose demonstrated skill at that family is highest"}},
+              {name: fw_openai_agents, params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B, embed_instruct: "Given a task family, retrieve agents whose demonstrated skill at that family is highest"}},
+              {name: fw_google_adk, params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B, embed_instruct: "Given a task family, retrieve agents whose demonstrated skill at that family is highest"}},
+              {name: fw_llamaindex, params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B, embed_instruct: "Given a task family, retrieve agents whose demonstrated skill at that family is highest"}},
+              {name: fw_smolagents, params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B, embed_instruct: "Given a task family, retrieve agents whose demonstrated skill at that family is highest"}},
+              {name: fw_camel_workforce, params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B, embed_instruct: "Given a task family, retrieve agents whose demonstrated skill at that family is highest"}}]]
+
   # ---- 2026-09-16: the missing cartel cell for the VA-cohort frameworks (the verified-cohort grids ran random liars
   # only). Same ten frameworks holding MIDIAN-VA's leaf cohort (r = 10), beta = 0.5 low-skill-first, 3 shapes, seeds 1-10.
   fw_live_n1000_verified_va_lowskill: {mirror_of: fw_live_n1000_verified_va, beta: [0.5], liar_select: [low_skill_first]}

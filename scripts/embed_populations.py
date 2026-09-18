@@ -51,10 +51,21 @@ def main():
     ap.add_argument("--sota", action="store_true", help="also pre-warm the (K, k) SOTA shortlist (needs the reranker)")
     ap.add_argument("--rerank-model", default="Qwen/Qwen3-Reranker-4B")
     ap.add_argument("--k", type=int, default=10); ap.add_argument("--rerank-pool", type=int, default=50)
+    ap.add_argument("--instruct", default="", help="query-side task instruction for an asymmetric embedder (only the K family texts depend on it)")
     a = ap.parse_args()
     sl = slug(a.model)
     dirs = population_dirs(a.dists, a.ns, a.seeds)[a.shard::a.shards]
-    todo = [p for p in dirs if not os.path.exists(f"{p}/descriptions_{sl}.npy")]
+    sota_name = sota_cache_name(a.model, a.rerank_model, a.k, a.rerank_pool, True, a.instruct)
+    import hashlib
+    itag = "" if not a.instruct else "_i" + hashlib.blake2b(a.instruct.encode(), digest_size=4).hexdigest()
+    fam_name = f"families_{sl}{itag}.npy"
+    qkw = {"prompt": f"Instruct: {a.instruct}\nQuery:"} if a.instruct else {"prompt_name": "query"}
+
+    def pending(p):                                          # --sota must not be skipped just because embeddings exist
+        return (not os.path.exists(f"{p}/descriptions_{sl}.npy") or not os.path.exists(f"{p}/{fam_name}")
+                or (a.sota and not os.path.exists(f"{p}/{sota_name}")))
+
+    todo = [p for p in dirs if pending(p)]
     print(f"model {a.model} (local: {resolve(a.model)})\n{len(dirs)} populations in shard, {len(todo)} to do", flush=True)
     if a.list:
         for p in todo: print("  ", os.path.basename(p), len(json.load(open(f"{p}/descriptions.json"))))
@@ -68,10 +79,10 @@ def main():
         save(f"{p}/descriptions_{sl}.npy", E)
         dt = time.time() - t0
         print(f"[{i}/{len(todo)}] {os.path.basename(p):38s} {len(desc):7,d} texts  {dt:7.1f}s  {len(desc)/max(dt,1e-9):7.1f}/s", flush=True)
-        if not os.path.exists(f"{p}/families_{sl}.npy"):
-            save(f"{p}/families_{sl}.npy", embed(fam, a.model, prompt_name="query"))
+        if not os.path.exists(f"{p}/{fam_name}"):
+            save(f"{p}/{fam_name}", embed(fam, a.model, **qkw))
         if not a.sota: continue
-        out = f"{p}/{sota_cache_name(a.model, a.rerank_model, a.k, a.rerank_pool, True)}"
+        out = f"{p}/{sota_name}"
         if os.path.exists(out): continue
         if ce is None:
             import torch
@@ -81,7 +92,7 @@ def main():
         for idx, t in enumerate(desc): first.setdefault(t, idx)
         pool = np.array(sorted(first.values()), dtype=np.int64)
         t0 = time.time()
-        T = sota_shortlist(_bm25(desc, fam), E, np.load(f"{p}/families_{sl}.npy"), pool, desc, fam,
+        T = sota_shortlist(_bm25(desc, fam), E, np.load(f"{p}/{fam_name}"), pool, desc, fam,
                            lambda q, d: np.asarray(ce.predict([(q, x) for x in d]), dtype=np.float32), a.k, a.rerank_pool)
         save(out, T)
         print(f"        sota table {T.shape} in {time.time()-t0:.1f}s ({len(pool):,} distinct texts)", flush=True)
