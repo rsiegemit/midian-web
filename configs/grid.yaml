@@ -680,6 +680,81 @@ grids:
                                                                           {name: fw_llamaindex, params: {retrieval: embed, dedup: true}}, {name: fw_smolagents, params: {retrieval: embed, dedup: true}},
                                                                           {name: fw_camel_workforce, params: {retrieval: embed, dedup: true}}]}
 
+  # ---- 2026-09-17: the SOTA retrieval stack in front of the frameworks (METHODS.md 5a). The pre-registered adapter is
+  # hashed TF-IDF and the _em mirrors are all-MiniLM-L6-v2; neither is what a deployed system puts in front of a
+  # framework, so the frameworks have only ever been measured with weak retrieval. These arms are the production
+  # stack: BM25 alone, Qwen3-Embedding-8B alone (top of MTEB), reciprocal-rank fusion of the two, and fusion + a
+  # Qwen3-Reranker-4B cross-encoder over the top 50. A shortlist depends only on the population, so the dense block
+  # and the reranked table are precomputed by `scripts/embed_populations.py --sota` and every job here is CPU-only.
+  # Four-arm ablation at 10^3 (which PART of the stack buys what); sota + hybrid elsewhere (the headline comparison).
+  fw_live_n1000_sota:
+    mirror_of: fw_live_n1000
+    methods: [&fw10_bm25 [{name: fw_langgraph, params: {retrieval: bm25, dedup: true}},
+                          {name: fw_crewai, params: {retrieval: bm25, dedup: true}},
+                          {name: fw_autogen, params: {retrieval: bm25, dedup: true}},
+                          {name: fw_magentic_one, params: {retrieval: bm25, dedup: true}},
+                          {name: fw_maf, params: {retrieval: bm25, dedup: true}},
+                          {name: fw_openai_agents, params: {retrieval: bm25, dedup: true}},
+                          {name: fw_google_adk, params: {retrieval: bm25, dedup: true}},
+                          {name: fw_llamaindex, params: {retrieval: bm25, dedup: true}},
+                          {name: fw_smolagents, params: {retrieval: bm25, dedup: true}},
+                          {name: fw_camel_workforce, params: {retrieval: bm25, dedup: true}}],
+              &fw10_dense [{name: fw_langgraph, params: {retrieval: embed, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B}},
+                          {name: fw_crewai, params: {retrieval: embed, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B}},
+                          {name: fw_autogen, params: {retrieval: embed, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B}},
+                          {name: fw_magentic_one, params: {retrieval: embed, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B}},
+                          {name: fw_maf, params: {retrieval: embed, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B}},
+                          {name: fw_openai_agents, params: {retrieval: embed, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B}},
+                          {name: fw_google_adk, params: {retrieval: embed, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B}},
+                          {name: fw_llamaindex, params: {retrieval: embed, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B}},
+                          {name: fw_smolagents, params: {retrieval: embed, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B}},
+                          {name: fw_camel_workforce, params: {retrieval: embed, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B}}],
+              &fw10_hybrid [{name: fw_langgraph, params: {retrieval: hybrid, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B}},
+                          {name: fw_crewai, params: {retrieval: hybrid, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B}},
+                          {name: fw_autogen, params: {retrieval: hybrid, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B}},
+                          {name: fw_magentic_one, params: {retrieval: hybrid, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B}},
+                          {name: fw_maf, params: {retrieval: hybrid, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B}},
+                          {name: fw_openai_agents, params: {retrieval: hybrid, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B}},
+                          {name: fw_google_adk, params: {retrieval: hybrid, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B}},
+                          {name: fw_llamaindex, params: {retrieval: hybrid, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B}},
+                          {name: fw_smolagents, params: {retrieval: hybrid, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B}},
+                          {name: fw_camel_workforce, params: {retrieval: hybrid, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B}}],
+              &fw10_sota [{name: fw_langgraph, params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B}},
+                          {name: fw_crewai, params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B}},
+                          {name: fw_autogen, params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B}},
+                          {name: fw_magentic_one, params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B}},
+                          {name: fw_maf, params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B}},
+                          {name: fw_openai_agents, params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B}},
+                          {name: fw_google_adk, params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B}},
+                          {name: fw_llamaindex, params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B}},
+                          {name: fw_smolagents, params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B}},
+                          {name: fw_camel_workforce, params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B}}]]
+  fw_live_n100_sota:           {mirror_of: fw_live_n100,           methods: [*fw10_hybrid, *fw10_sota]}
+  fw_live_n1000_lowskill_sota: {mirror_of: fw_live_n1000_lowskill, methods: [*fw10_hybrid, *fw10_sota]}
+  fw_live_n100_lowskill_sota:  {mirror_of: fw_live_n100_lowskill,  methods: [*fw10_hybrid, *fw10_sota]}
+  fw_live_n10k_sota:           {mirror_of: live_n10k_v2,           methods: [*fw10_hybrid, *fw10_sota]}
+  fw_live_n100k_sota:          {mirror_of: live_n100k,             methods: [*fw10_hybrid, *fw10_sota]}
+  fw_live_n10k_cartel_sota:                                        # nine frameworks, as the other 10^4 cartel grids
+    mirror_of: fw_live_n10k_cartel
+    methods: [[{name: fw_langgraph, params: {retrieval: hybrid, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B}},
+              {name: fw_crewai, params: {retrieval: hybrid, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B}},
+              {name: fw_autogen, params: {retrieval: hybrid, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B}},
+              {name: fw_maf, params: {retrieval: hybrid, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B}},
+              {name: fw_openai_agents, params: {retrieval: hybrid, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B}},
+              {name: fw_google_adk, params: {retrieval: hybrid, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B}},
+              {name: fw_llamaindex, params: {retrieval: hybrid, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B}},
+              {name: fw_smolagents, params: {retrieval: hybrid, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B}},
+              {name: fw_camel_workforce, params: {retrieval: hybrid, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B}}],
+              [{name: fw_langgraph, params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B}},
+              {name: fw_crewai, params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B}},
+              {name: fw_autogen, params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B}},
+              {name: fw_maf, params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B}},
+              {name: fw_openai_agents, params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B}},
+              {name: fw_google_adk, params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B}},
+              {name: fw_llamaindex, params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B}},
+              {name: fw_smolagents, params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B}},
+              {name: fw_camel_workforce, params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B}}]]
+
   # ---- 2026-09-16: the missing cartel cell for the VA-cohort frameworks (the verified-cohort grids ran random liars
   # only). Same ten frameworks holding MIDIAN-VA's leaf cohort (r = 10), beta = 0.5 low-skill-first, 3 shapes, seeds 1-10.
   fw_live_n1000_verified_va_lowskill: {mirror_of: fw_live_n1000_verified_va, beta: [0.5], liar_select: [low_skill_first]}
