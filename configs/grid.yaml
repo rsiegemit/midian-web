@@ -794,6 +794,54 @@ grids:
               {name: fw_smolagents, params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B, embed_instruct: "Given a task family, retrieve agents whose demonstrated skill at that family is highest"}},
               {name: fw_camel_workforce, params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B, embed_instruct: "Given a task family, retrieve agents whose demonstrated skill at that family is highest"}}]]
 
+  # ---- 2026-09-18: dense-alone WITH a tuned instruction. The shortlist-skill diagnostic (jobs/shortlist_skill.py)
+  # shows this is the best text retriever at 10^5 -- top-10 true skill 0.485 against MiniLM 0.455, random 0.428 and
+  # the stock-instruction dense arm 0.407 -- while FUSING BM25 in drags it to 0.370 and the cross-encoder to 0.428.
+  # The first probe grid ran hybrid and sota under the instructions but not dense alone, i.e. it omitted the
+  # configuration that actually wins; this grid is that omission.
+  fw_live_n100k_dense_instruct:
+    mirror_of: live_n100k
+    methods: [[{name: fw_langgraph, params: {retrieval: embed, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, embed_instruct: "Given a task family, retrieve agents that are competent at solving tasks of that family"}},
+              {name: fw_crewai, params: {retrieval: embed, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, embed_instruct: "Given a task family, retrieve agents that are competent at solving tasks of that family"}},
+              {name: fw_autogen, params: {retrieval: embed, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, embed_instruct: "Given a task family, retrieve agents that are competent at solving tasks of that family"}},
+              {name: fw_magentic_one, params: {retrieval: embed, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, embed_instruct: "Given a task family, retrieve agents that are competent at solving tasks of that family"}},
+              {name: fw_maf, params: {retrieval: embed, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, embed_instruct: "Given a task family, retrieve agents that are competent at solving tasks of that family"}},
+              {name: fw_openai_agents, params: {retrieval: embed, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, embed_instruct: "Given a task family, retrieve agents that are competent at solving tasks of that family"}},
+              {name: fw_google_adk, params: {retrieval: embed, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, embed_instruct: "Given a task family, retrieve agents that are competent at solving tasks of that family"}},
+              {name: fw_llamaindex, params: {retrieval: embed, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, embed_instruct: "Given a task family, retrieve agents that are competent at solving tasks of that family"}},
+              {name: fw_smolagents, params: {retrieval: embed, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, embed_instruct: "Given a task family, retrieve agents that are competent at solving tasks of that family"}},
+              {name: fw_camel_workforce, params: {retrieval: embed, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, embed_instruct: "Given a task family, retrieve agents that are competent at solving tasks of that family"}}],
+              [{name: fw_langgraph, params: {retrieval: embed, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, embed_instruct: "Given a task family, retrieve agents whose demonstrated skill at that family is highest"}},
+              {name: fw_crewai, params: {retrieval: embed, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, embed_instruct: "Given a task family, retrieve agents whose demonstrated skill at that family is highest"}},
+              {name: fw_autogen, params: {retrieval: embed, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, embed_instruct: "Given a task family, retrieve agents whose demonstrated skill at that family is highest"}},
+              {name: fw_magentic_one, params: {retrieval: embed, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, embed_instruct: "Given a task family, retrieve agents whose demonstrated skill at that family is highest"}},
+              {name: fw_maf, params: {retrieval: embed, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, embed_instruct: "Given a task family, retrieve agents whose demonstrated skill at that family is highest"}},
+              {name: fw_openai_agents, params: {retrieval: embed, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, embed_instruct: "Given a task family, retrieve agents whose demonstrated skill at that family is highest"}},
+              {name: fw_google_adk, params: {retrieval: embed, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, embed_instruct: "Given a task family, retrieve agents whose demonstrated skill at that family is highest"}},
+              {name: fw_llamaindex, params: {retrieval: embed, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, embed_instruct: "Given a task family, retrieve agents whose demonstrated skill at that family is highest"}},
+              {name: fw_smolagents, params: {retrieval: embed, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, embed_instruct: "Given a task family, retrieve agents whose demonstrated skill at that family is highest"}},
+              {name: fw_camel_workforce, params: {retrieval: embed, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, embed_instruct: "Given a task family, retrieve agents whose demonstrated skill at that family is highest"}}]]
+
+  # ---- 2026-09-18: the declared-claim shortlist, the cheap baseline every text retriever should be measured against.
+  # Diagnostics (jobs/shortlist_skill.py, jobs/declared_cohort.py) at 10^5 show the declared top-10 has the HIGHEST
+  # shortlist mean of any source (0.615 honest, 0.526-0.572 under liars) while its best member is only 0.66-0.75
+  # against the VA cohort's 0.838 -- and frameworks recover just 15-35 % of the mean->best gap, so the mean is what
+  # they mostly get. That predicts the declared top-10 BEATS the VA cohort as a framework shortlist in three of five
+  # regimes, losing only under the beta = 0.25 cartel. Prediction from a linear fit, hence this grid.
+  # It also concentrates liars: 74 % of the declared top-10 at beta = 0.5 random, against a 50 % population rate.
+  fw_live_n100k_declared:
+    mirror_of: live_n100k
+    methods: [[{name: fw_langgraph, params: {retrieval: declared, dedup: true}},
+              {name: fw_crewai, params: {retrieval: declared, dedup: true}},
+              {name: fw_autogen, params: {retrieval: declared, dedup: true}},
+              {name: fw_magentic_one, params: {retrieval: declared, dedup: true}},
+              {name: fw_maf, params: {retrieval: declared, dedup: true}},
+              {name: fw_openai_agents, params: {retrieval: declared, dedup: true}},
+              {name: fw_google_adk, params: {retrieval: declared, dedup: true}},
+              {name: fw_llamaindex, params: {retrieval: declared, dedup: true}},
+              {name: fw_smolagents, params: {retrieval: declared, dedup: true}},
+              {name: fw_camel_workforce, params: {retrieval: declared, dedup: true}}]]
+
   # ---- 2026-09-16: the missing cartel cell for the VA-cohort frameworks (the verified-cohort grids ran random liars
   # only). Same ten frameworks holding MIDIAN-VA's leaf cohort (r = 10), beta = 0.5 low-skill-first, 3 shapes, seeds 1-10.
   fw_live_n1000_verified_va_lowskill: {mirror_of: fw_live_n1000_verified_va, beta: [0.5], liar_select: [low_skill_first]}

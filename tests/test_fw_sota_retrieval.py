@@ -139,3 +139,15 @@ def test_embed_instruct_changes_only_the_query_side_cache_names():
     b = _built(dedup=True, retrieval="embed", embed_instruct="some task instruction")
     assert a._itag() == "" and b._itag().startswith("_i")
     assert a._slug(a.embed_model) == b._slug(b.embed_model)          # document block is shared, never re-embedded
+
+
+def test_declared_retrieval_ranks_by_the_declared_claim():
+    """retrieval='declared' is the cheap baseline: top-k by the declared matrix, no text retrieval at all.
+    It reads the same channel liars control, which is the point of running it."""
+    m = _built(dedup=True, retrieval="declared")
+    D = m.view.declared
+    for task in _tasks():
+        f = int(task.family)
+        top = m.retrieve(task)
+        assert list(top) == list(m._pool[np.argsort(-D[m._pool, f], kind="stable")][:m.k])
+        assert m._B is None and m._sota is None              # no BM25 block, no reranked table

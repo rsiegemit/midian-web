@@ -19,6 +19,7 @@ SUPERVISOR = "Qwen/Qwen2.5-7B-Instruct"
 STRONG_EMBED = "Qwen/Qwen3-Embedding-8B"      # top of MTEB; the SOTA stack's dense half
 RERANKER = "Qwen/Qwen3-Reranker-4B"          # cross-encoder over the fused pool
 DENSE = ("embed", "hybrid", "sota")          # modes that need the dense block
+DECLARED = "declared"                        # top-k by the declared claim; no text retrieval at all
 LEXICAL = ("bm25", "hybrid", "sota")        # modes that need the BM25 block
 _TOK = re.compile(r"[a-z0-9]+")
 
@@ -255,7 +256,9 @@ class FrameworkMethod(Method):
             row = self._sota[f]
             return row[row >= 0]
         pool = self._pool if self.dedup else np.arange(self.view.n)   # dedup: one representative per distinct text
-        if self.retrieval == "bm25": sims = self._B[f][pool]
+        if self.retrieval == "declared":                     # top-k by the DECLARED claim: the cheap baseline a
+            sims = self.view.declared[pool, f]               # practitioner reaches for before any retriever
+        elif self.retrieval == "bm25": sims = self._B[f][pool]
         else:
             sims = (self._Xa @ self._Xf[f])[pool]            # cosine: rows are L2-normalised in every dense mode
             if self.retrieval == "hybrid": sims = _rrf(self._B[f][pool], sims)
