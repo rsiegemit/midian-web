@@ -269,6 +269,12 @@ shape are what the figures support.
 
 | part | what | result |
 |---|---|---|
+| SOTA retrieval | `*_sota` grids: BM25, Qwen3-Embedding-8B, RRF hybrid, Qwen3-Reranker-4B in front of the ten frameworks; 327 units, 3,267 jobs | at 10^5 beta = 0 the stack reaches 0.419-0.431 against TF-IDF 0.377 and MiniLM 0.493 -- **fusion and reranking make it worse**, dense alone is the best text arm |
+| instruction | `*_sota_instruct`, `*_dense_instruct`: Qwen3-Embedding is instruction-tuned, the campaign used its STOCK web-search prefix | a task-appropriate instruction moves sota 0.431 -> 0.465 and dense to 0.523 (flat across regimes); the main SOTA arms measure a handicapped configuration |
+| shortlist skill | `jobs/shortlist_skill.py`, `jobs/cohort_skill.py`, `jobs/position1_skill.py`: true skill of what each source offers (S read for MEASUREMENT only) | **every text retriever's POSITION-1 agent is at or below random (0.434)**: SOTA+rerank 0.247, hybrid 0.32, TF-IDF 0.384, MiniLM 0.385, best text arm 0.428. MIDIAN-VA's pick is 0.832 against a population best of 0.845 |
+| framework pick | recovery = (routing - shortlist mean) / (shortlist best - shortlist mean) | frameworks recover only 15-35 %: they are far closer to random-within-list than to competent. MiniLM routing (0.493) still beats its own position-1 (0.385) and top-10 mean (0.455), so a small genuine description signal (+0.04) exists |
+| position control | `fw_live_n100k_verified_va_shuffled`: same cohort members, MIDIAN's pick no longer first | 0.593 -> **0.504**, i.e. recovery falls from 37 % to 15 %, exactly the text-shortlist rate. Frameworks largely consume position 1. Predicted "~0.50" in the commit before the data landed |
+| declared shortlist | `retrieval="declared"`: top-k by the declared claim, the cheap baseline the text retrievers were never measured against | shortlist mean 0.615 honest (highest of any source) but position-1 0.627 and ceiling 0.66-0.75; it concentrates liars (74 % of its top-10 at beta = 0.5 random vs a 50 % base rate). Grid written, not yet run |
 | dedup | `*_dd` grids: framework shortlist without clones (erratum 25), 11 grids, 3,389 units | ten frameworks now distinct in every cell; 10^3 means move <= 0.02 (heavy_tail 10^2 +0.05); 10^5 row 0.363 / 0.344 vs VA 0.836 / 0.828; seven of ten below random because the TF-IDF top-10's true skill averages 0.31 |
 | embed | `*_em` grids: MiniLM cosine retriever over the deduped descriptions, 7 grids, 3,267 units (complete 2026-09-16) | 10^5 row 0.493 / 0.459 (best 0.633 / 0.503); 10^4 0.475 / 0.434; 10^3 specialist 0.530 (+0.14), cartel 0.515; heavy_tail / bimodal within 0.03 of before; frameworks sit at their shortlist's mean true skill; VA +0.20 to +0.32 over the best framework at every n |
 | coverage fill | five rivals never scheduled on the sweeps (LinUCB, cascade, referral, gossip, TrueSkill) on bernoulli 10..10^7 and replay 10..10^6, 5 regimes | gossip 0.671 → 0.415 and referral 0.556 → 0.431 under the cartel (= random 0.419) while MIDIAN-VA holds 0.789: decentralised report reading without trimming is owned by a colluding majority. LinUCB-honest 0.726 → 0.261 from 10^3 to 10^7, identical in all five regimes: a pure scale failure (RESULTS II.4e) |
@@ -343,6 +349,22 @@ specialist); every external comparison in RESULTS_rte_v3.md; H8 / H9; the MIDIAN
 
 ---
 
+## 8b. Erratum 27 -- the lie model does not touch the self-description TEXT (2026-09-19)
+
+`World.apply_lying` inflates the declared MATRIX (`D[liars] += 0.4`). The self-description text is generated once per
+population and cached in `<population>/descriptions.json`, whose path carries no beta -- so a liar's TEXT is identical
+to its honest text, and **every text-retrieval shortlist (TF-IDF, dedup, BM25, MiniLM, dense, hybrid, sota) is
+bit-identical across all five liar regimes**. Their only beta-dependence is the declared-argmax fallback taken when a
+framework fails to pick, which is what moves MiniLM 0.495 -> 0.459 from honest to the beta = 0.5 cartel.
+
+Consequence for reporting: the apparent liar-robustness of the text arms -- most starkly `dense + I-competent` at
+0.523 in BOTH the honest and cartel cells -- is an artefact of the threat model, NOT a result. A real adversary would
+lie in its description too. Every cross-regime claim about a text-retrieval arm must carry this caveat, and the
+declared-channel arms (declared_argmax, `retrieval="declared"`, the frameworks' fallback) are the only ones the
+current lie model actually attacks.
+
+---
+
 ## 9. Still open (not results)
 
 - Coverage fill and expansions (COVERAGE.md §7-§9, 2026-09-17): the synthetic and live fills are complete and folded; three
@@ -361,4 +383,11 @@ specialist); every external comparison in RESULTS_rte_v3.md; H8 / H9; the MIDIAN
   rate rises (RESULTS II.4f). The numbers are on 200-1000 seeds and the counters are unambiguous; the code path (which
   report-channel weight in `midian.py` grows with b, and why A's 5% audits stop keeping up) is not yet traced.
 - MIDIAN-SH/SHA are absent at every b = 1 rung by construction; `units_todo` for those grids never reaches 0 for that reason.
+- SOTA campaign refill (2026-09-19): 669 of the 10^3 four-arm jobs hit the 1-day walltime (4 specs x 1000 tasks = 4000
+  supervisor calls) and the first launcher enumerated 5 regimes by hand where the grids carry 6 (beta = 0 x
+  low_skill_first was dropped). `jobs/relaunch_gaps.sh` refills from the GRID LOADER at a 3-day limit; rte.run skips
+  rids already on disk. Affected: n = 10^3 sota (2249/4920), n = 10^2 lowskill (31/630), and the three 10^5 controls.
+- `retrieval="declared"` (`fw_live_n100k_declared`) is implemented and tested but NOT yet run. The diagnostics predict
+  it beats the VA cohort as a framework shortlist in three of five regimes on shortlist MEAN, and loses badly on
+  position-1 (0.627 vs 0.832); which matters depends on the framework's 15-35 % recovery, so it needs the data.
 - The not-run rivals in section 1 stay not run without a decision.

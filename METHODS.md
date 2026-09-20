@@ -113,6 +113,27 @@ so a top-10 is put in front of them). Five, never pooled, each its own grid (RES
 | `retrieval="embed"` (+dedup) | post-hoc 2026-09-15 | all-MiniLM-L6-v2 cosine over the deduped descriptions: the dense retriever a deployed stack would use | reported beside |
 | `retrieval="midian"` (r = 10) | v2 (T3-19 lineage; H7) | MIDIAN-V's probed leaf cohort, V's pick first | reported beside |
 | `retrieval="midian_va"` (r = 10) | v3 T3-19 at 10^3; post-hoc at 10^2, 10^4, 10^5 and the cartel cells (2026-09-16) | MIDIAN-VA's audited leaf cohort, VA's pick first | reported beside |
+| `retrieval="bm25"` | post-hoc 2026-09-17 | Okapi BM25 (k1 = 1.5, b = 0.75) over an inverted index; the lexical half of a production stack | reported beside |
+| `retrieval="hybrid"` | post-hoc 2026-09-17 | reciprocal-rank fusion (k = 60) of BM25 with the dense scores | reported beside |
+| `retrieval="sota"` (+ `rerank_pool` = 50) | post-hoc 2026-09-17 | hybrid, then the top 50 reranked by a cross-encoder (`Qwen/Qwen3-Reranker-4B`), top k kept. Table is per-population and cached | reported beside |
+| `embed_model` (`Qwen/Qwen3-Embedding-8B`) | post-hoc 2026-09-17 | the strong dense half; defaults to MiniLM so `retrieval="embed"` is bit-identical to what was already reported | reported beside |
+| `embed_instruct` | post-hoc 2026-09-18 | the QUERY-side task instruction an instruction-tuned embedder expects; only the K family texts depend on it, so the n document embeddings are reused | reported beside |
+| `retrieval="declared"` | post-hoc 2026-09-18 | top-k by the declared claim: no text retrieval at all, the cheap baseline every text arm should be measured against | grid written, NOT yet run |
+| `shuffle=True` | post-hoc 2026-09-18 | position CONTROL: permutes a midian cohort deterministically so the pick is not first. Same members, ordering only | **control -- never a rival, never pooled with the VA-cohort rows** |
+
+### 5b. What the shortlist diagnostics measure (`jobs/shortlist_skill.py`, `cohort_skill.py`, `position1_skill.py`)
+
+Three statistics of a shortlist, all computed from the measured S matrix OFFLINE -- S is read for MEASUREMENT only and
+is never visible to any method:
+
+| statistic | what it answers | why it matters |
+|---|---|---|
+| top-k **mean** | what you score picking uniformly from the list | the right statistic only if the consumer picks blindly |
+| **best in list** | the ceiling a perfect consumer could reach | the right statistic only if the consumer is competent |
+| **position 1** | what the list's own top-ranked agent is worth | every retriever ranks best-first, and the shuffle control shows frameworks largely consume position 1 -- so this is the statistic that actually drives outcomes |
+
+Measured recovery, `(routing - mean) / (best - mean)`, is 15-35 % across every source: frameworks sit much closer to
+random-within-list than to competent, which is why mean and position-1 both matter and `best` alone never does.
 
 ## 6. The do-not-add list (`scripts/extra_figs.py`, `excluded()`), applied to every figure
 

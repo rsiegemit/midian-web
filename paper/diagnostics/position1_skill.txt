@@ -1,0 +1,21 @@
+
+n = 10^5 specialist, 3 seeds. Every retriever ranks best-first; position 1 is what the framework reads.
+source                          POSITION 1  top-10 mean
+--------------------------------------------------------
+SOTA+rerank (stock)                  0.247        0.373
+hybrid (I-competent)                 0.318        0.370
+hybrid (stock)                       0.320        0.330
+hybrid (I-demonstrated)              0.324        0.365
+SOTA+rerank (I-competent)            0.350        0.428
+dense Q3-8B (stock)                  0.361        0.407
+SOTA+rerank (I-demonstrated)         0.377        0.410
+TF-IDF (pre-registered)              0.384        0.384
+TF-IDF + dedup                       0.384        0.310
+MiniLM                               0.385        0.455
+BM25                                 0.394        0.356
+dense Q3-8B (I-demonstrated)         0.410        0.473
+dense Q3-8B (I-competent)            0.428        0.485
+random                               0.434        0.428
+declared argmax                      0.627        0.615
+-- best agent in population --       0.845             
+MIDIAN-VA (its verified pick)        0.832        0.447   [measured in jobs/cohort_skill.py]

@@ -1,0 +1,21 @@
+
+TRUE skill of the top-10 shortlist, n = 10^5 specialist, mean over 3 seeds
+shortlist source                            true skill
+-------------------------------------------------------
+TF-IDF + dedup                                   0.310
+Qwen3-8B hybrid (stock instr)                    0.330
+BM25 + dedup                                     0.356
+Qwen3-8B hybrid (instr: demonstrated)            0.365
+Qwen3-8B hybrid (instr: competent)               0.370
+Qwen3-8B SOTA+rerank (stock instr)               0.373
+TF-IDF (pre-registered, no dedup)                0.384
+Qwen3-8B dense (stock instr)                     0.407
+Qwen3-8B SOTA+rerank (instr: demonstrated)       0.410
+-- population mean --                            0.426
+Qwen3-8B SOTA+rerank (instr: competent)          0.428
+random 10 from the population                    0.428
+MiniLM + dedup                                   0.455
+Qwen3-8B dense (instr: demonstrated)             0.473
+Qwen3-8B dense (instr: competent)                0.485
+declared argmax (top-10 by claim)                0.615
+-- best single agent per family --               0.845
