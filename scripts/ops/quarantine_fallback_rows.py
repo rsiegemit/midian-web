@@ -25,7 +25,12 @@ def contaminated(method, ms):
 
 
 units, moved = set(), 0
-for gdir in sorted(glob.glob(f"{R}/fw_live_*")):
+# Every grid that can hold framework / supervisor rows: those run only on the llm and routereval backends. Scanning
+# bernoulli / replay (1 GB rows.csv, no frameworks) would only cost memory and time.
+FW_PREFIXES = ("fw_", "live_", "learned_", "routereval", "llmrouterbench", "cohort_", "variants_", "churn_")
+for gdir in sorted(glob.glob(f"{R}/*")):
+    if not os.path.basename(gdir).startswith(FW_PREFIXES): continue
+    if not (os.path.isdir(f"{gdir}/rows.d") or os.path.exists(f"{gdir}/rows.csv")): continue
     g = os.path.basename(gdir); q = f"{gdir}/quarantine"; bad = set()
     for f in glob.glob(f"{gdir}/rows.d/*.json"):
         try: r = json.load(open(f))
@@ -47,7 +52,10 @@ for gdir in sorted(glob.glob(f"{R}/fw_live_*")):
     if bad: print(f"  {g:40s} {len(bad):5d} rows"); moved += len(bad)
 
 out = pd.DataFrame(sorted(units), columns=["grid", "method", "dist", "beta", "liar_select", "seed"])
-if APPLY: out.to_csv(f"{R}/quarantine_units.tsv", sep="\t", index=False)
+if APPLY:                                           # append: earlier passes' units may still be rerunning
+    U = f"{R}/quarantine_units.tsv"
+    prev = pd.read_csv(U, sep="\t") if os.path.exists(U) else out.iloc[0:0]
+    pd.concat([prev, out]).drop_duplicates().to_csv(U, sep="\t", index=False)
 print(f"\n{'QUARANTINED' if APPLY else 'WOULD QUARANTINE'} {moved} rows -> {len(out)} units to rerun"
       + ("" if APPLY else "   (dry run; pass --apply)"))
 print(out.groupby("method").size().to_string())
