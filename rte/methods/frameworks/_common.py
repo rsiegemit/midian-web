@@ -111,7 +111,7 @@ class FrameworkMethod(Method):
     def __init__(self, k: int = 10, supervisor: str = SUPERVISOR, base_url: str | None = None,
                  retrieval: str = "tfidf", r: int = 10, dedup: bool = False,
                  embed_model: str = MINILM, rerank_model: str = RERANKER, rerank_pool: int = 50,
-                 embed_instruct: str = "", shuffle: bool = False, **params):
+                 embed_instruct: str = "", shuffle: bool = False, lie_text: bool = False, **params):
         super().__init__(k=k, supervisor=supervisor, retrieval=retrieval, r=r, **params)
         self.k, self.supervisor, self._base_url = int(k), supervisor, base_url
         self.retrieval, self.r = retrieval, int(r)
@@ -129,6 +129,14 @@ class FrameworkMethod(Method):
         # best agent sits in position 1 and a supervisor with position bias gets it for free. Shuffling permutes that
         # list deterministically per cohort, which separates "the cohort is better material" from "the pick was first".
         self.shuffle = bool(shuffle)
+        # lie_text (erratum 27): the benchmark's lie inflates the declared MATRIX but leaves the self-description TEXT
+        # stating the agent's TRUE specialty, so a liar's text and its numbers disagree and every text retriever is
+        # shielded from the attack. With lie_text the "Declared areas:" clause -- the structured claim carried IN the
+        # text -- is rederived from view.declared for EVERY agent, liar or not, so the method needs no knowledge of
+        # who lies. Honest agents barely move (their declared is true skill plus 0.05 noise); liars now claim in text
+        # what they claim in the matrix. The LLM prose is untouched and still describes the real specialty, so this is
+        # a PARTIAL text lie and must be reported as one.
+        self.lie_text = bool(lie_text)
         self._rr = None
         # dedup (2026-09-14, labeled variant): rank DISTINCT description texts and offer one agent per text (the lowest
         # id). Agents sharing a prompt signature share a memoized self-description AND memoized answers, so the plain
@@ -144,6 +152,15 @@ class FrameworkMethod(Method):
         self._picked, self._n, self._strict = False, 0, 0
 
     # ---- world accessors (llm backend provides real text; bernoulli/replay get synthesized descriptions)
+    def _relabel(self, desc, view, top=3):
+        """Rewrite the trailing 'Declared areas: ...' clause from the DECLARED channel (see lie_text)."""
+        fams = list(view.families); D = view.declared
+        out = []
+        for a, d in enumerate(desc):
+            claim = ", ".join(fams[f] for f in np.argsort(-D[a], kind="stable")[:top])
+            out.append(re.sub(r"\s*Declared areas: .*$", "", d).rstrip() + f" Declared areas: {claim}.")
+        return out
+
     def _texts(self, view):
         try:
             from rte.backends import llm as L
@@ -168,6 +185,14 @@ class FrameworkMethod(Method):
         except Exception:
             return None
 
+    def _ltag(self):
+        """Cache-name suffix when lie_text is on. Keyed on a hash of the DOCUMENTS, not on beta/liar_select: the view
+        deliberately does not expose those (they are adversary knowledge), and content-hashing is what the cache
+        actually needs -- two regimes that produce the same text should share vectors, and any text change must miss."""
+        if not self.lie_text: return ""
+        import hashlib
+        return "_lt" + hashlib.blake2b("\x00".join(self.desc).encode(), digest_size=4).hexdigest()
+
     def _itag(self):
         import hashlib
         return "" if not self.embed_instruct else "_i" + hashlib.blake2b(self.embed_instruct.encode(), digest_size=4).hexdigest()
@@ -178,7 +203,8 @@ class FrameworkMethod(Method):
         """The (K, k) shortlist for retrieval='sota'. It depends only on the population, so it is computed once and
         cached beside it; scripts/embed_populations.py pre-warms it, which is what keeps routing jobs off the GPU."""
         d = self._popdir(view)
-        name = sota_cache_name(self.embed_model, self.rerank_model, self.k, self.rerank_pool, self.dedup, self.embed_instruct)
+        name = sota_cache_name(self.embed_model, self.rerank_model, self.k, self.rerank_pool, self.dedup,
+                               self.embed_instruct + self._ltag())
         path = (d / name) if d is not None else None
         if path is not None and path.exists():
             T = np.load(path)
@@ -194,7 +220,7 @@ class FrameworkMethod(Method):
         filename carrying the model so MiniLM and the strong embedder never share a cache. Asymmetric models (Qwen3)
         want the retrieval prompt on the QUERY side only -- here the family descriptions."""
         from .._learned import embed
-        slug = self._slug(self.embed_model)
+        slug = self._slug(self.embed_model) + self._ltag()   # lie_text rewrites the documents: never reuse honest vectors
         d = self._popdir(view)
         cache = (d / f"descriptions_{slug}.npy") if d is not None else None
         fcache = cache.with_name(f"families_{slug}{self._itag()}.npy") if cache is not None else None
@@ -232,6 +258,7 @@ class FrameworkMethod(Method):
     def build(self, view, budget):
         super().build(view, budget)
         self.desc, self.fdesc, self._task_text = self._texts(view)
+        if self.lie_text: self.desc = self._relabel(self.desc, view)
         self.names = [f"agent_{a:06d}" for a in range(view.n)]
         self._name2id = {nm: a for a, nm in enumerate(self.names)}
         if self.retrieval in DENSE:

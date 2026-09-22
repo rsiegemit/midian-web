@@ -178,3 +178,41 @@ def test_shuffle_permutes_the_midian_cohort_without_changing_its_members():
         assert b.tolist() == shuf.retrieve(task).tolist()     # and stable across repeated calls
         first_is_pick += int(b[0] == a[0])
     assert first_is_pick < len(list(_tasks(K)))               # the pick is not always first any more
+
+
+def test_lie_text_rewrites_the_declared_clause_from_the_declared_channel():
+    """erratum 27: with lie_text the 'Declared areas:' clause must state what the agent DECLARES, not its true
+    specialty -- applied to every agent, so the method never learns who lies. The prose is left untouched."""
+    class _T(_Fw):
+        def _texts(self, view):
+            fams = list(view.families)
+            return ([f"Prose about agent {a}. Declared areas: {fams[0]}." for a in range(view.n)],
+                    [f"Tasks of family {f}" for f in fams], (lambda task: "t"))
+
+    honest = _T(base_url="http://127.0.0.1:1/v1", dedup=True, retrieval="tfidf")
+    honest.build(World(N, K, "specialist", 0.0, seed=1).view(honest.needs), Budget(1))
+    lied = _T(base_url="http://127.0.0.1:1/v1", dedup=True, retrieval="tfidf", lie_text=True)
+    lied.build(World(N, K, "specialist", 0.5, seed=1, liar_select="low_skill_first").view(lied.needs), Budget(1))
+    assert all(d.startswith("Prose about agent ") for d in lied.desc)          # prose preserved
+    assert all(" Declared areas: " in d and d.endswith(".") for d in lied.desc)
+    assert all(d.count("Declared areas:") == 1 for d in lied.desc)             # clause replaced, not appended twice
+    D, fams = lied.view.declared, list(lied.view.families)
+    for a in (0, 7, 42):
+        want = ", ".join(fams[f] for f in np.argsort(-D[a], kind="stable")[:3])
+        assert lied.desc[a].endswith(f"Declared areas: {want}.")
+    assert honest.desc != lied.desc                                            # the condition actually changes the text
+
+
+def test_lie_text_changes_the_embedding_cache_identity():
+    """A dense arm must never reuse honest-text vectors under lie_text. The tag is a hash of the DOCUMENTS -- the view
+    does not expose beta or liar_select (adversary knowledge), and content-hashing is what the cache actually needs."""
+    plain = _built(dedup=True, retrieval="embed")
+    assert plain._ltag() == ""
+    lied = _Fw(base_url="http://127.0.0.1:1/v1", embed_model="all-MiniLM-L6-v2", dedup=True,
+               retrieval="embed", lie_text=True)
+    lied.build(World(N, K, "specialist", 0.5, seed=1, liar_select="low_skill_first").view(lied.needs), Budget(1))
+    assert lied._ltag().startswith("_lt") and lied._ltag() != ""
+    other = _Fw(base_url="http://127.0.0.1:1/v1", embed_model="all-MiniLM-L6-v2", dedup=True,
+                retrieval="embed", lie_text=True)
+    other.build(World(N, K, "specialist", 0.25, seed=1).view(other.needs), Budget(1))
+    assert other._ltag() != lied._ltag()          # different regime -> different text -> different cache
