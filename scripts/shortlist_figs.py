@@ -3,12 +3,14 @@
                                                            + figures/shortlist/<family>.csv + figures/shortlist/INDEX.md
 One figure per condition (family, n, population shape, liar regime); one panel and one row, always. One group per
 framework, one bar per shortlist source that has data in the condition (SOURCES: the pre-registered hashed TF-IDF,
-dedup, MiniLM, BM25, Qwen3-Embedding-8B dense with and without a task instruction, BM25+dense fusion, fusion + the
-Qwen3 cross-encoder, the declared-claim top-k, the MIDIAN-V and MIDIAN-VA leaf cohorts). The oracle (dotted) and MIDIAN-VA routing the whole population (solid) are horizontal lines across the panel
+MiniLM, BM25, Qwen3-Embedding-8B dense with and without a task instruction, BM25+dense fusion + the Qwen3
+cross-encoder with and without an instruction, the declared-claim top-k and the MIDIAN-VA leaf cohort). Not drawn:
+dedup TF-IDF, fusion without the reranker, the MIDIAN-V cohort; a condition with fewer than two shortlists is skipped).
+The oracle (dotted) and MIDIAN-VA routing the whole population (solid) are horizontal lines across the panel
 with their 95% seed-bootstrap band. A source is recognised from each row's params, so a new shortlist grid needs only
 an entry in SOURCES. Bars whose rows still have an erratum-28 rerun outstanding carry an asterisk.
 Rows come from rows.csv AND rows.d (reruns write rows.d only). b = 3 only -- never pooled with b = 1.
-Do-not-add list (extra_figs.excluded) applies; MIDIAN cohorts other than r = 10, the shuffled VA cohort, the lying-text condition and the 14B
+Do-not-add list (extra_figs.excluded) applies; MIDIAN cohorts other than r = 10, the shuffled VA cohort (a position control), the lying-text condition and the 14B
 Magentic-One supervisor arm are not shortlist sources and are never drawn."""
 from __future__ import annotations
 import glob, json, os, sys
@@ -25,32 +27,29 @@ plt.rcParams.update({"pdf.fonttype": 42, "font.family": "DejaVu Sans", "font.siz
                      "ytick.labelsize": 6.5, "legend.fontsize": 6, "axes.linewidth": 0.6, "figure.constrained_layout.use": True})
 
 # shortlist source -> (display name, colour); drawn left to right in this order wherever the source has data
-SOURCES = [("tfidf", "hashed TF-IDF (pre-registered)", "#b0b0b0"), ("dedup", "dedup TF-IDF", "#8c6d31"),
-           ("bm25", "BM25", "#17becf"), ("embed", "MiniLM", "#1f77b4"),
+SOURCES = [("tfidf", "hashed TF-IDF (pre-registered)", "#b0b0b0"), ("bm25", "BM25", "#17becf"), ("embed", "MiniLM", "#1f77b4"),
            ("dense", "Qwen3-8B dense", "#c5b0d5"), ("dense_icomp", "Qwen3-8B dense, I-competent", "#9467bd"),
            ("dense_idemo", "Qwen3-8B dense, I-demonstrated", "#5b2c83"),
-           ("hybrid", "BM25+dense fusion", "#ffbb78"), ("hybrid_icomp", "fusion, I-competent", "#ff7f0e"),
            ("sota", "fusion + reranker", "#ff9896"), ("sota_icomp", "fusion + reranker, I-competent", "#d62728"),
            ("sota_idemo", "fusion + reranker, I-demonstrated", "#8b0000"),
            ("declared", "declared-claim top-k", "#e7ba52"),
-           ("v_cohort", "MIDIAN-V leaf cohort", "#98df8a"), ("va_cohort", "MIDIAN-VA leaf cohort", "#117a3d")]
+           ("va_cohort", "MIDIAN-VA leaf cohort", "#117a3d")]
 SRC_NAME = {k: v for k, v, _ in SOURCES}; SRC_COLOR = {k: c for k, _, c in SOURCES}
 GRIDS = {"live": lambda g: g.startswith("fw_live_n") and "lietext" not in g or g in ("live_n10k_v2", "live_n100k"),
          "routereval": lambda g: g.startswith("fw_routereval_")}
 
 
 def source(params):
-    """params JSON of a framework row -> shortlist source key, or None when the row is not a shortlist arm."""
+    """params JSON of a framework row -> shortlist source key, or None when the row is not drawn (not a shortlist arm, or
+    dropped: dedup TF-IDF, fusion without the reranker, the MIDIAN-V cohort, the shuffled VA cohort, r != 10)."""
     p = json.loads(params) if isinstance(params, str) and params.startswith("{") else {}
     if "supervisor" in p or "lie_text" in p: return None
     ret = p.get("retrieval"); ins = str(p.get("embed_instruct", ""))
     tag = "_icomp" if "competent" in ins else "_idemo" if "demonstrated" in ins else ""
-    if ret is None: return "dedup" if p.get("dedup") else "tfidf"
-    if ret in ("midian", "midian_va"):
-        if p.get("r") != 10: return None
-        return None if p.get("shuffle") else "v_cohort" if ret == "midian" else "va_cohort"   # the shuffle is a control, not a shortlist
+    if ret is None: return None if p.get("dedup") else "tfidf"
+    if ret == "midian_va": return "va_cohort" if p.get("r") == 10 and not p.get("shuffle") else None
     if ret == "embed": return ("dense" + tag) if "Qwen" in str(p.get("embed_model", "")) else "embed"
-    if ret in ("hybrid", "sota"): return ret + tag
+    if ret == "sota": return "sota" + tag
     return ret if ret in ("bm25", "declared") else None
 # where the oracle and MIDIAN-VA for a condition come from: every grid at that n is pooled and matched on (dist, regime, seed)
 REF_GRIDS = {"live": {100: ["fw_live_n100", "learned_n100", "live_core_n100", "fw_live_n100_lowskill"],
@@ -115,7 +114,7 @@ def draw(family, key, cell, csv_rows):
     n, dist, reg = key
     fws = sorted(cell["fw"], key=lambda m: ABBR.get(m, m))
     srcs = [s for s, _, _ in SOURCES if any(s in cell["fw"][m] or (m, s) in cell["pending"] for m in fws)]
-    if not fws or not srcs: return None
+    if not fws or len(srcs) < 2: return None                       # a single shortlist compares nothing
     w = 0.84 / len(srcs); xfw = list(range(len(fws)))              # one group per framework, one bar per source
     fig, ax = plt.subplots(figsize=(max(6.4, (0.35 + 0.075 * len(srcs)) * len(fws) + 2.0), 2.9))
 
