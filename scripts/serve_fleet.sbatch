@@ -60,11 +60,18 @@ while read -r MODEL GPU PORT UTIL; do
   sleep "${RTE_LAUNCH_STAGGER:-90}"
   watch_health "$MODEL" "$PORT" "$HOSTNAME_FQ" 240 &
 done < <("$PY" -c "
-import yaml
-# configs/models.yaml is ordered ASCENDING by params_b (a profile picks its model by index there).
+import os, yaml
+# configs/models.yaml is ordered ASCENDING by params_b (a profile picks its model by index there), so it is never
+# edited for placement. RTE_FLEET_PLACEMENT names a file of {id: {gpu, gpu_share}} that SELECTS and PLACES models:
+# only listed ids are served. Rule: request exactly the GPUs the placement uses -- a fleet that loads models nobody
+# calls leaves GPUs at 0% (2026-09-22: the 7B supervisor took 487,222 requests in 16 h, the other six models 8).
+ms = yaml.safe_load(open('$REPO/configs/models.yaml'))['models']
+pl = os.environ.get('RTE_FLEET_PLACEMENT')
+if pl:
+    over = yaml.safe_load(open(pl))['place']
+    ms = [dict(m, **over[m['id']]) for m in ms if m['id'] in over]
 # Launch largest first so each later server on a shared GPU sees its neighbour's allocation.
-for m in sorted(yaml.safe_load(open('$REPO/configs/models.yaml'))['models'],
-                key=lambda m: -m['params_b']):
+for m in sorted(ms, key=lambda m: -m['params_b']):
     print(m['id'], m['gpu'], m['port'], m['gpu_share'])
 ")
 

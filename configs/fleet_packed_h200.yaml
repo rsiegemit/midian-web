@@ -1,0 +1,10 @@
+# Every model on ONE H200 (141 GB): ~74 GB of bf16 weights plus small KV caches. Serves the rare memo misses and the
+# 14B orchestrator arm without holding four GPUs. Submit on kempner_h200 with --gres=gpu:1 -c 8.
+place:
+  Qwen/Qwen2.5-14B-Instruct:  {gpu: 0, gpu_share: 0.24}
+  google/gemma-2-9b-it:       {gpu: 0, gpu_share: 0.17}
+  Qwen/Qwen2.5-7B-Instruct:   {gpu: 0, gpu_share: 0.16}
+  Qwen/Qwen2.5-3B-Instruct:   {gpu: 0, gpu_share: 0.07}
+  google/gemma-2-2b-it:       {gpu: 0, gpu_share: 0.07}
+  Qwen/Qwen2.5-1.5B-Instruct: {gpu: 0, gpu_share: 0.05}
+  Qwen/Qwen2.5-0.5B-Instruct: {gpu: 0, gpu_share: 0.04}

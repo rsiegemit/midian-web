@@ -1,0 +1,4 @@
+# Supervisor-only replica: 1 GPU. The framework campaign's traffic is ~100% the Qwen2.5-7B supervisor (agent answers
+# are memoised per signature), so this is what throughput replicas serve. Submit with --gres=gpu:1 -c 8.
+place:
+  Qwen/Qwen2.5-7B-Instruct: {gpu: 0, gpu_share: 0.90}

@@ -231,3 +231,22 @@ def test_claim_threshold_lists_every_family_above_it():
     for a in (0, 7, 42):
         want = [fams[f] for f in np.argsort(-D[a], kind="stable") if D[a, f] > 0.5] or [fams[int(np.argmax(D[a]))]]
         assert m.desc[a].endswith("Declared areas: " + ", ".join(want) + ".")
+
+
+def test_infrastructure_errors_fail_the_unit_instead_of_writing_a_fallback_row():
+    """A worker that errors (crash, missing .so, dead endpoint) must not silently become declared-argmax picks. A few
+    errors are tolerated and counted as infra_errors; past 2 % of calls fetch raises, so the unit writes no row."""
+    m = _built(dedup=True, retrieval="tfidf")
+    m.bridge.select = lambda *a, **k: {"choice": None, "error": "ImportError: libffi.so.8", "raw": None}
+    tasks = list(_tasks(40))
+    with pytest.raises(RuntimeError, match="refusing to write"):
+        for t in tasks: m.fetch(t)
+    assert m.stats["infra_errors"] >= 4 and m.stats["fallbacks"] == 0      # never counted as framework behaviour
+
+
+def test_a_framework_naming_nobody_is_still_a_fallback_not_an_error():
+    """choice=None WITHOUT an error is genuine framework behaviour (it named no candidate): it falls back and counts."""
+    m = _built(dedup=True, retrieval="tfidf")
+    m.bridge.select = lambda *a, **k: {"choice": None, "error": None, "raw": "I would pick the arithmetic expert"}
+    for t in _tasks(10): m.fetch(t)
+    assert m.stats["fallbacks"] == 10 and m.stats.get("infra_errors", 0) == 0

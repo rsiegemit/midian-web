@@ -155,7 +155,7 @@ class FrameworkMethod(Method):
         if retrieval in ("midian", "midian_va"):             # verified shortlist: MIDIAN-V's (or MIDIAN-VA's) leaf cohort (k = r)
             self.needs = self.needs | {"probe", "reports"}
         self.stats = {"picks": 0, "fallbacks": 0, "failures": 0, "bad_name": 0, "success_strict": 0.0, "fallback_rate": 0.0}
-        self._picked, self._n, self._strict = False, 0, 0
+        self._picked, self._n, self._strict, self._calls = False, 0, 0, 0
 
     # ---- world accessors (llm backend provides real text; bernoulli/replay get synthesized descriptions)
     def _relabel(self, desc, view, top=3):
@@ -321,7 +321,21 @@ class FrameworkMethod(Method):
         self.view.ledger.compare(len(cand)); self.view.ledger.hop(1)
         self.view.ledger.message(len(cand) + 2)             # k descriptions read + supervisor request/reply
         payload = [{"name": self.names[a], "description": self.desc[a]} for a in cand]
-        resp = self.bridge.select(self._task_text(task), payload, self.supervisor, self._base_url or _endpoint(self.supervisor), params=self.params)   # re-pick per call: replicas that join mid-run get used
+        ask = lambda: self.bridge.select(self._task_text(task), payload, self.supervisor, self._base_url or _endpoint(self.supervisor), params=self.params)   # re-pick per call: replicas that join mid-run get used
+        resp = ask()
+        if resp.get("error"): resp = ask()                  # one retry: the bridge restarts a dead worker on the next call
+        self._calls += 1
+        if resp.get("error"):
+            # INFRASTRUCTURE, not framework behaviour: a crashed worker, a missing shared library, a dead endpoint. These
+            # used to fall through to declared argmax and write a normal-looking row that measured declared argmax under
+            # the framework's name -- ~4,500 rows on 2026-09-22 (CrewAI / ADK venvs with deleted .so files). A few are
+            # tolerated and counted apart from real fallbacks; past 2 % of calls the unit FAILS and writes no row.
+            self.stats["infra_errors"] = self.stats.get("infra_errors", 0) + 1
+            if self.stats["infra_errors"] > max(3, 0.02 * self._calls):
+                raise RuntimeError(f"{self.name}: {self.stats['infra_errors']} of {self._calls} supervisor calls failed "
+                                   f"({resp['error'][:160]}) -- refusing to write a fallback-contaminated row")
+            D = self.view.declared
+            return int(cand[np.argmax(D[cand, task.family])])
         choice = resp.get("choice")
         self._picked = choice in self._name2id and self._name2id[choice] in set(int(a) for a in cand)
         if self._picked:
