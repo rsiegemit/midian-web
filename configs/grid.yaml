@@ -912,6 +912,34 @@ grids:
               {name: fw_smolagents, params: {retrieval: bm25, dedup: true, lie_text: true}},
               {name: fw_camel_workforce, params: {retrieval: bm25, dedup: true, lie_text: true}}]]
 
+  # ---- 2026-09-22: the lying-text condition, done properly. The first version (fw_live_n100k_lietext) listed the
+  # top-3 declared families, which barely carries the lie: `inflate` adds +0.4 to every family and so preserves an
+  # agent's ranking -- only 14% of cartel liars' top-3 changed. claim_threshold = 0.7 lists EVERY family rated above
+  # 0.7, so a cartel liar claims ~15 of 16 families against ~3 honestly ("I can do everything"). The honest-text
+  # TF-IDF / BM25 arms are already on disk in fw_live_n100k_lietext and pair with these.
+  fw_live_n100k_lietext_th:
+    mirror_of: live_n100k
+    methods: [[{name: fw_langgraph, params: {retrieval: tfidf, dedup: true, lie_text: true, claim_threshold: 0.7}},
+              {name: fw_crewai, params: {retrieval: tfidf, dedup: true, lie_text: true, claim_threshold: 0.7}},
+              {name: fw_autogen, params: {retrieval: tfidf, dedup: true, lie_text: true, claim_threshold: 0.7}},
+              {name: fw_magentic_one, params: {retrieval: tfidf, dedup: true, lie_text: true, claim_threshold: 0.7}},
+              {name: fw_maf, params: {retrieval: tfidf, dedup: true, lie_text: true, claim_threshold: 0.7}},
+              {name: fw_openai_agents, params: {retrieval: tfidf, dedup: true, lie_text: true, claim_threshold: 0.7}},
+              {name: fw_google_adk, params: {retrieval: tfidf, dedup: true, lie_text: true, claim_threshold: 0.7}},
+              {name: fw_llamaindex, params: {retrieval: tfidf, dedup: true, lie_text: true, claim_threshold: 0.7}},
+              {name: fw_smolagents, params: {retrieval: tfidf, dedup: true, lie_text: true, claim_threshold: 0.7}},
+              {name: fw_camel_workforce, params: {retrieval: tfidf, dedup: true, lie_text: true, claim_threshold: 0.7}}],
+              [{name: fw_langgraph, params: {retrieval: bm25, dedup: true, lie_text: true, claim_threshold: 0.7}},
+              {name: fw_crewai, params: {retrieval: bm25, dedup: true, lie_text: true, claim_threshold: 0.7}},
+              {name: fw_autogen, params: {retrieval: bm25, dedup: true, lie_text: true, claim_threshold: 0.7}},
+              {name: fw_magentic_one, params: {retrieval: bm25, dedup: true, lie_text: true, claim_threshold: 0.7}},
+              {name: fw_maf, params: {retrieval: bm25, dedup: true, lie_text: true, claim_threshold: 0.7}},
+              {name: fw_openai_agents, params: {retrieval: bm25, dedup: true, lie_text: true, claim_threshold: 0.7}},
+              {name: fw_google_adk, params: {retrieval: bm25, dedup: true, lie_text: true, claim_threshold: 0.7}},
+              {name: fw_llamaindex, params: {retrieval: bm25, dedup: true, lie_text: true, claim_threshold: 0.7}},
+              {name: fw_smolagents, params: {retrieval: bm25, dedup: true, lie_text: true, claim_threshold: 0.7}},
+              {name: fw_camel_workforce, params: {retrieval: bm25, dedup: true, lie_text: true, claim_threshold: 0.7}}]]
+
   # ---- 2026-09-16: the missing cartel cell for the VA-cohort frameworks (the verified-cohort grids ran random liars
   # only). Same ten frameworks holding MIDIAN-VA's leaf cohort (r = 10), beta = 0.5 low-skill-first, 3 shapes, seeds 1-10.
   fw_live_n1000_verified_va_lowskill: {mirror_of: fw_live_n1000_verified_va, beta: [0.5], liar_select: [low_skill_first]}

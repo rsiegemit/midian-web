@@ -216,3 +216,18 @@ def test_lie_text_changes_the_embedding_cache_identity():
                 retrieval="embed", lie_text=True)
     other.build(World(N, K, "specialist", 0.25, seed=1).view(other.needs), Budget(1))
     assert other._ltag() != lied._ltag()          # different regime -> different text -> different cache
+
+
+def test_claim_threshold_lists_every_family_above_it():
+    """claim_threshold: the clause states every family the agent's DECLARED rating exceeds, so an inflating liar claims
+    far more families than an honest agent -- the lie the top-3 form cannot carry (it preserves the ranking)."""
+    class _T(_Fw):
+        def _texts(self, view):
+            fams = list(view.families)
+            return ([f"Prose. Declared areas: {fams[0]}." for a in range(view.n)], [f"Tasks of family {f}" for f in fams], (lambda task: "t"))
+    m = _T(base_url="http://127.0.0.1:1/v1", dedup=True, retrieval="tfidf", lie_text=True, claim_threshold=0.5)
+    m.build(World(N, K, "specialist", 0.5, seed=1, liar_select="low_skill_first").view(m.needs), Budget(1))
+    D, fams = m.view.declared, list(m.view.families)
+    for a in (0, 7, 42):
+        want = [fams[f] for f in np.argsort(-D[a], kind="stable") if D[a, f] > 0.5] or [fams[int(np.argmax(D[a]))]]
+        assert m.desc[a].endswith("Declared areas: " + ", ".join(want) + ".")

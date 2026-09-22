@@ -111,7 +111,8 @@ class FrameworkMethod(Method):
     def __init__(self, k: int = 10, supervisor: str = SUPERVISOR, base_url: str | None = None,
                  retrieval: str = "tfidf", r: int = 10, dedup: bool = False,
                  embed_model: str = MINILM, rerank_model: str = RERANKER, rerank_pool: int = 50,
-                 embed_instruct: str = "", shuffle: bool = False, lie_text: bool = False, **params):
+                 embed_instruct: str = "", shuffle: bool = False, lie_text: bool = False,
+                 claim_threshold: float = 0.0, **params):
         super().__init__(k=k, supervisor=supervisor, retrieval=retrieval, r=r, **params)
         self.k, self.supervisor, self._base_url = int(k), supervisor, base_url
         self.retrieval, self.r = retrieval, int(r)
@@ -137,6 +138,11 @@ class FrameworkMethod(Method):
         # what they claim in the matrix. The LLM prose is untouched and still describes the real specialty, so this is
         # a PARTIAL text lie and must be reported as one.
         self.lie_text = bool(lie_text)
+        # claim_threshold > 0: the clause lists EVERY family the agent rates above the threshold instead of its top 3.
+        # The top-3 form barely carries the benchmark's lie -- `inflate` adds +0.4 to every family, which preserves an
+        # agent's ranking, so only 14% of cartel liars' top-3 changes. With a threshold of 0.7 a cartel liar claims
+        # ~15 of 16 families against ~3 honestly: the "I can do everything" description a lying agent actually writes.
+        self.claim_threshold = float(claim_threshold)
         self._rr = None
         # dedup (2026-09-14, labeled variant): rank DISTINCT description texts and offer one agent per text (the lowest
         # id). Agents sharing a prompt signature share a memoized self-description AND memoized answers, so the plain
@@ -157,7 +163,11 @@ class FrameworkMethod(Method):
         fams = list(view.families); D = view.declared
         out = []
         for a, d in enumerate(desc):
-            claim = ", ".join(fams[f] for f in np.argsort(-D[a], kind="stable")[:top])
+            if self.claim_threshold > 0:
+                fs = [f for f in np.argsort(-D[a], kind="stable") if D[a, f] > self.claim_threshold] or [int(np.argmax(D[a]))]
+            else:
+                fs = np.argsort(-D[a], kind="stable")[:top]
+            claim = ", ".join(fams[f] for f in fs)
             out.append(re.sub(r"\s*Declared areas: .*$", "", d).rstrip() + f" Declared areas: {claim}.")
         return out
 
