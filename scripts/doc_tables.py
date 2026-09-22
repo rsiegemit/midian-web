@@ -4,12 +4,12 @@
     python scripts/doc_tables.py --sync      # rewrite every <!-- doc_tables:NAME --> ... <!-- /doc_tables --> block in RESULTS.md
 Sources: the pre-registered TF-IDF rows (source grids), dedup (_dd), MiniLM (_em), MIDIAN-V cohort (_verified), MIDIAN-VA cohort
 (_verified_va*). Cells: frameworks pooled (mean of per-framework seed means) and the best single framework. Asterisks mark
-cells whose framework set is incomplete (a framework with fewer seeds than the cell has)."""
+cells whose framework set is incomplete (a framework with fewer seeds than the cell has) or that still has an erratum-28 rerun outstanding."""
 from __future__ import annotations
 import os, re, sys
 import numpy as np, pandas as pd
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from fw_variant_numbers import load, select, regime, RTE_DATA
+from fw_variant_numbers import load, select, regime, pending_reruns, RTE_DATA
 
 R = f"{RTE_DATA}/results"
 NAMES = {"fw_google_adk": "Google ADK", "fw_crewai": "CrewAI", "fw_magentic_one": "Magentic-One", "fw_openai_agents": "OpenAI Agents",
@@ -27,6 +27,7 @@ NINE = {"fw_live_n10k_cartel", "fw_live_n10k_cartel_dd", "fw_live_n10k_cartel_em
 REF = {100: "fw_live_n100", 1000: "fw_live_n1000", 10000: "live_n10k_v2", 100000: "live_n100k"}
 REF_CARTEL = {100: "fw_live_n100_lowskill", 1000: "fw_live_n1000_lowskill", 10000: "learned_n10k", 100000: "live_n100k"}
 _cache = {}
+PENDING = pending_reruns()
 
 
 def fw_rows(grid, kind):
@@ -40,7 +41,8 @@ def cell(fw, dist, reg, expected=10):
     if reg == "beta0" and q.liar_select.nunique() > 1: q = q[q.liar_select == "random"]   # liar-free: the random cell, once
     if q.empty: return None
     per = q.groupby(["method", "seed"]).success.mean().unstack(0)
-    star = "*" if per.isna().any().any() or per.shape[1] < expected else ""
+    pend = any((g, m, dist, reg) in PENDING for g, m in zip(q.grid, q.method))
+    star = "*" if per.isna().any().any() or per.shape[1] < expected or pend else ""
     return per.mean(axis=1).mean(), per.mean().max(), NAMES.get(per.mean().idxmax(), per.mean().idxmax()), star
 
 
@@ -79,17 +81,18 @@ def per_framework_table(n=100000, dist="specialist"):
             fw = fw_rows(g, kind); q = fw[(fw.dist == dist) & (fw.regime == ("beta0" if reg == "honest" else "cartel"))]
             if reg == "honest" and q.liar_select.nunique() > 1: q = q[q.liar_select == "random"]
             if q.empty: continue
-            cols.append((f"{name}, {reg}", q.groupby("method").success.mean(), q.groupby("method").seed.nunique()))
-    frameworks = sorted({m for _, s, _ in cols for m in s.index}, key=lambda m: -cols[-1][1].get(m, 0))
+            r = "beta0" if reg == "honest" else "cartel"
+            cols.append((f"{name}, {reg}", q.groupby("method").success.mean(), q.groupby("method").seed.nunique(), {m for m in q.method.unique() if (g, m, dist, r) in PENDING}))
+    frameworks = sorted({m for _, s, _, _ in cols for m in s.index}, key=lambda m: -cols[-1][1].get(m, 0))
     lines = ["| framework | " + " | ".join(c[0] for c in cols) + " |", "|---|" + "---|" * len(cols)]
     for m in frameworks:
         vals = []
-        for _, s, k in cols:
+        for _, s, k, pend in cols:
             if m not in s: vals.append("--"); continue
-            star = "*" if k[m] < k.max() else ""
+            star = "*" if k[m] < k.max() or m in pend else ""
             vals.append(f"{s[m]:.3f}{star}")
         lines.append(f"| {NAMES.get(m, m)} | " + " | ".join(vals) + " |")
-    means = [f"{s.mean():.3f}" for _, s, _ in cols]
+    means = [f"{s.mean():.3f}" + ("*" if pend else "") for _, s, _, pend in cols]
     lines.append("| **mean of ten** | " + " | ".join(means) + " |")
     return "\n".join(lines)
 

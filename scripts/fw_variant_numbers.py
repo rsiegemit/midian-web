@@ -9,6 +9,7 @@ import glob, json, os
 import numpy as np, pandas as pd
 
 RTE_DATA = os.environ.get("RTE_DATA", "/scratch/rte"); R = f"{RTE_DATA}/results"
+PENDING: set = set()
 VARIANTS = {                                   # variant -> [(grid, filter on params)]; the pre-registered arms are the tfidf rows of the source grids
     "tfidf": [("fw_live_n100", "plain"), ("fw_live_n1000", "plain"), ("fw_live_n100_lowskill", "plain"), ("fw_live_n1000_lowskill", "plain"),
               ("live_n10k_v2", "plain"), ("fw_live_n10k_cartel", "plain"), ("live_n100k", "plain")],
@@ -28,7 +29,17 @@ def load(grid):
     if df.empty: return df
     if "rid" in df: df = df.drop_duplicates("rid")
     df["params"] = df.params.astype(str)
-    return df.drop_duplicates(["dist", "beta", "liar_select", "seed", "method", "params"])
+    return df.drop_duplicates(["n", "dist", "beta", "liar_select", "seed", "method", "params"])   # n: some grids hold several sizes
+
+
+def pending_reruns():
+    """{(grid, framework, dist, regime)} whose erratum-28 rerun is still outstanding -- those numbers carry an asterisk.
+    Empty once finalize_stage2 has fired; the ablation grids stay pending between stage 1 and stage 2 (campaign_tick.sh)."""
+    p = f"{R}/quarantine_units.tsv"
+    if not os.path.exists(p) or os.path.exists(f"{RTE_DATA}/logs/DONE_stage2"): return set()
+    u = pd.read_csv(p, sep="\t")
+    if os.path.exists(f"{RTE_DATA}/logs/DONE_stage1"): u = u[u.grid.str.fullmatch(r"fw_live_n(1000|100)(_lowskill)?_sota")]
+    return {(g, m, d, regime(b, l)) for g, m, d, b, l in zip(u.grid, u.method, u.dist, u.beta, u.liar_select)}
 
 
 def select(df, kind):
@@ -60,6 +71,7 @@ def entry(per_seed, grid, note=None):
 
 
 def collect(N):
+    global PENDING; PENDING = pending_reruns()
     for variant, grids in VARIANTS.items():
         for grid, kind in grids:
             df = load(grid)
@@ -72,9 +84,11 @@ def collect(N):
                 if reg == "beta0" and q.liar_select.nunique() > 1: q = q[q.liar_select == "random"]     # liar-free: one cell
                 base = f"v6.{variant}.n{int(n)}.{dist}.{reg}"
                 per_fw = q.groupby(["method", "seed"]).success.mean().unstack(0)      # seeds x frameworks
-                N[f"{base}.frameworks_mean"] = entry(per_fw.mean(axis=1), grid, f"{per_fw.shape[1]} frameworks, seed means")
-                best = per_fw.mean().idxmax(); N[f"{base}.frameworks_best"] = entry(per_fw[best], grid, f"best = {best}")
-                for m in per_fw: N[f"{base}.{m}"] = entry(per_fw[m].dropna(), grid)
+                star = {m for m in per_fw if (grid, m, dist, reg) in PENDING}
+                pend = lambda ms: "; * erratum-28 rerun outstanding" if ms & star else ""
+                N[f"{base}.frameworks_mean"] = entry(per_fw.mean(axis=1), grid, f"{per_fw.shape[1]} frameworks, seed means" + pend(set(per_fw)))
+                best = per_fw.mean().idxmax(); N[f"{base}.frameworks_best"] = entry(per_fw[best], grid, f"best = {best}" + pend({best}))
+                for m in per_fw: N[f"{base}.{m}"] = entry(per_fw[m].dropna(), grid, pend({m})[2:] or None)
             # the identical-framework (clone) signature: cells where every framework has the same success
             same = fw.groupby(["n", "dist", "regime", "seed"]).success.nunique().eq(1).groupby(level=[0, 1, 2]).mean()
             for (n, dist, reg), v in same.items(): N[f"v6.{variant}.n{int(n)}.{dist}.{reg}.identical_cells_frac"] = dict(value=round(float(v), 4), grid=grid, units=None, ci=None)
