@@ -30,6 +30,10 @@ if [ "$subd" -lt "$plan" ] && [ "$fresh" = 0 ] && ! q | grep -q " rte_rerun_subm
     -o $L/rerun_submitter.log --open-mode=append --wrap="$REPO/scripts/ops/rerun_units.sh" >/dev/null && say "submitter (re)started: $subd/$plan submitted"
 fi
 
+# 1b. the n=10^3/10^2 SOTA ablation always runs last: renice any pending ablation job the submitter queued at nice 0
+squeue -u "$USER" -h -t PD -o "%i %j %y" | awk '$3==0' | grep -E " rte_${ABL}__" | awk '{print $1}' |
+  while read -r j; do scontrol update JobId="$j" Nice=1000000; done
+
 # 2. fleet health
 rep=$($PY -c "import json; print(sum(k.startswith('Qwen/Qwen2.5-7B') for k in json.load(open('$RTE_DATA/endpoints.json'))))" 2>/dev/null || echo 0)
 [ "$rep" -lt 2 ] && { say "ALERT only $rep supervisor replica(s)"; echo "$(date -Is) $rep supervisor replicas" >> $L/ALERT_fleet; }
