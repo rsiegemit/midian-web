@@ -5,6 +5,24 @@
 > errors). Every rule was paid for; see CHANGES_AND_ERRATA errata 27-28.
 
 
+**Current (2026-09-22 17:00, v8) -- supersedes the v7 block below where they conflict.**
+
+- **Erratum 28 rerun, running UNATTENDED.** 5,297 framework rows silently measured declared argmax (7 framework conda
+  envs had deleted .so files; workers crashed on some nodes and the adapter fell back). Envs repaired byte-identically
+  (`scripts/check_envs.sh` passes on all 14), all ten frameworks verified live, rows quarantined to
+  `results/<grid>/quarantine/`, 3,572 units rerunning (`results/quarantine_units.tsv`). **Every framework-MEAN number
+  reported before this is superseded** -- CrewAI/ADK were biased up, paired differences diluted toward zero.
+- **Driver**: `scripts/ops/campaign_tick.sh` (SLURM on `test`, re-submits itself every 30 min) keeps the detached
+  submitter alive and fires `finalize_stage1` (headline + lietext_th drained) then `finalize_stage2` (ablation too). Each
+  finalize re-audits and refuses to regenerate if contamination recurs. Check `logs/campaign_tick.log`.
+- **ETA**: headline numbers ~2 days (1.5-4), everything ~3 days; bound by fairshare, not the fleet.
+- **Fleet**: 1-GPU replicas with chained successors (`configs/fleet_supervisor.yaml`, `configs/fleet_packed_h200.yaml`).
+- **After stage 1**: verify unit coverage; recompute the framework findings (shuffle control, declared baseline, recovery,
+  significance) on clean rows; read the erratum-27 text-lie result (`fw_live_n100k_lietext_th`); manual RESULTS.md prose
+  pass; then ICLR -- framework section last. Full checklist in memory `project_rte_jobs_pending_sync.md` (v8).
+- **Safe to write now**: benchmark, MIDIAN family, non-framework rivals, bernoulli/replay/scale (b=3 only), threat model,
+  shortlist diagnostics (`paper/diagnostics/`).
+
 **Current (2026-09-17 18:30, v7 sync).** Read `RESULTS.md` first (the dossier; every number in `paper/NUMBERS.json`),
 then `METHODS.md` (every method: origin, what it is, what it does), `COVERAGE.md` (what exists, what is missing, whether
 the gap is justified, and the campaign state), `CHANGES_AND_ERRATA.md` (errata 1-26) and `DEVIATIONS.md` (dated log).
