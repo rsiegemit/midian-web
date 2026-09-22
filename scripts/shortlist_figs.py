@@ -4,12 +4,11 @@
 One figure per condition (family, n, population shape, liar regime); one panel and one row, always. One group per
 framework, one bar per shortlist source that has data in the condition (SOURCES: the pre-registered hashed TF-IDF,
 dedup, MiniLM, BM25, Qwen3-Embedding-8B dense with and without a task instruction, BM25+dense fusion, fusion + the
-Qwen3 cross-encoder, the declared-claim top-k, the MIDIAN-V and MIDIAN-VA leaf cohorts and the position-shuffled VA
-cohort). The oracle (dotted) and MIDIAN-VA routing the whole population (solid) are horizontal lines across the panel
+Qwen3 cross-encoder, the declared-claim top-k, the MIDIAN-V and MIDIAN-VA leaf cohorts). The oracle (dotted) and MIDIAN-VA routing the whole population (solid) are horizontal lines across the panel
 with their 95% seed-bootstrap band. A source is recognised from each row's params, so a new shortlist grid needs only
 an entry in SOURCES. Bars whose rows still have an erratum-28 rerun outstanding carry an asterisk.
 Rows come from rows.csv AND rows.d (reruns write rows.d only). b = 3 only -- never pooled with b = 1.
-Do-not-add list (extra_figs.excluded) applies; MIDIAN cohorts other than r = 10, the lying-text condition and the 14B
+Do-not-add list (extra_figs.excluded) applies; MIDIAN cohorts other than r = 10, the shuffled VA cohort, the lying-text condition and the 14B
 Magentic-One supervisor arm are not shortlist sources and are never drawn."""
 from __future__ import annotations
 import glob, json, os, sys
@@ -34,8 +33,7 @@ SOURCES = [("tfidf", "hashed TF-IDF (pre-registered)", "#b0b0b0"), ("dedup", "de
            ("sota", "fusion + reranker", "#ff9896"), ("sota_icomp", "fusion + reranker, I-competent", "#d62728"),
            ("sota_idemo", "fusion + reranker, I-demonstrated", "#8b0000"),
            ("declared", "declared-claim top-k", "#e7ba52"),
-           ("v_cohort", "MIDIAN-V leaf cohort", "#98df8a"), ("va_cohort", "MIDIAN-VA leaf cohort", "#117a3d"),
-           ("va_shuffled", "MIDIAN-VA cohort, shuffled", "#6b9e6b")]
+           ("v_cohort", "MIDIAN-V leaf cohort", "#98df8a"), ("va_cohort", "MIDIAN-VA leaf cohort", "#117a3d")]
 SRC_NAME = {k: v for k, v, _ in SOURCES}; SRC_COLOR = {k: c for k, _, c in SOURCES}
 GRIDS = {"live": lambda g: g.startswith("fw_live_n") and "lietext" not in g or g in ("live_n10k_v2", "live_n100k"),
          "routereval": lambda g: g.startswith("fw_routereval_")}
@@ -50,7 +48,7 @@ def source(params):
     if ret is None: return "dedup" if p.get("dedup") else "tfidf"
     if ret in ("midian", "midian_va"):
         if p.get("r") != 10: return None
-        return "v_cohort" if ret == "midian" else "va_shuffled" if p.get("shuffle") else "va_cohort"
+        return None if p.get("shuffle") else "v_cohort" if ret == "midian" else "va_cohort"   # the shuffle is a control, not a shortlist
     if ret == "embed": return ("dense" + tag) if "Qwen" in str(p.get("embed_model", "")) else "embed"
     if ret in ("hybrid", "sota"): return ret + tag
     return ret if ret in ("bm25", "declared") else None

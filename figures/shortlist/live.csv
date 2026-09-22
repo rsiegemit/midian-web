@@ -674,7 +674,7 @@ live,beta0,specialist,100,openai,va_cohort,0.5258999999999999,0.475695,0.5620025
 live,beta0,specialist,100,smol,va_cohort,0.5505,0.5198975,0.5787000000000001,10,False
 live,beta01_random,specialist,100,oracle,-,0.8449,0.8333999999999999,0.8548025,10,False
 live,beta01_random,specialist,100,MIDIAN-VA (whole population),-,0.7588,0.7368975000000001,0.7786000000000001,10,False
-live,beta01_random,specialist,100,autogen,tfidf,0.46133333333333326,0.4329888888888889,0.49033333333333334,9,True
+live,beta01_random,specialist,100,autogen,tfidf,0.4542999999999999,0.42539250000000006,0.484905,10,True
 live,beta01_random,specialist,100,camel,tfidf,0.48625,0.44937499999999997,0.518253125,8,True
 live,beta01_random,specialist,100,crewai,tfidf,0.459,0.4267777777777778,0.4895555555555555,9,True
 live,beta01_random,specialist,100,langgraph,tfidf,0.4554444444444445,0.4281111111111111,0.4832333333333333,9,True
@@ -794,7 +794,7 @@ live,beta025_random,specialist,100,openai,va_cohort,0.5121,0.4734975,0.5405,10,F
 live,beta025_random,specialist,100,smol,va_cohort,0.5588,0.5330974999999999,0.5859049999999999,10,False
 live,beta05_random,specialist,100,oracle,-,0.8449,0.8333999999999999,0.8548025,10,False
 live,beta05_random,specialist,100,MIDIAN-VA (whole population),-,0.7748,0.7516900000000001,0.7956025000000001,10,False
-live,beta05_random,specialist,100,autogen,tfidf,0.46677777777777774,0.4364444444444444,0.49711388888888886,9,True
+live,beta05_random,specialist,100,autogen,tfidf,0.45909999999999995,0.4269974999999999,0.489505,10,True
 live,beta05_random,specialist,100,camel,tfidf,0.4667,0.4304,0.5005099999999999,10,False
 live,beta05_random,specialist,100,crewai,tfidf,0.45062500000000005,0.418375,0.48188125000000004,8,True
 live,beta05_random,specialist,100,langgraph,tfidf,0.4706666666666666,0.4451111111111111,0.49233333333333335,9,True
@@ -1618,7 +1618,7 @@ live,beta0,specialist,1000,maf,dedup,0.3702,0.3555,0.3836,10,False
 live,beta0,specialist,1000,magentic,dedup,0.44010000000000005,0.4185,0.46180000000000004,10,False
 live,beta0,specialist,1000,openai,dedup,0.36490000000000006,0.34880000000000005,0.37850249999999996,10,False
 live,beta0,specialist,1000,smol,dedup,0.3843,0.35769,0.4119025,10,False
-live,beta0,specialist,1000,autogen,bm25,0.38225000000000003,0.374,0.3905,4,False
+live,beta0,specialist,1000,autogen,bm25,0.374,0.3572,0.3878,5,False
 live,beta0,specialist,1000,langgraph,bm25,0.40066666666666667,0.371,0.424,3,False
 live,beta0,specialist,1000,llama,bm25,0.37433333333333335,0.353,0.39799999999999996,3,False
 live,beta0,specialist,1000,maf,bm25,0.41669999999999996,0.39539749999999996,0.43910249999999995,10,False
@@ -1632,19 +1632,19 @@ live,beta0,specialist,1000,maf,embed,0.5249,0.4993,0.5467025000000001,10,False
 live,beta0,specialist,1000,magentic,embed,0.6315,0.6122,0.654905,10,False
 live,beta0,specialist,1000,openai,embed,0.485,0.46880000000000005,0.5011,10,False
 live,beta0,specialist,1000,smol,embed,0.4655,0.4478000000000001,0.4848025,10,False
-live,beta0,specialist,1000,autogen,dense,0.424,0.404,0.442,4,False
+live,beta0,specialist,1000,autogen,dense,0.409,0.3766,0.43760000000000004,5,False
 live,beta0,specialist,1000,langgraph,dense,0.4736666666666666,0.432,0.52,3,False
 live,beta0,specialist,1000,llama,dense,0.4343333333333333,0.38400000000000006,0.48100000000000004,3,False
 live,beta0,specialist,1000,maf,dense,0.4795999999999999,0.45639500000000005,0.5000025,10,False
 live,beta0,specialist,1000,openai,dense,0.4696666666666667,0.422,0.557,3,False
 live,beta0,specialist,1000,smol,dense,0.41259999999999997,0.38439999999999996,0.4405,10,False
-live,beta0,specialist,1000,autogen,hybrid,0.39825,0.3635,0.433,4,False
+live,beta0,specialist,1000,autogen,hybrid,0.40599999999999997,0.3728,0.43599999999999994,5,False
 live,beta0,specialist,1000,langgraph,hybrid,0.38999999999999996,0.37600000000000006,0.409,3,False
 live,beta0,specialist,1000,llama,hybrid,0.381,0.353,0.416,3,False
 live,beta0,specialist,1000,maf,hybrid,0.43579999999999997,0.4046,0.47350000000000003,10,False
 live,beta0,specialist,1000,openai,hybrid,0.4136666666666666,0.36800000000000005,0.458,3,False
 live,beta0,specialist,1000,smol,hybrid,0.3957,0.3675,0.4242025,10,False
-live,beta0,specialist,1000,autogen,sota,0.48,0.451,0.51,4,False
+live,beta0,specialist,1000,autogen,sota,0.4816,0.45732999999999996,0.5065999999999999,5,False
 live,beta0,specialist,1000,langgraph,sota,0.4305,0.364,0.497,2,False
 live,beta0,specialist,1000,llama,sota,0.4883333333333333,0.4709999999999999,0.507,3,False
 live,beta0,specialist,1000,maf,sota,0.4601,0.42898749999999997,0.4894124999999999,10,False
@@ -1688,7 +1688,7 @@ live,beta01_random,specialist,1000,maf,dedup,0.371,0.3569975,0.3845,10,False
 live,beta01_random,specialist,1000,magentic,dedup,0.44159999999999994,0.4166,0.4667,10,False
 live,beta01_random,specialist,1000,openai,dedup,0.3652,0.34919749999999994,0.3791025,10,False
 live,beta01_random,specialist,1000,smol,dedup,0.3852,0.35849749999999997,0.41230999999999995,10,False
-live,beta01_random,specialist,1000,autogen,bm25,0.337,0.337,0.337,1,False
+live,beta01_random,specialist,1000,autogen,bm25,0.365,0.337,0.393,2,False
 live,beta01_random,specialist,1000,langgraph,bm25,0.402,0.402,0.402,1,False
 live,beta01_random,specialist,1000,llama,bm25,0.438,0.429,0.447,2,False
 live,beta01_random,specialist,1000,maf,bm25,0.41669999999999996,0.39490000000000003,0.4394,10,False
@@ -1702,19 +1702,19 @@ live,beta01_random,specialist,1000,maf,embed,0.5246999999999999,0.49870000000000
 live,beta01_random,specialist,1000,magentic,embed,0.6248,0.6016974999999999,0.6507000000000001,10,False
 live,beta01_random,specialist,1000,openai,embed,0.4849,0.46909999999999996,0.5005025000000001,10,False
 live,beta01_random,specialist,1000,smol,embed,0.46580000000000005,0.448595,0.485,10,False
-live,beta01_random,specialist,1000,autogen,dense,0.346,0.346,0.346,1,False
+live,beta01_random,specialist,1000,autogen,dense,0.38649999999999995,0.346,0.427,2,False
 live,beta01_random,specialist,1000,langgraph,dense,0.365,0.365,0.365,1,False
 live,beta01_random,specialist,1000,llama,dense,0.4295,0.358,0.501,2,False
 live,beta01_random,specialist,1000,maf,dense,0.47970000000000007,0.4579975,0.4993025,10,False
 live,beta01_random,specialist,1000,openai,dense,0.46566666666666673,0.3960000000000001,0.551,3,False
 live,beta01_random,specialist,1000,smol,dense,0.4125,0.38449749999999994,0.4405,10,False
-live,beta01_random,specialist,1000,autogen,hybrid,0.437,0.437,0.437,1,False
+live,beta01_random,specialist,1000,autogen,hybrid,0.39049999999999996,0.344,0.437,2,False
 live,beta01_random,specialist,1000,langgraph,hybrid,0.378,0.378,0.378,1,False
 live,beta01_random,specialist,1000,llama,hybrid,0.392,0.372,0.412,2,False
 live,beta01_random,specialist,1000,maf,hybrid,0.43529999999999996,0.4041975,0.47300249999999994,10,False
 live,beta01_random,specialist,1000,openai,hybrid,0.3986666666666667,0.35799999999999993,0.464,3,False
 live,beta01_random,specialist,1000,smol,hybrid,0.39580000000000004,0.367895,0.4243,10,False
-live,beta01_random,specialist,1000,autogen,sota,0.489,0.489,0.489,1,False
+live,beta01_random,specialist,1000,autogen,sota,0.501,0.489,0.513,2,False
 live,beta01_random,specialist,1000,langgraph,sota,0.537,0.537,0.537,1,False
 live,beta01_random,specialist,1000,llama,sota,0.4995,0.498,0.501,2,False
 live,beta01_random,specialist,1000,maf,sota,0.4598999999999999,0.42859500000000006,0.48980250000000003,10,False
@@ -1773,19 +1773,19 @@ live,beta025_random,specialist,1000,magentic,embed,0.5914999999999999,0.5685925,
 live,beta025_random,specialist,1000,openai,embed,0.4831,0.46769749999999993,0.49829999999999997,10,False
 live,beta025_random,specialist,1000,smol,embed,0.46610000000000007,0.4485975,0.4852074999999999,10,False
 live,beta025_random,specialist,1000,autogen,dense,0.4325,0.426,0.439,2,False
-live,beta025_random,specialist,1000,langgraph,dense,0.4075,0.388,0.427,2,False
+live,beta025_random,specialist,1000,langgraph,dense,0.44700000000000006,0.38800000000000007,0.526,3,False
 live,beta025_random,specialist,1000,llama,dense,0.39799999999999996,0.36999999999999994,0.44,3,False
 live,beta025_random,specialist,1000,maf,dense,0.47929999999999995,0.45620000000000005,0.499305,10,False
 live,beta025_random,specialist,1000,openai,dense,0.4135,0.396,0.431,2,False
 live,beta025_random,specialist,1000,smol,dense,0.413,0.38479749999999996,0.4407074999999999,10,False
 live,beta025_random,specialist,1000,autogen,hybrid,0.39649999999999996,0.353,0.44,2,False
-live,beta025_random,specialist,1000,langgraph,hybrid,0.39449999999999996,0.365,0.424,2,False
+live,beta025_random,specialist,1000,langgraph,hybrid,0.39599999999999996,0.365,0.424,3,False
 live,beta025_random,specialist,1000,llama,hybrid,0.36933333333333335,0.351,0.397,3,False
 live,beta025_random,specialist,1000,maf,hybrid,0.4359,0.40440000000000004,0.47340249999999995,10,False
 live,beta025_random,specialist,1000,openai,hybrid,0.371,0.369,0.373,2,False
 live,beta025_random,specialist,1000,smol,hybrid,0.39560000000000006,0.3673,0.4242025,10,False
 live,beta025_random,specialist,1000,autogen,sota,0.515,0.509,0.521,2,False
-live,beta025_random,specialist,1000,langgraph,sota,0.536,0.442,0.63,2,False
+live,beta025_random,specialist,1000,langgraph,sota,0.537,0.442,0.63,3,False
 live,beta025_random,specialist,1000,llama,sota,0.492,0.488,0.5,3,False
 live,beta025_random,specialist,1000,maf,sota,0.45970000000000005,0.4282975,0.48940249999999996,10,False
 live,beta025_random,specialist,1000,openai,sota,0.48250000000000004,0.42,0.545,2,False
@@ -2228,14 +2228,6 @@ live,beta0,specialist,100000,maf,va_cohort,0.5488888888888889,0.4333333333333333
 live,beta0,specialist,100000,magentic,va_cohort,0.66,0.62,0.6866666666666666,3,False
 live,beta0,specialist,100000,openai,va_cohort,0.4844444444444444,0.3466666666666667,0.65,3,False
 live,beta0,specialist,100000,smol,va_cohort,0.5533333333333333,0.5433333333333333,0.5666666666666667,3,False
-live,beta0,specialist,100000,autogen,va_shuffled,0.525,0.5,0.55,2,False
-live,beta0,specialist,100000,camel,va_shuffled,0.4049999999999999,0.3733333333333333,0.4366666666666666,2,False
-live,beta0,specialist,100000,langgraph,va_shuffled,0.42500000000000004,0.4,0.45,2,False
-live,beta0,specialist,100000,llama,va_shuffled,0.45833333333333337,0.4,0.5166666666666667,2,False
-live,beta0,specialist,100000,maf,va_shuffled,0.51,0.48,0.54,2,False
-live,beta0,specialist,100000,magentic,va_shuffled,0.5816666666666667,0.58,0.5833333333333334,2,False
-live,beta0,specialist,100000,openai,va_shuffled,0.44833333333333336,0.42,0.4766666666666667,2,False
-live,beta0,specialist,100000,smol,va_shuffled,0.4633333333333334,0.46,0.4666666666666667,2,False
 live,beta025_cartel,specialist,100000,oracle,-,0.8622222222222221,0.83,0.8966666666666666,3,False
 live,beta025_cartel,specialist,100000,MIDIAN-VA (whole population),-,0.7877777777777778,0.7533333333333333,0.8133333333333334,3,False
 live,beta025_cartel,specialist,100000,adk,tfidf,0.37888888888888883,0.3466666666666667,0.4233333333333333,3,False
@@ -2336,14 +2328,6 @@ live,beta025_cartel,specialist,100000,maf,va_cohort,0.5266666666666667,0.4266666
 live,beta025_cartel,specialist,100000,magentic,va_cohort,0.6155555555555555,0.5766666666666667,0.6566666666666666,3,False
 live,beta025_cartel,specialist,100000,openai,va_cohort,0.4688888888888889,0.3366666666666666,0.6666666666666666,3,False
 live,beta025_cartel,specialist,100000,smol,va_cohort,0.5155555555555555,0.4466666666666666,0.5533333333333333,3,False
-live,beta025_cartel,specialist,100000,autogen,va_shuffled,0.5422222222222223,0.5033333333333333,0.6066666666666667,3,False
-live,beta025_cartel,specialist,100000,camel,va_shuffled,0.46555555555555556,0.38000000000000006,0.5666666666666667,3,False
-live,beta025_cartel,specialist,100000,langgraph,va_shuffled,0.4688888888888889,0.3733333333333333,0.5733333333333334,3,False
-live,beta025_cartel,specialist,100000,llama,va_shuffled,0.42333333333333334,0.4000000000000001,0.4666666666666666,3,False
-live,beta025_cartel,specialist,100000,maf,va_shuffled,0.5044444444444444,0.47666666666666674,0.5366666666666666,3,False
-live,beta025_cartel,specialist,100000,magentic,va_shuffled,0.5722222222222223,0.5466666666666666,0.6166666666666667,3,False
-live,beta025_cartel,specialist,100000,openai,va_shuffled,0.45444444444444443,0.4233333333333333,0.47,3,False
-live,beta025_cartel,specialist,100000,smol,va_shuffled,0.47222222222222215,0.44,0.5133333333333333,3,False
 live,beta025_random,specialist,100000,oracle,-,0.8622222222222221,0.83,0.8966666666666666,3,False
 live,beta025_random,specialist,100000,MIDIAN-VA (whole population),-,0.8188888888888889,0.7766666666666667,0.8666666666666667,3,False
 live,beta025_random,specialist,100000,adk,tfidf,0.37888888888888883,0.3466666666666667,0.4233333333333333,3,False
@@ -2444,14 +2428,6 @@ live,beta025_random,specialist,100000,maf,va_cohort,0.5433333333333333,0.43,0.60
 live,beta025_random,specialist,100000,magentic,va_cohort,0.6533333333333333,0.58,0.7066666666666667,3,False
 live,beta025_random,specialist,100000,openai,va_cohort,0.4777777777777777,0.37666666666666665,0.6466666666666666,3,False
 live,beta025_random,specialist,100000,smol,va_cohort,0.51,0.45,0.54,3,False
-live,beta025_random,specialist,100000,autogen,va_shuffled,0.5544444444444444,0.52,0.6166666666666667,3,False
-live,beta025_random,specialist,100000,camel,va_shuffled,0.4766666666666666,0.4066666666666667,0.5566666666666666,3,False
-live,beta025_random,specialist,100000,langgraph,va_shuffled,0.5255555555555556,0.44,0.6266666666666667,3,False
-live,beta025_random,specialist,100000,llama,va_shuffled,0.49222222222222217,0.4333333333333333,0.53,3,False
-live,beta025_random,specialist,100000,maf,va_shuffled,0.5033333333333334,0.4833333333333332,0.5166666666666667,3,False
-live,beta025_random,specialist,100000,magentic,va_shuffled,0.5922222222222223,0.55,0.64,3,False
-live,beta025_random,specialist,100000,openai,va_shuffled,0.45999999999999996,0.4466666666666666,0.4833333333333332,3,False
-live,beta025_random,specialist,100000,smol,va_shuffled,0.4666666666666666,0.4266666666666667,0.5,3,False
 live,beta05_random,specialist,100000,oracle,-,0.8622222222222221,0.83,0.8966666666666666,3,False
 live,beta05_random,specialist,100000,MIDIAN-VA (whole population),-,0.8344444444444444,0.8166666666666668,0.8433333333333334,3,False
 live,beta05_random,specialist,100000,adk,tfidf,0.37888888888888883,0.3466666666666667,0.4233333333333333,3,False
@@ -2552,14 +2528,6 @@ live,beta05_random,specialist,100000,maf,va_cohort,0.5622222222222222,0.49333333
 live,beta05_random,specialist,100000,magentic,va_cohort,0.6744444444444445,0.63,0.71,3,False
 live,beta05_random,specialist,100000,openai,va_cohort,0.48666666666666664,0.3366666666666666,0.63,3,False
 live,beta05_random,specialist,100000,smol,va_cohort,0.5433333333333333,0.5366666666666666,0.55,3,False
-live,beta05_random,specialist,100000,autogen,va_shuffled,0.5422222222222223,0.5,0.6033333333333334,3,False
-live,beta05_random,specialist,100000,camel,va_shuffled,0.4466666666666666,0.3733333333333333,0.52,3,False
-live,beta05_random,specialist,100000,langgraph,va_shuffled,0.4888888888888889,0.4333333333333333,0.58,3,False
-live,beta05_random,specialist,100000,llama,va_shuffled,0.4766666666666666,0.4033333333333333,0.5233333333333333,3,False
-live,beta05_random,specialist,100000,maf,va_shuffled,0.4977777777777777,0.48,0.5233333333333333,3,False
-live,beta05_random,specialist,100000,magentic,va_shuffled,0.5788888888888889,0.5466666666666666,0.6266666666666667,3,False
-live,beta05_random,specialist,100000,openai,va_shuffled,0.43333333333333335,0.4233333333333333,0.4433333333333333,3,False
-live,beta05_random,specialist,100000,smol,va_shuffled,0.47000000000000003,0.45,0.5,3,False
 live,cartel,specialist,100000,oracle,-,0.8622222222222221,0.83,0.8966666666666666,3,False
 live,cartel,specialist,100000,MIDIAN-VA (whole population),-,0.8277777777777778,0.8133333333333334,0.8366666666666666,3,False
 live,cartel,specialist,100000,adk,tfidf,0.37888888888888883,0.3466666666666667,0.4233333333333333,3,False
@@ -2660,11 +2628,3 @@ live,cartel,specialist,100000,maf,va_cohort,0.5244444444444444,0.423333333333333
 live,cartel,specialist,100000,magentic,va_cohort,0.6200000000000001,0.5633333333333334,0.66,3,False
 live,cartel,specialist,100000,openai,va_cohort,0.45888888888888885,0.3333333333333333,0.57,3,False
 live,cartel,specialist,100000,smol,va_cohort,0.5366666666666667,0.5,0.56,3,False
-live,cartel,specialist,100000,autogen,va_shuffled,0.5277777777777778,0.4966666666666666,0.55,3,False
-live,cartel,specialist,100000,camel,va_shuffled,0.43111111111111106,0.3733333333333333,0.47333333333333333,3,False
-live,cartel,specialist,100000,langgraph,va_shuffled,0.46444444444444444,0.39666666666666667,0.56,3,False
-live,cartel,specialist,100000,llama,va_shuffled,0.4266666666666667,0.4033333333333333,0.4533333333333333,3,False
-live,cartel,specialist,100000,maf,va_shuffled,0.4877777777777778,0.4233333333333333,0.5533333333333333,3,False
-live,cartel,specialist,100000,magentic,va_shuffled,0.5411111111111112,0.49333333333333335,0.62,3,False
-live,cartel,specialist,100000,openai,va_shuffled,0.44,0.4066666666666667,0.5,3,False
-live,cartel,specialist,100000,smol,va_shuffled,0.4666666666666666,0.4633333333333333,0.47,3,False
