@@ -1,5 +1,10 @@
 # RTE — Routing To Experts: MIDIAN vs self-contained rivals and ten real agent frameworks
 
+> **Before launching anything, read [OPS_RULES.md](OPS_RULES.md)** -- mandatory operating rules (1-CPU units via
+> `scripts/launch_units.sh`, measured walltimes, 1-GPU fleet replicas, `scripts/check_envs.sh` gate, loud infra
+> errors). Every rule was paid for; see CHANGES_AND_ERRATA errata 27-28.
+
+
 RTE is a clean-room benchmark for one question: **given n agents of unknown and possibly misreported skill, how do you
 route each incoming task to the right one, cheaply, when some agents lie?** It compares MIDIAN, a hierarchical
 peer-verified routing tree, against 18 self-contained rival mechanisms and the selection primitives of 10 popular

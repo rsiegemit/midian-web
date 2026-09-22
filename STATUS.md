@@ -1,5 +1,10 @@
 # STATUS.md — RTE handoff
 
+> **Before launching anything, read [OPS_RULES.md](OPS_RULES.md)** -- mandatory operating rules (1-CPU units via
+> `scripts/launch_units.sh`, measured walltimes, 1-GPU fleet replicas, `scripts/check_envs.sh` gate, loud infra
+> errors). Every rule was paid for; see CHANGES_AND_ERRATA errata 27-28.
+
+
 **Current (2026-09-17 18:30, v7 sync).** Read `RESULTS.md` first (the dossier; every number in `paper/NUMBERS.json`),
 then `METHODS.md` (every method: origin, what it is, what it does), `COVERAGE.md` (what exists, what is missing, whether
 the gap is justified, and the campaign state), `CHANGES_AND_ERRATA.md` (errata 1-26) and `DEVIATIONS.md` (dated log).
