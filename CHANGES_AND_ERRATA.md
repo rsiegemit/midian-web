@@ -365,6 +365,26 @@ current lie model actually attacks.
 
 ---
 
+## 8c. Erratum 28 -- framework rows that silently measured declared argmax (2026-09-22)
+
+A supervisor/worker error returned `choice=None` and the adapter routed by declared argmax, writing a normal-looking row
+that measured declared argmax under the framework's name. Root cause: 7 framework conda envs (autogen, crewai,
+google_adk, langgraph, llamaindex, maf, openai_agents) had 240 dangling library symlinks each -- the targets of libffi,
+libbz2, libreadline, libsqlite3 and ~100 more had been deleted, and the extracted package cache lost the same files.
+Workers crashed only on nodes whose `/lib64` lacked a compatible copy, so the failure was bimodal per unit (0% or ~100%
+fallback) and read as framework behaviour. CrewAI and ADK were hit hardest (~2/3 of units each).
+
+Effect on reported numbers: declared argmax scores 0.619 honest, above most frameworks, so contamination biased CrewAI
+and ADK UPWARD -- it is why they topped the ten-framework table (0.633 on MiniLM at 10^5, identical to each other in
+every shortlist condition) -- and inflated every "mean of ten frameworks". Correcting it can only lower those numbers.
+
+Fix: envs restored byte-identically from the package archives (`scripts/ops/repair_fw_envs.sh`; `scripts/check_envs.sh`
+passes on all 14 envs); all ten frameworks verified live (3/3 correct delegations, 0 infra errors each);
+`FrameworkMethod.fetch` now fails a unit instead of writing a row once infra errors pass 2% of calls; 4,269 contaminated
+rows moved to `results/<grid>/quarantine/` (not deleted) and their 2,904 units rerun. Rules: OPS_RULES.md D1-D6.
+
+---
+
 ## 9. Still open (not results)
 
 - Coverage fill and expansions (COVERAGE.md §7-§9, 2026-09-17): the synthetic and live fills are complete and folded; three
