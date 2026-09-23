@@ -62,7 +62,7 @@ def save(fig, name):
 
 
 # ----------------------------------------------------------------------------------------------------- M1
-M1_SERIES = ["oracle", HALP, "midian_va", "midian_a", "midian", FLAT_ON, "knn_router", "declared_argmax", "random"]
+M1_SERIES = [l for l in ["oracle", HALP, "midian_va", "midian_a", "midian", FLAT_ON, "knn_router", "declared_argmax", "random"] if not excluded(l)]
 SIM_SKIP = {"knn_router",            # not run on the calibrated backend
             "declared_argmax"}       # the calibrated sweep declares on the PROGRAMMATIC channel (honest S + noise); the live points are
                                      # self-described (over-claiming), so one curve across both would read a channel change as scale
@@ -150,7 +150,7 @@ def M1():
     axes[0].set_ylabel("success"); csv("M1_success_vs_n", recs); save(fig, "M1_success_vs_n")
 
 
-M1F_SERIES = ["oracle", HALP, "declared_argmax", "warm_start_bandit", "midian_va", "midian_v", "midian", "mlp_router", FLAT_ON, "knn_router", "random"]
+M1F_SERIES = [l for l in ["oracle", HALP, "declared_argmax", "warm_start_bandit", "midian_va", "midian_v", "midian", "mlp_router", FLAT_ON, "knn_router", "random"] if not excluded(l)]
 
 
 def M1_full():
@@ -178,8 +178,8 @@ def M1_full():
 
 
 # ----------------------------------------------------------------------------------------------------- M2
-M2_SERIES = ["oracle", HALP, "midian_va", "midian_v", "midian_a", "midian", FLAT_ON, "mlp_router", "knn_router", "declared_argmax"]
-BAND = {"midian_va", "midian_v", HALP, "declared_argmax"}
+M2_SERIES = [l for l in ["oracle", HALP, "midian_va", "midian_v", "midian_a", "midian", FLAT_ON, "mlp_router", "knn_router", "declared_argmax"] if not excluded(l)]
+BAND = {l for l in ("midian_va", "midian_v", HALP, "declared_argmax") if not excluded(l)}
 REPORT_FREE = {FLAT_ON, "mlp_router", "knn_router", "declared_argmax", "oracle"}
 
 

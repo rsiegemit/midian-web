@@ -68,11 +68,15 @@ _DELTA = re.compile(r"delta=([0-9.]+)")
 _VARIANT = re.compile(r"cohort=|stratify=True|churn_mode=|online=False")   # v4 cohort modes (their own tables), churn-mode arms (H9), online-off ablations
 
 
+HIDE_HALVING = True          # TEMPORARY (2026-09-22, user request): every sequential-halving arm off every figure; set False to restore
+
+
 def excluded(label):
     """The do-not-add list for every figure: MIDIAN with r != 10 or delta != 1/3, SH / SHA, the LLM-descent ablation, online-off,
     the v4 cohort-mode and churn-mode variants, route-to-many, and the trusted-observer halving arm (erratum 26)."""
     label = str(label)
     if label in DO_NOT_ADD: return True
+    if HIDE_HALVING and ("halving" in label.lower()): return True
     if label.startswith("midian") or label.startswith("sequential_halving"):
         if _VARIANT.search(label): return True
         m = _R.search(label)
@@ -199,7 +203,7 @@ def H4():
 def H5():
     """Cost scaling on bernoulli_scale (K=16; b=3 to 1e5, b=1 above) + supervisor latency from the fw rows only."""
     d = rows("bernoulli_scale"); d = d[d.beta.isin([0.0, 0.25])] if len(d) else d
-    keep = {"midian": "-", "midian_v": "-", FLAT: "-", "declared_argmax": "--", "cnp_self_bid": ":", HALP: "-"}
+    keep = {k: v for k, v in {"midian": "-", "midian_v": "-", FLAT: "-", "declared_argmax": "--", "cnp_self_bid": ":", HALP: "-"}.items() if not excluded(k)}
     fig, axes = plt.subplots(1, 4, figsize=(22, 5))
     for ax, (c, ttl) in zip(axes[:3], [("comparisons_per_task", "comparisons per task"), ("messages_per_task", "messages per task"), ("build_probes", "build probes (b=1 above 1e5)")]):
         for l, ls in keep.items():
@@ -216,7 +220,7 @@ def H5():
 def H6():
     """MIDIAN vs halving by beta x liar selection, self-described, with the Phase-1 variants; second row = replay twin."""
     live = selfdesc(rows("live_f1_n1000", "variants_f1")); rep = rows("replay_mirror_live_f1_n1000")
-    arms = ["oracle", HALP, "midian_v", "midian", "midian_sh", "midian_a", "midian_sha", "midian_va", FLAT_ON]   # no trusted-observer halving (erratum 26)
+    arms = [l for l in ["oracle", HALP, "midian_v", "midian", "midian_sh", "midian_a", "midian_sha", "midian_va", FLAT_ON] if not excluded(l)]   # no trusted-observer halving (erratum 26)
     fig, axes = plt.subplots(2, 2, figsize=(13, 9), sharey="row")
     for r_, (df, name) in enumerate([(live, "live LLM population, self-described channel"), (rep, "RouterBench replay twin")]):
         w = piv(df, ("dist", "beta", "liar_select", "seed")) if len(df) else pd.DataFrame()
@@ -249,7 +253,7 @@ def H8():
     """Budget sweep split by declaration channel (budget_sweep: b=1,3,10 programmatic; budget_b10_shapes adds b=10 on both channels)."""
     df = rows("budget_sweep", "budget_b10_shapes")
     if not len(df): return print("[H8] waiting on data")
-    arms = ["oracle", HALP, "midian_v", "midian", FLAT, FLAT_ON, "warm_start_bandit", "declared_argmax", "linucb_honest", "fw_langgraph", "fw_autogen"]
+    arms = [l for l in ["oracle", HALP, "midian_v", "midian", FLAT, FLAT_ON, "warm_start_bandit", "declared_argmax", "linucb_honest", "fw_langgraph", "fw_autogen"] if not excluded(l)]
     chans = sorted(df.declared_source.unique()); fig, axes = plt.subplots(1, len(chans), figsize=(7 * len(chans), 5.5), sharey=True)
     for ax, ch in zip(np.atleast_1d(axes), chans):
         w = piv(df[df.declared_source == ch], ("dist", "seed", "b"))
@@ -264,7 +268,7 @@ def H9():
     df = rows("churn_n1000")
     if not len(df) or "churn" not in df: return print("[H9] waiting on data: churn_n1000")
     df = df.assign(frac=df.churn.map(lambda c: (c if isinstance(c, dict) else ast.literal_eval(str(c))).get("frac")), blocks=df.success_by_block.map(lambda b: b if isinstance(b, list) else ast.literal_eval(str(b))))
-    arms = ["oracle", "midian", "midian_sh", "midian_a", "midian_v", HAL_RB, HAL_ST, FLAT_ON, "warm_start_bandit", "linucb_honest", "fw_langgraph", "fw_autogen"]
+    arms = [l for l in ["oracle", "midian", "midian_sh", "midian_a", "midian_v", HAL_RB, HAL_ST, FLAT_ON, "warm_start_bandit", "linucb_honest", "fw_langgraph", "fw_autogen"] if not excluded(l)]
     fracs = sorted(df.frac.dropna().unique()); fig, axes = plt.subplots(2, len(fracs), figsize=(7 * len(fracs), 9), squeeze=False)
     for j, fr in enumerate(fracs):
         d = df[df.frac == fr]

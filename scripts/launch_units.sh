@@ -1,6 +1,6 @@
 #!/bin/bash
 # THE launcher for llm-backend grids: one unit per job, sized from measurement, resumable. Use this, never a copy.
-#   scripts/launch_units.sh <grid> [--nice N]
+#   [RTE_FW_PARALLEL=8 MEM=40G] scripts/launch_units.sh <grid> [--nice N]     (parallel framework requests need the 40 G)
 # Enforces OPS_RULES.md:
 #   R1  units come from the GRID LOADER (rte.run), never a hand-written filter list (a hand list dropped a regime once)
 #   R2  1 CPU: a unit only waits on HTTP to the fleet (2 CPUs ran at ~5% efficiency)
@@ -30,9 +30,9 @@ sub=0
 while IFS=$'\t' read -r m only seed t; do
   key="$m|$only|$seed"; grep -qF "$key" "$LOG" && continue
   while :; do
-    jid=$(sbatch --parsable -p sapphire,serial_requeue -A sompolinsky_lab --nice="$NICE" -c 1 --mem=32G --time="$t" \
+    jid=$(sbatch --parsable -p sapphire,serial_requeue -A sompolinsky_lab --nice="$NICE" -c 1 --mem="${MEM:-32G}" --time="$t" \
       --job-name="rte_${G}__${m}" -o "$RTE_DATA/logs/units/%x-%j.out" -e "$RTE_DATA/logs/units/%x-%j.err" \
-      --export=ALL,RTE_PYTHON="$PY",RTE_WORKERS=1,RTE_CONSOLIDATE=0 \
+      --export=ALL,RTE_PYTHON="$PY",RTE_WORKERS=1,RTE_CONSOLIDATE=0,RTE_FW_PARALLEL="${RTE_FW_PARALLEL:-1}" \
       scripts/run_grid.sbatch "$G" --methods "$m" --only "$only" --seeds "$seed" 2>&1)
     case "$jid" in
       *QOSMax*) sleep 300;;

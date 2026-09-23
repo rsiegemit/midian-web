@@ -91,6 +91,7 @@ if __name__ == "__main__":
     open(os.path.dirname(__file__) + "/../RESULTS_energy.md", "w").write("\n".join(md) + "\n")
     T = np.logspace(2, 5, 300); fig, axes = plt.subplots(2, 2, figsize=(15, 11)); axes = axes.ravel()
     show = ["midian", "midian_a", "midian_v", 'sequential_halving{"peer_reported":true}', 'flat_probe_argmax{"online":true}', "linucb_honest", "verify_on_claim", "llm_supervisor"] + fws
+    from extra_figs import excluded; show = [l for l in show if not excluded(l)]
     style = {"midian": ("#c0392b", 3.0), "midian_a": ("#e74c3c", 2.2), "midian_v": ("#e67e22", 2.2), "fw_autogen": ("#2980b9", 2.0), "fw_magentic_one": ("#8e44ad", 2.0)}
     panels = [("build_gpu_s", "per_task_gpu_s", 1.0, "cumulative LLM GPU-seconds"), ("build_gpu_s", "per_task_gpu_s", 700 / 3600, "cumulative Wh (700 W per H100)"),
               ("build_msgs", "msgs_per_task", 1.0, "cumulative messages"), ("build_cmp", "cmp_per_task", 1.0, "cumulative comparisons")]

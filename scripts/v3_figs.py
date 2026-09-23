@@ -43,7 +43,7 @@ def X4():
 
 
 def X5():
-    df = load(["routereval_mmlu", "routereval_mmlu5k"]); arms = ["oracle", "sequential_halving_peer", "midian_va", "midian_v", "midian_a", "midian", "flat_probe_argmax_online", "mlp_router", "knn_router", "warm_start_bandit", "declared_argmax"]
+    df = load(["routereval_mmlu", "routereval_mmlu5k"]); arms = [l for l in ["oracle", "sequential_halving_peer", "midian_va", "midian_v", "midian_a", "midian", "flat_probe_argmax_online", "mlp_router", "knn_router", "warm_start_bandit", "declared_argmax"] if not excluded(l)]
     COLOR.setdefault("declared_argmax", "#5d6d7e")
     fig, axes = plt.subplots(2, 4, figsize=(20, 9), sharey="row")
     for j, n in enumerate([10, 100, 1000, 5000]):
@@ -58,7 +58,7 @@ def X5():
 
 
 def X6():
-    df = load(["scale_100k"]); arms = ["oracle", "sequential_halving_peer", "midian_va", "midian_v", "midian_a", "midian", "flat_probe_argmax_online", "warm_start_bandit", "declared_argmax", "linucb_honest"]
+    df = load(["scale_100k"]); arms = [l for l in ["oracle", "sequential_halving_peer", "midian_va", "midian_v", "midian_a", "midian", "flat_probe_argmax_online", "warm_start_bandit", "declared_argmax", "linucb_honest"] if not excluded(l)]
     COLOR.setdefault("declared_argmax", "#5d6d7e")
     fig, axes = plt.subplots(2, 2, figsize=(12, 9), sharey=True)
     for j, n in enumerate([10000, 100000]):

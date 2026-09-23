@@ -3,10 +3,6 @@ random liars,oracle,0.0,0.7229666666666665,0.7187,0.7280333333333332,30,10,varia
 random liars,oracle,0.1,0.7229666666666665,0.7187,0.7280333333333332,30,10,variants_f1+learned_f1+live_f1_n1000
 random liars,oracle,0.25,0.7229666666666665,0.7187,0.7280333333333332,30,10,variants_f1+learned_f1+live_f1_n1000
 random liars,oracle,0.5,0.7229666666666665,0.7187,0.7280333333333332,30,10,variants_f1+learned_f1+live_f1_n1000
-random liars,seq. halving (peer),0.0,0.7218888888888889,0.7168877777777778,0.7275133333333333,30,10,variants_f1+learned_f1+live_f1_n1000
-random liars,seq. halving (peer),0.1,0.7220333333333333,0.7171325,0.7276341666666667,30,10,variants_f1+learned_f1+live_f1_n1000
-random liars,seq. halving (peer),0.25,0.7191333333333333,0.7144666666666668,0.7244999999999999,30,10,variants_f1+learned_f1+live_f1_n1000
-random liars,seq. halving (peer),0.5,0.6778,0.6664991666666666,0.6880000000000001,30,10,variants_f1+learned_f1+live_f1_n1000
 random liars,MIDIAN-VA,0.0,0.6837000000000001,0.6777666666666667,0.6892675,30,10,variants_f1+learned_f1+live_f1_n1000
 random liars,MIDIAN-VA,0.1,0.6716333333333335,0.6649,0.6785675,30,10,variants_f1+learned_f1+live_f1_n1000
 random liars,MIDIAN-VA,0.25,0.6641666666666668,0.6569666666666667,0.6713683333333333,30,10,variants_f1+learned_f1+live_f1_n1000
@@ -43,10 +39,6 @@ low-skill-first liars,oracle,0.0,0.7229666666666665,0.7187,0.7280333333333332,30
 low-skill-first liars,oracle,0.1,0.7229666666666665,0.7187,0.7280333333333332,30,10,variants_f1+learned_f1+live_f1_n1000
 low-skill-first liars,oracle,0.25,0.7229666666666665,0.7187,0.7280333333333332,30,10,variants_f1+learned_f1+live_f1_n1000
 low-skill-first liars,oracle,0.5,0.7229666666666665,0.7187,0.7280333333333332,30,10,variants_f1+learned_f1+live_f1_n1000
-low-skill-first liars,seq. halving (peer),0.0,0.7222222222222222,0.7172549999999999,0.7279777777777777,30,10,variants_f1+learned_f1+live_f1_n1000
-low-skill-first liars,seq. halving (peer),0.1,0.7219333333333332,0.7167333333333332,0.7275341666666666,30,10,variants_f1+learned_f1+live_f1_n1000
-low-skill-first liars,seq. halving (peer),0.25,0.7161333333333335,0.7119,0.7209033333333335,30,10,variants_f1+learned_f1+live_f1_n1000
-low-skill-first liars,seq. halving (peer),0.5,0.4016333333333334,0.39006583333333333,0.4143,30,10,variants_f1+learned_f1+live_f1_n1000
 low-skill-first liars,MIDIAN-VA,0.0,0.6837000000000001,0.6777666666666667,0.6892675,30,10,variants_f1+learned_f1+live_f1_n1000
 low-skill-first liars,MIDIAN-VA,0.1,0.6704,0.6646333333333334,0.6774008333333332,30,10,variants_f1+learned_f1+live_f1_n1000
 low-skill-first liars,MIDIAN-VA,0.25,0.6697,0.6632991666666667,0.6761000000000001,30,10,variants_f1+learned_f1+live_f1_n1000
