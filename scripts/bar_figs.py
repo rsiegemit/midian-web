@@ -28,7 +28,7 @@ MATRIX_REGIME = {"beta0": "beta=0 (no liars)", "beta025_random": "beta=0.25 rand
                  "beta05_random": "beta=0.5 random liars", "cartel": "beta=0.5 CARTEL (low-skill-first)"}
 LIVE_GRIDS = {100: ["fw_live_n100", "learned_n100", "live_core_n100", "fw_live_n100_lowskill"],
               1000: ["fw_live_n1000", "live_f1_n1000", "variants_f1", "learned_f1", "fw_live_n1000_lowskill"],
-              10000: ["learned_n10k", "live_n10k_v2", "fw_live_n10k_cartel"], 100000: ["live_n100k"]}
+              10000: ["learned_n10k", "live_n10k_v2", "fw_live_n10k_cartel", "live_n10k_cartel_random"], 100000: ["live_n100k"]}
 _mem = {}; JOBS = []
 
 

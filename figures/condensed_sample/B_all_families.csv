@@ -287,6 +287,7 @@ RouterEval,5000,honest,random,random,0.6096059113300493
 LLMRouterBench,20,honest,random,random,0.6744827586206896
 live,100,β=0.5 cartel,random,random,0.5039057876671795
 live,1000,β=0.5 cartel,random,random,0.5017998142127265
+live,10000,β=0.5 cartel,random,random,0.4851228978007762
 live,100000,β=0.5 cartel,random,random,0.5128865979381444
 bernoulli,10,β=0.5 cartel,random,random,0.5759288310589347
 bernoulli,100,β=0.5 cartel,random,random,0.4985954068552727

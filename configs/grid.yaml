@@ -1021,3 +1021,7 @@ grids:
   fw_live_n1000_lowskill_backfill: {mirror_of: fw_live_n1000_lowskill, dist: [specialist], seeds: 1-3, methods: *fw10_backfill}
   fw_live_n10k_backfill:          {mirror_of: live_n10k_v2,          beta: [0], methods: *fw10_backfill}
   fw_live_n10k_cartel_backfill:   {mirror_of: fw_live_n10k_cartel,   methods: *fw10_backfill}
+
+  # ---- 2026-09-22: the one missing bar -- random at n = 10^4 under the beta = 0.5 low-skill cartel (live_n10k_v2 ran
+  # random only at beta in {0, 0.25}; learned_n10k and fw_live_n10k_cartel never listed it). Same cells as learned_n10k.
+  live_n10k_cartel_random: {mirror_of: learned_n10k, beta: [0.5], liar_select: [low_skill_first], methods: [random]}
