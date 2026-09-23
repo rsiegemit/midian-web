@@ -1,0 +1,177 @@
+family,group,n,regime,best_rival,gap,half_width,best_rival_incl_hidden,gap_incl_hidden
+RouterEval,all_weak,5000,beta0,declared_argmax,-0.15888888888888886,0.05550275268448903,sequential_halving,-0.17666666666666653
+RouterEval,strong_to_weak,5000,beta0,declared_argmax,-0.15888888888888886,0.05550275268448903,sequential_halving,-0.17666666666666653
+RouterEval,all_strong,5000,beta0,declared_argmax,-0.15888888888888886,0.05550275268448903,sequential_halving,-0.17666666666666653
+RouterEval,strong_to_weak,1000,beta0,declared_argmax,-0.12600000000000022,0.021896717219711332,declared_argmax,-0.12600000000000022
+RouterEval,strong_to_weak,100,beta05_random,mlp_router,-0.11839999999999995,0.02428600419995015,mlp_router,-0.11839999999999995
+RouterEval,strong_to_weak,100,beta025_random,mlp_router,-0.11759999999999993,0.03194119597009475,mlp_router,-0.11759999999999993
+RouterEval,strong_to_weak,100,beta025_cartel,mlp_router,-0.11359999999999992,0.023894769302087865,mlp_router,-0.11359999999999992
+RouterEval,strong_to_weak,100,cartel,mlp_router,-0.11140000000000005,0.025321137415211064,mlp_router,-0.11140000000000005
+RouterEval,strong_to_weak,100,beta0,mlp_router,-0.11099999999999999,0.029595399241267216,mlp_router,-0.11099999999999999
+RouterEval,strong_to_weak,10,beta025_random,mlp_router,-0.0978,0.023528705871764446,mlp_router,-0.0978
+RouterEval,strong_to_weak,10,beta0,mlp_router,-0.09639999999999993,0.024482646915723803,mlp_router,-0.09639999999999993
+RouterEval,strong_to_weak,10,cartel,mlp_router,-0.09639999999999993,0.024482646915723803,mlp_router,-0.09639999999999993
+RouterEval,strong_to_weak,10,beta05_random,mlp_router,-0.0955999999999998,0.023719190542680874,mlp_router,-0.0955999999999998
+RouterEval,strong_to_weak,10,beta025_cartel,mlp_router,-0.0938,0.022010906387516238,mlp_router,-0.0938
+RouterEval,all_strong,1000,beta0,declared_argmax,-0.09239999999999993,0.011482595525402796,declared_argmax,-0.09239999999999993
+RouterEval,all_weak,1000,beta025_random,declared_argmax,-0.06840000000000002,0.01820988742414405,declared_argmax,-0.06840000000000002
+RouterEval,all_weak,1000,beta05_random,declared_argmax,-0.06719999999999993,0.01716896928327383,declared_argmax,-0.06719999999999993
+RouterEval,all_weak,1000,beta0,declared_argmax,-0.05980000000000002,0.028448097036533056,declared_argmax,-0.05980000000000002
+bernoulli,specialist,100,beta0,declared_argmax,-0.05744099999999985,0.0019422055324584905,declared_argmax,-0.05744099999999985
+bernoulli,specialist,10,beta0,cluster_head_router,-0.05444899999999997,0.003856569391736747,cluster_head_router,-0.05444899999999997
+RouterEval,all_weak,10,beta025_random,knn_router_online,-0.054200000000000026,0.025175384803414615,knn_router_online,-0.054200000000000026
+RouterBench replay,all shapes pooled,100,beta0,declared_argmax,-0.05363833333333334,0.001547435451276676,declared_argmax,-0.05363833333333334
+RouterEval,all_weak,10,beta025_cartel,knn_router_online,-0.052800000000000014,0.023067987693988403,knn_router_online,-0.052800000000000014
+RouterEval,all_weak,10,beta0,knn_router_online,-0.05140000000000011,0.02596944550813513,knn_router_online,-0.05140000000000011
+RouterEval,all_weak,10,cartel,knn_router_online,-0.05140000000000011,0.02596944550813513,knn_router_online,-0.05140000000000011
+RouterEval,all_weak,10,beta05_random,knn_router_online,-0.05140000000000011,0.02596944550813513,knn_router_online,-0.05140000000000011
+LLMRouterBench,20 models,20,beta0,declared_argmax,-0.049000000000000044,0.02546291420870753,declared_argmax,-0.049000000000000044
+bernoulli,specialist,1000,beta0,verify_on_claim,-0.04793700000000012,0.001245302760187637,sequential_halving_peer,-0.050159000000000065
+RouterEval,strong_to_weak,1000,beta025_cartel,mlp_router,-0.0474,0.0470919313683353,mlp_router,-0.0474
+RouterEval,strong_to_weak,1000,beta025_random,mlp_router,-0.046599999999999975,0.046038940311436356,mlp_router,-0.046599999999999975
+RouterEval,all_weak,100,beta025_cartel,knn_router_online,-0.0464,0.015564061166675011,knn_router_online,-0.0464
+RouterEval,all_strong,1000,beta025_random,linucb_honest,-0.045399999999999996,0.024123432591569564,linucb_honest,-0.045399999999999996
+RouterEval,all_weak,100,cartel,knn_router_online,-0.04420000000000002,0.011764352935882225,knn_router_online,-0.04420000000000002
+RouterBench replay,all shapes pooled,1000,beta0,declared_argmax,-0.042966999999999866,0.0011550364313413094,declared_argmax,-0.042966999999999866
+RouterEval,strong_to_weak,1000,cartel,mlp_router,-0.041999999999999926,0.04740675057415343,mlp_router,-0.041999999999999926
+bernoulli,specialist,10000,beta0,verify_on_claim,-0.04157199999999994,0.0012169169143397443,sequential_halving_peer,-0.049138000000000015
+bernoulli,specialist,100000,beta0,verify_on_claim,-0.041538000000000075,0.0017709395927726652,sequential_halving_peer,-0.048628000000000005
+bernoulli,specialist,10000000,beta0,verify_on_claim,-0.04056999999999977,0.0037172890155327725,sequential_halving_peer,-0.044789999999999774
+RouterBench replay,all shapes pooled,10,beta0,cluster_head_router,-0.0399356666666667,0.010155967510349181,cluster_head_router,-0.0399356666666667
+bernoulli,specialist,1000000,beta0,cnp_self_bid,-0.03887499999999999,0.0024593462363312057,sequential_halving_peer,-0.04526000000000008
+LLMRouterBench,20 models,20,beta05_random,mlp_router,-0.03839999999999999,0.03207132675771305,mlp_router,-0.03839999999999999
+RouterEval,all_weak,100,beta025_random,knn_router_online,-0.03839999999999999,0.018774717041809188,knn_router_online,-0.03839999999999999
+RouterEval,strong_to_weak,1000,beta05_random,mlp_router,-0.03820000000000001,0.04687216658103186,mlp_router,-0.03820000000000001
+RouterEval,all_weak,100,beta0,knn_router_online,-0.03760000000000002,0.015388892910147901,knn_router_online,-0.03760000000000002
+RouterEval,all_weak,100,beta05_random,knn_router_online,-0.03739999999999999,0.012762444906835039,knn_router_online,-0.03739999999999999
+RouterEval,all_strong,1000,beta025_cartel,linucb_honest,-0.03639999999999988,0.021627066375262405,linucb_honest,-0.03639999999999988
+live,bimodal,1000,beta025_random,verify_on_claim,-0.035599999999999854,0.011303589100922745,sequential_halving,-0.035599999999999854
+RouterEval,all_strong,100,beta0,declared_argmax,-0.03399999999999981,0.013775340286178024,declared_argmax,-0.03399999999999981
+RouterBench replay,all shapes pooled,10000,beta0,verify_on_claim,-0.0325333333333333,0.0011389491469128365,sequential_halving_peer,-0.03432400000000002
+live,bimodal,1000,beta01_random,verify_on_claim,-0.03090000000000004,0.013175071157303105,sequential_halving,-0.031299999999999994
+RouterEval,all_strong,1000,beta05_random,linucb_honest,-0.030200000000000005,0.01716770223413724,linucb_honest,-0.030200000000000005
+live,bimodal,1000,beta025_cartel,llm_supervisor,-0.030199999999999894,0.014022713940247067,llm_supervisor,-0.030199999999999894
+live,heavy_tail,1000,beta025_random,warm_start_bandit,-0.02959999999999996,0.012992786460186267,sequential_halving,-0.06899999999999995
+RouterBench replay,all shapes pooled,100000,beta0,verify_on_claim,-0.029420000000000113,0.0024884814616165083,sequential_halving_peer,-0.030843333333333556
+live,bimodal,1000,cartel,llm_supervisor,-0.028750000000000053,0.011850248151410166,sequential_halving,-0.02969999999999995
+live,bimodal,1000,beta05_random,verify_on_claim,-0.027599999999999958,0.014200352108310488,sequential_halving,-0.027799999999999936
+RouterEval,all_strong,1000,cartel,linucb_honest,-0.02739999999999987,0.014340502083260553,linucb_honest,-0.02739999999999987
+RouterBench replay,all shapes pooled,1000000,beta0,cluster_head_router,-0.026710000000000123,0.0038404430501156835,sequential_halving_peer,-0.028303333333333458
+live,bimodal,1000,beta0,cluster_head_router,-0.026100000000000012,0.01230690862889611,cluster_head_router,-0.026100000000000012
+live,bimodal,100,beta0,declared_argmax,-0.024433333333333085,0.011141163048017001,declared_argmax,-0.024433333333333085
+LLMRouterBench,20 models,20,beta025_random,mlp_router,-0.023400000000000087,0.024860008045050952,mlp_router,-0.023400000000000087
+live,heavy_tail,100,beta01_random,flat_probe_argmax_online,-0.02320000000000011,0.02323066941701203,sequential_halving_peer,-0.0646000000000001
+RouterBench replay,all shapes pooled,1000,beta025_cartel,verify_on_claim,-0.022786666666666622,0.0011620621051754087,sequential_halving_peer,-0.04125866666666678
+RouterBench replay,all shapes pooled,100,beta025_cartel,verify_on_claim,-0.02235799999999999,0.0015930350949306664,verify_on_claim,-0.02235799999999999
+bernoulli,specialist,10,beta025_random,flat_probe_argmax_online,-0.022017000000000064,0.003966074608732309,flat_probe_argmax_online,-0.022017000000000064
+live,specialist,100,beta01_random,flat_probe_argmax_online,-0.02169999999999994,0.024840659776362625,sequential_halving,-0.05149999999999999
+bernoulli,specialist,10,beta025_cartel,flat_probe_argmax_online,-0.02161299999999977,0.003968125755197488,flat_probe_argmax_online,-0.02161299999999977
+bernoulli,specialist,10,beta05_random,flat_probe_argmax_online,-0.021525000000000016,0.003992006453409335,flat_probe_argmax_online,-0.021525000000000016
+bernoulli,specialist,10,cartel,flat_probe_argmax_online,-0.021201999999999943,0.0039673732528981865,flat_probe_argmax_online,-0.021201999999999943
+LLMRouterBench,20 models,20,cartel,mlp_router,-0.02080000000000015,0.02782552784764379,mlp_router,-0.02080000000000015
+LLMRouterBench,20 models,20,beta025_cartel,mlp_router,-0.02080000000000004,0.02275820744808337,mlp_router,-0.02080000000000004
+live,heavy_tail,1000,beta01_random,warm_start_bandit,-0.02069999999999994,0.012311072252245118,sequential_halving,-0.059699999999999975
+live,specialist,100,beta025_random,flat_probe_argmax_online,-0.020499999999999963,0.021165390418381093,sequential_halving,-0.05030000000000001
+RouterBench replay,all shapes pooled,10,beta025_random,linucb_honest,-0.020292999999999894,0.010177489334843396,linucb_honest,-0.020292999999999894
+RouterBench replay,all shapes pooled,10,beta025_cartel,linucb_honest,-0.02027566666666658,0.010176133956265881,linucb_honest,-0.02027566666666658
+RouterBench replay,all shapes pooled,10,beta05_random,linucb_honest,-0.0202753333333332,0.010175567587098897,linucb_honest,-0.0202753333333332
+RouterBench replay,all shapes pooled,10,cartel,linucb_honest,-0.0202753333333332,0.010175567587098897,linucb_honest,-0.0202753333333332
+bernoulli,specialist,100000,beta025_random,warm_start_bandit,-0.020157999999999898,0.002000114978726266,sequential_halving_peer,-0.06321199999999982
+live,specialist,100,beta025_cartel,flat_probe_argmax_online,-0.020000000000000018,0.023678756466767842,sequential_halving,-0.049800000000000066
+bernoulli,specialist,10000,beta025_random,warm_start_bandit,-0.01903799999999989,0.001355964022211279,sequential_halving_peer,-0.06425099999999984
+live,heavy_tail,100,beta025_random,flat_probe_argmax_online,-0.018900000000000028,0.024101919010734375,sequential_halving,-0.06020000000000003
+bernoulli,specialist,1000000,beta025_random,warm_start_bandit,-0.0181349999999999,0.0031027112198949492,sequential_halving_peer,-0.0590949999999999
+bernoulli,specialist,10000000,beta025_random,warm_start_bandit,-0.01802999999999988,0.004158323888599716,sequential_halving_peer,-0.05954999999999988
+live,bimodal,100,beta01_random,mlp_router,-0.016800000000000037,0.015556509891360568,sequential_halving,-0.028800000000000048
+bernoulli,specialist,1000,beta025_random,warm_start_bandit,-0.016625000000000112,0.0014015800954860307,sequential_halving_peer,-0.06368999999999991
+live,bimodal,100,beta025_cartel,mlp_router,-0.01649999999999996,0.015310756074162343,sequential_halving,-0.02849999999999997
+live,heavy_tail,1000,beta025_cartel,warm_start_bandit,-0.016199999999999992,0.013827951990443108,sequential_halving,-0.06240000000000001
+RouterEval,all_strong,10,beta05_random,knn_router_online,-0.01539999999999997,0.012045332083425423,knn_router_online,-0.01539999999999997
+live,bimodal,100,beta025_random,mlp_router,-0.015000000000000124,0.01765573561197606,sequential_halving,-0.027000000000000135
+RouterEval,all_strong,10,beta025_random,knn_router_online,-0.014799999999999924,0.011313708498984693,knn_router_online,-0.014799999999999924
+bernoulli,specialist,1000,beta025_cartel,warm_start_bandit,-0.01426700000000003,0.0013908873766524921,sequential_halving_peer,-0.062085999999999975
+RouterEval,all_strong,10,beta025_cartel,knn_router_online,-0.014000000000000012,0.010762899237658925,knn_router_online,-0.014000000000000012
+live,heavy_tail,1000,beta0,warm_start_bandit,-0.014000000000000012,0.010678424582423164,sequential_halving_peer,-0.04379999999999995
+RouterEval,all_strong,10,beta0,knn_router_online,-0.013600000000000056,0.010499523798725267,knn_router_online,-0.013600000000000056
+bernoulli,specialist,100000,beta05_random,warm_start_bandit,-0.013268000000000058,0.0019742985095976876,sequential_halving_peer,-0.04787599999999992
+bernoulli,specialist,1000000,beta05_random,warm_start_bandit,-0.012940000000000174,0.0030870309524789713,sequential_halving_peer,-0.050040000000000084
+RouterEval,all_strong,10,cartel,knn_router_online,-0.012599999999999945,0.010897706180660164,knn_router_online,-0.012599999999999945
+live,specialist,100,cartel,flat_probe_argmax_online,-0.012499999999999956,0.025772000461983975,sequential_halving,-0.042300000000000004
+bernoulli,specialist,10000,beta05_random,warm_start_bandit,-0.010525999999999924,0.0013726291634350418,sequential_halving_peer,-0.03935500000000003
+RouterBench replay,all shapes pooled,10000,beta025_cartel,warm_start_bandit,-0.010513333333333486,0.0011553604113679727,sequential_halving_peer,-0.0381813333333334
+live,bimodal,100,cartel,mlp_router,-0.010000000000000009,0.014110722873049406,sequential_halving,-0.02200000000000002
+live,heavy_tail,100,beta025_cartel,flat_probe_argmax_online,-0.009000000000000008,0.025268260723682604,sequential_halving,-0.05030000000000001
+RouterBench replay,all shapes pooled,100000,beta025_cartel,warm_start_bandit,-0.008533333333333393,0.0024468052736801573,sequential_halving_peer,-0.03465000000000007
+live,heavy_tail,1000,beta05_random,warm_start_bandit,-0.008500000000000063,0.008882707920448549,sequential_halving,-0.04589999999999994
+live,heavy_tail,100,beta0,warm_start_bandit,-0.008199999999999985,0.0282029255186852,sequential_halving,-0.04500000000000004
+bernoulli,specialist,1000,beta05_random,warm_start_bandit,-0.00812400000000002,0.0014335440202955312,sequential_halving_peer,-0.012656999999999918
+live,bimodal,100,beta05_random,mlp_router,-0.008100000000000107,0.013473121390383145,sequential_halving,-0.020100000000000118
+bernoulli,specialist,100,beta025_random,flat_probe_argmax_online,-0.008073999999999915,0.002201975493058747,sequential_halving_peer,-0.03722900000000007
+RouterBench replay,all shapes pooled,100,beta025_random,linucb_honest,-0.007811333333333281,0.0016334020432082865,sequential_halving_peer,-0.015642333333333425
+live,heavy_tail,1000,cartel,warm_start_bandit,-0.006799999999999917,0.010995567288684945,sequential_halving,-0.04799999999999993
+bernoulli,specialist,10000000,beta05_random,warm_start_bandit,-0.006739999999999746,0.00407350772139312,sequential_halving_peer,-0.04825999999999975
+RouterBench replay,all shapes pooled,100,cartel,linucb_honest,-0.006482333333333257,0.0016551869559664116,linucb_honest,-0.006482333333333257
+RouterBench replay,all shapes pooled,100,beta05_random,linucb_honest,-0.00630799999999998,0.001661122751297558,linucb_honest,-0.00630799999999998
+bernoulli,specialist,100,beta025_cartel,flat_probe_argmax_online,-0.006036999999999959,0.0022202460295117237,sequential_halving_peer,-0.034102999999999994
+live,specialist,100,beta05_random,flat_probe_argmax_online,-0.005699999999999927,0.02577519477375488,sequential_halving,-0.035499999999999976
+bernoulli,specialist,10000,beta025_cartel,warm_start_bandit,-0.005354999999999888,0.0013363720535932548,sequential_halving_peer,-0.06335899999999994
+live,heavy_tail,100,beta05_random,flat_probe_argmax_online,-0.005099999999999993,0.02447444078140498,sequential_halving,-0.0464
+bernoulli,specialist,100000,beta025_cartel,warm_start_bandit,-0.0050520000000001675,0.0019126193312445203,sequential_halving_peer,-0.06368799999999997
+live,specialist,10000,beta05_random,warm_start_bandit,-0.004444444444444473,0.05911382616989398,sequential_halving_peer,-0.0477777777777777
+bernoulli,specialist,100,beta05_random,flat_probe_argmax_online,-0.002923000000000009,0.002230048867527919,flat_probe_argmax_online,-0.002923000000000009
+live,heavy_tail,100,cartel,flat_probe_argmax_online,-0.0013999999999999568,0.02403000221077805,sequential_halving,-0.04269999999999996
+bernoulli,specialist,1000000,beta025_cartel,warm_start_bandit,-0.0005649999999998156,0.002976045068543172,sequential_halving_peer,-0.06219999999999981
+RouterEval,all_weak,1000,beta025_cartel,flat_probe_argmax_online,0.0,0.020865521800328878,sequential_halving,-0.05059999999999998
+RouterEval,all_strong,100,beta025_random,warm_start_bandit,0.00019999999999997797,0.01570350279396276,warm_start_bandit,0.00019999999999997797
+bernoulli,specialist,100,cartel,flat_probe_argmax_online,0.0007870000000000932,0.0021493681819461387,flat_probe_argmax_online,0.0007870000000000932
+live,specialist,100,beta0,flat_probe_argmax_online,0.0010999999999999899,0.02568474744984856,sequential_halving,-0.02870000000000006
+RouterBench replay,all shapes pooled,1000000,beta025_cartel,warm_start_bandit,0.0017166666666665886,0.0037314043809957786,sequential_halving_peer,-0.031876666666666775
+RouterEval,all_strong,100,cartel,mlp_router,0.0020000000000000018,0.035302266216207655,mlp_router,0.0020000000000000018
+live,specialist,10000,beta025_random,warm_start_bandit,0.002777777777777768,0.05270462766947301,sequential_halving_peer,-0.05999999999999994
+live,specialist,1000,beta025_random,flat_probe_argmax_online,0.0030999999999998806,0.011731160495130089,sequential_halving,-0.07069999999999999
+RouterEval,all_strong,100,beta05_random,mlp_router,0.0044000000000000705,0.03567408022640526,mlp_router,0.0044000000000000705
+live,specialist,1000,beta025_cartel,flat_probe_argmax_online,0.006299999999999972,0.00945920888935758,sequential_halving,-0.06629999999999991
+bernoulli,specialist,10000000,beta025_cartel,warm_start_bandit,0.00727000000000011,0.004220327601324475,sequential_halving_peer,-0.05952999999999997
+RouterEval,all_weak,5000,beta025_random,warm_start_bandit,0.010000000000000009,0.052941267247562006,sequential_halving,-0.1744444444444444
+RouterEval,strong_to_weak,5000,beta025_random,warm_start_bandit,0.010000000000000009,0.052941267247562006,sequential_halving,-0.1744444444444444
+RouterEval,all_strong,5000,beta025_random,warm_start_bandit,0.010000000000000009,0.052941267247562006,sequential_halving,-0.1744444444444444
+live,specialist,1000,beta01_random,flat_probe_argmax_online,0.010599999999999943,0.013753635882922013,sequential_halving,-0.06229999999999991
+RouterEval,all_strong,100,beta025_cartel,mlp_router,0.01079999999999992,0.0346538598138793,mlp_router,0.01079999999999992
+live,specialist,10000,beta025_cartel,flat_probe_argmax_online,0.012222222222222245,0.08013876853447535,sequential_halving_peer,-0.0722222222222223
+RouterBench replay,all shapes pooled,100000,beta025_random,warm_start_bandit,0.012506666666666555,0.002506301622927017,sequential_halving_peer,-0.03401333333333356
+RouterBench replay,all shapes pooled,10000,beta025_random,warm_start_bandit,0.013301333333333165,0.001178908941358017,sequential_halving_peer,-0.03729166666666661
+RouterBench replay,all shapes pooled,1000,beta025_random,verify_on_claim,0.013548333333333162,0.0012695327978126693,sequential_halving_peer,-0.04033466666666685
+bernoulli,specialist,10000,cartel,warm_start_bandit,0.014564000000000132,0.0013802436073479694,warm_start_bandit,0.014564000000000132
+RouterBench replay,all shapes pooled,100000,beta05_random,warm_start_bandit,0.014831666666666576,0.002576721213442697,sequential_halving_peer,-0.0192500000000001
+RouterBench replay,all shapes pooled,1000,beta05_random,verify_on_claim,0.014851333333333216,0.00129217441854858,verify_on_claim,0.014851333333333216
+RouterBench replay,all shapes pooled,1000000,beta025_random,warm_start_bandit,0.014866666666666584,0.003800138574319165,sequential_halving_peer,-0.03176333333333359
+RouterBench replay,all shapes pooled,10000,beta05_random,warm_start_bandit,0.015369666666666726,0.0011921361005448258,sequential_halving_peer,-0.009896666666666665
+bernoulli,specialist,1000,cartel,flat_probe_argmax_online,0.01576500000000003,0.0014738400081186498,flat_probe_argmax_online,0.01576500000000003
+RouterEval,strong_to_weak,5000,beta025_cartel,warm_start_bandit,0.01666666666666683,0.04503085362035434,sequential_halving,-0.171111111111111
+RouterEval,all_strong,5000,beta025_cartel,warm_start_bandit,0.01666666666666683,0.04503085362035434,sequential_halving,-0.171111111111111
+RouterEval,all_weak,5000,beta025_cartel,warm_start_bandit,0.01666666666666683,0.04503085362035434,sequential_halving,-0.171111111111111
+RouterEval,all_weak,1000,cartel,flat_probe_argmax_online,0.01679999999999998,0.023175849498993553,sequential_halving,-0.0338
+RouterBench replay,all shapes pooled,1000000,beta05_random,warm_start_bandit,0.016959999999999975,0.003986490079570431,sequential_halving_peer,-0.02192000000000016
+RouterEval,strong_to_weak,5000,beta05_random,declared_argmax,0.018888888888888955,0.05002777006601208,sequential_halving,-0.1744444444444444
+RouterEval,all_strong,5000,beta05_random,declared_argmax,0.018888888888888955,0.05002777006601208,sequential_halving,-0.1744444444444444
+RouterEval,all_weak,5000,beta05_random,declared_argmax,0.018888888888888955,0.05002777006601208,sequential_halving,-0.1744444444444444
+bernoulli,specialist,100000,cartel,warm_start_bandit,0.019125999999999865,0.0019958623978746375,warm_start_bandit,0.019125999999999865
+live,specialist,1000,cartel,flat_probe_argmax_online,0.020499999999999963,0.011697638717386476,sequential_halving,-0.051999999999999935
+live,specialist,1000,beta05_random,flat_probe_argmax_online,0.022099999999999898,0.013713456097023942,sequential_halving,-0.050900000000000056
+bernoulli,specialist,1000000,cartel,flat_probe_argmax_online,0.022830000000000017,0.0032102838854219835,flat_probe_argmax_online,0.022830000000000017
+bernoulli,specialist,10000000,cartel,flat_probe_argmax_online,0.025210000000000177,0.004699991078781413,flat_probe_argmax_online,0.025210000000000177
+live,specialist,1000,beta0,flat_probe_argmax_online,0.02629999999999988,0.00984149386843789,sequential_halving,-0.04860000000000009
+live,specialist,10000,cartel,warm_start_bandit,0.026666666666666727,0.06718548123582128,warm_start_bandit,0.026666666666666727
+RouterBench replay,all shapes pooled,1000,cartel,warm_start_bandit,0.02806333333333333,0.001205887936004584,warm_start_bandit,0.02806333333333333
+live,specialist,10000,beta0,flat_probe_argmax_online,0.03666666666666685,0.06731456008918124,sequential_halving_peer,-0.05222222222222206
+live,specialist,100000,beta025_cartel,flat_probe_argmax_online,0.03888888888888897,0.05974482776311635,sequential_halving_peer,-0.07555555555555549
+live,specialist,100000,beta025_random,warm_start_bandit,0.03888888888888897,0.06603870918719648,sequential_halving_peer,-0.043333333333333224
+RouterBench replay,all shapes pooled,10000,cartel,flat_nsw_router,0.0441180000000001,0.00129303601598269,flat_nsw_router,0.0441180000000001
+RouterBench replay,all shapes pooled,100000,cartel,flat_nsw_router,0.045030000000000014,0.0028291352002577136,flat_nsw_router,0.045030000000000014
+RouterBench replay,all shapes pooled,1000000,cartel,flat_nsw_router,0.04742666666666673,0.004313594263746056,flat_nsw_router,0.04742666666666673
+live,specialist,100000,cartel,warm_start_bandit,0.050000000000000155,0.04006938426723778,warm_start_bandit,0.050000000000000155
+live,specialist,100000,beta05_random,warm_start_bandit,0.06555555555555559,0.03901566636906542,sequential_halving_peer,-0.022222222222222143
+RouterEval,all_weak,5000,cartel,warm_start_bandit,0.07555555555555549,0.04955356249106165,sequential_halving,-0.17222222222222217
+RouterEval,all_strong,5000,cartel,warm_start_bandit,0.07555555555555549,0.04955356249106165,sequential_halving,-0.17222222222222217
+RouterEval,strong_to_weak,5000,cartel,warm_start_bandit,0.07555555555555549,0.04955356249106165,sequential_halving,-0.17222222222222217
+live,specialist,100000,beta0,flat_probe_argmax_online,0.08666666666666678,0.05669117117231644,sequential_halving_peer,-0.02777777777777768
