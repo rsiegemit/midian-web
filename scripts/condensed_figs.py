@@ -5,7 +5,8 @@ rows and, for bernoulli / replay b = 1, their scale matrices. b is NEVER pooled:
   A  live headline: n = 10^2..10^5 (specialist), solid = honest, hatched = beta = 0.5 low-skill cartel.
   B  every family at its largest population, success / oracle, same arms and style.
   Two versions of each: _allb  -- one bar per (arm, regime, b), shade light -> dark = b = 1, 3, 5;
-                        _nested -- one slot per (arm, regime), the b = 5 / 3 / 1 bars drawn widest-to-narrowest in it.
+                        _stacked -- one full-width bar per (arm, regime): b = 1 at the bottom, then the gain to b = 3,
+                                    then to b = 5 (drawn tallest-first, so a non-monotone arm shows out-of-order shades).
   declared argmax and random spend no probes: one bar (b does not apply). * = a budget not in yet.
   C  scripts/paired_gaps.py: MIDIAN-VA minus each FIXED rival, seed-paired, every condition.
   D  appendix heatmap: every arm x every (family, n, regime) cell, success / oracle.
@@ -72,12 +73,13 @@ def shade(col, b):
     c = np.array(mc.to_rgb(col)); return tuple(c + (1 - c) * 0.5) if b == 1 else tuple(c * 0.6) if b == 5 else tuple(c)
 
 
-def budget_bars(C, groups, title, name, norm=False, nested=False):
+def budget_bars(C, groups, title, name, norm=False, nested=False, stacked=False):
     """One group per (x label, cell). _allb: a bar per (arm, regime, b). _nested: one slot per (arm, regime) holding the
     b = 5, 3, 1 bars widest to narrowest (success rises with b, so each stays visible). A budget not in yet: * in its place."""
     A = {g: arms_at(C[key[:3] + (r,)]) for _, key in groups for g, r in [((key, r), r) for r in REG] if key[:3] + (r,) in C}
     arms = [a for a in ARMS if any(a[0] in v for v in A.values())]
     slots = [(k, r) for k, _, _ in arms for r in REG]                      # nested: one slot each
+    nested = nested or stacked                                          # both: one slot per (arm, regime)
     if not nested: slots = [(k, r, b) for k, _, _ in arms for r in REG for b in ((3,) if k in BUDGETLESS else BS)]
     w = 0.86 / len(slots); fig, ax = plt.subplots(figsize=(7.2, 2.8)); rec = []; col = {k: c for k, _, c in ARMS}; lab = {k: l for k, l, _ in ARMS}
     for i, (xl, key) in enumerate(groups):
@@ -86,8 +88,9 @@ def budget_bars(C, groups, title, name, norm=False, nested=False):
             k, r = sl[0], sl[1]; x = i + (j - (len(slots) - 1) / 2) * w; h = r == "cartel"
             got = A.get((key, r), {}).get(k, {})
             bs = [sl[2]] if not nested else ((3,) if k in BUDGETLESS else (5, 3, 1))
+            if stacked: bs = sorted(bs, key=lambda b: -got[b][0] if b in got else 0)   # tallest behind: each level at its true height
             for depth, b in enumerate(bs):
-                ww = w * 0.95 * (1.0 if not nested else (1.0, 0.66, 0.36)[depth])
+                ww = w * 0.95 * (1.0 if (not nested or stacked) else (1.0, 0.66, 0.36)[depth])
                 if b not in got:
                     if k in A.get((key, r), {}): ax.text(x, 0.205 if not norm else 0.205, "*", ha="center", va="bottom", fontsize=5.5)
                     continue
@@ -107,13 +110,14 @@ def budget_bars(C, groups, title, name, norm=False, nested=False):
 
 KEY_ALL = "light / mid / dark = probe budget b = 1 / 3 / 5"
 KEY_NEST = "in each slot: wide = b 5, mid = b 3, narrow = b 1"
+KEY_STACK = "stacked: light = b 1, + mid = gain to b 3, + dark = gain to b 5"
 
 
 def fig_A(C):
     ns = sorted(n for (f, g, n, r) in C if f == "live" and g == "specialist" and r == "beta0")
     g = [(f"n = {n:,}", ("live", "specialist", n)) for n in ns]
     budget_bars(C, g, f"A  live RTE, specialist; solid honest, hatched β = 0.5 cartel; {KEY_ALL}", "A_live_allb")
-    budget_bars(C, g, f"A  live RTE, specialist; solid honest, hatched β = 0.5 cartel; {KEY_NEST}", "A_live_nested", nested=True)
+    budget_bars(C, g, f"A  live RTE, specialist; solid honest, hatched β = 0.5 cartel; {KEY_STACK}", "A_live_stacked", stacked=True)
 
 
 def primary(f, g): return g == PRIMARY.get(f, g)
@@ -128,7 +132,7 @@ def fig_B(C):
         n = max(ns); g = next(g for (ff, g, nn, r) in C if ff == f and nn == n and primary(f, g))
         groups.append((f"{FAMILY[f]}\nn = {n:,}", (f, g, n)))
     budget_bars(C, groups, f"B  each family at its largest n, success / oracle; hatched = cartel; {KEY_ALL}", "B_families_allb", norm=True)
-    budget_bars(C, groups, f"B  each family at its largest n, success / oracle; hatched = cartel; {KEY_NEST}", "B_families_nested", norm=True, nested=True)
+    budget_bars(C, groups, f"B  each family at its largest n, success / oracle; hatched = cartel; {KEY_STACK}", "B_families_stacked", norm=True, stacked=True)
 
 
 def fig_D(d):
