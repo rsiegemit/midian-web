@@ -15,15 +15,13 @@ matplotlib.use("Agg"); import matplotlib.pyplot as plt
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import extra_figs  # noqa: F401  (legend rule: best top-left, row-major)
 from seed_tables import label
-from condensed_figs import ARMS, OUT, save
+from condensed_figs import ARMS, BANDIT, LEARNED, NOT_RUNNABLE, OUT, POOLS, save
 
 R = os.environ.get("RTE_DATA", "/scratch/rte") + "/results"
 COST = f"{OUT}/cost_by_n.csv"
 COLS = ["n", "b", "beta", "method", "params", "messages_per_task", "comparisons_per_task", "build_probes", "build_messages"]
-SHOW = {"midian_va": "MIDIAN-VA", "midian": "MIDIAN", "flat_probe_argmax_online": "flat probe argmax (online)",
-        "warm_start_bandit": "warm-start bandit", "ucb_per_family": "UCB bandit", "flat_nsw_router": "flat NSW index router",
-        "declared_argmax": "declared argmax"}
-COL = {k: c for k, _, c in ARMS} | {"warm_start_bandit": "#9467bd", "ucb_per_family": "#c5b0d5", "flat_nsw_router": "#ff7f0e"}
+FIXED = ["midian_va", "midian", "flat_probe_argmax_online", "declared_argmax"]      # C draws exactly A / B's arms (ARMS)
+SHOW = set(FIXED) | set(LEARNED) | set(BANDIT)                                      # + every member of the two pools
 
 
 def costs():
@@ -70,15 +68,28 @@ def growth(s):
 
 
 def draw_I(ax, d):
+    """Exactly A / B's arms, labels and colours. A pool ("best learned router", "best bandit") picks a different member per
+    cell and seed, so it is drawn as the band between its cheapest and costliest runnable member at each n."""
     d = d[d.b == 3].assign(work=lambda x: x.messages_per_task + x.comparisons_per_task); rec = []
-    for l, name in SHOW.items():
-        q = d[(d.label == l) & (d.n >= 100)].sort_values("n")
-        if q.empty or (q.work <= 0).all(): continue
+    for k, name, c in ARMS:
+        if k == "random":                                    # routes blindly: no routing work, nothing to draw on a log axis
+            ax.plot([], [], "o-", ms=3, lw=1.6, color=c, label=f"{name}  (0: no routing work)"); continue
+        if k in POOLS:
+            q = d[d.label.isin(POOLS[k]) & ~pd.Series([l in NOT_RUNNABLE("bernoulli", n) for l, n in zip(d.label, d.n)], index=d.index)]
+            q = q[q.n >= 100].groupby("n").work.agg(["min", "max"]).reset_index()
+            lo, hi = slope(q.rename(columns={"min": "work"})), slope(q.rename(columns={"max": "work"}))
+            ax.fill_between(q.n, q["min"], q["max"], color=c, alpha=0.3, lw=0)
+            for e in ("min", "max"): ax.plot(q.n, q[e], "-", lw=1.0, color=c)
+            span = growth(lo) if growth(lo) == growth(hi) else f"{growth(lo)} to {growth(hi)} across its pool"
+            ax.plot([], [], "o-", ms=3, lw=1.6, color=c, label=f"{name}  ({span})")
+            rec += [dict(arm=name, n=int(n), work=w, work_max=m, slope=lo, slope_max=hi) for n, w, m in zip(q.n, q["min"], q["max"])]
+            continue
+        q = d[(d.label == k) & (d.n >= 100)].sort_values("n")
         s = slope(q); rec += [dict(arm=name, n=int(n), work=w, slope=s) for n, w in zip(q.n, q.work)]
-        ax.plot(q.n, q.work, "o-", ms=3, lw=1.6, color=COL[l], label=f"{name}  ({growth(s)})")
+        ax.plot(q.n, q.work, "o-", ms=3, lw=1.6, color=c, label=f"{name}  ({growth(s)})")
     ax.set_xscale("log"); ax.set_yscale("log"); ax.set_xlabel("population n (agents)"); ax.set_ylabel("messages + comparisons per query")
     ax.grid(which="major", lw=0.3, alpha=0.4)
-    ax.set_title("C  routing work per query: MIDIAN grows like log n, flat methods like n (calibrated bernoulli, b = 3, exact ledger)")
+    ax.set_title("C  routing work per query, the arms of A / B: MIDIAN grows like log n (calibrated bernoulli, b = 3, exact ledger)")
     ax.legend(ncol=2, frameon=False, loc="upper left", fontsize=6, rank="asc")
     return pd.DataFrame(rec)
 
@@ -103,9 +114,9 @@ def draw_J(ax, d):
             for lo, hi in ((fwJ.min(), "cheapest"), (fwJ.max(), "costliest")):
                 t = build / (lo - marg); ax.plot(t, lo, "x", color="black", ms=3, zorder=5)
                 rec.append(dict(n=n, b=b, build_probes=probes, build_source=src, build_J=build, marginal_J=marg, vs=hi, fw_J=lo, break_even_queries=t))
-    ax.set_xscale("log"); ax.set_yscale("log"); ax.set_xlabel("queries served T"); ax.set_ylabel("energy per query, J (build amortised)")
+    ax.set_xscale("log"); ax.set_yscale("log"); ax.set_xlabel("queries served T"); ax.set_ylabel("estimated energy per query, J (build amortised)")
     ax.grid(which="major", lw=0.3, alpha=0.4)
-    ax.set_title("D  energy per query (*): MIDIAN-VA pays one probing build, then ~0.01 J / query; frameworks pay supervisor LLM calls every query", pad=38)
+    ax.set_title("D  estimated energy per query: MIDIAN-VA pays one probing build, then ~0.01 J / query; frameworks pay supervisor LLM calls every query", pad=38)
     ax.legend(ncol=4, frameon=False, loc="lower center", bbox_to_anchor=(0.5, 1.0), fontsize=5.5, rank="asc")
     return pd.DataFrame(rec)
 
