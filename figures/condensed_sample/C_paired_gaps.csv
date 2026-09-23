@@ -1,0 +1,1248 @@
+family,group,n,regime,rival,rival_name,gap,ci_lo,ci_hi,units,result
+bernoulli,shapes pooled,10,beta0,flat_probe_argmax_online,flat probe argmax (online),-0.021050999999999993,-0.022389074999999994,-0.019765974999999995,1000,loss
+bernoulli,shapes pooled,10,beta0,warm_start_bandit,warm-start bandit,-0.021388999999999995,-0.02284009999999999,-0.01995297499999999,1000,loss
+bernoulli,shapes pooled,10,beta0,linucb_honest,LinUCB,-0.015191,-0.016559499999999998,-0.01381895,1000,loss
+bernoulli,shapes pooled,10,beta0,declared_argmax,declared argmax,-0.05439399999999999,-0.05605814999999999,-0.052799875,1000,loss
+bernoulli,shapes pooled,10,beta0,verify_on_claim,verify on claim,-0.031445999999999995,-0.03310212499999999,-0.029826674999999993,1000,loss
+bernoulli,shapes pooled,10,beta0,midian,MIDIAN,-0.012583999999999996,-0.013808349999999997,-0.011439725000000001,1000,loss
+bernoulli,shapes pooled,10,beta0,sequential_halving_peer,seq. halving (peer),0.022305,0.020179825,0.024352550000000004,1000,win
+bernoulli,shapes pooled,10,beta025_cartel,flat_probe_argmax_online,flat probe argmax (online),-0.021612999999999993,-0.022957299999999993,-0.020348999999999996,1000,loss
+bernoulli,shapes pooled,10,beta025_cartel,warm_start_bandit,warm-start bandit,-0.0075089999999999974,-0.009025074999999997,-0.006071924999999998,1000,loss
+bernoulli,shapes pooled,10,beta025_cartel,linucb_honest,LinUCB,-0.015752999999999996,-0.01711015,-0.014394949999999997,1000,loss
+bernoulli,shapes pooled,10,beta025_cartel,declared_argmax,declared argmax,0.03778700000000001,0.035354300000000005,0.040251075000000004,1000,win
+bernoulli,shapes pooled,10,beta025_cartel,verify_on_claim,verify on claim,-0.010601999999999999,-0.012589475,-0.008630924999999996,1000,loss
+bernoulli,shapes pooled,10,beta025_cartel,midian,MIDIAN,-0.0010789999999999986,-0.0025301749999999982,0.0002781000000000009,1000,tie
+bernoulli,shapes pooled,10,beta025_cartel,sequential_halving_peer,seq. halving (peer),0.026274000000000002,0.024105525000000003,0.028416,1000,win
+bernoulli,shapes pooled,10,beta025_random,flat_probe_argmax_online,flat probe argmax (online),-0.022016999999999995,-0.023338549999999996,-0.020726974999999995,1000,loss
+bernoulli,shapes pooled,10,beta025_random,warm_start_bandit,warm-start bandit,-0.010251999999999999,-0.01181825,-0.008774749999999998,1000,loss
+bernoulli,shapes pooled,10,beta025_random,linucb_honest,LinUCB,-0.016156999999999998,-0.017486124999999998,-0.014778649999999999,1000,loss
+bernoulli,shapes pooled,10,beta025_random,declared_argmax,declared argmax,0.027263000000000006,0.024662100000000003,0.029887524999999998,1000,win
+bernoulli,shapes pooled,10,beta025_random,verify_on_claim,verify on claim,-0.0009789999999999992,-0.0030370249999999988,0.0009603249999999991,1000,tie
+bernoulli,shapes pooled,10,beta025_random,midian,MIDIAN,-0.004008999999999999,-0.005429075,-0.0025968249999999997,1000,loss
+bernoulli,shapes pooled,10,beta025_random,sequential_halving_peer,seq. halving (peer),0.023815000000000006,0.021789925000000005,0.025817274999999997,1000,win
+bernoulli,shapes pooled,10,beta05_random,flat_probe_argmax_online,flat probe argmax (online),-0.021525,-0.022887025000000002,-0.020244775,1000,loss
+bernoulli,shapes pooled,10,beta05_random,warm_start_bandit,warm-start bandit,0.0009120000000000005,-0.0006730999999999992,0.002305124999999998,1000,tie
+bernoulli,shapes pooled,10,beta05_random,linucb_honest,LinUCB,-0.015665,-0.017029049999999997,-0.014298999999999997,1000,loss
+bernoulli,shapes pooled,10,beta05_random,declared_argmax,declared argmax,0.010847,0.008224825,0.013431249999999999,1000,win
+bernoulli,shapes pooled,10,beta05_random,verify_on_claim,verify on claim,0.021725,0.019607925,0.023937049999999998,1000,win
+bernoulli,shapes pooled,10,beta05_random,midian,MIDIAN,0.008252,0.0061348750000000014,0.010331149999999999,1000,win
+bernoulli,shapes pooled,10,beta05_random,sequential_halving_peer,seq. halving (peer),0.08382900000000001,0.07981890000000001,0.087840225,1000,win
+bernoulli,shapes pooled,10,cartel,flat_probe_argmax_online,flat probe argmax (online),-0.021202,-0.022524574999999995,-0.019915949999999995,1000,loss
+bernoulli,shapes pooled,10,cartel,warm_start_bandit,warm-start bandit,0.01144,0.009830600000000002,0.012887199999999996,1000,win
+bernoulli,shapes pooled,10,cartel,linucb_honest,LinUCB,-0.015341999999999998,-0.016716099999999998,-0.013964974999999998,1000,loss
+bernoulli,shapes pooled,10,cartel,declared_argmax,declared argmax,0.063305,0.060809975,0.065694125,1000,win
+bernoulli,shapes pooled,10,cartel,verify_on_claim,verify on claim,0.025252000000000004,0.023136800000000003,0.02730215,1000,win
+bernoulli,shapes pooled,10,cartel,midian,MIDIAN,0.030913000000000003,0.0284269,0.033317375,1000,win
+bernoulli,shapes pooled,10,cartel,sequential_halving_peer,seq. halving (peer),0.198409,0.19356605000000002,0.20323500000000003,1000,win
+bernoulli,shapes pooled,100,beta0,flat_probe_argmax_online,flat probe argmax (online),0.005183000000000002,0.003725000000000001,0.0066810750000000025,1000,win
+bernoulli,shapes pooled,100,beta0,warm_start_bandit,warm-start bandit,-0.024028000000000008,-0.025512075000000006,-0.022583950000000005,1000,loss
+bernoulli,shapes pooled,100,beta0,linucb_honest,LinUCB,0.014201000000000007,0.012656850000000008,0.01579312500000001,1000,win
+bernoulli,shapes pooled,100,beta0,declared_argmax,declared argmax,-0.057440999999999964,-0.05896737499999997,-0.055886974999999964,1000,loss
+bernoulli,shapes pooled,100,beta0,verify_on_claim,verify on claim,-0.05124699999999997,-0.05270607499999998,-0.049696949999999976,1000,loss
+bernoulli,shapes pooled,100,beta0,midian,MIDIAN,0.009782000000000004,0.008252950000000004,0.011246250000000005,1000,win
+bernoulli,shapes pooled,100,beta0,sequential_halving_peer,seq. halving (peer),-0.030885999999999993,-0.03255329999999999,-0.029243924999999994,1000,loss
+bernoulli,shapes pooled,100,beta025_cartel,flat_probe_argmax_online,flat probe argmax (online),-0.006037000000000005,-0.007544075000000008,-0.004415700000000007,1000,loss
+bernoulli,shapes pooled,100,beta025_cartel,warm_start_bandit,warm-start bandit,-0.003542000000000003,-0.005113075000000005,-0.0019270000000000027,1000,loss
+bernoulli,shapes pooled,100,beta025_cartel,linucb_honest,LinUCB,0.0029810000000000014,0.001337800000000001,0.004651000000000002,1000,win
+bernoulli,shapes pooled,100,beta025_cartel,declared_argmax,declared argmax,0.05406700000000002,0.05185090000000001,0.05639725000000001,1000,win
+bernoulli,shapes pooled,100,beta025_cartel,verify_on_claim,verify on claim,0.004168000000000002,0.0018556750000000026,0.006504125000000002,1000,win
+bernoulli,shapes pooled,100,beta025_cartel,midian,MIDIAN,0.011626000000000008,0.009924400000000007,0.013412100000000005,1000,win
+bernoulli,shapes pooled,100,beta025_cartel,sequential_halving_peer,seq. halving (peer),-0.03410300000000001,-0.035858125000000005,-0.032396925,1000,loss
+bernoulli,shapes pooled,100,beta025_random,flat_probe_argmax_online,flat probe argmax (online),-0.008074000000000007,-0.00962425000000001,-0.006456975000000005,1000,loss
+bernoulli,shapes pooled,100,beta025_random,warm_start_bandit,warm-start bandit,-0.0035650000000000035,-0.005207175000000004,-0.0019799000000000028,1000,loss
+bernoulli,shapes pooled,100,beta025_random,linucb_honest,LinUCB,0.0009440000000000001,-0.0006352750000000012,0.0025940250000000015,1000,tie
+bernoulli,shapes pooled,100,beta025_random,declared_argmax,declared argmax,0.021519000000000007,0.01917252500000001,0.02399702500000001,1000,win
+bernoulli,shapes pooled,100,beta025_random,verify_on_claim,verify on claim,0.006408000000000004,0.004337950000000002,0.008398025000000005,1000,win
+bernoulli,shapes pooled,100,beta025_random,midian,MIDIAN,0.006414000000000005,0.004664875000000002,0.008009100000000005,1000,win
+bernoulli,shapes pooled,100,beta025_random,sequential_halving_peer,seq. halving (peer),-0.03722900000000001,-0.039049150000000005,-0.035425850000000016,1000,loss
+bernoulli,shapes pooled,100,beta05_random,flat_probe_argmax_online,flat probe argmax (online),-0.0029230000000000037,-0.004522175000000004,-0.0013769000000000027,1000,loss
+bernoulli,shapes pooled,100,beta05_random,warm_start_bandit,warm-start bandit,0.01001600000000001,0.008394400000000007,0.011636350000000005,1000,win
+bernoulli,shapes pooled,100,beta05_random,linucb_honest,LinUCB,0.006095000000000004,0.004447625000000002,0.007765075000000006,1000,win
+bernoulli,shapes pooled,100,beta05_random,declared_argmax,declared argmax,0.024188000000000008,0.021877750000000012,0.026579100000000015,1000,win
+bernoulli,shapes pooled,100,beta05_random,verify_on_claim,verify on claim,0.015016000000000009,0.01291390000000001,0.01708502500000001,1000,win
+bernoulli,shapes pooled,100,beta05_random,midian,MIDIAN,0.04148300000000002,0.03947192500000001,0.04354035000000002,1000,win
+bernoulli,shapes pooled,100,beta05_random,sequential_halving_peer,seq. halving (peer),0.03995500000000001,0.03728177500000001,0.042630425000000007,1000,win
+bernoulli,shapes pooled,100,cartel,flat_probe_argmax_online,flat probe argmax (online),0.0007869999999999991,-0.0006190250000000032,0.0023951,1000,tie
+bernoulli,shapes pooled,100,cartel,warm_start_bandit,warm-start bandit,0.028054000000000023,0.02647460000000002,0.029546175000000018,1000,win
+bernoulli,shapes pooled,100,cartel,linucb_honest,LinUCB,0.009805000000000006,0.008253925000000004,0.011397075000000007,1000,win
+bernoulli,shapes pooled,100,cartel,declared_argmax,declared argmax,0.07450100000000001,0.07214670000000002,0.07687002500000002,1000,win
+bernoulli,shapes pooled,100,cartel,verify_on_claim,verify on claim,0.04884100000000002,0.04662597500000002,0.05098212500000002,1000,win
+bernoulli,shapes pooled,100,cartel,midian,MIDIAN,0.06580400000000002,0.06349480000000002,0.06807402500000001,1000,win
+bernoulli,shapes pooled,100,cartel,sequential_halving_peer,seq. halving (peer),0.21789100000000003,0.214050675,0.221700525,1000,win
+bernoulli,shapes pooled,1000,beta0,flat_probe_argmax_online,flat probe argmax (online),0.02283500000000001,0.02147595000000001,0.02418907500000001,1000,win
+bernoulli,shapes pooled,1000,beta0,warm_start_bandit,warm-start bandit,-0.03696499999999995,-0.03812112499999994,-0.035843974999999945,1000,loss
+bernoulli,shapes pooled,1000,beta0,linucb_honest,LinUCB,0.06421400000000003,0.06285467500000005,0.06561215000000005,1000,win
+bernoulli,shapes pooled,1000,beta0,declared_argmax,declared argmax,-0.04728999999999994,-0.04846534999999994,-0.046130849999999946,1000,loss
+bernoulli,shapes pooled,1000,beta0,verify_on_claim,verify on claim,-0.04793699999999994,-0.049060274999999945,-0.04680992499999995,1000,loss
+bernoulli,shapes pooled,1000,beta0,midian,MIDIAN,0.022919000000000012,0.02164460000000001,0.024208025000000015,1000,win
+bernoulli,shapes pooled,1000,beta0,sequential_halving_peer,seq. halving (peer),-0.05015899999999994,-0.05129012499999994,-0.04900897499999994,1000,loss
+bernoulli,shapes pooled,1000,beta025_cartel,flat_probe_argmax_online,flat probe argmax (online),0.008014000000000005,0.006614700000000004,0.009389425000000005,1000,win
+bernoulli,shapes pooled,1000,beta025_cartel,warm_start_bandit,warm-start bandit,-0.01426700000000001,-0.01555200000000001,-0.01303095000000001,1000,loss
+bernoulli,shapes pooled,1000,beta025_cartel,linucb_honest,LinUCB,0.04939300000000004,0.04798587500000004,0.05089312500000004,1000,win
+bernoulli,shapes pooled,1000,beta025_cartel,declared_argmax,declared argmax,0.07077200000000002,0.06908295000000003,0.07244620000000003,1000,win
+bernoulli,shapes pooled,1000,beta025_cartel,verify_on_claim,verify on claim,0.028737000000000023,0.02690675000000002,0.030645150000000024,1000,win
+bernoulli,shapes pooled,1000,beta025_cartel,midian,MIDIAN,0.016755000000000013,0.01529775000000001,0.01817707500000001,1000,win
+bernoulli,shapes pooled,1000,beta025_cartel,sequential_halving_peer,seq. halving (peer),-0.06208599999999995,-0.06329609999999995,-0.06085362499999995,1000,loss
+bernoulli,shapes pooled,1000,beta025_random,flat_probe_argmax_online,flat probe argmax (online),0.006741000000000005,0.005355000000000004,0.008119500000000003,1000,win
+bernoulli,shapes pooled,1000,beta025_random,warm_start_bandit,warm-start bandit,-0.016625000000000008,-0.01788007500000001,-0.015356925000000009,1000,loss
+bernoulli,shapes pooled,1000,beta025_random,linucb_honest,LinUCB,0.04812000000000003,0.04671962500000004,0.049646025000000045,1000,win
+bernoulli,shapes pooled,1000,beta025_random,declared_argmax,declared argmax,0.018643000000000014,0.016729950000000014,0.020569025000000015,1000,win
+bernoulli,shapes pooled,1000,beta025_random,verify_on_claim,verify on claim,-0.003269999999999997,-0.004945149999999999,-0.0015328999999999983,1000,loss
+bernoulli,shapes pooled,1000,beta025_random,midian,MIDIAN,0.01289200000000001,0.01154500000000001,0.014270700000000008,1000,win
+bernoulli,shapes pooled,1000,beta025_random,sequential_halving_peer,seq. halving (peer),-0.06368999999999994,-0.06494129999999994,-0.06242659999999995,1000,loss
+bernoulli,shapes pooled,1000,beta05_random,flat_probe_argmax_online,flat probe argmax (online),0.013897000000000008,0.012371625000000006,0.01535407500000001,1000,win
+bernoulli,shapes pooled,1000,beta05_random,warm_start_bandit,warm-start bandit,-0.008124000000000006,-0.009493275000000004,-0.006752800000000008,1000,loss
+bernoulli,shapes pooled,1000,beta05_random,linucb_honest,LinUCB,0.05527600000000004,0.05382097500000004,0.05677917500000004,1000,win
+bernoulli,shapes pooled,1000,beta05_random,declared_argmax,declared argmax,0.031546000000000025,0.029355175000000025,0.03364912500000002,1000,win
+bernoulli,shapes pooled,1000,beta05_random,verify_on_claim,verify on claim,0.0057330000000000055,0.003925950000000005,0.007456700000000001,1000,win
+bernoulli,shapes pooled,1000,beta05_random,midian,MIDIAN,0.053965000000000034,0.05215895000000003,0.05573402500000004,1000,win
+bernoulli,shapes pooled,1000,beta05_random,sequential_halving_peer,seq. halving (peer),-0.012656999999999986,-0.014625074999999989,-0.01060294999999999,1000,loss
+bernoulli,shapes pooled,1000,cartel,flat_probe_argmax_online,flat probe argmax (online),0.01576500000000001,0.014379750000000009,0.017097100000000007,1000,win
+bernoulli,shapes pooled,1000,cartel,warm_start_bandit,warm-start bandit,0.015810000000000008,0.01450095000000001,0.01705907500000001,1000,win
+bernoulli,shapes pooled,1000,cartel,linucb_honest,LinUCB,0.05714400000000005,0.05578930000000004,0.05858722500000004,1000,win
+bernoulli,shapes pooled,1000,cartel,declared_argmax,declared argmax,0.06402200000000005,0.06208972500000003,0.06595705000000003,1000,win
+bernoulli,shapes pooled,1000,cartel,verify_on_claim,verify on claim,0.03782600000000003,0.03600787500000003,0.03955727500000003,1000,win
+bernoulli,shapes pooled,1000,cartel,midian,MIDIAN,0.06773300000000003,0.06576482500000004,0.06971602500000004,1000,win
+bernoulli,shapes pooled,1000,cartel,sequential_halving_peer,seq. halving (peer),0.17304900000000004,0.16971995000000004,0.17619925000000003,1000,win
+bernoulli,shapes pooled,10000,beta0,flat_probe_argmax_online,flat probe argmax (online),0.02786700000000001,0.026610000000000005,0.029144025000000014,1000,win
+bernoulli,shapes pooled,10000,beta0,warm_start_bandit,warm-start bandit,-0.03900099999999994,-0.04008702499999995,-0.03785364999999995,1000,loss
+bernoulli,shapes pooled,10000,beta0,linucb_honest,LinUCB,0.17765400000000006,0.17614982500000004,0.17910192500000005,1000,win
+bernoulli,shapes pooled,10000,beta0,declared_argmax,declared argmax,-0.04105799999999994,-0.04220127499999994,-0.03993089999999994,1000,loss
+bernoulli,shapes pooled,10000,beta0,verify_on_claim,verify on claim,-0.04157199999999995,-0.04266814999999994,-0.040422799999999946,1000,loss
+bernoulli,shapes pooled,10000,beta0,midian,MIDIAN,0.027347000000000014,0.02610277500000001,0.028595050000000007,1000,win
+bernoulli,shapes pooled,10000,beta0,sequential_halving_peer,seq. halving (peer),-0.049137999999999946,-0.05028402499999995,-0.04807294999999995,1000,loss
+bernoulli,shapes pooled,10000,beta025_cartel,flat_probe_argmax_online,flat probe argmax (online),0.01310000000000001,0.011736950000000006,0.01449712500000001,1000,win
+bernoulli,shapes pooled,10000,beta025_cartel,warm_start_bandit,warm-start bandit,-0.005355000000000005,-0.006626000000000007,-0.004113950000000003,1000,loss
+bernoulli,shapes pooled,10000,beta025_cartel,linucb_honest,LinUCB,0.16288700000000003,0.16137097500000006,0.16442407500000003,1000,win
+bernoulli,shapes pooled,10000,beta025_cartel,declared_argmax,declared argmax,0.08027000000000004,0.07855380000000002,0.08199402500000003,1000,win
+bernoulli,shapes pooled,10000,beta025_cartel,verify_on_claim,verify on claim,0.046014000000000034,0.044225950000000035,0.04785530000000003,1000,win
+bernoulli,shapes pooled,10000,beta025_cartel,midian,MIDIAN,0.01842900000000001,0.01702195000000001,0.019858225000000014,1000,win
+bernoulli,shapes pooled,10000,beta025_cartel,sequential_halving_peer,seq. halving (peer),-0.06335899999999996,-0.06460802499999994,-0.062182899999999944,1000,loss
+bernoulli,shapes pooled,10000,beta025_random,flat_probe_argmax_online,flat probe argmax (online),0.011949000000000006,0.010537950000000008,0.013403050000000008,1000,win
+bernoulli,shapes pooled,10000,beta025_random,warm_start_bandit,warm-start bandit,-0.019038,-0.020351099999999997,-0.017688600000000002,1000,loss
+bernoulli,shapes pooled,10000,beta025_random,linucb_honest,LinUCB,0.16173600000000005,0.16018300000000005,0.163257075,1000,win
+bernoulli,shapes pooled,10000,beta025_random,declared_argmax,declared argmax,0.025625000000000023,0.023687375000000017,0.027763100000000023,1000,win
+bernoulli,shapes pooled,10000,beta025_random,verify_on_claim,verify on claim,0.0006700000000000049,-0.0011201999999999952,0.0024900250000000046,1000,tie
+bernoulli,shapes pooled,10000,beta025_random,midian,MIDIAN,0.01577200000000001,0.01445785000000001,0.017244450000000012,1000,win
+bernoulli,shapes pooled,10000,beta025_random,sequential_halving_peer,seq. halving (peer),-0.06425099999999995,-0.06542607499999996,-0.06302572499999995,1000,loss
+bernoulli,shapes pooled,10000,beta05_random,flat_probe_argmax_online,flat probe argmax (online),0.01873600000000001,0.017408925000000016,0.020171075000000007,1000,win
+bernoulli,shapes pooled,10000,beta05_random,warm_start_bandit,warm-start bandit,-0.010526000000000002,-0.01187005,-0.009246800000000005,1000,loss
+bernoulli,shapes pooled,10000,beta05_random,linucb_honest,LinUCB,0.16852300000000003,0.16697595000000004,0.16995712500000004,1000,win
+bernoulli,shapes pooled,10000,beta05_random,declared_argmax,declared argmax,0.037705000000000016,0.03562000000000003,0.03973265000000003,1000,win
+bernoulli,shapes pooled,10000,beta05_random,verify_on_claim,verify on claim,0.010621000000000007,0.008960800000000005,0.012361050000000007,1000,win
+bernoulli,shapes pooled,10000,beta05_random,midian,MIDIAN,0.06151900000000004,0.05986180000000004,0.06315415000000005,1000,win
+bernoulli,shapes pooled,10000,beta05_random,sequential_halving_peer,seq. halving (peer),-0.03935499999999996,-0.04081304999999996,-0.03796662499999996,1000,loss
+bernoulli,shapes pooled,10000,cartel,flat_probe_argmax_online,flat probe argmax (online),0.02035800000000001,0.01887062500000001,0.021732050000000013,1000,win
+bernoulli,shapes pooled,10000,cartel,warm_start_bandit,warm-start bandit,0.014564000000000004,0.013181975000000005,0.015787025000000007,1000,win
+bernoulli,shapes pooled,10000,cartel,linucb_honest,LinUCB,0.17014500000000005,0.16857335000000004,0.17162807500000002,1000,win
+bernoulli,shapes pooled,10000,cartel,declared_argmax,declared argmax,0.06933600000000004,0.06745095000000005,0.07125102500000005,1000,win
+bernoulli,shapes pooled,10000,cartel,verify_on_claim,verify on claim,0.040198000000000025,0.038453625000000026,0.04191740000000003,1000,win
+bernoulli,shapes pooled,10000,cartel,midian,MIDIAN,0.07571200000000004,0.07363870000000004,0.07769315000000004,1000,win
+bernoulli,shapes pooled,10000,cartel,sequential_halving_peer,seq. halving (peer),0.12096900000000002,0.11876352500000001,0.12316207500000002,1000,win
+bernoulli,shapes pooled,100000,beta0,flat_probe_argmax_online,flat probe argmax (online),0.029948000000000016,0.028216000000000012,0.03173015000000001,500,win
+bernoulli,shapes pooled,100000,beta0,warm_start_bandit,warm-start bandit,-0.04037599999999994,-0.04178609999999994,-0.03881584999999994,500,loss
+bernoulli,shapes pooled,100000,beta0,linucb_honest,LinUCB,0.36037199999999997,0.3583317,0.3624143,500,win
+bernoulli,shapes pooled,100000,beta0,declared_argmax,declared argmax,-0.04048799999999994,-0.042024099999999946,-0.03899599999999995,500,loss
+bernoulli,shapes pooled,100000,beta0,verify_on_claim,verify on claim,-0.04153799999999994,-0.04301259999999994,-0.040025799999999945,500,loss
+bernoulli,shapes pooled,100000,beta0,midian,MIDIAN,0.02835400000000001,0.02664760000000001,0.03008435000000001,500,win
+bernoulli,shapes pooled,100000,beta0,sequential_halving_peer,seq. halving (peer),-0.04862799999999994,-0.050141999999999944,-0.04703184999999996,500,loss
+bernoulli,shapes pooled,100000,beta025_cartel,flat_probe_argmax_online,flat probe argmax (online),0.014722000000000008,0.012793850000000008,0.01658205000000001,500,win
+bernoulli,shapes pooled,100000,beta025_cartel,warm_start_bandit,warm-start bandit,-0.005052000000000005,-0.006882400000000005,-0.0033539000000000043,500,loss
+bernoulli,shapes pooled,100000,beta025_cartel,linucb_honest,LinUCB,0.34514599999999995,0.34296360000000004,0.34729245000000003,500,win
+bernoulli,shapes pooled,100000,beta025_cartel,declared_argmax,declared argmax,0.08167000000000005,0.07929155000000003,0.08405830000000002,500,win
+bernoulli,shapes pooled,100000,beta025_cartel,verify_on_claim,verify on claim,0.054758000000000036,0.05222600000000004,0.05706605000000005,500,win
+bernoulli,shapes pooled,100000,beta025_cartel,midian,MIDIAN,0.01887600000000001,0.01695760000000001,0.02070630000000001,500,win
+bernoulli,shapes pooled,100000,beta025_cartel,sequential_halving_peer,seq. halving (peer),-0.06368799999999995,-0.06545604999999996,-0.061943999999999944,500,loss
+bernoulli,shapes pooled,100000,beta025_random,flat_probe_argmax_online,flat probe argmax (online),0.01498400000000001,0.01316575000000001,0.01684045000000001,500,win
+bernoulli,shapes pooled,100000,beta025_random,warm_start_bandit,warm-start bandit,-0.020157999999999995,-0.021880149999999994,-0.0182798,500,loss
+bernoulli,shapes pooled,100000,beta025_random,linucb_honest,LinUCB,0.345408,0.3431997500000001,0.34765435,500,win
+bernoulli,shapes pooled,100000,beta025_random,declared_argmax,declared argmax,0.026600000000000023,0.023871650000000022,0.029472050000000024,500,win
+bernoulli,shapes pooled,100000,beta025_random,verify_on_claim,verify on claim,0.0007620000000000069,-0.0015521499999999941,0.0032347500000000032,500,tie
+bernoulli,shapes pooled,100000,beta025_random,midian,MIDIAN,0.018150000000000013,0.01624565000000001,0.020126050000000013,500,win
+bernoulli,shapes pooled,100000,beta025_random,sequential_halving_peer,seq. halving (peer),-0.06321199999999995,-0.06482409999999995,-0.06152914999999995,500,loss
+bernoulli,shapes pooled,100000,beta05_random,flat_probe_argmax_online,flat probe argmax (online),0.01954200000000001,0.017655850000000008,0.021434000000000012,500,win
+bernoulli,shapes pooled,100000,beta05_random,warm_start_bandit,warm-start bandit,-0.013268,-0.015128699999999997,-0.011369150000000005,500,loss
+bernoulli,shapes pooled,100000,beta05_random,linucb_honest,LinUCB,0.34996600000000005,0.34775980000000006,0.35223610000000005,500,win
+bernoulli,shapes pooled,100000,beta05_random,declared_argmax,declared argmax,0.03588000000000002,0.033231550000000026,0.03873435000000003,500,win
+bernoulli,shapes pooled,100000,beta05_random,verify_on_claim,verify on claim,0.009956000000000008,0.007605400000000008,0.012342050000000009,500,win
+bernoulli,shapes pooled,100000,beta05_random,midian,MIDIAN,0.060102000000000044,0.05774995000000004,0.06250830000000003,500,win
+bernoulli,shapes pooled,100000,beta05_random,sequential_halving_peer,seq. halving (peer),-0.047875999999999946,-0.04979804999999995,-0.04596569999999995,500,loss
+bernoulli,shapes pooled,100000,cartel,flat_probe_argmax_online,flat probe argmax (online),0.02185600000000001,0.020103900000000015,0.02371235000000001,500,win
+bernoulli,shapes pooled,100000,cartel,warm_start_bandit,warm-start bandit,0.01912600000000001,0.017401950000000006,0.020954000000000007,500,win
+bernoulli,shapes pooled,100000,cartel,linucb_honest,LinUCB,0.3522800000000001,0.3502078,0.35437415,500,win
+bernoulli,shapes pooled,100000,cartel,declared_argmax,declared argmax,0.06963000000000005,0.06720390000000004,0.07224205000000004,500,win
+bernoulli,shapes pooled,100000,cartel,verify_on_claim,verify on claim,0.04104800000000003,0.038685700000000024,0.04338615000000002,500,win
+bernoulli,shapes pooled,100000,cartel,midian,MIDIAN,0.07789800000000005,0.07498780000000005,0.08062380000000004,500,win
+bernoulli,shapes pooled,100000,cartel,sequential_halving_peer,seq. halving (peer),0.09919000000000003,0.09671975000000003,0.10174885000000003,500,win
+bernoulli,shapes pooled,1000000,beta0,flat_probe_argmax_online,flat probe argmax (online),0.030260000000000006,0.027759750000000007,0.03295512500000001,200,win
+bernoulli,shapes pooled,1000000,beta0,warm_start_bandit,warm-start bandit,-0.03750999999999994,-0.03966512499999994,-0.03519487499999995,200,loss
+bernoulli,shapes pooled,1000000,beta0,linucb_honest,LinUCB,0.47831500000000005,0.4750245,0.4813955000000001,200,win
+bernoulli,shapes pooled,1000000,beta0,declared_argmax,declared argmax,-0.03805499999999994,-0.040260124999999945,-0.035684999999999946,200,loss
+bernoulli,shapes pooled,1000000,beta0,verify_on_claim,verify on claim,-0.03866999999999994,-0.04080074999999994,-0.036459749999999944,200,loss
+bernoulli,shapes pooled,1000000,beta0,midian,MIDIAN,0.030895000000000006,0.027989625000000004,0.03370512500000001,200,win
+bernoulli,shapes pooled,1000000,beta0,sequential_halving_peer,seq. halving (peer),-0.045259999999999946,-0.047300499999999954,-0.04303987499999995,200,loss
+bernoulli,shapes pooled,1000000,beta025_cartel,flat_probe_argmax_online,flat probe argmax (online),0.014200000000000008,0.011434500000000007,0.016895500000000008,200,win
+bernoulli,shapes pooled,1000000,beta025_cartel,warm_start_bandit,warm-start bandit,-0.0005650000000000021,-0.0032101250000000046,0.0022552499999999994,200,tie
+bernoulli,shapes pooled,1000000,beta025_cartel,linucb_honest,LinUCB,0.462255,0.4586695,0.46555150000000006,200,win
+bernoulli,shapes pooled,1000000,beta025_cartel,declared_argmax,declared argmax,0.08293000000000005,0.07956787500000002,0.08646012500000004,200,win
+bernoulli,shapes pooled,1000000,beta025_cartel,verify_on_claim,verify on claim,0.05899000000000004,0.055354875000000046,0.06292000000000005,200,win
+bernoulli,shapes pooled,1000000,beta025_cartel,midian,MIDIAN,0.017935000000000013,0.015073500000000012,0.02071537500000002,200,win
+bernoulli,shapes pooled,1000000,beta025_cartel,sequential_halving_peer,seq. halving (peer),-0.06219999999999995,-0.06462499999999995,-0.05978999999999994,200,loss
+bernoulli,shapes pooled,1000000,beta025_random,flat_probe_argmax_online,flat probe argmax (online),0.015775000000000008,0.012969750000000004,0.018685125000000007,200,win
+bernoulli,shapes pooled,1000000,beta025_random,warm_start_bandit,warm-start bandit,-0.01813499999999999,-0.020770124999999997,-0.015489999999999997,200,loss
+bernoulli,shapes pooled,1000000,beta025_random,linucb_honest,LinUCB,0.46382999999999996,0.46039,0.46722025000000006,200,win
+bernoulli,shapes pooled,1000000,beta025_random,declared_argmax,declared argmax,0.02754500000000002,0.023234625000000016,0.03230012500000002,200,win
+bernoulli,shapes pooled,1000000,beta025_random,verify_on_claim,verify on claim,0.004105000000000005,0.00044912500000000063,0.007790250000000002,200,win
+bernoulli,shapes pooled,1000000,beta025_random,midian,MIDIAN,0.01933000000000001,0.01636975000000001,0.02229050000000001,200,win
+bernoulli,shapes pooled,1000000,beta025_random,sequential_halving_peer,seq. halving (peer),-0.05909499999999995,-0.061599999999999946,-0.05642474999999995,200,loss
+bernoulli,shapes pooled,1000000,beta05_random,flat_probe_argmax_online,flat probe argmax (online),0.01905500000000001,0.016344625000000005,0.021695625000000003,200,win
+bernoulli,shapes pooled,1000000,beta05_random,warm_start_bandit,warm-start bandit,-0.012939999999999997,-0.015360124999999999,-0.010220000000000002,200,loss
+bernoulli,shapes pooled,1000000,beta05_random,linucb_honest,LinUCB,0.46710999999999997,0.463864875,0.47019,200,win
+bernoulli,shapes pooled,1000000,beta05_random,declared_argmax,declared argmax,0.03557000000000002,0.031059250000000017,0.04000012500000003,200,win
+bernoulli,shapes pooled,1000000,beta05_random,verify_on_claim,verify on claim,0.00924500000000001,0.005515000000000007,0.013015125000000013,200,win
+bernoulli,shapes pooled,1000000,beta05_random,midian,MIDIAN,0.06122000000000003,0.05727950000000003,0.06542012500000004,200,win
+bernoulli,shapes pooled,1000000,beta05_random,sequential_halving_peer,seq. halving (peer),-0.050039999999999946,-0.05239512499999994,-0.04753974999999994,200,loss
+bernoulli,shapes pooled,1000000,cartel,flat_probe_argmax_online,flat probe argmax (online),0.022830000000000013,0.01997487500000001,0.02571025000000001,200,win
+bernoulli,shapes pooled,1000000,cartel,warm_start_bandit,warm-start bandit,0.02408500000000001,0.021340000000000012,0.02686025000000001,200,win
+bernoulli,shapes pooled,1000000,cartel,linucb_honest,LinUCB,0.47088500000000005,0.467514875,0.474045,200,win
+bernoulli,shapes pooled,1000000,cartel,declared_argmax,declared argmax,0.07113000000000004,0.06733975000000006,0.07507012500000006,200,win
+bernoulli,shapes pooled,1000000,cartel,verify_on_claim,verify on claim,0.04719500000000003,0.04346487500000003,0.05095000000000002,200,win
+bernoulli,shapes pooled,1000000,cartel,midian,MIDIAN,0.07939500000000005,0.07492475000000005,0.08387625000000003,200,win
+bernoulli,shapes pooled,1000000,cartel,sequential_halving_peer,seq. halving (peer),0.09164000000000005,0.08813987500000005,0.09498025000000004,200,win
+bernoulli,shapes pooled,10000000,beta0,flat_probe_argmax_online,flat probe argmax (online),0.032220000000000006,0.02838000000000001,0.036471250000000004,100,win
+bernoulli,shapes pooled,10000000,beta0,warm_start_bandit,warm-start bandit,-0.03746999999999995,-0.04058024999999994,-0.03417924999999995,100,loss
+bernoulli,shapes pooled,10000000,beta0,linucb_honest,LinUCB,0.53976,0.5356700000000001,0.5443205,100,win
+bernoulli,shapes pooled,10000000,beta0,declared_argmax,declared argmax,-0.039959999999999954,-0.04302024999999994,-0.03662974999999995,100,loss
+bernoulli,shapes pooled,10000000,beta0,verify_on_claim,verify on claim,-0.04056999999999995,-0.04364999999999994,-0.03715949999999995,100,loss
+bernoulli,shapes pooled,10000000,beta0,midian,MIDIAN,0.030420000000000006,0.026679500000000005,0.034130250000000015,100,win
+bernoulli,shapes pooled,10000000,beta0,sequential_halving_peer,seq. halving (peer),-0.04478999999999995,-0.04797024999999995,-0.04127974999999995,100,loss
+bernoulli,shapes pooled,10000000,beta025_cartel,flat_probe_argmax_online,flat probe argmax (online),0.017900000000000013,0.014039750000000007,0.021890500000000004,100,win
+bernoulli,shapes pooled,10000000,beta025_cartel,warm_start_bandit,warm-start bandit,0.007270000000000004,0.0037197500000000026,0.010920000000000003,100,win
+bernoulli,shapes pooled,10000000,beta025_cartel,linucb_honest,LinUCB,0.52544,0.5215500000000002,0.5294899999999999,100,win
+bernoulli,shapes pooled,10000000,beta025_cartel,declared_argmax,declared argmax,0.08403000000000004,0.07895975000000005,0.08936100000000005,100,win
+bernoulli,shapes pooled,10000000,beta025_cartel,verify_on_claim,verify on claim,0.06465000000000004,0.05953975000000003,0.06985150000000004,100,win
+bernoulli,shapes pooled,10000000,beta025_cartel,midian,MIDIAN,0.023270000000000016,0.019469500000000018,0.02708000000000001,100,win
+bernoulli,shapes pooled,10000000,beta025_cartel,sequential_halving_peer,seq. halving (peer),-0.05952999999999993,-0.06288024999999994,-0.05611974999999994,100,loss
+bernoulli,shapes pooled,10000000,beta025_random,flat_probe_argmax_online,flat probe argmax (online),0.016860000000000007,0.012669250000000003,0.02091399999999999,100,win
+bernoulli,shapes pooled,10000000,beta025_random,warm_start_bandit,warm-start bandit,-0.01802999999999999,-0.021940749999999988,-0.014219499999999987,100,loss
+bernoulli,shapes pooled,10000000,beta025_random,linucb_honest,LinUCB,0.5244,0.5201895000000001,0.52864025,100,win
+bernoulli,shapes pooled,10000000,beta025_random,declared_argmax,declared argmax,0.030370000000000025,0.02413975000000002,0.03685000000000002,100,win
+bernoulli,shapes pooled,10000000,beta025_random,verify_on_claim,verify on claim,0.0018400000000000105,-0.0034402499999999898,0.007140250000000003,100,tie
+bernoulli,shapes pooled,10000000,beta025_random,midian,MIDIAN,0.021620000000000018,0.01742950000000001,0.025751000000000013,100,win
+bernoulli,shapes pooled,10000000,beta025_random,sequential_halving_peer,seq. halving (peer),-0.05954999999999996,-0.06343024999999994,-0.05580874999999995,100,loss
+bernoulli,shapes pooled,10000000,beta05_random,flat_probe_argmax_online,flat probe argmax (online),0.02487000000000001,0.020689750000000007,0.028920500000000005,100,win
+bernoulli,shapes pooled,10000000,beta05_random,warm_start_bandit,warm-start bandit,-0.006739999999999991,-0.010850749999999985,-0.0026897499999999895,100,loss
+bernoulli,shapes pooled,10000000,beta05_random,linucb_honest,LinUCB,0.53241,0.52810975,0.53682275,100,win
+bernoulli,shapes pooled,10000000,beta05_random,declared_argmax,declared argmax,0.04551000000000003,0.03865850000000002,0.052710500000000035,100,win
+bernoulli,shapes pooled,10000000,beta05_random,verify_on_claim,verify on claim,0.012860000000000005,0.007349749999999999,0.018660250000000014,100,win
+bernoulli,shapes pooled,10000000,beta05_random,midian,MIDIAN,0.06690000000000004,0.06218000000000004,0.07160025000000003,100,win
+bernoulli,shapes pooled,10000000,beta05_random,sequential_halving_peer,seq. halving (peer),-0.04825999999999994,-0.051690999999999945,-0.044709499999999944,100,loss
+bernoulli,shapes pooled,10000000,cartel,flat_probe_argmax_online,flat probe argmax (online),0.025210000000000007,0.02095975000000001,0.029520250000000015,100,win
+bernoulli,shapes pooled,10000000,cartel,warm_start_bandit,warm-start bandit,0.026340000000000013,0.02306000000000001,0.02979000000000001,100,win
+bernoulli,shapes pooled,10000000,cartel,linucb_honest,LinUCB,0.5327500000000001,0.5282792500000001,0.53756025,100,win
+bernoulli,shapes pooled,10000000,cartel,declared_argmax,declared argmax,0.07070000000000004,0.06491900000000005,0.07673025000000003,100,win
+bernoulli,shapes pooled,10000000,cartel,verify_on_claim,verify on claim,0.04575000000000003,0.03970850000000002,0.05168025000000003,100,win
+bernoulli,shapes pooled,10000000,cartel,midian,MIDIAN,0.07816000000000005,0.07220975000000004,0.08475075000000003,100,win
+bernoulli,shapes pooled,10000000,cartel,sequential_halving_peer,seq. halving (peer),0.08646000000000002,0.08206975000000005,0.09081050000000004,100,win
+live,bimodal,100,beta0,flat_probe_argmax_online,flat probe argmax (online),0.0028000000000000026,-0.004402499999999992,0.008099999999999996,10,tie
+live,bimodal,100,beta0,warm_start_bandit,warm-start bandit,-0.016599999999999983,-0.024299999999999978,-0.009097499999999988,10,loss
+live,bimodal,100,beta0,knn_router_online,KNN router (online),0.002400000000000002,-0.005199999999999982,0.01020000000000001,10,tie
+live,bimodal,100,beta0,mlp_router,MLP router,-0.008799999999999985,-0.016802499999999946,-0.0012999999999999897,10,loss
+live,bimodal,100,beta0,declared_argmax,declared argmax,-0.024433333333333286,-0.03146999999999998,-0.01823333333333328,10,loss
+live,bimodal,100,beta0,midian,MIDIAN,0.00791666666666666,0.0008662500000000046,0.014417083333333343,10,win
+live,bimodal,100,beta0,sequential_halving_peer,seq. halving (peer),-0.020799999999999964,-0.02859999999999996,-0.01419999999999998,10,loss
+live,bimodal,100,beta01_random,flat_probe_argmax_online,flat probe argmax (online),-0.005199999999999982,-0.01509999999999997,0.0026000000000000354,10,tie
+live,bimodal,100,beta01_random,warm_start_bandit,warm-start bandit,-0.013099999999999968,-0.022999999999999944,-0.004397499999999963,10,loss
+live,bimodal,100,beta01_random,knn_router_online,KNN router (online),-0.005599999999999983,-0.013999999999999967,0.0008000000000000007,10,tie
+live,bimodal,100,beta01_random,mlp_router,MLP router,-0.01679999999999997,-0.025999999999999968,-0.008897499999999989,10,loss
+live,bimodal,100,beta01_random,declared_argmax,declared argmax,0.011166666666666703,-0.0033999999999999426,0.026776666666666643,10,tie
+live,bimodal,100,beta01_random,midian,MIDIAN,0.001866666666666672,-0.008234583333333347,0.009733333333333339,10,tie
+live,bimodal,100,beta01_random,sequential_halving_peer,seq. halving (peer),-0.028799999999999947,-0.03850249999999998,-0.019299999999999963,10,loss
+live,bimodal,100,beta025_cartel,flat_probe_argmax_online,flat probe argmax (online),-0.0048999999999999825,-0.010199999999999987,0.0008000000000000229,10,tie
+live,bimodal,100,beta025_cartel,warm_start_bandit,warm-start bandit,-0.0026999999999999915,-0.008899999999999996,0.005400000000000005,10,tie
+live,bimodal,100,beta025_cartel,knn_router_online,KNN router (online),-0.005299999999999983,-0.010599999999999976,-0.0001999999999999999,10,loss
+live,bimodal,100,beta025_cartel,mlp_router,MLP router,-0.01649999999999997,-0.021499999999999943,-0.010399999999999975,10,loss
+live,bimodal,100,beta025_cartel,declared_argmax,declared argmax,0.04185000000000003,0.030000000000000027,0.05385125000000004,10,win
+live,bimodal,100,beta025_cartel,midian,MIDIAN,0.03345000000000003,0.02400000000000002,0.04225000000000004,10,win
+live,bimodal,100,beta025_cartel,sequential_halving_peer,seq. halving (peer),-0.025499999999999957,-0.033299999999999975,-0.01749999999999997,10,loss
+live,bimodal,100,beta025_random,flat_probe_argmax_online,flat probe argmax (online),-0.003400000000000014,-0.01150000000000002,0.0031999999999999694,10,tie
+live,bimodal,100,beta025_random,warm_start_bandit,warm-start bandit,-0.0039000000000000146,-0.011599999999999989,0.003599999999999981,10,tie
+live,bimodal,100,beta025_random,knn_router_online,KNN router (online),-0.0038000000000000143,-0.01280250000000001,0.00649999999999995,10,tie
+live,bimodal,100,beta025_random,mlp_router,MLP router,-0.015000000000000003,-0.02360250000000001,-0.006200000000000015,10,loss
+live,bimodal,100,beta025_random,declared_argmax,declared argmax,0.0021666666666666614,-0.01373333333333333,0.017166666666666653,10,tie
+live,bimodal,100,beta025_random,midian,MIDIAN,0.02146666666666665,0.012565416666666671,0.030550416666666635,10,win
+live,bimodal,100,beta025_random,sequential_halving_peer,seq. halving (peer),-0.023999999999999976,-0.0356,-0.01499999999999999,10,loss
+live,bimodal,100,beta05_random,flat_probe_argmax_online,flat probe argmax (online),0.003500000000000003,-0.004599999999999961,0.009999999999999976,10,tie
+live,bimodal,100,beta05_random,warm_start_bandit,warm-start bandit,0.016199999999999992,0.004197499999999982,0.028700000000000014,10,win
+live,bimodal,100,beta05_random,knn_router_online,KNN router (online),0.003100000000000003,-0.005499999999999994,0.011602499999999984,10,tie
+live,bimodal,100,beta05_random,mlp_router,MLP router,-0.008099999999999986,-0.016199999999999957,-0.0007000000000000006,10,loss
+live,bimodal,100,beta05_random,declared_argmax,declared argmax,0.00946666666666669,-0.006504999999999982,0.023269999999999996,10,tie
+live,bimodal,100,beta05_random,midian,MIDIAN,0.038300000000000015,0.024497499999999995,0.05110250000000002,10,win
+live,bimodal,100,beta05_random,sequential_halving_peer,seq. halving (peer),0.03810000000000002,0.013597500000000061,0.06360250000000002,10,win
+live,bimodal,100,cartel,flat_probe_argmax_online,flat probe argmax (online),0.0016000000000000124,-0.0031024999999999794,0.006102500000000012,10,tie
+live,bimodal,100,cartel,warm_start_bandit,warm-start bandit,0.011900000000000011,0.002300000000000002,0.022602500000000008,10,win
+live,bimodal,100,cartel,knn_router_online,KNN router (online),0.0012000000000000123,-0.004899999999999971,0.007002500000000003,10,tie
+live,bimodal,100,cartel,mlp_router,MLP router,-0.009999999999999976,-0.01579999999999996,-0.004297499999999996,10,loss
+live,bimodal,100,cartel,declared_argmax,declared argmax,0.04836666666666671,0.037899166666666706,0.059100000000000055,10,win
+live,bimodal,100,cartel,midian,MIDIAN,0.13113333333333338,0.09279333333333337,0.17210000000000006,10,win
+live,bimodal,100,cartel,sequential_halving_peer,seq. halving (peer),0.27210000000000006,0.24029250000000002,0.3020025,10,win
+live,bimodal,1000,beta0,flat_probe_argmax_online,flat probe argmax (online),-0.0032499999999999972,-0.010899999999999976,0.0036499999999999753,10,tie
+live,bimodal,1000,beta0,warm_start_bandit,warm-start bandit,-0.023399999999999976,-0.030200000000000005,-0.016599999999999993,5,loss
+live,bimodal,1000,beta0,linucb_honest,LinUCB,0.00229999999999998,-0.0029000000000000137,0.006999999999999951,10,tie
+live,bimodal,1000,beta0,knn_router_online,KNN router (online),-0.0009999999999999898,-0.010302499999999975,0.007902499999999995,10,tie
+live,bimodal,1000,beta0,mlp_router,MLP router,-0.01479999999999997,-0.021499999999999964,-0.008799999999999964,10,loss
+live,bimodal,1000,beta0,declared_argmax,declared argmax,-0.025099999999999945,-0.03150249999999994,-0.01999999999999994,10,loss
+live,bimodal,1000,beta0,verify_on_claim,verify on claim,-0.023599999999999954,-0.03179999999999994,-0.01639999999999999,5,loss
+live,bimodal,1000,beta0,midian,MIDIAN,-0.00485000000000001,-0.012151249999999994,0.0012999999999999464,10,tie
+live,bimodal,1000,beta0,sequential_halving_peer,seq. halving (peer),-0.024899999999999943,-0.03139999999999993,-0.019699999999999974,10,loss
+live,bimodal,1000,beta01_random,flat_probe_argmax_online,flat probe argmax (online),-0.008099999999999986,-0.01590249999999999,-0.0004999999999999672,10,loss
+live,bimodal,1000,beta01_random,warm_start_bandit,warm-start bandit,-0.03319999999999994,-0.04279999999999999,-0.02379999999999991,5,loss
+live,bimodal,1000,beta01_random,linucb_honest,LinUCB,-0.004100000000000004,-0.009600000000000008,0.0009000000000000008,10,tie
+live,bimodal,1000,beta01_random,knn_router_online,KNN router (online),-0.006199999999999972,-0.01759999999999997,0.005200000000000038,10,tie
+live,bimodal,1000,beta01_random,mlp_router,MLP router,-0.019999999999999952,-0.02849999999999999,-0.012599999999999955,10,loss
+live,bimodal,1000,beta01_random,declared_argmax,declared argmax,0.005100000000000026,-0.013904999999999968,0.020902500000000004,10,tie
+live,bimodal,1000,beta01_random,verify_on_claim,verify on claim,-0.03619999999999992,-0.04659999999999993,-0.026399999999999913,5,loss
+live,bimodal,1000,beta01_random,midian,MIDIAN,-0.005099999999999982,-0.01115124999999997,0.0013000000000000123,10,tie
+live,bimodal,1000,beta01_random,sequential_halving_peer,seq. halving (peer),-0.030099999999999925,-0.03770499999999993,-0.023697499999999923,10,loss
+live,bimodal,1000,beta025_cartel,flat_probe_argmax_online,flat probe argmax (online),-0.006200000000000016,-0.0152025,0.0023999999999999694,10,tie
+live,bimodal,1000,beta025_cartel,warm_start_bandit,warm-start bandit,-0.02519999999999998,-0.03859999999999997,-0.010600000000000009,5,loss
+live,bimodal,1000,beta025_cartel,linucb_honest,LinUCB,-0.001900000000000035,-0.008600000000000019,0.005002499999999924,10,tie
+live,bimodal,1000,beta025_cartel,knn_router_online,KNN router (online),-0.004900000000000004,-0.015602500000000024,0.005999999999999994,10,tie
+live,bimodal,1000,beta025_cartel,mlp_router,MLP router,-0.018699999999999984,-0.027002500000000013,-0.011099999999999999,10,loss
+live,bimodal,1000,beta025_cartel,declared_argmax,declared argmax,0.04519999999999998,0.026180000000000012,0.06439999999999997,5,win
+live,bimodal,1000,beta025_cartel,verify_on_claim,verify on claim,0.014199999999999968,0.0026000000000000025,0.025799999999999934,5,win
+live,bimodal,1000,beta025_cartel,midian,MIDIAN,0.020699999999999986,0.01249749999999999,0.029102499999999944,10,win
+live,bimodal,1000,beta025_cartel,sequential_halving_peer,seq. halving (peer),-0.02469999999999999,-0.03079999999999996,-0.019200000000000016,10,loss
+live,bimodal,1000,beta025_random,flat_probe_argmax_online,flat probe argmax (online),-0.012499999999999989,-0.018302499999999982,-0.007099999999999984,10,loss
+live,bimodal,1000,beta025_random,warm_start_bandit,warm-start bandit,-0.032199999999999965,-0.03939999999999999,-0.023399999999999976,5,loss
+live,bimodal,1000,beta025_random,linucb_honest,LinUCB,-0.007500000000000007,-0.01170000000000001,-0.0036975000000000167,10,loss
+live,bimodal,1000,beta025_random,knn_router_online,KNN router (online),-0.010499999999999976,-0.01990249999999995,-0.0013999999999999902,10,loss
+live,bimodal,1000,beta025_random,mlp_router,MLP router,-0.024299999999999954,-0.03229999999999994,-0.016099999999999958,10,loss
+live,bimodal,1000,beta025_random,declared_argmax,declared argmax,0.005400000000000016,-0.008502499999999974,0.014700000000000013,10,tie
+live,bimodal,1000,beta025_random,verify_on_claim,verify on claim,-0.03719999999999992,-0.044399999999999926,-0.030799999999999918,5,loss
+live,bimodal,1000,beta025_random,midian,MIDIAN,-0.0011499999999999954,-0.008252499999999989,0.004500000000000004,10,tie
+live,bimodal,1000,beta025_random,sequential_halving_peer,seq. halving (peer),-0.03299999999999995,-0.03859999999999995,-0.028299999999999957,10,loss
+live,bimodal,1000,beta05_random,flat_probe_argmax_online,flat probe argmax (online),-0.004500000000000004,-0.01309999999999999,0.004202499999999989,10,tie
+live,bimodal,1000,beta05_random,warm_start_bandit,warm-start bandit,-0.022799999999999997,-0.03539999999999999,-0.007795000000000034,5,loss
+live,bimodal,1000,beta05_random,linucb_honest,LinUCB,0.0007999999999999785,-0.006100000000000006,0.007799999999999962,10,tie
+live,bimodal,1000,beta05_random,knn_router_online,KNN router (online),-0.0026999999999999915,-0.013399999999999978,0.008104999999999979,10,tie
+live,bimodal,1000,beta05_random,mlp_router,MLP router,-0.01649999999999997,-0.024699999999999944,-0.009297499999999934,10,loss
+live,bimodal,1000,beta05_random,declared_argmax,declared argmax,0.009200000000000009,-0.007002499999999983,0.023899999999999977,10,tie
+live,bimodal,1000,beta05_random,verify_on_claim,verify on claim,-0.030399999999999962,-0.041999999999999926,-0.017399999999999992,5,loss
+live,bimodal,1000,beta05_random,midian,MIDIAN,0.026699999999999984,0.013398749999999978,0.041151249999999986,10,win
+live,bimodal,1000,beta05_random,sequential_halving_peer,seq. halving (peer),0.0024000000000000132,-0.014502499999999979,0.01970249999999999,10,tie
+live,bimodal,1000,cartel,flat_probe_argmax_online,flat probe argmax (online),-0.006200000000000006,-0.01419999999999999,0.0015999999999999793,10,tie
+live,bimodal,1000,cartel,warm_start_bandit,warm-start bandit,-0.012999999999999989,-0.020599999999999972,-0.005400000000000005,5,loss
+live,bimodal,1000,cartel,linucb_honest,LinUCB,-0.002100000000000024,-0.009602500000000019,0.00539999999999996,10,tie
+live,bimodal,1000,cartel,knn_router_online,KNN router (online),-0.004599999999999993,-0.01369999999999998,0.004399999999999972,10,tie
+live,bimodal,1000,cartel,mlp_router,MLP router,-0.018399999999999972,-0.025399999999999957,-0.011499999999999988,10,loss
+live,bimodal,1000,cartel,declared_argmax,declared argmax,0.05170000000000001,0.04180000000000004,0.06160250000000001,10,win
+live,bimodal,1000,cartel,verify_on_claim,verify on claim,0.03199999999999999,0.021799999999999996,0.04459999999999995,5,win
+live,bimodal,1000,cartel,midian,MIDIAN,0.0819,0.07084875000000002,0.09470000000000002,10,win
+live,bimodal,1000,cartel,sequential_halving_peer,seq. halving (peer),0.2666,0.24330000000000002,0.28890000000000005,10,win
+live,heavy_tail,100,beta0,flat_probe_argmax_online,flat probe argmax (online),-0.0037000000000000145,-0.019200000000000016,0.011902499999999976,10,tie
+live,heavy_tail,100,beta0,warm_start_bandit,warm-start bandit,-0.008200000000000018,-0.02400250000000002,0.006102499999999992,10,tie
+live,heavy_tail,100,beta0,knn_router_online,KNN router (online),0.0534,0.0388975,0.06799999999999999,10,win
+live,heavy_tail,100,beta0,mlp_router,MLP router,-0.0013000000000000123,-0.021200000000000007,0.017199999999999993,10,tie
+live,heavy_tail,100,beta0,declared_argmax,declared argmax,0.024050000000000005,-0.003699999999999993,0.05010125000000001,10,tie
+live,heavy_tail,100,beta0,midian,MIDIAN,0.004333333333333323,-0.010667500000000014,0.018667499999999983,10,tie
+live,heavy_tail,100,beta0,sequential_halving_peer,seq. halving (peer),-0.044299999999999985,-0.06230499999999998,-0.02649999999999998,10,loss
+live,heavy_tail,100,beta01_random,flat_probe_argmax_online,flat probe argmax (online),-0.02320000000000002,-0.03340000000000003,-0.013700000000000013,10,loss
+live,heavy_tail,100,beta01_random,warm_start_bandit,warm-start bandit,-0.01260000000000001,-0.02210000000000002,-0.0033975000000000164,10,loss
+live,heavy_tail,100,beta01_random,knn_router_online,KNN router (online),0.0339,0.02049750000000002,0.04789999999999998,10,win
+live,heavy_tail,100,beta01_random,mlp_router,MLP router,-0.02080000000000002,-0.03660250000000001,-0.006697500000000064,10,loss
+live,heavy_tail,100,beta01_random,declared_argmax,declared argmax,0.028549999999999992,0.0036987499999999703,0.059800000000000006,10,win
+live,heavy_tail,100,beta01_random,midian,MIDIAN,-0.010516666666666674,-0.018284166666666685,-0.0023816666666666795,10,loss
+live,heavy_tail,100,beta01_random,sequential_halving_peer,seq. halving (peer),-0.06459999999999999,-0.07719999999999996,-0.05209749999999999,10,loss
+live,heavy_tail,100,beta025_cartel,flat_probe_argmax_online,flat probe argmax (online),-0.009000000000000008,-0.020402500000000018,0.0029000000000000024,10,tie
+live,heavy_tail,100,beta025_cartel,warm_start_bandit,warm-start bandit,0.018100000000000005,0.004400000000000004,0.032399999999999984,10,win
+live,heavy_tail,100,beta025_cartel,knn_router_online,KNN router (online),0.04810000000000001,0.035497499999999994,0.06070500000000002,10,win
+live,heavy_tail,100,beta025_cartel,mlp_router,MLP router,-0.006600000000000006,-0.02390500000000001,0.009099999999999974,10,tie
+live,heavy_tail,100,beta025_cartel,declared_argmax,declared argmax,0.10270000000000001,0.0782975,0.126305,10,win
+live,heavy_tail,100,beta025_cartel,midian,MIDIAN,0.02865000000000002,0.013349999999999983,0.04245125000000004,10,win
+live,heavy_tail,100,beta025_cartel,sequential_halving_peer,seq. halving (peer),-0.044699999999999976,-0.055802499999999984,-0.032397499999999975,10,loss
+live,heavy_tail,100,beta025_random,flat_probe_argmax_online,flat probe argmax (online),-0.018900000000000007,-0.033105,-0.005397500000000019,10,loss
+live,heavy_tail,100,beta025_random,warm_start_bandit,warm-start bandit,0.0024000000000000132,-0.012002499999999977,0.017800000000000017,10,tie
+live,heavy_tail,100,beta025_random,knn_router_online,KNN router (online),0.03820000000000001,0.022897499999999998,0.05270000000000001,10,win
+live,heavy_tail,100,beta025_random,mlp_router,MLP router,-0.016500000000000004,-0.0352025,-0.0004000000000000001,10,loss
+live,heavy_tail,100,beta025_random,declared_argmax,declared argmax,0.0613,0.03269500000000001,0.09000249999999999,10,win
+live,heavy_tail,100,beta025_random,midian,MIDIAN,0.011083333333333356,-0.0036016666666666263,0.023850416666666693,10,tie
+live,heavy_tail,100,beta025_random,sequential_halving_peer,seq. halving (peer),-0.058499999999999976,-0.07520499999999997,-0.04199749999999996,10,loss
+live,heavy_tail,100,beta05_random,flat_probe_argmax_online,flat probe argmax (online),-0.005100000000000016,-0.019600000000000017,0.008902499999999973,10,tie
+live,heavy_tail,100,beta05_random,warm_start_bandit,warm-start bandit,0.0324,0.020299999999999995,0.043502500000000006,10,win
+live,heavy_tail,100,beta05_random,knn_router_online,KNN router (online),0.052000000000000005,0.038495,0.06510249999999998,10,win
+live,heavy_tail,100,beta05_random,mlp_router,MLP router,-0.0027000000000000136,-0.021402499999999984,0.014299999999999969,10,tie
+live,heavy_tail,100,beta05_random,declared_argmax,declared argmax,0.08134999999999998,0.050649999999999994,0.1127149999999999,10,win
+live,heavy_tail,100,beta05_random,midian,MIDIAN,0.05718333333333333,0.02969666666666667,0.09161791666666666,10,win
+live,heavy_tail,100,beta05_random,sequential_halving_peer,seq. halving (peer),0.0648,0.03199500000000001,0.10270499999999999,10,win
+live,heavy_tail,100,cartel,flat_probe_argmax_online,flat probe argmax (online),-0.0014000000000000013,-0.015300000000000013,0.01080000000000001,10,tie
+live,heavy_tail,100,cartel,warm_start_bandit,warm-start bandit,0.04560000000000003,0.031100000000000017,0.05880250000000004,10,win
+live,heavy_tail,100,cartel,knn_router_online,KNN router (online),0.05570000000000001,0.0416975,0.06850250000000002,10,win
+live,heavy_tail,100,cartel,mlp_router,MLP router,0.0010000000000000009,-0.017699999999999983,0.0169025,10,tie
+live,heavy_tail,100,cartel,declared_argmax,declared argmax,0.1133,0.09220000000000003,0.13560000000000003,10,win
+live,heavy_tail,100,cartel,midian,MIDIAN,0.19956666666666667,0.16829250000000004,0.24210000000000004,10,win
+live,heavy_tail,100,cartel,sequential_halving_peer,seq. halving (peer),0.35940000000000005,0.33379749999999997,0.3854025,10,win
+live,heavy_tail,1000,beta0,flat_probe_argmax_online,flat probe argmax (online),0.026049999999999962,0.020549999999999968,0.032001249999999946,10,win
+live,heavy_tail,1000,beta0,warm_start_bandit,warm-start bandit,-0.01739999999999997,-0.023199999999999953,-0.008600000000000007,5,loss
+live,heavy_tail,1000,beta0,linucb_honest,LinUCB,0.045999999999999985,0.03699999999999996,0.0560025,10,win
+live,heavy_tail,1000,beta0,knn_router_online,KNN router (online),0.04249999999999998,0.030000000000000006,0.055899999999999964,10,win
+live,heavy_tail,1000,beta0,mlp_router,MLP router,0.045499999999999985,0.03670000000000001,0.05379999999999997,10,win
+live,heavy_tail,1000,beta0,declared_argmax,declared argmax,0.07320000000000002,0.04410000000000003,0.099805,10,win
+live,heavy_tail,1000,beta0,verify_on_claim,verify on claim,0.01479999999999999,0.0028000000000000026,0.02679999999999998,5,win
+live,heavy_tail,1000,beta0,midian,MIDIAN,0.02856666666666665,0.019947916666666645,0.03665041666666668,10,win
+live,heavy_tail,1000,beta0,sequential_halving_peer,seq. halving (peer),-0.043799999999999985,-0.049199999999999966,-0.03909999999999999,10,loss
+live,heavy_tail,1000,beta01_random,flat_probe_argmax_online,flat probe argmax (online),0.011899999999999999,0.002200000000000002,0.02130249999999996,10,win
+live,heavy_tail,1000,beta01_random,warm_start_bandit,warm-start bandit,-0.02179999999999993,-0.029799999999999917,-0.01639999999999995,5,loss
+live,heavy_tail,1000,beta01_random,linucb_honest,LinUCB,0.030100000000000016,0.019300000000000005,0.040400000000000026,10,win
+live,heavy_tail,1000,beta01_random,knn_router_online,KNN router (online),0.027800000000000012,0.013300000000000001,0.043599999999999986,10,win
+live,heavy_tail,1000,beta01_random,mlp_router,MLP router,0.030800000000000015,0.024400000000000022,0.037400000000000024,10,win
+live,heavy_tail,1000,beta01_random,declared_argmax,declared argmax,0.08840000000000002,0.05119750000000001,0.12571,10,win
+live,heavy_tail,1000,beta01_random,verify_on_claim,verify on claim,0.005400000000000005,-0.0031999999999999806,0.013999999999999947,5,tie
+live,heavy_tail,1000,beta01_random,midian,MIDIAN,0.018000000000000016,0.008200000000000018,0.026251250000000045,10,win
+live,heavy_tail,1000,beta01_random,sequential_halving_peer,seq. halving (peer),-0.05879999999999995,-0.06449999999999993,-0.05259749999999994,10,loss
+live,heavy_tail,1000,beta025_cartel,flat_probe_argmax_online,flat probe argmax (online),0.00824999999999998,-0.0018512500000000076,0.01950499999999997,10,tie
+live,heavy_tail,1000,beta025_cartel,warm_start_bandit,warm-start bandit,-0.021599999999999953,-0.028999999999999936,-0.015599999999999992,5,loss
+live,heavy_tail,1000,beta025_cartel,linucb_honest,LinUCB,0.026700000000000012,0.015200000000000014,0.038400000000000004,10,win
+live,heavy_tail,1000,beta025_cartel,knn_router_online,KNN router (online),0.02470000000000001,0.009799999999999998,0.04300000000000002,10,win
+live,heavy_tail,1000,beta025_cartel,mlp_router,MLP router,0.027700000000000013,0.02260000000000001,0.03270000000000001,10,win
+live,heavy_tail,1000,beta025_cartel,declared_argmax,declared argmax,0.1562,0.1326,0.17840000000000003,5,win
+live,heavy_tail,1000,beta025_cartel,verify_on_claim,verify on claim,-0.0027999999999999805,-0.023399999999999956,0.019400000000000018,5,tie
+live,heavy_tail,1000,beta025_cartel,midian,MIDIAN,0.052600000000000036,0.04420000000000003,0.06150250000000004,10,win
+live,heavy_tail,1000,beta025_cartel,sequential_halving_peer,seq. halving (peer),-0.05099999999999995,-0.05969999999999994,-0.040697499999999935,10,loss
+live,heavy_tail,1000,beta025_random,flat_probe_argmax_online,flat probe argmax (online),0.0015499999999999737,-0.008450000000000023,0.011599999999999966,10,tie
+live,heavy_tail,1000,beta025_random,warm_start_bandit,warm-start bandit,-0.03059999999999998,-0.04479999999999997,-0.015400000000000014,5,loss
+live,heavy_tail,1000,beta025_random,linucb_honest,LinUCB,0.02040000000000001,0.009897499999999998,0.030402500000000013,10,win
+live,heavy_tail,1000,beta025_random,knn_router_online,KNN router (online),0.018100000000000005,0.0033974999999999925,0.035204999999999965,10,win
+live,heavy_tail,1000,beta025_random,mlp_router,MLP router,0.021100000000000008,0.013000000000000012,0.0285025,10,win
+live,heavy_tail,1000,beta025_random,declared_argmax,declared argmax,0.08360000000000002,0.04649750000000004,0.11960250000000003,10,win
+live,heavy_tail,1000,beta025_random,verify_on_claim,verify on claim,-0.012400000000000012,-0.023599999999999954,0.003999999999999937,5,tie
+live,heavy_tail,1000,beta025_random,midian,MIDIAN,0.02140000000000001,0.00584875,0.034401250000000036,10,win
+live,heavy_tail,1000,beta025_random,sequential_halving_peer,seq. halving (peer),-0.06439999999999996,-0.07269999999999996,-0.056299999999999975,10,loss
+live,heavy_tail,1000,beta05_random,flat_probe_argmax_online,flat probe argmax (online),0.02240000000000001,0.015448749999999987,0.02860125000000002,10,win
+live,heavy_tail,1000,beta05_random,warm_start_bandit,warm-start bandit,-0.015199999999999925,-0.017999999999999905,-0.012399999999999944,5,loss
+live,heavy_tail,1000,beta05_random,linucb_honest,LinUCB,0.040000000000000015,0.031500000000000014,0.04780250000000002,10,win
+live,heavy_tail,1000,beta05_random,knn_router_online,KNN router (online),0.03820000000000001,0.027200000000000002,0.05020000000000002,10,win
+live,heavy_tail,1000,beta05_random,mlp_router,MLP router,0.041200000000000014,0.03310000000000002,0.04990250000000003,10,win
+live,heavy_tail,1000,beta05_random,declared_argmax,declared argmax,0.11240000000000006,0.08519750000000002,0.13380250000000005,10,win
+live,heavy_tail,1000,beta05_random,verify_on_claim,verify on claim,0.014600000000000012,0.0018000000000000017,0.027600000000000024,5,win
+live,heavy_tail,1000,beta05_random,midian,MIDIAN,0.07490000000000005,0.06229875000000004,0.08850125000000005,10,win
+live,heavy_tail,1000,beta05_random,sequential_halving_peer,seq. halving (peer),0.007500000000000029,-0.013102499999999954,0.028200000000000003,10,tie
+live,heavy_tail,1000,cartel,flat_probe_argmax_online,flat probe argmax (online),0.022899999999999976,0.01709874999999997,0.02949999999999999,10,win
+live,heavy_tail,1000,cartel,warm_start_bandit,warm-start bandit,-0.01020000000000001,-0.019999999999999973,-0.0016000000000000237,5,loss
+live,heavy_tail,1000,cartel,linucb_honest,LinUCB,0.04039999999999998,0.032900000000000006,0.04869999999999995,10,win
+live,heavy_tail,1000,cartel,knn_router_online,KNN router (online),0.03909999999999998,0.02809999999999997,0.05089999999999999,10,win
+live,heavy_tail,1000,cartel,mlp_router,MLP router,0.042099999999999985,0.030999999999999982,0.05289999999999995,10,win
+live,heavy_tail,1000,cartel,declared_argmax,declared argmax,0.1553,0.1280975,0.18200499999999997,10,win
+live,heavy_tail,1000,cartel,verify_on_claim,verify on claim,0.009599999999999964,-0.006800000000000028,0.026599999999999978,5,tie
+live,heavy_tail,1000,cartel,midian,MIDIAN,0.18089999999999998,0.15839749999999997,0.206705,10,win
+live,heavy_tail,1000,cartel,sequential_halving_peer,seq. halving (peer),0.41530000000000006,0.3879975,0.43999999999999995,10,win
+live,specialist,100,beta0,flat_probe_argmax_online,flat probe argmax (online),0.0010999999999999788,-0.013100000000000011,0.01599999999999997,10,tie
+live,specialist,100,beta0,warm_start_bandit,warm-start bandit,0.051600000000000014,0.03900000000000002,0.062399999999999976,10,win
+live,specialist,100,beta0,knn_router_online,KNN router (online),0.044,0.02949999999999999,0.05930250000000001,10,win
+live,specialist,100,beta0,mlp_router,MLP router,0.052700000000000004,0.0377,0.07300250000000001,10,win
+live,specialist,100,beta0,declared_argmax,declared argmax,0.18243333333333328,0.14786666666666665,0.21747,10,win
+live,specialist,100,beta0,midian,MIDIAN,0.0069166666666666266,-0.006067083333333376,0.018502083333333273,10,tie
+live,specialist,100,beta0,sequential_halving_peer,seq. halving (peer),-0.02849999999999998,-0.04120249999999999,-0.016699999999999993,10,loss
+live,specialist,100,beta01_random,flat_probe_argmax_online,flat probe argmax (online),-0.021699999999999997,-0.03429999999999998,-0.008697500000000009,10,loss
+live,specialist,100,beta01_random,warm_start_bandit,warm-start bandit,0.03030000000000003,0.019700000000000016,0.04180250000000003,10,win
+live,specialist,100,beta01_random,knn_router_online,KNN router (online),0.021200000000000017,0.01059750000000001,0.03170000000000003,10,win
+live,specialist,100,beta01_random,mlp_router,MLP router,0.029900000000000027,0.016397500000000016,0.04840250000000003,10,win
+live,specialist,100,beta01_random,declared_argmax,declared argmax,0.19445,0.14849875,0.23810125000000001,10,win
+live,specialist,100,beta01_random,midian,MIDIAN,-0.010333333333333338,-0.019817500000000016,-0.0006808333333333486,10,loss
+live,specialist,100,beta01_random,sequential_halving_peer,seq. halving (peer),-0.04869999999999995,-0.060299999999999965,-0.037299999999999965,10,loss
+live,specialist,100,beta025_cartel,flat_probe_argmax_online,flat probe argmax (online),-0.020000000000000007,-0.03400000000000001,-0.005697500000000008,10,loss
+live,specialist,100,beta025_cartel,warm_start_bandit,warm-start bandit,0.044000000000000025,0.033297499999999994,0.054400000000000025,10,win
+live,specialist,100,beta025_cartel,knn_router_online,KNN router (online),0.02290000000000001,0.009500000000000008,0.03920250000000002,10,win
+live,specialist,100,beta025_cartel,mlp_router,MLP router,0.03160000000000002,0.017999999999999995,0.049805,10,win
+live,specialist,100,beta025_cartel,declared_argmax,declared argmax,0.2488,0.2015975,0.29890500000000003,10,win
+live,specialist,100,beta025_cartel,midian,MIDIAN,0.0032999999999999917,-0.008805000000000038,0.015104999999999974,10,tie
+live,specialist,100,beta025_cartel,sequential_halving_peer,seq. halving (peer),-0.041499999999999995,-0.050099999999999964,-0.03259750000000003,10,loss
+live,specialist,100,beta025_random,flat_probe_argmax_online,flat probe argmax (online),-0.020500000000000008,-0.029702500000000024,-0.010499999999999999,10,loss
+live,specialist,100,beta025_random,warm_start_bandit,warm-start bandit,0.029000000000000005,0.02150000000000001,0.03650000000000002,10,win
+live,specialist,100,beta025_random,knn_router_online,KNN router (online),0.02240000000000001,0.01169750000000001,0.03450000000000002,10,win
+live,specialist,100,beta025_random,mlp_router,MLP router,0.031100000000000017,0.018899999999999993,0.04730000000000003,10,win
+live,specialist,100,beta025_random,declared_argmax,declared argmax,0.2138,0.1715,0.25110499999999997,10,win
+live,specialist,100,beta025_random,midian,MIDIAN,-0.0019166666666666776,-0.011950416666666693,0.009799999999999998,10,tie
+live,specialist,100,beta025_random,sequential_halving_peer,seq. halving (peer),-0.043899999999999995,-0.05609999999999998,-0.031999999999999994,10,loss
+live,specialist,100,beta05_random,flat_probe_argmax_online,flat probe argmax (online),-0.005700000000000016,-0.01990000000000002,0.008199999999999985,10,tie
+live,specialist,100,beta05_random,warm_start_bandit,warm-start bandit,0.04550000000000002,0.03129750000000001,0.06010000000000002,10,win
+live,specialist,100,beta05_random,knn_router_online,KNN router (online),0.0372,0.020700000000000007,0.05450250000000002,10,win
+live,specialist,100,beta05_random,mlp_router,MLP router,0.04590000000000001,0.028297500000000027,0.068505,10,win
+live,specialist,100,beta05_random,declared_argmax,declared argmax,0.21695000000000003,0.18529374999999998,0.24560125000000002,10,win
+live,specialist,100,beta05_random,midian,MIDIAN,0.03985000000000002,0.022432083333333328,0.057769166666666656,10,win
+live,specialist,100,beta05_random,sequential_halving_peer,seq. halving (peer),0.029899999999999993,0.007897499999999974,0.051300000000000026,10,win
+live,specialist,100,cartel,flat_probe_argmax_online,flat probe argmax (online),-0.012500000000000011,-0.03240250000000002,0.007499999999999995,10,tie
+live,specialist,100,cartel,warm_start_bandit,warm-start bandit,0.04970000000000002,0.029600000000000026,0.06940249999999999,10,win
+live,specialist,100,cartel,knn_router_online,KNN router (online),0.030400000000000003,0.010799999999999999,0.05060250000000002,10,win
+live,specialist,100,cartel,mlp_router,MLP router,0.03910000000000001,0.019799999999999995,0.0644,10,win
+live,specialist,100,cartel,declared_argmax,declared argmax,0.2499,0.20339749999999998,0.2962,10,win
+live,specialist,100,cartel,midian,MIDIAN,0.03213333333333338,0.02193250000000005,0.04093333333333336,10,win
+live,specialist,100,cartel,sequential_halving_peer,seq. halving (peer),0.22269999999999998,0.16968750000000002,0.28301749999999987,10,win
+live,specialist,1000,beta0,flat_probe_argmax_online,flat probe argmax (online),0.026299999999999955,0.021099999999999987,0.029999999999999992,10,win
+live,specialist,1000,beta0,warm_start_bandit,warm-start bandit,0.05219999999999998,0.04580000000000002,0.058599999999999944,5,win
+live,specialist,1000,beta0,linucb_honest,LinUCB,0.08,0.06660000000000002,0.08920250000000003,10,win
+live,specialist,1000,beta0,knn_router_online,KNN router (online),0.047799999999999974,0.03319499999999994,0.061999999999999965,10,win
+live,specialist,1000,beta0,mlp_router,MLP router,0.07830000000000001,0.06330000000000001,0.09249999999999997,10,win
+live,specialist,1000,beta0,declared_argmax,declared argmax,0.19795,0.17274624999999996,0.2254,10,win
+live,specialist,1000,beta0,verify_on_claim,verify on claim,0.09400000000000001,0.07839999999999996,0.10860000000000007,5,win
+live,specialist,1000,beta0,midian,MIDIAN,0.024416666666666597,0.014666249999999917,0.033749999999999926,10,win
+live,specialist,1000,beta0,sequential_halving_peer,seq. halving (peer),-0.046450000000000005,-0.0522,-0.04160000000000005,10,loss
+live,specialist,1000,beta01_random,flat_probe_argmax_online,flat probe argmax (online),0.010599999999999953,0.002099999999999957,0.018202499999999934,10,win
+live,specialist,1000,beta01_random,warm_start_bandit,warm-start bandit,0.015399999999999947,-0.002000000000000024,0.03323499999999973,5,tie
+live,specialist,1000,beta01_random,linucb_honest,LinUCB,0.0623,0.05100000000000001,0.07160250000000001,10,win
+live,specialist,1000,beta01_random,knn_router_online,KNN router (online),0.03149999999999997,0.015900000000000015,0.048799999999999934,10,win
+live,specialist,1000,beta01_random,mlp_router,MLP router,0.062,0.04920000000000002,0.07649999999999998,10,win
+live,specialist,1000,beta01_random,declared_argmax,declared argmax,0.21059999999999995,0.18969499999999997,0.22890249999999995,10,win
+live,specialist,1000,beta01_random,verify_on_claim,verify on claim,0.07339999999999999,0.04619999999999998,0.10300000000000001,5,win
+live,specialist,1000,beta01_random,midian,MIDIAN,0.007599999999999951,-0.005952500000000055,0.02139999999999993,10,tie
+live,specialist,1000,beta01_random,sequential_halving_peer,seq. halving (peer),-0.0623,-0.07289999999999998,-0.052700000000000004,10,loss
+live,specialist,1000,beta025_cartel,flat_probe_argmax_online,flat probe argmax (online),0.006299999999999995,0.002500000000000002,0.009999999999999986,10,win
+live,specialist,1000,beta025_cartel,warm_start_bandit,warm-start bandit,0.03940000000000003,0.02520000000000002,0.05780000000000005,5,win
+live,specialist,1000,beta025_cartel,linucb_honest,LinUCB,0.05750000000000004,0.04580000000000004,0.06650000000000003,10,win
+live,specialist,1000,beta025_cartel,knn_router_online,KNN router (online),0.027500000000000014,0.015200000000000014,0.041999999999999996,10,win
+live,specialist,1000,beta025_cartel,mlp_router,MLP router,0.05800000000000004,0.046497500000000004,0.07000000000000006,10,win
+live,specialist,1000,beta025_cartel,declared_argmax,declared argmax,0.27920000000000006,0.23990000000000006,0.3276,5,win
+live,specialist,1000,beta025_cartel,verify_on_claim,verify on claim,0.14300000000000002,0.1162,0.17100000000000004,5,win
+live,specialist,1000,beta025_cartel,midian,MIDIAN,0.0127,0.002400000000000002,0.0225,10,win
+live,specialist,1000,beta025_cartel,sequential_halving_peer,seq. halving (peer),-0.06359999999999996,-0.07080249999999998,-0.05659999999999994,10,loss
+live,specialist,1000,beta025_random,flat_probe_argmax_online,flat probe argmax (online),0.0030999999999999804,-0.0045000000000000265,0.011999999999999955,10,tie
+live,specialist,1000,beta025_random,warm_start_bandit,warm-start bandit,0.011199999999999988,0.005200000000000005,0.017199999999999972,5,win
+live,specialist,1000,beta025_random,linucb_honest,LinUCB,0.052700000000000025,0.038300000000000035,0.06340000000000004,10,win
+live,specialist,1000,beta025_random,knn_router_online,KNN router (online),0.0231,0.005992500000000006,0.04300499999999994,10,win
+live,specialist,1000,beta025_random,mlp_router,MLP router,0.05360000000000002,0.04140000000000003,0.06510000000000006,10,win
+live,specialist,1000,beta025_random,declared_argmax,declared argmax,0.1964,0.17099499999999998,0.22279999999999997,10,win
+live,specialist,1000,beta025_random,verify_on_claim,verify on claim,0.07240000000000002,0.0558,0.09100000000000001,5,win
+live,specialist,1000,beta025_random,midian,MIDIAN,0.00708333333333333,-0.00545125000000001,0.019334166666666652,10,tie
+live,specialist,1000,beta025_random,sequential_halving_peer,seq. halving (peer),-0.06749999999999998,-0.07419999999999997,-0.06049749999999997,10,loss
+live,specialist,1000,beta05_random,flat_probe_argmax_online,flat probe argmax (online),0.022099999999999953,0.011299999999999966,0.03189999999999994,10,win
+live,specialist,1000,beta05_random,warm_start_bandit,warm-start bandit,0.03199999999999996,0.022599999999999974,0.041199999999999945,5,win
+live,specialist,1000,beta05_random,linucb_honest,LinUCB,0.0744,0.06009500000000003,0.08570249999999997,10,win
+live,specialist,1000,beta05_random,knn_router_online,KNN router (online),0.04289999999999997,0.023192499999999977,0.06190249999999996,10,win
+live,specialist,1000,beta05_random,mlp_router,MLP router,0.07339999999999999,0.05649749999999998,0.08770000000000001,10,win
+live,specialist,1000,beta05_random,declared_argmax,declared argmax,0.2365,0.2057975,0.26950749999999996,10,win
+live,specialist,1000,beta05_random,verify_on_claim,verify on claim,0.0718,0.06598999999999995,0.08060000000000005,5,win
+live,specialist,1000,beta05_random,midian,MIDIAN,0.057066666666666654,0.035201249999999976,0.07631666666666667,10,win
+live,specialist,1000,beta05_random,sequential_halving_peer,seq. halving (peer),-0.003100000000000025,-0.016505000000000023,0.011502499999999962,10,tie
+live,specialist,1000,cartel,flat_probe_argmax_online,flat probe argmax (online),0.020499999999999973,0.01160000000000001,0.02790249999999993,10,win
+live,specialist,1000,cartel,warm_start_bandit,warm-start bandit,0.03660000000000001,0.019600000000000062,0.05359999999999996,5,win
+live,specialist,1000,cartel,linucb_honest,LinUCB,0.07360000000000003,0.05930000000000003,0.08520249999999999,10,win
+live,specialist,1000,cartel,knn_router_online,KNN router (online),0.04179999999999999,0.02360000000000002,0.05890249999999996,10,win
+live,specialist,1000,cartel,mlp_router,MLP router,0.07230000000000002,0.058699999999999995,0.08489999999999999,10,win
+live,specialist,1000,cartel,declared_argmax,declared argmax,0.2872,0.26179500000000006,0.31660749999999993,10,win
+live,specialist,1000,cartel,verify_on_claim,verify on claim,0.08620000000000003,0.056800000000000093,0.1244849999999995,5,win
+live,specialist,1000,cartel,midian,MIDIAN,0.06948333333333334,0.05429916666666674,0.08496708333333333,10,win
+live,specialist,1000,cartel,sequential_halving_peer,seq. halving (peer),0.15130000000000005,0.11889750000000007,0.18490749999999995,10,win
+live,specialist,10000,beta0,flat_probe_argmax_online,flat probe argmax (online),0.03666666666666666,0.011666666666666714,0.07166666666666655,3,win
+live,specialist,10000,beta0,warm_start_bandit,warm-start bandit,0.06777777777777776,0.020000000000000018,0.10166666666666657,3,win
+live,specialist,10000,beta0,linucb_honest,LinUCB,0.3244444444444445,0.2833333333333333,0.3766666666666667,3,win
+live,specialist,10000,beta0,knn_router_online,KNN router (online),0.08,0.06666666666666665,0.10333333333333328,3,win
+live,specialist,10000,beta0,declared_argmax,declared argmax,0.15333333333333332,0.10999999999999999,0.19999999999999996,3,win
+live,specialist,10000,beta0,verify_on_claim,verify on claim,0.08666666666666667,0.033333333333333326,0.1133333333333334,3,win
+live,specialist,10000,beta0,midian,MIDIAN,0.026111111111111123,0.01666666666666672,0.03166666666666673,3,win
+live,specialist,10000,beta0,sequential_halving_peer,seq. halving (peer),-0.052222222222222205,-0.06999999999999995,-0.043333333333333335,3,loss
+live,specialist,10000,beta025_cartel,flat_probe_argmax_online,flat probe argmax (online),0.012222222222222245,-0.023333333333333317,0.030000000000000027,3,tie
+live,specialist,10000,beta025_cartel,warm_start_bandit,warm-start bandit,0.05111111111111111,0.006666666666666599,0.09666666666666668,3,win
+live,specialist,10000,beta025_cartel,knn_router_online,KNN router (online),0.055555555555555546,0.029999999999999916,0.07333333333333336,3,win
+live,specialist,10000,beta025_cartel,declared_argmax,declared argmax,0.21555555555555558,0.1366666666666666,0.2633333333333334,3,win
+live,specialist,10000,beta025_cartel,midian,MIDIAN,-0.0011111111111110998,-0.023333333333333317,0.033333333333333326,3,tie
+live,specialist,10000,beta025_cartel,sequential_halving_peer,seq. halving (peer),-0.07222222222222223,-0.10666666666666669,-0.040000000000000036,3,loss
+live,specialist,10000,beta025_random,flat_probe_argmax_online,flat probe argmax (online),0.028888888888888926,0.010000000000000009,0.06333333333333335,3,win
+live,specialist,10000,beta025_random,warm_start_bandit,warm-start bandit,0.0027777777777778048,-0.014999999999999902,0.025000000000000022,3,tie
+live,specialist,10000,beta025_random,linucb_honest,LinUCB,0.31000000000000005,0.2666666666666667,0.3666666666666667,3,win
+live,specialist,10000,beta025_random,knn_router_online,KNN router (online),0.07222222222222223,0.053333333333333344,0.09666666666666668,3,win
+live,specialist,10000,beta025_random,declared_argmax,declared argmax,0.2366666666666667,0.20666666666666667,0.27,3,win
+live,specialist,10000,beta025_random,verify_on_claim,verify on claim,0.09444444444444444,0.07999999999999996,0.1166666666666667,3,win
+live,specialist,10000,beta025_random,midian,MIDIAN,0.01777777777777782,0.01333333333333342,0.023333333333333317,3,win
+live,specialist,10000,beta025_random,sequential_halving_peer,seq. halving (peer),-0.05999999999999998,-0.06999999999999995,-0.04999999999999993,3,loss
+live,specialist,10000,beta05_random,flat_probe_argmax_online,flat probe argmax (online),0.01777777777777782,-0.019999999999999907,0.06999999999999995,3,tie
+live,specialist,10000,beta05_random,warm_start_bandit,warm-start bandit,-0.004444444444444436,-0.043333333333333335,0.036666666666666625,3,tie
+live,specialist,10000,beta05_random,knn_router_online,KNN router (online),0.061111111111111116,0.033333333333333326,0.10333333333333328,3,win
+live,specialist,10000,beta05_random,declared_argmax,declared argmax,0.2855555555555556,0.20000000000000007,0.4033333333333333,3,win
+live,specialist,10000,beta05_random,midian,MIDIAN,0.05111111111111114,0.0033333333333334103,0.1233333333333333,3,win
+live,specialist,10000,beta05_random,sequential_halving_peer,seq. halving (peer),-0.04777777777777777,-0.06999999999999995,-0.023333333333333428,3,loss
+live,specialist,10000,cartel,flat_probe_argmax_online,flat probe argmax (online),0.0355555555555556,0.01333333333333342,0.06999999999999995,3,win
+live,specialist,10000,cartel,warm_start_bandit,warm-start bandit,0.02666666666666669,0.0033333333333334103,0.06333333333333324,3,win
+live,specialist,10000,cartel,knn_router_online,KNN router (online),0.0788888888888889,0.06666666666666665,0.10333333333333328,3,win
+live,specialist,10000,cartel,declared_argmax,declared argmax,0.2777777777777778,0.2466666666666667,0.31666666666666665,3,win
+live,specialist,10000,cartel,midian,MIDIAN,0.05777777777777778,0.039999999999999925,0.08333333333333337,3,win
+live,specialist,10000,cartel,sequential_halving_peer,seq. halving (peer),0.08888888888888895,0.06000000000000005,0.1100000000000001,3,win
+live,specialist,100000,beta0,flat_probe_argmax_online,flat probe argmax (online),0.08666666666666667,0.050000000000000044,0.10666666666666669,3,win
+live,specialist,100000,beta0,warm_start_bandit,warm-start bandit,0.09777777777777778,0.07333333333333336,0.13,3,win
+live,specialist,100000,beta0,linucb_honest,LinUCB,0.45,0.4200000000000001,0.4733333333333334,3,win
+live,specialist,100000,beta0,knn_router_online,KNN router (online),0.09444444444444448,0.08000000000000007,0.10333333333333328,3,win
+live,specialist,100000,beta0,declared_argmax,declared argmax,0.21333333333333335,0.18333333333333335,0.24,3,win
+live,specialist,100000,beta0,verify_on_claim,verify on claim,0.13333333333333333,0.08000000000000007,0.18333333333333335,3,win
+live,specialist,100000,beta0,midian,MIDIAN,0.08333333333333333,0.056666666666666754,0.1266666666666666,3,win
+live,specialist,100000,beta0,sequential_halving_peer,seq. halving (peer),-0.027777777777777752,-0.043333333333333335,-0.019999999999999907,3,loss
+live,specialist,100000,beta025_cartel,flat_probe_argmax_online,flat probe argmax (online),0.03888888888888886,0.00666666666666671,0.05999999999999994,3,win
+live,specialist,100000,beta025_cartel,warm_start_bandit,warm-start bandit,0.10666666666666665,0.08333333333333326,0.14,3,win
+live,specialist,100000,beta025_cartel,linucb_honest,LinUCB,0.4022222222222222,0.3633333333333333,0.43,3,win
+live,specialist,100000,beta025_cartel,knn_router_online,KNN router (online),0.04666666666666667,0.036666666666666736,0.05999999999999994,3,win
+live,specialist,100000,beta025_cartel,declared_argmax,declared argmax,0.2511111111111111,0.21666666666666667,0.31333333333333335,3,win
+live,specialist,100000,beta025_cartel,verify_on_claim,verify on claim,0.1644444444444444,0.1333333333333333,0.18999999999999995,3,win
+live,specialist,100000,beta025_cartel,midian,MIDIAN,0.04999999999999997,0.023333333333333317,0.07999999999999996,3,win
+live,specialist,100000,beta025_cartel,sequential_halving_peer,seq. halving (peer),-0.07555555555555556,-0.08666666666666667,-0.06333333333333335,3,loss
+live,specialist,100000,beta025_random,flat_probe_argmax_online,flat probe argmax (online),0.06999999999999999,0.06000000000000005,0.07666666666666666,3,win
+live,specialist,100000,beta025_random,warm_start_bandit,warm-start bandit,0.03888888888888886,0.023333333333333317,0.04999999999999993,3,win
+live,specialist,100000,beta025_random,linucb_honest,LinUCB,0.43333333333333335,0.38666666666666655,0.4666666666666666,3,win
+live,specialist,100000,beta025_random,knn_router_online,KNN router (online),0.07777777777777779,0.06666666666666665,0.09000000000000008,3,win
+live,specialist,100000,beta025_random,declared_argmax,declared argmax,0.23333333333333336,0.19666666666666666,0.27,3,win
+live,specialist,100000,beta025_random,verify_on_claim,verify on claim,0.10333333333333332,0.07666666666666666,0.1399999999999999,3,win
+live,specialist,100000,beta025_random,midian,MIDIAN,0.08111111111111113,0.046666666666666634,0.10333333333333339,3,win
+live,specialist,100000,beta025_random,sequential_halving_peer,seq. halving (peer),-0.043333333333333335,-0.050000000000000044,-0.033333333333333326,3,loss
+live,specialist,100000,beta05_random,flat_probe_argmax_online,flat probe argmax (online),0.08555555555555557,0.036666666666666736,0.11333333333333329,3,win
+live,specialist,100000,beta05_random,warm_start_bandit,warm-start bandit,0.06555555555555559,0.036666666666666736,0.08333333333333337,3,win
+live,specialist,100000,beta05_random,linucb_honest,LinUCB,0.4488888888888889,0.4266666666666666,0.4766666666666668,3,win
+live,specialist,100000,beta05_random,knn_router_online,KNN router (online),0.09333333333333338,0.06666666666666676,0.10666666666666669,3,win
+live,specialist,100000,beta05_random,declared_argmax,declared argmax,0.26777777777777784,0.21000000000000008,0.30000000000000004,3,win
+live,specialist,100000,beta05_random,verify_on_claim,verify on claim,0.12888888888888894,0.036666666666666736,0.24,3,win
+live,specialist,100000,beta05_random,midian,MIDIAN,0.21444444444444447,0.1233333333333334,0.36666666666666664,3,win
+live,specialist,100000,beta05_random,sequential_halving_peer,seq. halving (peer),-0.02222222222222218,-0.05666666666666664,-0.0033333333333332993,3,loss
+live,specialist,100000,cartel,flat_probe_argmax_online,flat probe argmax (online),0.0788888888888889,0.026666666666666727,0.10999999999999999,3,win
+live,specialist,100000,cartel,warm_start_bandit,warm-start bandit,0.050000000000000044,0.01666666666666672,0.07333333333333336,3,win
+live,specialist,100000,cartel,linucb_honest,LinUCB,0.44222222222222224,0.42333333333333334,0.47000000000000003,3,win
+live,specialist,100000,cartel,knn_router_online,KNN router (online),0.08666666666666671,0.056666666666666754,0.10333333333333339,3,win
+live,specialist,100000,cartel,declared_argmax,declared argmax,0.25000000000000006,0.22000000000000008,0.27,3,win
+live,specialist,100000,cartel,verify_on_claim,verify on claim,0.09888888888888892,0.056666666666666754,0.1433333333333333,3,win
+live,specialist,100000,cartel,midian,MIDIAN,0.12222222222222223,0.08666666666666667,0.14666666666666672,3,win
+live,specialist,100000,cartel,sequential_halving_peer,seq. halving (peer),0.10333333333333339,0.06000000000000005,0.1266666666666667,3,win
+llmrouterbench,20 models,20,beta0,flat_probe_argmax_online,flat probe argmax (online),-0.018399999999999972,-0.03499999999999994,0.0004049999999999947,5,tie
+llmrouterbench,20 models,20,beta0,warm_start_bandit,warm-start bandit,-0.01020000000000001,-0.02220000000000002,0.0018000000000000017,5,tie
+llmrouterbench,20 models,20,beta0,linucb_honest,LinUCB,-0.010399999999999987,-0.02739999999999996,0.0036000000000000034,5,tie
+llmrouterbench,20 models,20,beta0,knn_router_online,KNN router (online),0.005999999999999961,-0.010400000000000053,0.02119999999999993,5,tie
+llmrouterbench,20 models,20,beta0,mlp_router,MLP router,-0.018399999999999993,-0.03379999999999998,-0.0016000000000000014,5,loss
+llmrouterbench,20 models,20,beta0,declared_argmax,declared argmax,-0.048999999999999974,-0.061799999999999945,-0.030800000000000004,5,loss
+llmrouterbench,20 models,20,beta0,midian,MIDIAN,-0.005400000000000005,-0.014400000000000013,0.0038000000000000035,5,tie
+llmrouterbench,20 models,20,beta0,sequential_halving_peer,seq. halving (peer),0.004399999999999982,-0.0040000000000000036,0.01739999999999995,5,tie
+llmrouterbench,20 models,20,beta025_cartel,flat_probe_argmax_online,flat probe argmax (online),-0.02079999999999995,-0.03739999999999992,2.2204460492503132e-17,5,tie
+llmrouterbench,20 models,20,beta025_cartel,warm_start_bandit,warm-start bandit,0.015399999999999992,-0.0050000000000000044,0.03939999999999997,5,tie
+llmrouterbench,20 models,20,beta025_cartel,linucb_honest,LinUCB,-0.012799999999999968,-0.027999999999999935,0.0026000000000000025,5,tie
+llmrouterbench,20 models,20,beta025_cartel,knn_router_online,KNN router (online),0.003599999999999981,-0.013000000000000012,0.020199999999999975,5,tie
+llmrouterbench,20 models,20,beta025_cartel,mlp_router,MLP router,-0.020799999999999975,-0.03519999999999994,-0.0038000000000000035,5,loss
+llmrouterbench,20 models,20,beta025_cartel,declared_argmax,declared argmax,0.11280000000000001,0.08720000000000006,0.15079999999999996,5,win
+llmrouterbench,20 models,20,beta025_cartel,midian,MIDIAN,0.0036000000000000034,-0.0032000000000000028,0.01040000000000001,5,tie
+llmrouterbench,20 models,20,beta025_cartel,sequential_halving_peer,seq. halving (peer),0.006199999999999983,-0.008200000000000008,0.018799999999999973,5,tie
+llmrouterbench,20 models,20,beta025_random,flat_probe_argmax_online,flat probe argmax (online),-0.023399999999999956,-0.04279999999999995,-0.0013999999999999783,5,loss
+llmrouterbench,20 models,20,beta025_random,warm_start_bandit,warm-start bandit,0.005999999999999983,-0.015000000000000013,0.027454999999999678,5,tie
+llmrouterbench,20 models,20,beta025_random,linucb_honest,LinUCB,-0.01539999999999997,-0.036599999999999945,0.005400000000000005,5,tie
+llmrouterbench,20 models,20,beta025_random,knn_router_online,KNN router (online),0.0009999999999999788,-0.01160000000000001,0.016599999999999948,5,tie
+llmrouterbench,20 models,20,beta025_random,mlp_router,MLP router,-0.023399999999999976,-0.04179999999999995,-0.004985000000000064,5,loss
+llmrouterbench,20 models,20,beta025_random,declared_argmax,declared argmax,0.028600000000000004,-0.008200000000000008,0.08940000000000001,5,tie
+llmrouterbench,20 models,20,beta025_random,midian,MIDIAN,0.0030000000000000027,-0.018799999999999973,0.025399999999999978,5,tie
+llmrouterbench,20 models,20,beta025_random,sequential_halving_peer,seq. halving (peer),0.0010000000000000009,-0.006800000000000006,0.01120000000000001,5,tie
+llmrouterbench,20 models,20,beta05_random,flat_probe_argmax_online,flat probe argmax (online),-0.03839999999999997,-0.05839999999999994,-0.018399999999999993,5,loss
+llmrouterbench,20 models,20,beta05_random,warm_start_bandit,warm-start bandit,-0.014000000000000035,-0.032400000000000026,0.0043999999999999595,5,tie
+llmrouterbench,20 models,20,beta05_random,linucb_honest,LinUCB,-0.030399999999999983,-0.044220000000000016,-0.014999999999999968,5,loss
+llmrouterbench,20 models,20,beta05_random,knn_router_online,KNN router (online),-0.014000000000000035,-0.04043500000000006,0.008399999999999963,5,tie
+llmrouterbench,20 models,20,beta05_random,mlp_router,MLP router,-0.03839999999999999,-0.058600000000000006,-0.018199999999999973,5,loss
+llmrouterbench,20 models,20,beta05_random,declared_argmax,declared argmax,-0.032400000000000005,-0.06139999999999997,-0.006400000000000072,5,loss
+llmrouterbench,20 models,20,beta05_random,midian,MIDIAN,-0.015200000000000036,-0.03580000000000003,0.005399999999999983,5,tie
+llmrouterbench,20 models,20,beta05_random,sequential_halving_peer,seq. halving (peer),0.01040000000000001,-0.015014999999999947,0.045199999999999976,5,tie
+llmrouterbench,20 models,20,cartel,flat_probe_argmax_online,flat probe argmax (online),-0.020799999999999975,-0.039999999999999966,0.0006000000000000005,5,tie
+llmrouterbench,20 models,20,cartel,warm_start_bandit,warm-start bandit,0.03879999999999999,0.029800000000000028,0.05259999999999996,5,win
+llmrouterbench,20 models,20,cartel,linucb_honest,LinUCB,-0.012799999999999988,-0.03499999999999996,0.0036000000000000034,5,tie
+llmrouterbench,20 models,20,cartel,knn_router_online,KNN router (online),0.0035999999999999587,-0.012400000000000033,0.01979999999999995,5,tie
+llmrouterbench,20 models,20,cartel,mlp_router,MLP router,-0.020799999999999996,-0.04079999999999997,-0.0016000000000000014,5,loss
+llmrouterbench,20 models,20,cartel,declared_argmax,declared argmax,0.098,0.0712,0.1432,5,win
+llmrouterbench,20 models,20,cartel,midian,MIDIAN,0.06080000000000001,0.04959000000000002,0.072,5,win
+llmrouterbench,20 models,20,cartel,sequential_halving_peer,seq. halving (peer),0.20180000000000003,0.1472,0.2564,5,win
+replay,shapes pooled,10,beta0,flat_probe_argmax_online,flat probe argmax (online),-0.012908666666666669,-0.013451083333333336,-0.012362608333333332,1000,loss
+replay,shapes pooled,10,beta0,warm_start_bandit,warm-start bandit,-0.021639333333333333,-0.022287875000000006,-0.020999316666666667,1000,loss
+replay,shapes pooled,10,beta0,linucb_honest,LinUCB,-0.020275333333333336,-0.021014108333333333,-0.019588266666666673,1000,loss
+replay,shapes pooled,10,beta0,declared_argmax,declared argmax,-0.03993100000000001,-0.040802441666666675,-0.03911647500000001,1000,loss
+replay,shapes pooled,10,beta0,verify_on_claim,verify on claim,0.007536666666666668,0.006155258333333334,0.008924041666666669,1000,win
+replay,shapes pooled,10,beta0,midian,MIDIAN,-0.011477000000000001,-0.011967408333333332,-0.011034658333333334,1000,loss
+replay,shapes pooled,10,beta0,sequential_halving_peer,seq. halving (peer),0.010203,0.009120475000000003,0.011361441666666664,1000,win
+replay,shapes pooled,10,beta025_cartel,flat_probe_argmax_online,flat probe argmax (online),-0.012909,-0.013452408333333336,-0.0123626,1000,loss
+replay,shapes pooled,10,beta025_cartel,warm_start_bandit,warm-start bandit,-0.007110666666666664,-0.007704024999999997,-0.006544624999999997,1000,loss
+replay,shapes pooled,10,beta025_cartel,linucb_honest,LinUCB,-0.020275666666666668,-0.021013125,-0.019588925000000007,1000,loss
+replay,shapes pooled,10,beta025_cartel,declared_argmax,declared argmax,-0.010144000000000002,-0.011258058333333333,-0.009097908333333333,1000,loss
+replay,shapes pooled,10,beta025_cartel,verify_on_claim,verify on claim,0.011849666666666672,0.010390525000000005,0.013315708333333337,1000,win
+replay,shapes pooled,10,beta025_cartel,midian,MIDIAN,0.002090666666666664,0.0015149583333333317,0.002636341666666664,1000,win
+replay,shapes pooled,10,beta025_cartel,sequential_halving_peer,seq. halving (peer),0.01161,0.01058099166666667,0.012716008333333332,1000,win
+replay,shapes pooled,10,beta025_random,flat_probe_argmax_online,flat probe argmax (online),-0.012926333333333335,-0.013469033333333335,-0.012381975000000002,1000,loss
+replay,shapes pooled,10,beta025_random,warm_start_bandit,warm-start bandit,-0.008726666666666667,-0.009382383333333334,-0.008082241666666665,1000,loss
+replay,shapes pooled,10,beta025_random,linucb_honest,LinUCB,-0.020293000000000005,-0.021039808333333333,-0.019603658333333336,1000,loss
+replay,shapes pooled,10,beta025_random,declared_argmax,declared argmax,-0.0014503333333333373,-0.0028364250000000005,-1.2933333333338695e-05,1000,loss
+replay,shapes pooled,10,beta025_random,verify_on_claim,verify on claim,0.027022666666666674,0.02525506666666667,0.02868469166666667,1000,win
+replay,shapes pooled,10,beta025_random,midian,MIDIAN,-0.0014190000000000036,-0.002053766666666669,-0.0007799166666666712,1000,loss
+replay,shapes pooled,10,beta025_random,sequential_halving_peer,seq. halving (peer),0.011184,0.010130666666666665,0.012321733333333333,1000,win
+replay,shapes pooled,10,beta05_random,flat_probe_argmax_online,flat probe argmax (online),-0.012908666666666669,-0.013451083333333336,-0.012362608333333332,1000,loss
+replay,shapes pooled,10,beta05_random,warm_start_bandit,warm-start bandit,-0.0018356666666666651,-0.0025501250000000007,-0.0011315083333333345,1000,loss
+replay,shapes pooled,10,beta05_random,linucb_honest,LinUCB,-0.020275333333333336,-0.021014108333333333,-0.019588266666666673,1000,loss
+replay,shapes pooled,10,beta05_random,declared_argmax,declared argmax,-0.011318000000000005,-0.012615350000000003,-0.010058958333333338,1000,loss
+replay,shapes pooled,10,beta05_random,verify_on_claim,verify on claim,0.04694000000000001,0.045008200000000005,0.04884369166666667,1000,win
+replay,shapes pooled,10,beta05_random,midian,MIDIAN,0.03444066666666667,0.031074583333333333,0.037782858333333336,1000,win
+replay,shapes pooled,10,beta05_random,sequential_halving_peer,seq. halving (peer),0.10192699999999999,0.096796575,0.10669559166666666,1000,win
+replay,shapes pooled,10,cartel,flat_probe_argmax_online,flat probe argmax (online),-0.012908666666666669,-0.013451083333333336,-0.012362608333333332,1000,loss
+replay,shapes pooled,10,cartel,warm_start_bandit,warm-start bandit,0.009357000000000002,0.008761325000000006,0.009981041666666671,1000,win
+replay,shapes pooled,10,cartel,linucb_honest,LinUCB,-0.020275333333333336,-0.021014108333333333,-0.019588266666666673,1000,loss
+replay,shapes pooled,10,cartel,declared_argmax,declared argmax,0.013921999999999999,0.012598208333333333,0.015276625000000004,1000,win
+replay,shapes pooled,10,cartel,verify_on_claim,verify on claim,0.02759833333333334,0.026184583333333337,0.02906609166666667,1000,win
+replay,shapes pooled,10,cartel,midian,MIDIAN,0.08657166666666667,0.08294193333333333,0.09070670833333333,1000,win
+replay,shapes pooled,10,cartel,sequential_halving_peer,seq. halving (peer),0.21964533333333333,0.2141629,0.22523933333333332,1000,win
+replay,shapes pooled,100,beta0,flat_probe_argmax_online,flat probe argmax (online),0.007510333333333333,0.006906991666666667,0.008116533333333332,1000,win
+replay,shapes pooled,100,beta0,warm_start_bandit,warm-start bandit,-0.016002999999999993,-0.016513341666666664,-0.01550665833333333,1000,loss
+replay,shapes pooled,100,beta0,linucb_honest,LinUCB,-0.006046999999999988,-0.006584341666666654,-0.005473633333333325,1000,loss
+replay,shapes pooled,100,beta0,declared_argmax,declared argmax,-0.05363833333333334,-0.054269683333333346,-0.05300059166666667,1000,loss
+replay,shapes pooled,100,beta0,verify_on_claim,verify on claim,-0.037307666666666676,-0.037943666666666674,-0.03664930833333334,1000,loss
+replay,shapes pooled,100,beta0,midian,MIDIAN,0.008800333333333337,0.008238891666666666,0.009380333333333338,1000,win
+replay,shapes pooled,100,beta0,sequential_halving_peer,seq. halving (peer),-0.02040966666666666,-0.02098936666666666,-0.019881074999999998,1000,loss
+replay,shapes pooled,100,beta025_cartel,flat_probe_argmax_online,flat probe argmax (online),0.005669333333333335,0.005070316666666667,0.006277166666666667,1000,win
+replay,shapes pooled,100,beta025_cartel,warm_start_bandit,warm-start bandit,0.014467666666666676,0.013889608333333341,0.015059425000000006,1000,win
+replay,shapes pooled,100,beta025_cartel,linucb_honest,LinUCB,-0.007887999999999987,-0.008441791666666653,-0.007304649999999984,1000,loss
+replay,shapes pooled,100,beta025_cartel,declared_argmax,declared argmax,-0.013437999999999986,-0.014195708333333315,-0.012679299999999985,1000,loss
+replay,shapes pooled,100,beta025_cartel,verify_on_claim,verify on claim,-0.022357999999999992,-0.022972049999999997,-0.021699616666666657,1000,loss
+replay,shapes pooled,100,beta025_cartel,midian,MIDIAN,0.038272000000000014,0.03741010833333335,0.03913700833333335,1000,win
+replay,shapes pooled,100,beta025_cartel,sequential_halving_peer,seq. halving (peer),-0.013565333333333325,-0.014150349999999992,-0.012959983333333326,1000,loss
+replay,shapes pooled,100,beta025_random,flat_probe_argmax_online,flat probe argmax (online),0.005746,0.005131283333333335,0.0063837083333333315,1000,win
+replay,shapes pooled,100,beta025_random,warm_start_bandit,warm-start bandit,0.016739666666666674,0.016048308333333337,0.017393366666666663,1000,win
+replay,shapes pooled,100,beta025_random,linucb_honest,LinUCB,-0.007811333333333321,-0.008342674999999992,-0.007226299999999988,1000,loss
+replay,shapes pooled,100,beta025_random,declared_argmax,declared argmax,0.005611000000000002,0.004403166666666671,0.0067093833333333385,1000,win
+replay,shapes pooled,100,beta025_random,verify_on_claim,verify on claim,0.010048666666666673,0.00916800000000001,0.010925191666666674,1000,win
+replay,shapes pooled,100,beta025_random,midian,MIDIAN,0.02739133333333334,0.026541175000000007,0.02825775000000001,1000,win
+replay,shapes pooled,100,beta025_random,sequential_halving_peer,seq. halving (peer),-0.015642333333333328,-0.016292133333333327,-0.015047958333333325,1000,loss
+replay,shapes pooled,100,beta05_random,flat_probe_argmax_online,flat probe argmax (online),0.007249333333333334,0.0066149999999999985,0.007909,1000,win
+replay,shapes pooled,100,beta05_random,warm_start_bandit,warm-start bandit,0.020001666666666664,0.01928646666666667,0.020698458333333333,1000,win
+replay,shapes pooled,100,beta05_random,linucb_honest,LinUCB,-0.006307999999999987,-0.006922024999999988,-0.005696524999999987,1000,loss
+replay,shapes pooled,100,beta05_random,declared_argmax,declared argmax,0.00010166666666667084,-0.0009757416666666611,0.0011824666666666716,1000,tie
+replay,shapes pooled,100,beta05_random,verify_on_claim,verify on claim,0.012635000000000006,0.011797550000000002,0.013518383333333338,1000,win
+replay,shapes pooled,100,beta05_random,midian,MIDIAN,0.075417,0.07207404166666666,0.07887810833333332,1000,win
+replay,shapes pooled,100,beta05_random,sequential_halving_peer,seq. halving (peer),0.10942433333333335,0.10788116666666668,0.11103118333333334,1000,win
+replay,shapes pooled,100,cartel,flat_probe_argmax_online,flat probe argmax (online),0.007075000000000001,0.006426308333333336,0.0077191416666666695,1000,win
+replay,shapes pooled,100,cartel,warm_start_bandit,warm-start bandit,0.030624000000000002,0.029906950000000005,0.03130706666666667,1000,win
+replay,shapes pooled,100,cartel,linucb_honest,LinUCB,-0.006482333333333321,-0.00707468333333332,-0.005876983333333322,1000,loss
+replay,shapes pooled,100,cartel,declared_argmax,declared argmax,0.02946533333333335,0.028021233333333347,0.031020866666666685,1000,win
+replay,shapes pooled,100,cartel,verify_on_claim,verify on claim,0.008539333333333347,0.00747828333333335,0.00967652500000001,1000,win
+replay,shapes pooled,100,cartel,midian,MIDIAN,0.17796533333333334,0.17352455833333336,0.18262615833333337,1000,win
+replay,shapes pooled,100,cartel,sequential_halving_peer,seq. halving (peer),0.42495133333333335,0.42268745,0.42713830833333327,1000,win
+replay,shapes pooled,1000,beta0,flat_probe_argmax_online,flat probe argmax (online),0.03801599999999998,0.03734054166666664,0.038682549999999975,1000,win
+replay,shapes pooled,1000,beta0,warm_start_bandit,warm-start bandit,-0.016641333333333348,-0.01706401666666668,-0.016237925000000014,1000,loss
+replay,shapes pooled,1000,beta0,linucb_honest,LinUCB,0.06781666666666666,0.06728500000000001,0.06833871666666667,1000,win
+replay,shapes pooled,1000,beta0,declared_argmax,declared argmax,-0.04296700000000003,-0.043368033333333375,-0.0425672666666667,1000,loss
+replay,shapes pooled,1000,beta0,verify_on_claim,verify on claim,-0.04149333333333337,-0.041899383333333366,-0.0411055666666667,1000,loss
+replay,shapes pooled,1000,beta0,midian,MIDIAN,0.03811066666666665,0.037470974999999976,0.03875677499999998,1000,win
+replay,shapes pooled,1000,beta0,sequential_halving_peer,seq. halving (peer),-0.04225766666666669,-0.04265600833333337,-0.04185892500000003,1000,loss
+replay,shapes pooled,1000,beta025_cartel,flat_probe_argmax_online,flat probe argmax (online),0.0329763333333333,0.03228531666666665,0.03366974166666665,1000,win
+replay,shapes pooled,1000,beta025_cartel,warm_start_bandit,warm-start bandit,-0.003860333333333341,-0.0043570250000000066,-0.0033748916666666785,1000,loss
+replay,shapes pooled,1000,beta025_cartel,linucb_honest,LinUCB,0.062777,0.062214,0.063322025,1000,win
+replay,shapes pooled,1000,beta025_cartel,declared_argmax,declared argmax,-0.011478000000000009,-0.01205967500000001,-0.010896591666666672,1000,loss
+replay,shapes pooled,1000,beta025_cartel,verify_on_claim,verify on claim,-0.02278666666666668,-0.023311008333333345,-0.02223794166666668,1000,loss
+replay,shapes pooled,1000,beta025_cartel,midian,MIDIAN,0.05263933333333331,0.051830874999999985,0.05342204166666665,1000,win
+replay,shapes pooled,1000,beta025_cartel,sequential_halving_peer,seq. halving (peer),-0.04125866666666669,-0.04170067500000003,-0.0408203166666667,1000,loss
+replay,shapes pooled,1000,beta025_random,flat_probe_argmax_online,flat probe argmax (online),0.034029333333333314,0.033359641666666655,0.03470403333333331,1000,win
+replay,shapes pooled,1000,beta025_random,warm_start_bandit,warm-start bandit,0.014551333333333328,0.013935633333333329,0.015138024999999994,1000,win
+replay,shapes pooled,1000,beta025_random,linucb_honest,LinUCB,0.06383,0.06328994166666667,0.06436303333333333,1000,win
+replay,shapes pooled,1000,beta025_random,declared_argmax,declared argmax,0.020690999999999984,0.01975357499999998,0.02159741666666665,1000,win
+replay,shapes pooled,1000,beta025_random,verify_on_claim,verify on claim,0.013548333333333325,0.012802224999999988,0.014308691666666656,1000,win
+replay,shapes pooled,1000,beta025_random,midian,MIDIAN,0.044818333333333314,0.04407553333333332,0.04555904166666664,1000,win
+replay,shapes pooled,1000,beta025_random,sequential_halving_peer,seq. halving (peer),-0.0403346666666667,-0.0407736916666667,-0.0398882416666667,1000,loss
+replay,shapes pooled,1000,beta05_random,flat_probe_argmax_online,flat probe argmax (online),0.037284999999999985,0.03658830833333331,0.03796501666666664,1000,win
+replay,shapes pooled,1000,beta05_random,warm_start_bandit,warm-start bandit,0.015707333333333323,0.015050924999999995,0.016320333333333322,1000,win
+replay,shapes pooled,1000,beta05_random,linucb_honest,LinUCB,0.06708566666666667,0.06652455000000002,0.0676254,1000,win
+replay,shapes pooled,1000,beta05_random,declared_argmax,declared argmax,0.021479666666666657,0.020487516666666653,0.022442674999999985,1000,win
+replay,shapes pooled,1000,beta05_random,verify_on_claim,verify on claim,0.01485133333333333,0.01404598333333333,0.01561935833333333,1000,win
+replay,shapes pooled,1000,beta05_random,midian,MIDIAN,0.11248933333333333,0.10824663333333334,0.11671126666666666,1000,win
+replay,shapes pooled,1000,beta05_random,sequential_halving_peer,seq. halving (peer),0.036268666666666664,0.035387866666666656,0.037158366666666665,1000,win
+replay,shapes pooled,1000,cartel,flat_probe_argmax_online,flat probe argmax (online),0.03726533333333332,0.03657445833333331,0.03795239166666664,1000,win
+replay,shapes pooled,1000,cartel,warm_start_bandit,warm-start bandit,0.028063333333333315,0.027441274999999984,0.028669533333333313,1000,win
+replay,shapes pooled,1000,cartel,linucb_honest,LinUCB,0.067066,0.06652823333333334,0.06757970833333334,1000,win
+replay,shapes pooled,1000,cartel,declared_argmax,declared argmax,0.069613,0.06860696666666667,0.07057685833333331,1000,win
+replay,shapes pooled,1000,cartel,verify_on_claim,verify on claim,0.04543433333333331,0.04460089166666665,0.04628304999999997,1000,win
+replay,shapes pooled,1000,cartel,midian,MIDIAN,0.174923,0.17107248333333333,0.17895389999999997,1000,win
+replay,shapes pooled,1000,cartel,sequential_halving_peer,seq. halving (peer),0.40215700000000004,0.40049918333333334,0.40381460833333327,1000,win
+replay,shapes pooled,10000,beta0,flat_probe_argmax_online,flat probe argmax (online),0.05036766666666665,0.04966189999999998,0.051049691666666654,1000,win
+replay,shapes pooled,10000,beta0,warm_start_bandit,warm-start bandit,-0.02276966666666668,-0.023118366666666678,-0.022441458333333348,1000,loss
+replay,shapes pooled,10000,beta0,linucb_honest,LinUCB,0.21168099999999998,0.21101729166666666,0.21232346666666665,1000,win
+replay,shapes pooled,10000,beta0,declared_argmax,declared argmax,-0.03239000000000002,-0.03269401666666669,-0.03206195000000003,1000,loss
+replay,shapes pooled,10000,beta0,verify_on_claim,verify on claim,-0.03253333333333336,-0.03283333333333336,-0.03221930833333335,1000,loss
+replay,shapes pooled,10000,beta0,midian,MIDIAN,0.04948866666666666,0.04883764166666665,0.050175441666666654,1000,win
+replay,shapes pooled,10000,beta0,sequential_halving_peer,seq. halving (peer),-0.03432400000000003,-0.03463637500000002,-0.034007641666666685,1000,loss
+replay,shapes pooled,10000,beta025_cartel,flat_probe_argmax_online,flat probe argmax (online),0.04523999999999998,0.04453461666666665,0.045925741666666645,1000,win
+replay,shapes pooled,10000,beta025_cartel,warm_start_bandit,warm-start bandit,-0.010513333333333343,-0.01092337500000001,-0.010106308333333341,1000,loss
+replay,shapes pooled,10000,beta025_cartel,linucb_honest,LinUCB,0.2065533333333333,0.2058929,0.20721913333333333,1000,win
+replay,shapes pooled,10000,beta025_cartel,declared_argmax,declared argmax,0.004046999999999999,0.0035513333333333295,0.004532424999999993,1000,win
+replay,shapes pooled,10000,beta025_cartel,verify_on_claim,verify on claim,-0.0074123333333333385,-0.007926358333333341,-0.006915775000000005,1000,loss
+replay,shapes pooled,10000,beta025_cartel,midian,MIDIAN,0.06319233333333332,0.06239429166666666,0.06397405833333332,1000,win
+replay,shapes pooled,10000,beta025_cartel,sequential_halving_peer,seq. halving (peer),-0.038181333333333366,-0.038564016666666694,-0.037787225000000035,1000,loss
+replay,shapes pooled,10000,beta025_random,flat_probe_argmax_online,flat probe argmax (online),0.04638166666666665,0.04566258333333331,0.047060666666666646,1000,win
+replay,shapes pooled,10000,beta025_random,warm_start_bandit,warm-start bandit,0.013301333333333342,0.012763125000000007,0.013817375000000007,1000,win
+replay,shapes pooled,10000,beta025_random,linucb_honest,LinUCB,0.207695,0.2070059083333333,0.20834172499999998,1000,win
+replay,shapes pooled,10000,beta025_random,declared_argmax,declared argmax,0.029108666666666658,0.028186299999999994,0.02999696666666666,1000,win
+replay,shapes pooled,10000,beta025_random,verify_on_claim,verify on claim,0.016339333333333338,0.01560890833333333,0.017077774999999996,1000,win
+replay,shapes pooled,10000,beta025_random,midian,MIDIAN,0.05595299999999998,0.055172566666666645,0.05672500833333331,1000,win
+replay,shapes pooled,10000,beta025_random,sequential_halving_peer,seq. halving (peer),-0.0372916666666667,-0.037634358333333374,-0.03691858333333337,1000,loss
+replay,shapes pooled,10000,beta05_random,flat_probe_argmax_online,flat probe argmax (online),0.049156999999999985,0.04842699999999999,0.04983900833333332,1000,win
+replay,shapes pooled,10000,beta05_random,warm_start_bandit,warm-start bandit,0.015369666666666676,0.014848641666666676,0.015891083333333344,1000,win
+replay,shapes pooled,10000,beta05_random,linucb_honest,LinUCB,0.21047033333333331,0.20978829999999996,0.2111446833333333,1000,win
+replay,shapes pooled,10000,beta05_random,declared_argmax,declared argmax,0.032537666666666666,0.031663308333333334,0.03343634999999999,1000,win
+replay,shapes pooled,10000,beta05_random,verify_on_claim,verify on claim,0.01939833333333334,0.018679825000000004,0.020083375000000004,1000,win
+replay,shapes pooled,10000,beta05_random,midian,MIDIAN,0.128584,0.12445332500000002,0.132691,1000,win
+replay,shapes pooled,10000,beta05_random,sequential_halving_peer,seq. halving (peer),-0.009896666666666673,-0.01039233333333334,-0.009367316666666672,1000,loss
+replay,shapes pooled,10000,cartel,flat_probe_argmax_online,flat probe argmax (online),0.04926099999999998,0.04854459999999998,0.04995477499999998,1000,win
+replay,shapes pooled,10000,cartel,warm_start_bandit,warm-start bandit,0.050230999999999984,0.04970463333333332,0.05076437499999998,1000,win
+replay,shapes pooled,10000,cartel,linucb_honest,LinUCB,0.21057433333333334,0.20989523333333332,0.21120426666666667,1000,win
+replay,shapes pooled,10000,cartel,declared_argmax,declared argmax,0.08252233333333334,0.08186527500000002,0.08315280833333334,1000,win
+replay,shapes pooled,10000,cartel,verify_on_claim,verify on claim,0.06625099999999999,0.06559229166666666,0.06688370833333333,1000,win
+replay,shapes pooled,10000,cartel,midian,MIDIAN,0.19299233333333332,0.18912768333333335,0.19679290833333335,1000,win
+replay,shapes pooled,10000,cartel,sequential_halving_peer,seq. halving (peer),0.3349506666666667,0.3338009,0.3361693833333333,1000,win
+replay,shapes pooled,100000,beta0,flat_probe_argmax_online,flat probe argmax (online),0.05317333333333332,0.05180654166666666,0.05453012499999997,200,win
+replay,shapes pooled,100000,beta0,warm_start_bandit,warm-start bandit,-0.024830000000000022,-0.02554675000000002,-0.02413666666666669,200,loss
+replay,shapes pooled,100000,beta0,linucb_honest,LinUCB,0.24719333333333335,0.2455598333333333,0.248763375,200,win
+replay,shapes pooled,100000,beta0,declared_argmax,declared argmax,-0.029335000000000028,-0.02999333333333335,-0.028686666666666697,200,loss
+replay,shapes pooled,100000,beta0,verify_on_claim,verify on claim,-0.029420000000000033,-0.030090041666666706,-0.028766583333333356,200,loss
+replay,shapes pooled,100000,beta0,midian,MIDIAN,0.053041666666666654,0.051476291666666646,0.0546134583333333,200,win
+replay,shapes pooled,100000,beta0,sequential_halving_peer,seq. halving (peer),-0.03084333333333336,-0.031513416666666696,-0.030181541666666693,200,loss
+replay,shapes pooled,100000,beta025_cartel,flat_probe_argmax_online,flat probe argmax (online),0.04890833333333331,0.047519999999999986,0.05028520833333333,200,win
+replay,shapes pooled,100000,beta025_cartel,warm_start_bandit,warm-start bandit,-0.00853333333333335,-0.009383375000000003,-0.00771495833333335,200,loss
+replay,shapes pooled,100000,beta025_cartel,linucb_honest,LinUCB,0.24292833333333333,0.24128324999999995,0.2444853333333333,200,win
+replay,shapes pooled,100000,beta025_cartel,declared_argmax,declared argmax,0.015466666666666651,0.01451166666666665,0.016455041666666653,200,win
+replay,shapes pooled,100000,beta025_cartel,verify_on_claim,verify on claim,0.004439999999999996,0.003393208333333326,0.00549675,200,win
+replay,shapes pooled,100000,beta025_cartel,midian,MIDIAN,0.06629999999999998,0.06469154166666664,0.06786187499999999,200,win
+replay,shapes pooled,100000,beta025_cartel,sequential_halving_peer,seq. halving (peer),-0.034650000000000035,-0.03542675000000004,-0.03390812500000004,200,loss
+replay,shapes pooled,100000,beta025_random,flat_probe_argmax_online,flat probe argmax (online),0.049658333333333325,0.048318166666666655,0.05102724999999999,200,win
+replay,shapes pooled,100000,beta025_random,warm_start_bandit,warm-start bandit,0.012506666666666687,0.011333333333333353,0.013682000000000017,200,win
+replay,shapes pooled,100000,beta025_random,linucb_honest,LinUCB,0.24367833333333336,0.24209145833333334,0.24525670833333338,200,win
+replay,shapes pooled,100000,beta025_random,declared_argmax,declared argmax,0.03197000000000001,0.029979875000000007,0.03384670833333334,200,win
+replay,shapes pooled,100000,beta025_random,verify_on_claim,verify on claim,0.018600000000000016,0.017088208333333337,0.02010170833333335,200,win
+replay,shapes pooled,100000,beta025_random,midian,MIDIAN,0.06012499999999999,0.05830829166666667,0.06203504166666666,200,win
+replay,shapes pooled,100000,beta025_random,sequential_halving_peer,seq. halving (peer),-0.034013333333333354,-0.03473500000000003,-0.03324491666666669,200,loss
+replay,shapes pooled,100000,beta05_random,flat_probe_argmax_online,flat probe argmax (online),0.051464999999999976,0.05005316666666664,0.05287504166666664,200,win
+replay,shapes pooled,100000,beta05_random,warm_start_bandit,warm-start bandit,0.014831666666666674,0.013606416666666676,0.016023666666666672,200,win
+replay,shapes pooled,100000,beta05_random,linucb_honest,LinUCB,0.24548500000000004,0.24377295833333337,0.24716841666666667,200,win
+replay,shapes pooled,100000,beta05_random,declared_argmax,declared argmax,0.03487333333333333,0.03267616666666668,0.03694520833333334,200,win
+replay,shapes pooled,100000,beta05_random,verify_on_claim,verify on claim,0.020963333333333348,0.019296583333333353,0.022561833333333337,200,win
+replay,shapes pooled,100000,beta05_random,midian,MIDIAN,0.13397333333333333,0.12483833333333334,0.143473625,200,win
+replay,shapes pooled,100000,beta05_random,sequential_halving_peer,seq. halving (peer),-0.019250000000000017,-0.020148458333333355,-0.018359958333333357,200,loss
+replay,shapes pooled,100000,cartel,flat_probe_argmax_online,flat probe argmax (online),0.05206666666666665,0.05067154166666665,0.05344683333333331,200,win
+replay,shapes pooled,100000,cartel,warm_start_bandit,warm-start bandit,0.053293333333333325,0.05221420833333334,0.05440358333333333,200,win
+replay,shapes pooled,100000,cartel,linucb_honest,LinUCB,0.2460866666666667,0.24442970833333333,0.24764670833333338,200,win
+replay,shapes pooled,100000,cartel,declared_argmax,declared argmax,0.08652000000000001,0.08511329166666666,0.08793170833333336,200,win
+replay,shapes pooled,100000,cartel,verify_on_claim,verify on claim,0.06631666666666668,0.06507483333333333,0.06758499999999999,200,win
+replay,shapes pooled,100000,cartel,midian,MIDIAN,0.18915000000000004,0.18115283333333335,0.19728883333333333,200,win
+replay,shapes pooled,100000,cartel,sequential_halving_peer,seq. halving (peer),0.3111516666666667,0.30916479166666677,0.313048625,200,win
+replay,shapes pooled,1000000,beta0,flat_probe_argmax_online,flat probe argmax (online),0.05495666666666666,0.05299666666666667,0.05694333333333331,100,win
+replay,shapes pooled,1000000,beta0,warm_start_bandit,warm-start bandit,-0.024186666666666672,-0.025080083333333343,-0.023273333333333347,100,loss
+replay,shapes pooled,1000000,beta0,linucb_honest,LinUCB,0.26260000000000006,0.26035625,0.26477400000000006,100,win
+replay,shapes pooled,1000000,beta0,declared_argmax,declared argmax,-0.026466666666666683,-0.02730000000000002,-0.02565000000000002,100,loss
+replay,shapes pooled,1000000,beta0,verify_on_claim,verify on claim,-0.02669333333333336,-0.027503416666666704,-0.025846666666666695,100,loss
+replay,shapes pooled,1000000,beta0,midian,MIDIAN,0.05800333333333334,0.05579658333333333,0.06021675,100,win
+replay,shapes pooled,1000000,beta0,sequential_halving_peer,seq. halving (peer),-0.02830333333333335,-0.029070083333333347,-0.027559833333333353,100,loss
+replay,shapes pooled,1000000,beta025_cartel,flat_probe_argmax_online,flat probe argmax (online),0.05112666666666666,0.04905658333333332,0.053216749999999965,100,win
+replay,shapes pooled,1000000,beta025_cartel,warm_start_bandit,warm-start bandit,0.001716666666666664,0.00039666666666666404,0.0029633333333333313,100,win
+replay,shapes pooled,1000000,beta025_cartel,linucb_honest,LinUCB,0.25877,0.2563765833333333,0.2610133333333333,100,win
+replay,shapes pooled,1000000,beta025_cartel,declared_argmax,declared argmax,0.014670000000000011,0.013246416666666675,0.01611358333333335,100,win
+replay,shapes pooled,1000000,beta025_cartel,verify_on_claim,verify on claim,0.010076666666666671,0.008822999999999996,0.011280083333333338,100,win
+replay,shapes pooled,1000000,beta025_cartel,midian,MIDIAN,0.07230666666666667,0.06906966666666667,0.07639033333333332,100,win
+replay,shapes pooled,1000000,beta025_cartel,sequential_halving_peer,seq. halving (peer),-0.03187666666666669,-0.03283341666666669,-0.030900000000000035,100,loss
+replay,shapes pooled,1000000,beta025_random,flat_probe_argmax_online,flat probe argmax (online),0.05144666666666667,0.04954649999999998,0.05348341666666666,100,win
+replay,shapes pooled,1000000,beta025_random,warm_start_bandit,warm-start bandit,0.014866666666666672,0.013263249999999999,0.01643341666666667,100,win
+replay,shapes pooled,1000000,beta025_random,linucb_honest,LinUCB,0.25909,0.2567897500000001,0.2613005000000001,100,win
+replay,shapes pooled,1000000,beta025_random,declared_argmax,declared argmax,0.03471000000000001,0.03178616666666668,0.037536749999999994,100,win
+replay,shapes pooled,1000000,beta025_random,verify_on_claim,verify on claim,0.021896666666666675,0.019739833333333345,0.024180083333333335,100,win
+replay,shapes pooled,1000000,beta025_random,midian,MIDIAN,0.06424666666666666,0.06214633333333333,0.06638366666666666,100,win
+replay,shapes pooled,1000000,beta025_random,sequential_halving_peer,seq. halving (peer),-0.031763333333333345,-0.03274341666666668,-0.030816666666666697,100,loss
+replay,shapes pooled,1000000,beta05_random,flat_probe_argmax_online,flat probe argmax (online),0.05305666666666666,0.05106641666666665,0.05511758333333333,100,win
+replay,shapes pooled,1000000,beta05_random,warm_start_bandit,warm-start bandit,0.016960000000000017,0.015599916666666679,0.018410083333333337,100,win
+replay,shapes pooled,1000000,beta05_random,linucb_honest,LinUCB,0.2607,0.2585465833333333,0.26290375000000005,100,win
+replay,shapes pooled,1000000,beta05_random,declared_argmax,declared argmax,0.03795666666666667,0.035126416666666695,0.04069025000000003,100,win
+replay,shapes pooled,1000000,beta05_random,verify_on_claim,verify on claim,0.024506666666666687,0.02244641666666669,0.026617750000000027,100,win
+replay,shapes pooled,1000000,beta05_random,midian,MIDIAN,0.1412266666666667,0.12751774999999999,0.1556945833333333,100,win
+replay,shapes pooled,1000000,beta05_random,sequential_halving_peer,seq. halving (peer),-0.02192000000000001,-0.022826666666666676,-0.02099991666666667,100,loss
+replay,shapes pooled,1000000,cartel,flat_probe_argmax_online,flat probe argmax (online),0.053429999999999984,0.05143649999999997,0.055426833333333286,100,win
+replay,shapes pooled,1000000,cartel,warm_start_bandit,warm-start bandit,0.05504666666666667,0.053506666666666675,0.05647691666666667,100,win
+replay,shapes pooled,1000000,cartel,linucb_honest,LinUCB,0.2610733333333333,0.2588630833333334,0.26329366666666665,100,win
+replay,shapes pooled,1000000,cartel,declared_argmax,declared argmax,0.08831000000000001,0.0862999166666667,0.09019358333333331,100,win
+replay,shapes pooled,1000000,cartel,verify_on_claim,verify on claim,0.06857,0.06668666666666667,0.07030741666666665,100,win
+replay,shapes pooled,1000000,cartel,midian,MIDIAN,0.1996533333333333,0.18827266666666664,0.21203349999999996,100,win
+replay,shapes pooled,1000000,cartel,sequential_halving_peer,seq. halving (peer),0.30467666666666665,0.3018798333333333,0.3075803333333333,100,win
+routereval,all_strong,10,beta0,flat_probe_argmax_online,flat probe argmax (online),-0.0037999999999999813,-0.009799999999999965,0.002200000000000002,5,tie
+routereval,all_strong,10,beta0,warm_start_bandit,warm-start bandit,0.0028000000000000247,-0.005799999999999916,0.011999999999999966,5,tie
+routereval,all_strong,10,beta0,linucb_honest,LinUCB,0.007399999999999985,-0.0013999999999999568,0.016199999999999926,5,tie
+routereval,all_strong,10,beta0,knn_router_online,KNN router (online),-0.013599999999999968,-0.01859999999999993,-0.008600000000000007,5,loss
+routereval,all_strong,10,beta0,mlp_router,MLP router,0.03599999999999996,0.026400000000000024,0.04679999999999995,5,win
+routereval,all_strong,10,beta0,declared_argmax,declared argmax,-0.0050000000000000044,-0.018999999999999972,0.00839999999999994,5,tie
+routereval,all_strong,10,beta0,midian,MIDIAN,-0.0014000000000000013,-0.0038000000000000035,0.001200000000000001,5,tie
+routereval,all_strong,10,beta0,sequential_halving_peer,seq. halving (peer),0.022399999999999975,0.01399999999999999,0.03079999999999996,5,win
+routereval,all_strong,10,beta025_cartel,flat_probe_argmax_online,flat probe argmax (online),-0.0041999999999999815,-0.011399999999999943,0.0026000000000000025,5,tie
+routereval,all_strong,10,beta025_cartel,warm_start_bandit,warm-start bandit,0.0030000000000000027,-0.00459999999999996,0.010599999999999965,5,tie
+routereval,all_strong,10,beta025_cartel,linucb_honest,LinUCB,0.006999999999999984,-0.0021999999999999576,0.015999999999999924,5,tie
+routereval,all_strong,10,beta025_cartel,knn_router_online,KNN router (online),-0.013999999999999967,-0.02019999999999993,-0.008599999999999964,5,loss
+routereval,all_strong,10,beta025_cartel,mlp_router,MLP router,0.035599999999999965,0.026000000000000002,0.04619999999999995,5,win
+routereval,all_strong,10,beta025_cartel,declared_argmax,declared argmax,0.0692,0.05999999999999994,0.08099999999999999,5,win
+routereval,all_strong,10,beta025_cartel,midian,MIDIAN,-0.004599999999999982,-0.01040000000000001,0.004400000000000026,5,tie
+routereval,all_strong,10,beta025_cartel,sequential_halving_peer,seq. halving (peer),0.019799999999999974,0.007000000000000029,0.02859999999999996,5,win
+routereval,all_strong,10,beta025_random,flat_probe_argmax_online,flat probe argmax (online),-0.004999999999999982,-0.013199999999999944,0.002200000000000002,5,tie
+routereval,all_strong,10,beta025_random,warm_start_bandit,warm-start bandit,0.010799999999999966,0.0,0.021619999999999823,5,tie
+routereval,all_strong,10,beta025_random,linucb_honest,LinUCB,0.006199999999999983,-0.003799999999999959,0.015999999999999924,5,tie
+routereval,all_strong,10,beta025_random,knn_router_online,KNN router (online),-0.01479999999999997,-0.02219999999999993,-0.008600000000000007,5,loss
+routereval,all_strong,10,beta025_random,mlp_router,MLP router,0.03479999999999996,0.02479,0.04559999999999995,5,win
+routereval,all_strong,10,beta025_random,declared_argmax,declared argmax,0.01919999999999995,0.008799999999999985,0.027399999999999914,5,win
+routereval,all_strong,10,beta025_random,midian,MIDIAN,-0.007999999999999985,-0.014000000000000012,-0.0029999999999999805,5,loss
+routereval,all_strong,10,beta025_random,sequential_halving_peer,seq. halving (peer),0.018399999999999972,0.005399999999999983,0.02959999999999996,5,win
+routereval,all_strong,10,beta05_random,flat_probe_argmax_online,flat probe argmax (online),-0.005599999999999983,-0.010999999999999965,4.999999999972719e-06,5,tie
+routereval,all_strong,10,beta05_random,warm_start_bandit,warm-start bandit,0.008000000000000007,0.00040000000000006697,0.013999999999999967,5,win
+routereval,all_strong,10,beta05_random,linucb_honest,LinUCB,0.005599999999999983,-0.005799999999999961,0.016199999999999926,5,tie
+routereval,all_strong,10,beta05_random,knn_router_online,KNN router (online),-0.01539999999999997,-0.02019999999999993,-0.009599999999999987,5,loss
+routereval,all_strong,10,beta05_random,mlp_router,MLP router,0.03419999999999997,0.020999999999999974,0.04621499999999987,5,win
+routereval,all_strong,10,beta05_random,declared_argmax,declared argmax,0.032399999999999964,0.022599999999999953,0.043199999999999995,5,win
+routereval,all_strong,10,beta05_random,midian,MIDIAN,0.0008000000000000229,-0.00719999999999994,0.008200000000000008,5,tie
+routereval,all_strong,10,beta05_random,sequential_halving_peer,seq. halving (peer),0.022799999999999952,0.013799999999999969,0.02999999999999996,5,win
+routereval,all_strong,10,cartel,flat_probe_argmax_online,flat probe argmax (online),-0.0027999999999999805,-0.009799999999999942,0.004200000000000004,5,tie
+routereval,all_strong,10,cartel,warm_start_bandit,warm-start bandit,0.008199999999999985,-0.0008000000000000007,0.017604999999999923,5,tie
+routereval,all_strong,10,cartel,linucb_honest,LinUCB,0.008399999999999986,-0.00021999999999995466,0.016799999999999926,5,tie
+routereval,all_strong,10,cartel,knn_router_online,KNN router (online),-0.012599999999999967,-0.018399999999999927,-0.007799999999999962,5,loss
+routereval,all_strong,10,cartel,mlp_router,MLP router,0.036999999999999963,0.02699999999999998,0.04919999999999995,5,win
+routereval,all_strong,10,cartel,declared_argmax,declared argmax,0.02419999999999998,0.01379999999999999,0.03620000000000001,5,win
+routereval,all_strong,10,cartel,midian,MIDIAN,-0.0016000000000000014,-0.004200000000000004,0.0010049999999999736,5,tie
+routereval,all_strong,10,cartel,sequential_halving_peer,seq. halving (peer),0.02679999999999998,0.01379999999999999,0.03979999999999997,5,win
+routereval,all_strong,100,beta0,flat_probe_argmax_online,flat probe argmax (online),0.030399999999999937,0.023999999999999976,0.03619999999999992,5,win
+routereval,all_strong,100,beta0,warm_start_bandit,warm-start bandit,-0.01180000000000001,-0.02280000000000002,-0.0008000000000000007,5,loss
+routereval,all_strong,100,beta0,linucb_honest,LinUCB,0.011999999999999966,0.0032000000000000028,0.02079999999999993,5,win
+routereval,all_strong,100,beta0,knn_router_online,KNN router (online),0.027999999999999914,0.02299999999999991,0.03439999999999992,5,win
+routereval,all_strong,100,beta0,mlp_router,MLP router,0.010199999999999942,-0.022200000000000043,0.03939999999999992,5,tie
+routereval,all_strong,100,beta0,declared_argmax,declared argmax,-0.03400000000000003,-0.04080000000000004,-0.027200000000000023,5,loss
+routereval,all_strong,100,beta0,midian,MIDIAN,0.004799999999999982,0.0006000000000000005,0.008999999999999963,5,win
+routereval,all_strong,100,beta0,sequential_halving_peer,seq. halving (peer),0.04419999999999995,0.02959999999999998,0.053199999999999935,5,win
+routereval,all_strong,100,beta025_cartel,flat_probe_argmax_online,flat probe argmax (online),0.030999999999999937,0.022599999999999953,0.03939999999999995,5,win
+routereval,all_strong,100,beta025_cartel,warm_start_bandit,warm-start bandit,0.019399999999999952,0.008199999999999963,0.03279999999999996,5,win
+routereval,all_strong,100,beta025_cartel,linucb_honest,LinUCB,0.012599999999999967,0.0016000000000000014,0.024999999999999932,5,win
+routereval,all_strong,100,beta025_cartel,knn_router_online,KNN router (online),0.028599999999999914,0.02399999999999991,0.03319999999999992,5,win
+routereval,all_strong,100,beta025_cartel,mlp_router,MLP router,0.010799999999999943,-0.026000000000000044,0.04179999999999993,5,tie
+routereval,all_strong,100,beta025_cartel,declared_argmax,declared argmax,0.047599999999999934,0.03639999999999992,0.05779999999999994,5,win
+routereval,all_strong,100,beta025_cartel,midian,MIDIAN,0.01699999999999997,0.0014000000000000013,0.03259999999999994,5,win
+routereval,all_strong,100,beta025_cartel,sequential_halving_peer,seq. halving (peer),0.04279999999999995,0.023999999999999976,0.05679999999999994,5,win
+routereval,all_strong,100,beta025_random,flat_probe_argmax_online,flat probe argmax (online),0.024799999999999954,0.02119999999999993,0.027799999999999957,5,win
+routereval,all_strong,100,beta025_random,warm_start_bandit,warm-start bandit,0.00020000000000000017,-0.007399999999999962,0.007799999999999962,5,tie
+routereval,all_strong,100,beta025_random,linucb_honest,LinUCB,0.006399999999999984,0.0017950000000000019,0.012599999999999945,5,win
+routereval,all_strong,100,beta025_random,knn_router_online,KNN router (online),0.02239999999999993,0.014999999999999947,0.029799999999999917,5,win
+routereval,all_strong,100,beta025_random,mlp_router,MLP router,0.00459999999999996,-0.031400000000000025,0.03299999999999996,5,tie
+routereval,all_strong,100,beta025_random,declared_argmax,declared argmax,0.033199999999999966,0.023584999999999957,0.04479999999999997,5,win
+routereval,all_strong,100,beta025_random,midian,MIDIAN,0.007999999999999985,0.001200000000000001,0.012999999999999946,5,win
+routereval,all_strong,100,beta025_random,sequential_halving_peer,seq. halving (peer),0.02979999999999996,0.021799999999999976,0.03579999999999994,5,win
+routereval,all_strong,100,beta05_random,flat_probe_argmax_online,flat probe argmax (online),0.024599999999999955,0.016199999999999992,0.031399999999999914,5,win
+routereval,all_strong,100,beta05_random,warm_start_bandit,warm-start bandit,0.017399999999999992,0.01160000000000001,0.023199999999999978,5,win
+routereval,all_strong,100,beta05_random,linucb_honest,LinUCB,0.006199999999999983,-0.0033999999999999586,0.016199999999999947,5,tie
+routereval,all_strong,100,beta05_random,knn_router_online,KNN router (online),0.02219999999999993,0.018199999999999904,0.02959999999999994,5,win
+routereval,all_strong,100,beta05_random,mlp_router,MLP router,0.0043999999999999595,-0.03539999999999999,0.03459999999999992,5,tie
+routereval,all_strong,100,beta05_random,declared_argmax,declared argmax,0.036599999999999945,0.027199999999999957,0.047599999999999934,5,win
+routereval,all_strong,100,beta05_random,midian,MIDIAN,0.0064000000000000055,-0.005400000000000005,0.01879999999999995,5,tie
+routereval,all_strong,100,beta05_random,sequential_halving_peer,seq. halving (peer),0.03579999999999994,0.03159999999999996,0.0414099999999999,5,win
+routereval,all_strong,100,cartel,flat_probe_argmax_online,flat probe argmax (online),0.022199999999999952,0.017199999999999948,0.026799999999999956,5,win
+routereval,all_strong,100,cartel,warm_start_bandit,warm-start bandit,0.025799999999999955,0.02179999999999995,0.029799999999999983,5,win
+routereval,all_strong,100,cartel,linucb_honest,LinUCB,0.0037999999999999813,-0.002400000000000002,0.011199999999999943,5,tie
+routereval,all_strong,100,cartel,knn_router_online,KNN router (online),0.01979999999999993,0.014399999999999946,0.02519999999999991,5,win
+routereval,all_strong,100,cartel,mlp_router,MLP router,0.0019999999999999575,-0.034600000000000075,0.03179999999999996,5,tie
+routereval,all_strong,100,cartel,declared_argmax,declared argmax,0.04179999999999995,0.03579999999999994,0.04579999999999993,5,win
+routereval,all_strong,100,cartel,midian,MIDIAN,0.014399999999999968,0.007999999999999962,0.0244099999999999,5,win
+routereval,all_strong,100,cartel,sequential_halving_peer,seq. halving (peer),0.03719999999999994,0.027799999999999915,0.046399999999999955,5,win
+routereval,all_strong,1000,beta0,flat_probe_argmax_online,flat probe argmax (online),0.11239999999999999,0.10799999999999998,0.11879999999999999,5,win
+routereval,all_strong,1000,beta0,warm_start_bandit,warm-start bandit,-0.05059999999999998,-0.05900499999999998,-0.04299999999999997,5,loss
+routereval,all_strong,1000,beta0,linucb_honest,LinUCB,-0.02200000000000002,-0.036800000000000034,-0.007600000000000007,5,loss
+routereval,all_strong,1000,beta0,knn_router_online,KNN router (online),0.08759999999999998,0.08080000000000001,0.09519999999999999,5,win
+routereval,all_strong,1000,beta0,mlp_router,MLP router,-0.01980000000000002,-0.03080000000000003,-0.008600000000000007,5,loss
+routereval,all_strong,1000,beta0,declared_argmax,declared argmax,-0.09239999999999997,-0.10679999999999998,-0.07939999999999996,5,loss
+routereval,all_strong,1000,beta0,midian,MIDIAN,0.018400000000000017,0.015400000000000014,0.021004999999999992,5,win
+routereval,all_strong,1000,beta0,sequential_halving_peer,seq. halving (peer),0.057600000000000026,0.040200000000000034,0.0764,5,win
+routereval,all_strong,1000,beta025_cartel,flat_probe_argmax_online,flat probe argmax (online),0.09799999999999998,0.08519999999999997,0.10899999999999999,5,win
+routereval,all_strong,1000,beta025_cartel,warm_start_bandit,warm-start bandit,0.0642,0.04260000000000001,0.08579999999999999,5,win
+routereval,all_strong,1000,beta025_cartel,linucb_honest,LinUCB,-0.03640000000000003,-0.06560000000000006,-0.009800000000000008,5,loss
+routereval,all_strong,1000,beta025_cartel,knn_router_online,KNN router (online),0.07319999999999997,0.05519999999999994,0.09120000000000002,5,win
+routereval,all_strong,1000,beta025_cartel,mlp_router,MLP router,-0.03420000000000003,-0.05620000000000005,-0.01100000000000001,5,loss
+routereval,all_strong,1000,beta025_cartel,declared_argmax,declared argmax,0.11019999999999999,0.09539999999999997,0.13040000000000002,5,win
+routereval,all_strong,1000,beta025_cartel,midian,MIDIAN,0.020200000000000017,0.0016000000000000014,0.038800000000000036,5,win
+routereval,all_strong,1000,beta025_cartel,sequential_halving_peer,seq. halving (peer),0.030600000000000006,0.0026000000000000025,0.056399999999999985,5,win
+routereval,all_strong,1000,beta025_random,flat_probe_argmax_online,flat probe argmax (online),0.08899999999999997,0.07339999999999995,0.10259999999999998,5,win
+routereval,all_strong,1000,beta025_random,warm_start_bandit,warm-start bandit,0.034399999999999986,0.019399999999999973,0.05299999999999996,5,win
+routereval,all_strong,1000,beta025_random,linucb_honest,LinUCB,-0.04540000000000004,-0.07740000000000007,-0.017200000000000014,5,loss
+routereval,all_strong,1000,beta025_random,knn_router_online,KNN router (online),0.06419999999999997,0.04319999999999995,0.08480000000000001,5,win
+routereval,all_strong,1000,beta025_random,mlp_router,MLP router,-0.04320000000000004,-0.06980000000000006,-0.018600000000000016,5,loss
+routereval,all_strong,1000,beta025_random,declared_argmax,declared argmax,0.07719999999999996,0.05679999999999994,0.09759999999999998,5,win
+routereval,all_strong,1000,beta025_random,midian,MIDIAN,0.005600000000000005,-0.004800000000000004,0.019600000000000017,5,tie
+routereval,all_strong,1000,beta025_random,sequential_halving_peer,seq. halving (peer),0.031200000000000006,0.002400000000000002,0.0558,5,win
+routereval,all_strong,1000,beta05_random,flat_probe_argmax_online,flat probe argmax (online),0.10419999999999999,0.09199999999999997,0.11639999999999999,5,win
+routereval,all_strong,1000,beta05_random,warm_start_bandit,warm-start bandit,0.053200000000000025,0.04380000000000002,0.06420000000000006,5,win
+routereval,all_strong,1000,beta05_random,linucb_honest,LinUCB,-0.030200000000000025,-0.05280000000000005,-0.006600000000000006,5,loss
+routereval,all_strong,1000,beta05_random,knn_router_online,KNN router (online),0.07939999999999998,0.06859999999999997,0.09099999999999997,5,win
+routereval,all_strong,1000,beta05_random,mlp_router,MLP router,-0.028000000000000025,-0.04620000000000004,-0.009380000000000117,5,loss
+routereval,all_strong,1000,beta05_random,declared_argmax,declared argmax,0.10599999999999998,0.09799999999999998,0.11379999999999998,5,win
+routereval,all_strong,1000,beta05_random,midian,MIDIAN,0.025400000000000023,0.008600000000000007,0.040000000000000036,5,win
+routereval,all_strong,1000,beta05_random,sequential_halving_peer,seq. halving (peer),0.08199999999999996,0.07079999999999995,0.09119999999999998,5,win
+routereval,all_strong,1000,cartel,flat_probe_argmax_online,flat probe argmax (online),0.10699999999999998,0.09919999999999998,0.11479999999999999,5,win
+routereval,all_strong,1000,cartel,warm_start_bandit,warm-start bandit,0.08659999999999997,0.07679999999999995,0.09419999999999998,5,win
+routereval,all_strong,1000,cartel,linucb_honest,LinUCB,-0.027400000000000025,-0.04400000000000004,-0.005780000000000114,5,loss
+routereval,all_strong,1000,cartel,knn_router_online,KNN router (online),0.08219999999999998,0.07719999999999996,0.08720000000000001,5,win
+routereval,all_strong,1000,cartel,mlp_router,MLP router,-0.02520000000000002,-0.03940000000000003,-0.005800000000000005,5,loss
+routereval,all_strong,1000,cartel,declared_argmax,declared argmax,0.11639999999999999,0.10819999999999999,0.12501499999999993,5,win
+routereval,all_strong,1000,cartel,midian,MIDIAN,0.04920000000000004,0.04280000000000004,0.05620000000000005,5,win
+routereval,all_strong,1000,cartel,sequential_halving_peer,seq. halving (peer),0.1156,0.10959999999999999,0.1234,5,win
+routereval,all_weak,10,beta0,flat_probe_argmax_online,flat probe argmax (online),-0.015599999999999992,-0.04160999999999999,0.009200000000000009,5,tie
+routereval,all_weak,10,beta0,warm_start_bandit,warm-start bandit,-0.01479999999999999,-0.02719999999999998,-0.00039999999999998923,5,loss
+routereval,all_weak,10,beta0,linucb_honest,LinUCB,-0.005399999999999993,-0.030999999999999982,0.020199999999999996,5,tie
+routereval,all_weak,10,beta0,knn_router_online,KNN router (online),-0.0514,-0.0744,-0.028400000000000016,5,loss
+routereval,all_weak,10,beta0,mlp_router,MLP router,-0.00039999999999998923,-0.0254,0.02460000000000002,5,tie
+routereval,all_weak,10,beta0,declared_argmax,declared argmax,1.1102230246251566e-17,-0.03919999999999999,0.03920000000000001,5,tie
+routereval,all_weak,10,beta0,midian,MIDIAN,0.0024000000000000245,-0.022199999999999977,0.027000000000000024,5,tie
+routereval,all_weak,10,beta0,sequential_halving_peer,seq. halving (peer),0.01260000000000001,-0.005199999999999982,0.030400000000000003,5,tie
+routereval,all_weak,10,beta025_cartel,flat_probe_argmax_online,flat probe argmax (online),-0.016999999999999994,-0.04179999999999999,0.0040000000000000036,5,tie
+routereval,all_weak,10,beta025_cartel,warm_start_bandit,warm-start bandit,-0.003599999999999981,-0.019999999999999973,0.012800000000000011,5,tie
+routereval,all_weak,10,beta025_cartel,linucb_honest,LinUCB,-0.006799999999999995,-0.030200000000000005,0.0158,5,tie
+routereval,all_weak,10,beta025_cartel,knn_router_online,KNN router (online),-0.0528,-0.07419999999999999,-0.032000000000000015,5,loss
+routereval,all_weak,10,beta025_cartel,mlp_router,MLP router,-0.0017999999999999904,-0.02599999999999999,0.020600000000000018,5,tie
+routereval,all_weak,10,beta025_cartel,declared_argmax,declared argmax,0.03160000000000001,-0.0014049999999999787,0.0646,5,tie
+routereval,all_weak,10,beta025_cartel,midian,MIDIAN,0.0026000000000000133,-0.01599999999999998,0.018200000000000015,5,tie
+routereval,all_weak,10,beta025_cartel,sequential_halving_peer,seq. halving (peer),0.003200000000000014,-0.009799999999999986,0.01580999999999996,5,tie
+routereval,all_weak,10,beta025_random,flat_probe_argmax_online,flat probe argmax (online),-0.018399999999999993,-0.04239999999999999,0.005600000000000005,5,tie
+routereval,all_weak,10,beta025_random,warm_start_bandit,warm-start bandit,-0.01419999999999999,-0.0314,0.0046000000000000155,5,tie
+routereval,all_weak,10,beta025_random,linucb_honest,LinUCB,-0.008199999999999995,-0.037,0.019599999999999985,5,tie
+routereval,all_weak,10,beta025_random,knn_router_online,KNN router (online),-0.054200000000000005,-0.07499999999999998,-0.03560000000000002,5,loss
+routereval,all_weak,10,beta025_random,mlp_router,MLP router,-0.003199999999999992,-0.03180000000000001,0.025400000000000023,5,tie
+routereval,all_weak,10,beta025_random,declared_argmax,declared argmax,0.0030000000000000248,-0.021999999999999974,0.030000000000000037,5,tie
+routereval,all_weak,10,beta025_random,midian,MIDIAN,-0.0017999999999999904,-0.0246,0.017000000000000015,5,tie
+routereval,all_weak,10,beta025_random,sequential_halving_peer,seq. halving (peer),0.012200000000000011,-0.0049999999999999715,0.027609999999999957,5,tie
+routereval,all_weak,10,beta05_random,flat_probe_argmax_online,flat probe argmax (online),-0.015599999999999992,-0.04160999999999999,0.009200000000000009,5,tie
+routereval,all_weak,10,beta05_random,warm_start_bandit,warm-start bandit,-0.0027999999999999913,-0.0334,0.02220000000000002,5,tie
+routereval,all_weak,10,beta05_random,linucb_honest,LinUCB,-0.005399999999999993,-0.030999999999999982,0.020199999999999996,5,tie
+routereval,all_weak,10,beta05_random,knn_router_online,KNN router (online),-0.0514,-0.0744,-0.028400000000000016,5,loss
+routereval,all_weak,10,beta05_random,mlp_router,MLP router,-0.00039999999999998923,-0.0254,0.02460000000000002,5,tie
+routereval,all_weak,10,beta05_random,declared_argmax,declared argmax,-0.0071999999999999955,-0.03839999999999999,0.024,5,tie
+routereval,all_weak,10,beta05_random,midian,MIDIAN,0.0024000000000000132,-0.02759999999999998,0.032400000000000005,5,tie
+routereval,all_weak,10,beta05_random,sequential_halving_peer,seq. halving (peer),0.002000000000000024,-0.02759999999999998,0.03160000000000003,5,tie
+routereval,all_weak,10,cartel,flat_probe_argmax_online,flat probe argmax (online),-0.015599999999999992,-0.04160999999999999,0.009200000000000009,5,tie
+routereval,all_weak,10,cartel,warm_start_bandit,warm-start bandit,-0.0031999999999999806,-0.019999999999999973,0.012200000000000011,5,tie
+routereval,all_weak,10,cartel,linucb_honest,LinUCB,-0.005399999999999993,-0.030999999999999982,0.020199999999999996,5,tie
+routereval,all_weak,10,cartel,knn_router_online,KNN router (online),-0.0514,-0.0744,-0.028400000000000016,5,loss
+routereval,all_weak,10,cartel,mlp_router,MLP router,-0.00039999999999998923,-0.0254,0.02460000000000002,5,tie
+routereval,all_weak,10,cartel,declared_argmax,declared argmax,0.004400000000000015,-0.019999999999999973,0.030800000000000004,5,tie
+routereval,all_weak,10,cartel,midian,MIDIAN,-0.008599999999999986,-0.032199999999999986,0.015000000000000013,5,tie
+routereval,all_weak,10,cartel,sequential_halving_peer,seq. halving (peer),0.0048000000000000265,-0.01539999999999997,0.024800000000000034,5,tie
+routereval,all_weak,100,beta0,flat_probe_argmax_online,flat probe argmax (online),-0.007399999999999995,-0.02919999999999997,0.0142,5,tie
+routereval,all_weak,100,beta0,warm_start_bandit,warm-start bandit,0.01080000000000001,0.0,0.02420000000000002,5,tie
+routereval,all_weak,100,beta0,linucb_honest,LinUCB,-0.002599999999999991,-0.017199999999999993,0.01381499999999993,5,tie
+routereval,all_weak,100,beta0,knn_router_online,KNN router (online),-0.03760000000000001,-0.054599999999999996,-0.017600000000000015,5,loss
+routereval,all_weak,100,beta0,mlp_router,MLP router,0.005600000000000005,-0.012999999999999989,0.031000000000000007,5,tie
+routereval,all_weak,100,beta0,declared_argmax,declared argmax,-0.005599999999999994,-0.032399999999999984,0.0126,5,tie
+routereval,all_weak,100,beta0,midian,MIDIAN,-0.003999999999999992,-0.02599999999999999,0.020800000000000006,5,tie
+routereval,all_weak,100,beta0,sequential_halving_peer,seq. halving (peer),0.00039999999999998923,-0.023,0.023799999999999977,5,tie
+routereval,all_weak,100,beta025_cartel,flat_probe_argmax_online,flat probe argmax (online),-0.016199999999999992,-0.04200999999999999,0.009999999999999998,5,tie
+routereval,all_weak,100,beta025_cartel,warm_start_bandit,warm-start bandit,-0.016999999999999994,-0.031199999999999985,0.0014000000000000123,5,tie
+routereval,all_weak,100,beta025_cartel,linucb_honest,LinUCB,-0.011399999999999988,-0.028199999999999982,0.0040000000000000036,5,tie
+routereval,all_weak,100,beta025_cartel,knn_router_online,KNN router (online),-0.04640000000000001,-0.061204999999999996,-0.03179000000000007,5,loss
+routereval,all_weak,100,beta025_cartel,mlp_router,MLP router,-0.003199999999999992,-0.023599999999999975,0.017199999999999993,5,tie
+routereval,all_weak,100,beta025_cartel,declared_argmax,declared argmax,-0.015200000000000002,-0.022999999999999986,-0.007800000000000007,5,loss
+routereval,all_weak,100,beta025_cartel,midian,MIDIAN,-0.019799999999999984,-0.03459999999999998,-0.005790000000000049,5,loss
+routereval,all_weak,100,beta025_cartel,sequential_halving_peer,seq. halving (peer),-0.006000000000000005,-0.016999999999999994,0.009399999999999986,5,tie
+routereval,all_weak,100,beta025_random,flat_probe_argmax_online,flat probe argmax (online),-0.008199999999999985,-0.02799999999999997,0.005999999999999994,5,tie
+routereval,all_weak,100,beta025_random,warm_start_bandit,warm-start bandit,0.014600000000000002,-0.013409999999999977,0.039,5,tie
+routereval,all_weak,100,beta025_random,linucb_honest,LinUCB,-0.0033999999999999807,-0.021399999999999975,0.014600000000000012,5,tie
+routereval,all_weak,100,beta025_random,knn_router_online,KNN router (online),-0.038400000000000004,-0.053799999999999994,-0.019200000000000005,5,loss
+routereval,all_weak,100,beta025_random,mlp_router,MLP router,0.004800000000000015,-0.008399999999999986,0.018000000000000016,5,tie
+routereval,all_weak,100,beta025_random,declared_argmax,declared argmax,-0.005199999999999994,-0.026400000000000014,0.027000000000000003,5,tie
+routereval,all_weak,100,beta025_random,midian,MIDIAN,-0.005799999999999983,-0.022019999999999963,0.012600000000000023,5,tie
+routereval,all_weak,100,beta025_random,sequential_halving_peer,seq. halving (peer),0.015200000000000014,-0.011599999999999989,0.045600000000000016,5,tie
+routereval,all_weak,100,beta05_random,flat_probe_argmax_online,flat probe argmax (online),-0.007199999999999984,-0.023999999999999966,0.006800000000000006,5,tie
+routereval,all_weak,100,beta05_random,warm_start_bandit,warm-start bandit,0.008400000000000008,-0.00379999999999997,0.016999999999999994,5,tie
+routereval,all_weak,100,beta05_random,linucb_honest,LinUCB,-0.00239999999999998,-0.013199999999999957,0.01060000000000002,5,tie
+routereval,all_weak,100,beta05_random,knn_router_online,KNN router (online),-0.0374,-0.05059999999999999,-0.02420000000000001,5,loss
+routereval,all_weak,100,beta05_random,mlp_router,MLP router,0.005800000000000016,-0.007999999999999962,0.0236,5,tie
+routereval,all_weak,100,beta05_random,declared_argmax,declared argmax,-0.011799999999999988,-0.02639999999999998,0.0028000000000000026,5,tie
+routereval,all_weak,100,beta05_random,midian,MIDIAN,0.017000000000000005,0.008399999999999996,0.024,5,win
+routereval,all_weak,100,beta05_random,sequential_halving_peer,seq. halving (peer),0.004600000000000004,-0.028800000000000003,0.030200000000000005,5,tie
+routereval,all_weak,100,cartel,flat_probe_argmax_online,flat probe argmax (online),-0.014000000000000002,-0.02839999999999997,0.00039999999999997817,5,tie
+routereval,all_weak,100,cartel,warm_start_bandit,warm-start bandit,0.0,-0.0040000000000000036,0.0028000000000000026,5,tie
+routereval,all_weak,100,cartel,linucb_honest,LinUCB,-0.009199999999999996,-0.014400000000000013,-0.0005999999999999894,5,loss
+routereval,all_weak,100,cartel,knn_router_online,KNN router (online),-0.04420000000000002,-0.0536,-0.034785000000000114,5,loss
+routereval,all_weak,100,cartel,mlp_router,MLP router,-0.0010000000000000009,-0.009599999999999975,0.01419999999999998,5,tie
+routereval,all_weak,100,cartel,declared_argmax,declared argmax,-0.02200000000000001,-0.04640000000000001,0.002399999999999991,5,tie
+routereval,all_weak,100,cartel,midian,MIDIAN,-0.00040000000000001146,-0.008800000000000007,0.012399999999999977,5,tie
+routereval,all_weak,100,cartel,sequential_halving_peer,seq. halving (peer),0.028999999999999988,0.0073999999999999734,0.05084999999999972,5,win
+routereval,all_weak,1000,beta0,flat_probe_argmax_online,flat probe argmax (online),0.02200000000000001,-0.009399999999999986,0.05281499999999993,5,tie
+routereval,all_weak,1000,beta0,warm_start_bandit,warm-start bandit,0.0134,-0.01639999999999999,0.043199999999999995,5,tie
+routereval,all_weak,1000,beta0,linucb_honest,LinUCB,0.025,-0.008799999999999997,0.052000000000000005,5,tie
+routereval,all_weak,1000,beta0,knn_router_online,KNN router (online),0.026600000000000002,0.004800000000000038,0.0516,5,win
+routereval,all_weak,1000,beta0,mlp_router,MLP router,0.03400000000000001,-0.00019999999999997797,0.0786,5,tie
+routereval,all_weak,1000,beta0,declared_argmax,declared argmax,-0.0598,-0.08659999999999998,-0.0344,5,loss
+routereval,all_weak,1000,beta0,midian,MIDIAN,0.02160000000000002,-0.005599999999999971,0.05560000000000002,5,tie
+routereval,all_weak,1000,beta0,sequential_halving_peer,seq. halving (peer),-0.028600000000000014,-0.05940000000000001,0.009199999999999986,5,tie
+routereval,all_weak,1000,beta025_cartel,flat_probe_argmax_online,flat probe argmax (online),1.1102230246251566e-17,-0.028199999999999982,0.024,5,tie
+routereval,all_weak,1000,beta025_cartel,warm_start_bandit,warm-start bandit,0.04700000000000001,0.02260000000000001,0.0658,5,win
+routereval,all_weak,1000,beta025_cartel,linucb_honest,LinUCB,0.010399999999999998,-0.0232,0.030799999999999984,5,tie
+routereval,all_weak,1000,beta025_cartel,knn_router_online,KNN router (online),0.004600000000000004,-0.012799999999999988,0.022,5,tie
+routereval,all_weak,1000,beta025_cartel,mlp_router,MLP router,0.01200000000000001,-0.020399999999999984,0.04920000000000001,5,tie
+routereval,all_weak,1000,beta025_cartel,declared_argmax,declared argmax,0.08480000000000001,0.07520000000000002,0.09520000000000003,5,win
+routereval,all_weak,1000,beta025_cartel,midian,MIDIAN,0.01140000000000001,-0.008399999999999973,0.030599999999999995,5,tie
+routereval,all_weak,1000,beta025_cartel,sequential_halving_peer,seq. halving (peer),-0.045200000000000004,-0.059215,-0.029200000000000014,5,loss
+routereval,all_weak,1000,beta025_random,flat_probe_argmax_online,flat probe argmax (online),-0.005199999999999994,-0.020799999999999975,0.007399999999999995,5,tie
+routereval,all_weak,1000,beta025_random,warm_start_bandit,warm-start bandit,-0.010799999999999987,-0.02719999999999998,0.005400000000000005,5,tie
+routereval,all_weak,1000,beta025_random,linucb_honest,LinUCB,0.005199999999999994,-0.017999999999999995,0.02599999999999999,5,tie
+routereval,all_weak,1000,beta025_random,knn_router_online,KNN router (online),-0.0006000000000000005,-0.019399999999999962,0.016799999999999992,5,tie
+routereval,all_weak,1000,beta025_random,mlp_router,MLP router,0.006800000000000006,-0.01659999999999997,0.031199999999999995,5,tie
+routereval,all_weak,1000,beta025_random,declared_argmax,declared argmax,-0.0684,-0.08720000000000001,-0.04880000000000001,5,loss
+routereval,all_weak,1000,beta025_random,midian,MIDIAN,0.002200000000000002,-0.015199999999999981,0.019599999999999985,5,tie
+routereval,all_weak,1000,beta025_random,sequential_halving_peer,seq. halving (peer),-0.046200000000000005,-0.08159999999999999,-0.017000000000000015,5,loss
+routereval,all_weak,1000,beta05_random,flat_probe_argmax_online,flat probe argmax (online),-0.003599999999999992,-0.019999999999999983,0.012400000000000012,5,tie
+routereval,all_weak,1000,beta05_random,warm_start_bandit,warm-start bandit,-0.023399999999999997,-0.03639999999999999,-0.010600000000000009,5,loss
+routereval,all_weak,1000,beta05_random,linucb_honest,LinUCB,0.006799999999999995,-0.015599999999999992,0.02619999999999998,5,tie
+routereval,all_weak,1000,beta05_random,knn_router_online,KNN router (online),0.0010000000000000009,-0.008599999999999986,0.010599999999999988,5,tie
+routereval,all_weak,1000,beta05_random,mlp_router,MLP router,0.008400000000000008,-0.011999999999999988,0.0368,5,tie
+routereval,all_weak,1000,beta05_random,declared_argmax,declared argmax,-0.0672,-0.08159999999999998,-0.054599999999999996,5,loss
+routereval,all_weak,1000,beta05_random,midian,MIDIAN,0.01479999999999999,-0.009019999999999974,0.04059999999999999,5,tie
+routereval,all_weak,1000,beta05_random,sequential_halving_peer,seq. halving (peer),0.012200000000000011,-0.01679999999999998,0.043200000000000016,5,tie
+routereval,all_weak,1000,cartel,flat_probe_argmax_online,flat probe argmax (online),0.016800000000000002,-0.011599999999999977,0.03899999999999999,5,tie
+routereval,all_weak,1000,cartel,warm_start_bandit,warm-start bandit,0.0764,0.052000000000000025,0.09999999999999999,5,win
+routereval,all_weak,1000,cartel,linucb_honest,LinUCB,0.02719999999999999,-0.003799999999999992,0.04979999999999999,5,tie
+routereval,all_weak,1000,cartel,knn_router_online,KNN router (online),0.021399999999999995,0.003000000000000014,0.03979999999999998,5,win
+routereval,all_weak,1000,cartel,mlp_router,MLP router,0.028800000000000003,0.0012000000000000233,0.06559999999999999,5,win
+routereval,all_weak,1000,cartel,declared_argmax,declared argmax,0.08220000000000001,0.061399999999999996,0.1044,5,win
+routereval,all_weak,1000,cartel,midian,MIDIAN,0.0824,0.06520000000000001,0.09879999999999999,5,win
+routereval,all_weak,1000,cartel,sequential_halving_peer,seq. halving (peer),0.11720000000000001,0.08880000000000002,0.1456,5,win
+routereval,leaderboard,5000,beta0,flat_probe_argmax_online,flat probe argmax (online),0.08444444444444447,0.06666666666666665,0.09666666666666668,3,win
+routereval,leaderboard,5000,beta0,warm_start_bandit,warm-start bandit,-0.11666666666666665,-0.15000000000000002,-0.09333333333333327,3,loss
+routereval,leaderboard,5000,beta0,linucb_honest,LinUCB,0.09666666666666668,0.06333333333333335,0.13,3,win
+routereval,leaderboard,5000,beta0,declared_argmax,declared argmax,-0.15888888888888889,-0.16333333333333333,-0.15000000000000002,3,loss
+routereval,leaderboard,5000,beta0,midian,MIDIAN,0.062222222222222213,0.043333333333333335,0.08666666666666667,3,win
+routereval,leaderboard,5000,beta0,sequential_halving_peer,seq. halving (peer),-0.1766666666666666,-0.19666666666666666,-0.16666666666666652,3,loss
+routereval,leaderboard,5000,beta025_cartel,flat_probe_argmax_online,flat probe argmax (online),0.09000000000000001,0.08333333333333337,0.09999999999999998,3,win
+routereval,leaderboard,5000,beta025_cartel,warm_start_bandit,warm-start bandit,0.01666666666666668,0.0033333333333332993,0.030000000000000027,3,win
+routereval,leaderboard,5000,beta025_cartel,linucb_honest,LinUCB,0.10222222222222221,0.08333333333333337,0.1333333333333333,3,win
+routereval,leaderboard,5000,beta025_cartel,declared_argmax,declared argmax,0.10333333333333332,0.06666666666666665,0.1433333333333333,3,win
+routereval,leaderboard,5000,beta025_cartel,midian,MIDIAN,0.09444444444444444,0.043333333333333335,0.14,3,win
+routereval,leaderboard,5000,beta025_cartel,sequential_halving_peer,seq. halving (peer),-0.14444444444444446,-0.16000000000000003,-0.1333333333333333,3,loss
+routereval,leaderboard,5000,beta025_random,flat_probe_argmax_online,flat probe argmax (online),0.08666666666666667,0.06999999999999995,0.10333333333333339,3,win
+routereval,leaderboard,5000,beta025_random,warm_start_bandit,warm-start bandit,0.010000000000000009,-0.010000000000000009,0.033333333333333326,3,tie
+routereval,leaderboard,5000,beta025_random,linucb_honest,LinUCB,0.09888888888888887,0.06666666666666665,0.12,3,win
+routereval,leaderboard,5000,beta025_random,declared_argmax,declared argmax,0.0411111111111111,-0.00666666666666671,0.08666666666666667,3,tie
+routereval,leaderboard,5000,beta025_random,midian,MIDIAN,0.05333333333333331,0.036666666666666625,0.06666666666666665,3,win
+routereval,leaderboard,5000,beta025_random,sequential_halving_peer,seq. halving (peer),-0.1333333333333334,-0.16000000000000003,-0.10666666666666669,3,loss
+routereval,leaderboard,5000,beta05_random,flat_probe_argmax_online,flat probe argmax (online),0.08666666666666667,0.06666666666666665,0.09999999999999998,3,win
+routereval,leaderboard,5000,beta05_random,warm_start_bandit,warm-start bandit,0.018888888888888882,0.013333333333333308,0.023333333333333317,3,win
+routereval,leaderboard,5000,beta05_random,linucb_honest,LinUCB,0.09888888888888887,0.06333333333333335,0.1333333333333333,3,win
+routereval,leaderboard,5000,beta05_random,declared_argmax,declared argmax,0.018888888888888882,-0.010000000000000009,0.040000000000000036,3,tie
+routereval,leaderboard,5000,beta05_random,midian,MIDIAN,0.07555555555555556,0.033333333333333326,0.10999999999999999,3,win
+routereval,leaderboard,5000,beta05_random,sequential_halving_peer,seq. halving (peer),-0.0788888888888889,-0.17000000000000004,-0.020000000000000018,3,loss
+routereval,leaderboard,5000,cartel,flat_probe_argmax_online,flat probe argmax (online),0.08888888888888886,0.07999999999999996,0.09999999999999998,3,win
+routereval,leaderboard,5000,cartel,warm_start_bandit,warm-start bandit,0.07555555555555553,0.053333333333333344,0.10999999999999999,3,win
+routereval,leaderboard,5000,cartel,linucb_honest,LinUCB,0.10111111111111108,0.07666666666666666,0.1333333333333333,3,win
+routereval,leaderboard,5000,cartel,declared_argmax,declared argmax,0.09555555555555555,0.08333333333333337,0.10666666666666658,3,win
+routereval,leaderboard,5000,cartel,midian,MIDIAN,0.11111111111111109,0.08333333333333326,0.1433333333333333,3,win
+routereval,leaderboard,5000,cartel,sequential_halving_peer,seq. halving (peer),0.14555555555555555,0.12,0.16333333333333333,3,win
+routereval,strong_to_weak,10,beta0,flat_probe_argmax_online,flat probe argmax (online),-0.04059999999999997,-0.06799999999999998,-0.01539999999999997,5,loss
+routereval,strong_to_weak,10,beta0,warm_start_bandit,warm-start bandit,-0.030600000000000006,-0.04460000000000004,-0.01879999999999995,5,loss
+routereval,strong_to_weak,10,beta0,linucb_honest,LinUCB,-0.06719999999999997,-0.08459999999999997,-0.049999999999999975,5,loss
+routereval,strong_to_weak,10,beta0,knn_router_online,KNN router (online),0.054400000000000025,0.03400000000000001,0.07140000000000005,5,win
+routereval,strong_to_weak,10,beta0,mlp_router,MLP router,-0.09639999999999997,-0.11439999999999999,-0.07899999999999996,5,loss
+routereval,strong_to_weak,10,beta0,declared_argmax,declared argmax,-0.09039999999999997,-0.11079999999999998,-0.06959999999999995,5,loss
+routereval,strong_to_weak,10,beta0,midian,MIDIAN,-0.028000000000000025,-0.05260000000000005,-0.004600000000000004,5,loss
+routereval,strong_to_weak,10,beta0,sequential_halving_peer,seq. halving (peer),0.15000000000000002,0.11099999999999999,0.18900000000000006,5,win
+routereval,strong_to_weak,10,beta025_cartel,flat_probe_argmax_online,flat probe argmax (online),-0.037999999999999964,-0.06539999999999997,-0.01539999999999997,5,loss
+routereval,strong_to_weak,10,beta025_cartel,warm_start_bandit,warm-start bandit,-0.02160000000000002,-0.036800000000000034,-0.0064000000000000055,5,loss
+routereval,strong_to_weak,10,beta025_cartel,linucb_honest,LinUCB,-0.06459999999999996,-0.08199999999999996,-0.049999999999999975,5,loss
+routereval,strong_to_weak,10,beta025_cartel,knn_router_online,KNN router (online),0.05700000000000003,0.04180000000000002,0.07140000000000005,5,win
+routereval,strong_to_weak,10,beta025_cartel,mlp_router,MLP router,-0.09379999999999997,-0.11259999999999999,-0.07899999999999996,5,loss
+routereval,strong_to_weak,10,beta025_cartel,declared_argmax,declared argmax,-0.05539999999999996,-0.08339999999999996,-0.02759999999999998,5,loss
+routereval,strong_to_weak,10,beta025_cartel,midian,MIDIAN,0.04920000000000004,0.038800000000000036,0.060610000000000004,5,win
+routereval,strong_to_weak,10,beta025_cartel,sequential_halving_peer,seq. halving (peer),0.1408,0.10579999999999998,0.17740000000000006,5,win
+routereval,strong_to_weak,10,beta025_random,flat_probe_argmax_online,flat probe argmax (online),-0.04199999999999997,-0.06939999999999998,-0.017799999999999948,5,loss
+routereval,strong_to_weak,10,beta025_random,warm_start_bandit,warm-start bandit,-0.0236,-0.03840000000000001,-0.0030000000000000027,5,loss
+routereval,strong_to_weak,10,beta025_random,linucb_honest,LinUCB,-0.06859999999999997,-0.08599999999999997,-0.05119999999999998,5,loss
+routereval,strong_to_weak,10,beta025_random,knn_router_online,KNN router (online),0.053000000000000026,0.033400000000000006,0.06780000000000004,5,win
+routereval,strong_to_weak,10,beta025_random,mlp_router,MLP router,-0.09779999999999997,-0.1152,-0.08139999999999996,5,loss
+routereval,strong_to_weak,10,beta025_random,declared_argmax,declared argmax,-0.003400000000000003,-0.07339999999999998,0.06939999999999999,5,tie
+routereval,strong_to_weak,10,beta025_random,midian,MIDIAN,-0.001599999999999957,-0.04919999999999995,0.04780999999999999,5,tie
+routereval,strong_to_weak,10,beta025_random,sequential_halving_peer,seq. halving (peer),0.13740000000000002,0.10759999999999999,0.16720000000000004,5,win
+routereval,strong_to_weak,10,beta05_random,flat_probe_argmax_online,flat probe argmax (online),-0.03979999999999997,-0.06719999999999997,-0.01539999999999997,5,loss
+routereval,strong_to_weak,10,beta05_random,warm_start_bandit,warm-start bandit,0.008400000000000008,-0.0028000000000000026,0.020200000000000017,5,tie
+routereval,strong_to_weak,10,beta05_random,linucb_honest,LinUCB,-0.06639999999999997,-0.08379999999999996,-0.049999999999999975,5,loss
+routereval,strong_to_weak,10,beta05_random,knn_router_online,KNN router (online),0.05520000000000003,0.03640000000000001,0.07140000000000005,5,win
+routereval,strong_to_weak,10,beta05_random,mlp_router,MLP router,-0.09559999999999998,-0.11439999999999999,-0.07899999999999996,5,loss
+routereval,strong_to_weak,10,beta05_random,declared_argmax,declared argmax,0.10460000000000005,0.06020000000000005,0.17020000000000007,5,win
+routereval,strong_to_weak,10,beta05_random,midian,MIDIAN,0.03680000000000001,-0.03919999999999999,0.12720000000000004,5,tie
+routereval,strong_to_weak,10,beta05_random,sequential_halving_peer,seq. halving (peer),0.14940000000000003,0.1262,0.18183999999999984,5,win
+routereval,strong_to_weak,10,cartel,flat_probe_argmax_online,flat probe argmax (online),-0.04059999999999997,-0.06799999999999998,-0.01539999999999997,5,loss
+routereval,strong_to_weak,10,cartel,warm_start_bandit,warm-start bandit,0.025800000000000024,0.013600000000000011,0.036600000000000035,5,win
+routereval,strong_to_weak,10,cartel,linucb_honest,LinUCB,-0.06719999999999997,-0.08459999999999997,-0.049999999999999975,5,loss
+routereval,strong_to_weak,10,cartel,knn_router_online,KNN router (online),0.054400000000000025,0.03400000000000001,0.07140000000000005,5,win
+routereval,strong_to_weak,10,cartel,mlp_router,MLP router,-0.09639999999999997,-0.11439999999999999,-0.07899999999999996,5,loss
+routereval,strong_to_weak,10,cartel,declared_argmax,declared argmax,0.17280000000000004,0.1366,0.2032000000000001,5,win
+routereval,strong_to_weak,10,cartel,midian,MIDIAN,0.16940000000000005,0.1346,0.20420000000000008,5,win
+routereval,strong_to_weak,10,cartel,sequential_halving_peer,seq. halving (peer),0.22000000000000003,0.19260000000000002,0.2404,5,win
+routereval,strong_to_weak,100,beta0,flat_probe_argmax_online,flat probe argmax (online),0.02899999999999996,0.017799999999999972,0.038799999999999946,5,win
+routereval,strong_to_weak,100,beta0,warm_start_bandit,warm-start bandit,-0.03739999999999999,-0.06559999999999996,-0.01260000000000001,5,loss
+routereval,strong_to_weak,100,beta0,linucb_honest,LinUCB,-0.016200000000000013,-0.04819999999999995,0.015799999999999925,5,tie
+routereval,strong_to_weak,100,beta0,knn_router_online,KNN router (online),0.08080000000000001,0.057600000000000054,0.10041499999999992,5,win
+routereval,strong_to_weak,100,beta0,mlp_router,MLP router,-0.11100000000000006,-0.15220000000000006,-0.07260000000000007,5,loss
+routereval,strong_to_weak,100,beta0,declared_argmax,declared argmax,-0.09000000000000004,-0.12280000000000005,-0.059800000000000055,5,loss
+routereval,strong_to_weak,100,beta0,midian,MIDIAN,-0.00660000000000005,-0.024800000000000044,0.006799999999999917,5,tie
+routereval,strong_to_weak,100,beta0,sequential_halving_peer,seq. halving (peer),0.025599999999999956,-0.006000000000000072,0.05719999999999999,5,tie
+routereval,strong_to_weak,100,beta025_cartel,flat_probe_argmax_online,flat probe argmax (online),0.02639999999999998,0.02180000000000002,0.03139999999999994,5,win
+routereval,strong_to_weak,100,beta025_cartel,warm_start_bandit,warm-start bandit,0.0041999999999999815,-0.0040000000000000036,0.01699999999999995,5,tie
+routereval,strong_to_weak,100,beta025_cartel,linucb_honest,LinUCB,-0.018799999999999994,-0.038999999999999944,0.007999999999999962,5,tie
+routereval,strong_to_weak,100,beta025_cartel,knn_router_online,KNN router (online),0.07820000000000002,0.06360000000000006,0.095,5,win
+routereval,strong_to_weak,100,beta025_cartel,mlp_router,MLP router,-0.11360000000000003,-0.14400000000000002,-0.07900000000000004,5,loss
+routereval,strong_to_weak,100,beta025_cartel,declared_argmax,declared argmax,0.1146,0.09840000000000004,0.12959999999999994,5,win
+routereval,strong_to_weak,100,beta025_cartel,midian,MIDIAN,0.02759999999999998,0.016999999999999994,0.03699999999999994,5,win
+routereval,strong_to_weak,100,beta025_cartel,sequential_halving_peer,seq. halving (peer),0.009599999999999987,-0.012199999999999966,0.03299999999999992,5,tie
+routereval,strong_to_weak,100,beta025_random,flat_probe_argmax_online,flat probe argmax (online),0.022399999999999975,0.007199999999999984,0.03299999999999994,5,win
+routereval,strong_to_weak,100,beta025_random,warm_start_bandit,warm-start bandit,-0.007600000000000029,-0.035800000000000054,0.018999999999999996,5,tie
+routereval,strong_to_weak,100,beta025_random,linucb_honest,LinUCB,-0.022799999999999997,-0.055199999999999985,0.013199999999999967,5,tie
+routereval,strong_to_weak,100,beta025_random,knn_router_online,KNN router (online),0.07420000000000002,0.04720000000000002,0.1006,5,win
+routereval,strong_to_weak,100,beta025_random,mlp_router,MLP router,-0.11760000000000004,-0.16120000000000007,-0.07500000000000004,5,loss
+routereval,strong_to_weak,100,beta025_random,declared_argmax,declared argmax,0.0716,0.024995,0.10640499999999999,5,win
+routereval,strong_to_weak,100,beta025_random,midian,MIDIAN,-0.005600000000000027,-0.029400000000000027,0.012399999999999944,5,tie
+routereval,strong_to_weak,100,beta025_random,sequential_halving_peer,seq. halving (peer),0.015599999999999992,-0.019600000000000017,0.05719999999999999,5,tie
+routereval,strong_to_weak,100,beta05_random,flat_probe_argmax_online,flat probe argmax (online),0.021599999999999998,0.009800000000000008,0.034399999999999965,5,win
+routereval,strong_to_weak,100,beta05_random,warm_start_bandit,warm-start bandit,0.007199999999999984,-0.013600000000000011,0.02839999999999998,5,tie
+routereval,strong_to_weak,100,beta05_random,linucb_honest,LinUCB,-0.023599999999999975,-0.05159999999999994,0.004399999999999982,5,tie
+routereval,strong_to_weak,100,beta05_random,knn_router_online,KNN router (online),0.07340000000000005,0.054400000000000025,0.08780000000000003,5,win
+routereval,strong_to_weak,100,beta05_random,mlp_router,MLP router,-0.11840000000000002,-0.15380000000000002,-0.09080000000000002,5,loss
+routereval,strong_to_weak,100,beta05_random,declared_argmax,declared argmax,0.07580000000000005,0.047600000000000045,0.09820000000000007,5,win
+routereval,strong_to_weak,100,beta05_random,midian,MIDIAN,0.023799999999999998,0.002200000000000002,0.04481499999999989,5,win
+routereval,strong_to_weak,100,beta05_random,sequential_halving_peer,seq. halving (peer),0.07040000000000002,0.05599999999999998,0.08520000000000003,5,win
+routereval,strong_to_weak,100,cartel,flat_probe_argmax_online,flat probe argmax (online),0.02859999999999998,0.023,0.03399999999999994,5,win
+routereval,strong_to_weak,100,cartel,warm_start_bandit,warm-start bandit,0.05720000000000001,0.04700000000000004,0.06819999999999997,5,win
+routereval,strong_to_weak,100,cartel,linucb_honest,LinUCB,-0.016599999999999993,-0.038999999999999944,0.014599999999999969,5,tie
+routereval,strong_to_weak,100,cartel,knn_router_online,KNN router (online),0.08040000000000003,0.06360000000000006,0.1016,5,win
+routereval,strong_to_weak,100,cartel,mlp_router,MLP router,-0.11140000000000003,-0.14400000000000002,-0.07680000000000005,5,loss
+routereval,strong_to_weak,100,cartel,declared_argmax,declared argmax,0.14239999999999997,0.1146,0.17785499999999965,5,win
+routereval,strong_to_weak,100,cartel,midian,MIDIAN,0.06680000000000001,0.03860000000000004,0.098,5,win
+routereval,strong_to_weak,100,cartel,sequential_halving_peer,seq. halving (peer),0.14219999999999997,0.125,0.15939999999999993,5,win
+routereval,strong_to_weak,1000,beta0,flat_probe_argmax_online,flat probe argmax (online),0.20639999999999997,0.19099999999999995,0.23000499999999996,5,win
+routereval,strong_to_weak,1000,beta0,warm_start_bandit,warm-start bandit,-0.05160000000000005,-0.07160000000000007,-0.03160000000000003,5,loss
+routereval,strong_to_weak,1000,beta0,linucb_honest,LinUCB,-0.007800000000000029,-0.04640000000000004,0.027614999999999876,5,tie
+routereval,strong_to_weak,1000,beta0,knn_router_online,KNN router (online),0.2792,0.2568,0.2972,5,win
+routereval,strong_to_weak,1000,beta0,mlp_router,MLP router,-0.023200000000000044,-0.06300000000000006,0.022399999999999975,5,tie
+routereval,strong_to_weak,1000,beta0,declared_argmax,declared argmax,-0.126,-0.1386,-0.10979999999999998,5,loss
+routereval,strong_to_weak,1000,beta0,midian,MIDIAN,0.04799999999999995,0.028399999999999936,0.06939999999999995,5,win
+routereval,strong_to_weak,1000,beta0,sequential_halving_peer,seq. halving (peer),-0.0014000000000000234,-0.01980000000000002,0.01699999999999997,5,tie
+routereval,strong_to_weak,1000,beta025_cartel,flat_probe_argmax_online,flat probe argmax (online),0.18219999999999997,0.16340000000000002,0.2016,5,win
+routereval,strong_to_weak,1000,beta025_cartel,warm_start_bandit,warm-start bandit,-0.018799999999999973,-0.03979999999999995,0.004000000000000026,5,tie
+routereval,strong_to_weak,1000,beta025_cartel,linucb_honest,LinUCB,-0.03200000000000001,-0.06680000000000001,0.00221499999999992,5,tie
+routereval,strong_to_weak,1000,beta025_cartel,knn_router_online,KNN router (online),0.255,0.2278,0.27199999999999996,5,win
+routereval,strong_to_weak,1000,beta025_cartel,mlp_router,MLP router,-0.04740000000000002,-0.08560000000000005,-0.0002000000000000446,5,loss
+routereval,strong_to_weak,1000,beta025_cartel,declared_argmax,declared argmax,0.15019999999999997,0.1206,0.1736,5,win
+routereval,strong_to_weak,1000,beta025_cartel,midian,MIDIAN,0.04939999999999998,0.037600000000000036,0.05919999999999996,5,win
+routereval,strong_to_weak,1000,beta025_cartel,sequential_halving_peer,seq. halving (peer),-0.01339999999999999,-0.04399999999999995,0.017199999999999972,5,tie
+routereval,strong_to_weak,1000,beta025_random,flat_probe_argmax_online,flat probe argmax (online),0.183,0.16880000000000003,0.20539999999999997,5,win
+routereval,strong_to_weak,1000,beta025_random,warm_start_bandit,warm-start bandit,0.04520000000000002,0.03200000000000003,0.05899999999999998,5,win
+routereval,strong_to_weak,1000,beta025_random,linucb_honest,LinUCB,-0.031199999999999985,-0.0718,0.005800000000000005,5,tie
+routereval,strong_to_weak,1000,beta025_random,knn_router_online,KNN router (online),0.2552,0.2344,0.272,5,win
+routereval,strong_to_weak,1000,beta025_random,mlp_router,MLP router,-0.046599999999999996,-0.08800000000000001,-2.2204460492503132e-17,5,loss
+routereval,strong_to_weak,1000,beta025_random,declared_argmax,declared argmax,0.1504,0.1244,0.17839999999999998,5,win
+routereval,strong_to_weak,1000,beta025_random,midian,MIDIAN,0.041199999999999994,0.027785,0.055600000000000004,5,win
+routereval,strong_to_weak,1000,beta025_random,sequential_halving_peer,seq. halving (peer),-0.014999999999999968,-0.030799999999999918,0.0036000000000000034,5,tie
+routereval,strong_to_weak,1000,beta05_random,flat_probe_argmax_online,flat probe argmax (online),0.1914,0.164,0.21819999999999995,5,win
+routereval,strong_to_weak,1000,beta05_random,warm_start_bandit,warm-start bandit,0.06259999999999999,0.0524,0.07380499999999993,5,win
+routereval,strong_to_weak,1000,beta05_random,linucb_honest,LinUCB,-0.022799999999999997,-0.049799999999999976,0.012999999999999966,5,tie
+routereval,strong_to_weak,1000,beta05_random,knn_router_online,KNN router (online),0.26420000000000005,0.23400000000000004,0.2944,5,win
+routereval,strong_to_weak,1000,beta05_random,mlp_router,MLP router,-0.03820000000000001,-0.06660000000000002,-0.009800000000000008,5,loss
+routereval,strong_to_weak,1000,beta05_random,declared_argmax,declared argmax,0.16219999999999998,0.13340000000000002,0.19099999999999998,5,win
+routereval,strong_to_weak,1000,beta05_random,midian,MIDIAN,0.04599999999999997,0.03259999999999996,0.057599999999999964,5,win
+routereval,strong_to_weak,1000,beta05_random,sequential_halving_peer,seq. halving (peer),0.07839999999999998,0.0452,0.12779999999999997,5,win
+routereval,strong_to_weak,1000,cartel,flat_probe_argmax_online,flat probe argmax (online),0.18759999999999996,0.1678,0.20699999999999993,5,win
+routereval,strong_to_weak,1000,cartel,warm_start_bandit,warm-start bandit,0.11079999999999998,0.10099999999999998,0.1246,5,win
+routereval,strong_to_weak,1000,cartel,linucb_honest,LinUCB,-0.026600000000000023,-0.06640000000000001,0.013199999999999967,5,tie
+routereval,strong_to_weak,1000,cartel,knn_router_online,KNN router (online),0.26039999999999996,0.22820000000000001,0.2794,5,win
+routereval,strong_to_weak,1000,cartel,mlp_router,MLP router,-0.04200000000000004,-0.08420000000000005,0.00679999999999994,5,tie
+routereval,strong_to_weak,1000,cartel,declared_argmax,declared argmax,0.21359999999999996,0.19119999999999998,0.23759999999999995,5,win
+routereval,strong_to_weak,1000,cartel,midian,MIDIAN,0.09559999999999999,0.06698500000000002,0.11679999999999999,5,win
+routereval,strong_to_weak,1000,cartel,sequential_halving_peer,seq. halving (peer),0.14059999999999997,0.10879999999999998,0.17579999999999998,5,win

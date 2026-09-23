@@ -3,11 +3,11 @@
 Reads only figures/bars/<family>.csv (per-arm seed means and 95% seed-bootstrap CIs, written by bar_figs.py).
   A  live headline: n = 10^2..10^5 (specialist), a few arms, solid = honest, hatched = beta = 0.5 low-skill cartel.
   B  every family on one axis: success / oracle, same arms, filled = honest, hollow = cartel.
-  C  MIDIAN-VA minus the best rival, one dot per condition (family x n x shape x regime), sorted; > 0 is a win.
+  C  scripts/paired_gaps.py: MIDIAN-VA minus each FIXED rival, seed-paired, every condition.
   D  appendix heatmap: every arm x every (family, n, regime) cell, success / oracle.
 "Best learned router" / "best bandit" are chosen PER CONDITION (the most flattering choice for the rivals); the chosen arm
 is written to the csv. Frameworks are not drawn (figures/shortlist). The do-not-add list applies, and with it the
-TEMPORARY extra_figs.HIDE_HALVING switch -- C's csv carries the best rival WITH halving as well, so a hidden loss stays visible."""
+TEMPORARY extra_figs.HIDE_HALVING switch."""
 from __future__ import annotations
 import os, sys
 import numpy as np, pandas as pd, matplotlib
@@ -107,33 +107,6 @@ def fig_B(C):
     pd.DataFrame(rec).to_csv(f"{OUT}/B_all_families.csv", index=False)
 
 
-def fig_C(d):
-    rec = []
-    for (f, g, n, r), q in d.groupby(["family", "group", "n", "regime"]):
-        s = q.set_index("label")
-        if "midian_va" not in s.index: continue
-        riv = s.loc[[l for l in s.index if l != "oracle" and not str(l).startswith("midian") and l not in ("route_to_k_majority",)]]
-        shown = riv.loc[[l for l in riv.index if not excluded(l)]]
-        if shown.empty: continue
-        b, ball = shown["mean"].idxmax(), riv["mean"].idxmax()
-        va = s.loc["midian_va"]; hw = lambda x: (x.ci_hi - x.ci_lo) / 2
-        rec.append(dict(family=FAMILY[f], group=g, n=n, regime=r, best_rival=b, gap=va["mean"] - shown.at[b, "mean"],
-                        half_width=float(np.hypot(hw(va), hw(shown.loc[b]))),
-                        best_rival_incl_hidden=ball, gap_incl_hidden=va["mean"] - riv.at[ball, "mean"]))
-    t = pd.DataFrame(rec).sort_values("gap").reset_index(drop=True)
-    fam_col = dict(zip(FAMILY.values(), ["#c0392b", "#2980b9", "#8e44ad", "#16a085", "#d35400"]))
-    fig, ax = plt.subplots(figsize=(7.2, 2.8))
-    for fam, q in t.groupby("family"):
-        ax.errorbar(q.index, q.gap, yerr=q.half_width, fmt="o", ms=2.5, color=fam_col[fam], elinewidth=0.4, label=f"{fam} ({len(q)})")
-    ax.axhline(0, color="black", lw=0.6); ax.set_xlabel("condition (family × n × shape × liar regime), sorted by gap")
-    ax.set_ylabel("MIDIAN-VA − best rival"); ax.set_xticks([]); ax.grid(axis="y", lw=0.3, alpha=0.35)
-    wins = (t.gap - t.half_width > 0).sum(); losses = (t.gap + t.half_width < 0).sum()
-    ax.set_title(f"C  MIDIAN-VA vs the best rival in every condition: {wins} clear wins, {losses} clear losses, {len(t) - wins - losses} within CI "
-                 f"(of {len(t)}; approx. CI, halving hidden)")
-    ax.legend(ncol=5, frameon=False, loc="lower center", bbox_to_anchor=(0.5, 1.07)); save(fig, "C_gap_to_best_rival")
-    t.to_csv(f"{OUT}/C_gap_to_best_rival.csv", index=False)
-
-
 def fig_D(d):
     q = d[np.array([primary(f, g) for f, g in zip(d.family, d.group)]) & d.regime.isin(list(REG)) & ~d.label.map(excluded)]
     o = q[q.label == "oracle"].set_index(["family", "n", "regime"])["mean"]
@@ -152,4 +125,4 @@ def fig_D(d):
 
 if __name__ == "__main__":
     d = load(); C = cells(d)
-    fig_A(C); fig_B(C); fig_C(d); fig_D(d)
+    fig_A(C); fig_B(C); fig_D(d)          # C: scripts/paired_gaps.py (needs per-seed rows)

@@ -7,9 +7,16 @@ export RTE_DATA="${RTE_DATA:-/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte}"
 PLAN=${1:?plan}; LOG=${2:?log}; PAR=${RTE_FW_PARALLEL:-8}
 PY="$RTE_DATA/env/rte/bin/python"; cd "$(dirname "$0")/../.."; export PYTHONPATH="$PWD"; touch "$LOG"
 HB="$LOG.heartbeat"; sub=0
-while IFS=$'\t' read -r g m only seed nice; do
+"$PY" - "$PLAN" > "$PLAN.timed" <<'EOF'                  # walltimes in ONE interpreter (one per line cost ~10 s each)
+import sys; sys.path.insert(0, "scripts")
+from job_time import minutes, slurm
+for line in open(sys.argv[1]):
+    g, m, *rest = line.rstrip("\n").split("\t")
+    t = minutes(g, m) if "verified" in g else max(60, minutes(g, m) // 4)   # parallel units measured ~9x faster; cohorts stay sequential
+    print("\t".join([g, m, *rest, slurm(t)]))
+EOF
+while IFS=$'\t' read -r g m only seed nice t; do
   touch "$HB"; key="$g|$m|$only|$seed"; grep -qF "$key" "$LOG" && continue
-  t=$("$PY" -c "import sys; sys.path.insert(0,'scripts'); from job_time import minutes, slurm; print(slurm(minutes('$g','$m')))")
   while :; do
     jid=$(sbatch --parsable -p sapphire,serial_requeue -A sompolinsky_lab --nice="$nice" -c 1 --mem=40G --time="$t" \
       --job-name="rte_${g}__${m}" -o "$RTE_DATA/logs/units/%x-%j.out" -e "$RTE_DATA/logs/units/%x-%j.err" \
@@ -17,5 +24,5 @@ while IFS=$'\t' read -r g m only seed nice; do
       scripts/run_grid.sbatch "$g" --methods "$m" --only "$only" --seeds "$seed" 2>&1)
     case "$jid" in *QOSMax*) touch "$HB"; sleep 300;; ''|*[!0-9]*) echo "FAIL $key :: $jid" >&2; break;; *) echo "$jid $key" >> "$LOG"; sub=$((sub+1)); break;; esac
   done
-done < "$PLAN"
+done < "$PLAN.timed"
 echo "SUBMITTED $sub of $(wc -l < "$PLAN")"
