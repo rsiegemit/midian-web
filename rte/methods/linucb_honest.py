@@ -13,9 +13,13 @@ class LinUcbHonest(Method):
     name = "linucb_honest"
     needs = frozenset({"probe"})
 
-    def __init__(self, alpha=1.0, **p):
-        super().__init__(alpha=alpha, **p)
-        self.alpha = float(alpha)
+    def __init__(self, alpha=1.0, bonus="context", **p):
+        # bonus="own" (post-hoc fix, 2026-09-23 audit): the exploration bonus uses only the agent's OWN evidence for the
+        # family ([1, sqrt(count)]), not the full context. With the full context, agents tied at the top estimate are
+        # separated by how ATYPICAL their cross-family mean is -- i.e. weak agents that got lucky -- so LinUCB fell to
+        # random at 10^4-10^5. Default "context" keeps the pre-registered behaviour (and every existing row).
+        super().__init__(alpha=alpha, **({"bonus": bonus} if bonus != "context" else {}), **p)
+        self.alpha, self.bonus = float(alpha), bonus
 
     def features(self, f):
         """Context of every agent for family f: a function of observed outcomes only. float64[n, 4]."""
@@ -35,7 +39,12 @@ class LinUcbHonest(Method):
         f = task.family
         x = self.features(f); Ainv = np.linalg.inv(self.A[f])
         self.view.ledger.compare(self.view.n)
-        return int(np.argmax(x @ (Ainv @ self.b[f]) + self.alpha * np.sqrt(np.einsum("ij,jk,ik->i", x, Ainv, x))))
+        if self.bonus == "own":                                  # uncertainty of the agent's own (intercept, count) evidence
+            xo = x[:, [0, 2]]; Ao = np.linalg.inv(self.A[f][np.ix_([0, 2], [0, 2])])
+            bonus = np.sqrt(np.einsum("ij,jk,ik->i", xo, Ao, xo)) / np.sqrt(self.cnt[:, f])
+        else:
+            bonus = np.sqrt(np.einsum("ij,jk,ik->i", x, Ainv, x))
+        return int(np.argmax(x @ (Ainv @ self.b[f]) + self.alpha * bonus))
 
     def observe(self, task, agent, outcome):
         f = task.family

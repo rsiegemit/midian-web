@@ -22,7 +22,7 @@ VARIANTS = {                                   # variant -> [(grid, filter on pa
 
 
 def load(grid):
-    rows = [json.load(open(f)) for f in glob.glob(f"{R}/{grid}/rows.d/*.json")]
+    rows = [{**json.load(open(f)), "rid": os.path.basename(f)[:-5]} for f in glob.glob(f"{R}/{grid}/rows.d/*.json")]   # the file name IS the rid
     df = pd.DataFrame(rows) if rows else pd.DataFrame()
     p = f"{R}/{grid}/rows.csv"
     if os.path.exists(p): df = pd.concat([df, pd.read_csv(p, low_memory=False)], ignore_index=True)

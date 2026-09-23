@@ -31,7 +31,7 @@ def label(method, params):
 
 def rows(grid, n):
     """One grid's rows at population n (rows.csv + rows.d), de-duplicated on rid; never the framework arms."""
-    fr = [pd.DataFrame([json.load(open(f)) for f in glob.glob(f"{R}/{grid}/rows.d/*.json")])]
+    fr = [pd.DataFrame([{**json.load(open(f)), "rid": os.path.basename(f)[:-5]} for f in glob.glob(f"{R}/{grid}/rows.d/*.json")])]   # file name = rid
     if os.path.exists(f"{R}/{grid}/rows.csv"):
         head = pd.read_csv(f"{R}/{grid}/rows.csv", nrows=0).columns
         fr.append(pd.concat(c[c.n == n] for c in pd.read_csv(f"{R}/{grid}/rows.csv", usecols=[c for c in COLS if c in head], chunksize=500000, low_memory=False)))

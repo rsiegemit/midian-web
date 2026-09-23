@@ -33,7 +33,11 @@ ARMS = [("midian_va", "MIDIAN-VA", "#2ecc71"), ("midian", "MIDIAN", "#c0392b"), 
         ("best_learned", "best learned router", "#ff7f0e"), ("best_bandit", "best bandit", "#9467bd"),
         ("declared_argmax", "declared argmax", "#5d6d7e"), ("random", "random", "#bbbbbb")]
 POOLS = {"best_learned": LEARNED,                      # the bandit pool takes the TUNED warm-start bandit (n0 = 0.5) and drops the
-         "best_bandit": [a for a in BANDIT if a != "warm_start_bandit"] + ["warm_start_bandit[n0=0.5]"]}   # pre-registered n0 = 5
+         "best_bandit": [a for a in BANDIT if a != "linucb_honest"] + ["linucb_honest[bonus=own]", "warm_start_bandit[n0=0.5]"]}
+# linucb_honest -> the fixed bonus (post hoc, audit 2026-09-23: the context bonus picks the WEAKEST tied agent).
+# The pre-registered warm-start bandit (n0 = 5) trusts the declared claims; on the non-live backends those are true skill
+# + 5 % noise (an answer key), so it counts there only on the calibrated-claims reruns (erratum 30), not on these rows.
+CLAIM_KEY = {"bernoulli", "replay", "routereval", "llmrouterbench"}
 B_INVARIANT = {"declared_argmax", "random", "cluster_head_router", "disrouter_cascade"}   # never probe (needs has no probe / reports)
 NOT_RUNNABLE = lambda fam, n: ({"trueskill_per_family"} if n >= 10 ** 5 else set()) | ({"mlp_router"} if n >= 5000 else set()) \
                               | ({"knn_router", "knn_router_online", "mlp_router"} if fam in ("bernoulli", "replay") else set())   # grid.yaml pool_fill_*
@@ -66,7 +70,7 @@ def arms_at(cell):
     fam, n = cell["key"][0], cell["key"][2]
     for b, T in cell.get("seeds", {}).items():
         for k, pool in POOLS.items():
-            want = [a for a in pool if a not in NOT_RUNNABLE(fam, n)]
+            want = [a for a in pool if a not in NOT_RUNNABLE(fam, n) and not (a == "warm_start_bandit" and fam in CLAIM_KEY)]
             vals, picks = crossfit(T, want)
             if len(vals) < 2: continue                       # one seed cannot be cross-fitted: no bar, never the biased pick
             lo, hi = ci(vals.values); miss = [a for a in want if a not in T.columns]

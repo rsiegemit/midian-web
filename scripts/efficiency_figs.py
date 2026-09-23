@@ -44,12 +44,12 @@ def va_build(d):
     import glob, json
     fr = []
     for g in VA_GRIDS:
-        fr += [pd.DataFrame([json.load(open(f)) for f in glob.glob(f"{R}/{g}/rows.d/*.json")])]
+        fr += [pd.DataFrame([{**json.load(open(f)), "rid": os.path.basename(f)[:-5]} for f in glob.glob(f"{R}/{g}/rows.d/*.json")])]
         if os.path.exists(f"{R}/{g}/rows.csv"):
             head = pd.read_csv(f"{R}/{g}/rows.csv", nrows=0).columns
             fr.append(pd.read_csv(f"{R}/{g}/rows.csv", usecols=[c for c in ("rid", "n", "b", "method", "build_probes") if c in head], low_memory=False))
     L = pd.concat([f for f in fr if not f.empty])
-    L = pd.concat([L[L.rid.isna()], L[L.rid.notna()].drop_duplicates("rid")])   # a row can sit in both rows.d and rows.csv
+    L = L.drop_duplicates("rid")                                             # a row can sit in both rows.d and rows.csv
     L = L[L.method == "midian_va"].groupby(["n", "b"]).build_probes.median()
     for (n, b), v in d[d.label == "midian_va"].set_index(["n", "b"]).build_probes.items(): L.loc[(n, b)] = L.get((n, b), v)
     ratio = {b: float((L.xs(b, level="b") / (L.xs(b, level="b").index * 16 * b)).median()) for b in (1, 3, 5)}

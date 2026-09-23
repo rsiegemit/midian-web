@@ -19,7 +19,7 @@ group,regime,arm,b,chosen,value,ci_lo,ci_hi,b_invariant
 "live n = 100,000",β=0.5 cartel,best learned router,5,"disrouter_cascade x3 | INCOMPLETE POOL, missing knn_router, knn_router_online, flat_nsw_router",0.6817010309278352,0.6417525773195877,0.722938144329897,True
 "live n = 100,000",honest,best bandit,1,warm_start_bandit[n0=0.5] x3,0.7835051546391752,0.7268041237113403,0.8157216494845364,False
 "live n = 100,000",honest,best bandit,3,warm_start_bandit[n0=0.5] x3,0.8750000000000002,0.8234536082474228,0.904639175257732,False
-"live n = 100,000",β=0.5 cartel,best bandit,1,"ucb_per_family x3 | INCOMPLETE POOL, missing linucb_honest, warm_start_bandit[n0=0.5]",0.6675257731958765,0.6262886597938145,0.6958762886597939,False
+"live n = 100,000",β=0.5 cartel,best bandit,1,"ucb_per_family x3 | INCOMPLETE POOL, missing warm_start_bandit[n0=0.5]",0.6675257731958765,0.6262886597938145,0.6958762886597939,False
 "live n = 100,000",β=0.5 cartel,best bandit,3,warm_start_bandit[n0=0.5] x3,0.88659793814433,0.8621134020618557,0.9123711340206186,False
 "live n = 100,000",honest,declared argmax,-,declared_argmax,0.7216494845360826,0.6881443298969073,0.7809278350515465,True
 "live n = 100,000",β=0.5 cartel,declared argmax,-,declared_argmax,0.6701030927835053,0.6301546391752578,0.711340206185567,True
@@ -85,7 +85,7 @@ group,regime,arm,b,chosen,value,ci_lo,ci_hi,b_invariant
 "RouterBench replay n = 1,000,000",β=0.5 cartel,best learned router,5,flat_nsw_router x100,0.9336275531515416,0.9301461746501216,0.937091738358135,False
 "RouterBench replay n = 1,000,000",honest,best bandit,1,warm_start_bandit[n0=0.5] x100,0.9663011421410816,0.9632082477184603,0.9694993059393866,False
 "RouterBench replay n = 1,000,000",honest,best bandit,3,warm_start_bandit[n0=0.5] x100,0.9723557134478991,0.9692999481036745,0.9754654847243376,False
-"RouterBench replay n = 1,000,000",honest,best bandit,5,warm_start_bandit[n0=0.5] x59; ucb_per_family x41,0.9462219053124116,0.9379093164452283,0.9541540266063602,False
+"RouterBench replay n = 1,000,000",honest,best bandit,5,warm_start_bandit[n0=0.5] x79; ucb_per_family x21,0.9619764483504984,0.9551071469256701,0.9688160043204748,False
 "RouterBench replay n = 1,000,000",β=0.5 cartel,best bandit,1,warm_start_bandit[n0=0.5] x100,0.8493782988975193,0.8464584977068575,0.8523953529583017,False
 "RouterBench replay n = 1,000,000",β=0.5 cartel,best bandit,3,warm_start_bandit[n0=0.5] x100,0.8955997822885856,0.8925027741328463,0.8989037428642555,False
 "RouterBench replay n = 1,000,000",β=0.5 cartel,best bandit,5,warm_start_bandit[n0=0.5] x100,0.9281636717283163,0.925032276982925,0.9314588774360681,False
@@ -111,18 +111,18 @@ group,regime,arm,b,chosen,value,ci_lo,ci_hi,b_invariant
 "RouterEval n = 5,000",β=0.5 cartel,flat probe argmax (online),1,flat_probe_argmax_online,0.6330049261083746,0.5763546798029558,0.665024630541872,False
 "RouterEval n = 5,000",β=0.5 cartel,flat probe argmax (online),3,flat_probe_argmax_online,0.6884236453201972,0.6502463054187193,0.7167487684729065,False
 "RouterEval n = 5,000",β=0.5 cartel,flat probe argmax (online),5,flat_probe_argmax_online,0.727832512315271,0.7167487684729065,0.7426108374384238,False
-"RouterEval n = 5,000",honest,best learned router,1,"cluster_head_router x3 | INCOMPLETE POOL, missing knn_router, knn_router_online",0.9519704433497539,0.9273399014778326,0.9716748768472908,True
-"RouterEval n = 5,000",honest,best learned router,3,"cluster_head_router x3 | INCOMPLETE POOL, missing knn_router_online",0.9519704433497539,0.9273399014778326,0.9716748768472908,True
+"RouterEval n = 5,000",honest,best learned router,1,cluster_head_router x3,0.9519704433497539,0.9273399014778326,0.9716748768472908,True
+"RouterEval n = 5,000",honest,best learned router,3,cluster_head_router x3,0.9519704433497539,0.9273399014778326,0.9716748768472908,True
 "RouterEval n = 5,000",honest,best learned router,5,"cluster_head_router x3 | INCOMPLETE POOL, missing knn_router, knn_router_online",0.9519704433497539,0.9273399014778326,0.9716748768472908,True
 "RouterEval n = 5,000",β=0.5 cartel,best learned router,1,"flat_nsw_router x3 | INCOMPLETE POOL, missing knn_router, knn_router_online",0.6810344827586209,0.6317733990147784,0.705665024630542,False
-"RouterEval n = 5,000",β=0.5 cartel,best learned router,3,"flat_nsw_router x3 | INCOMPLETE POOL, missing knn_router_online",0.7327586206896552,0.6687192118226603,0.7943349753694583,False
+"RouterEval n = 5,000",β=0.5 cartel,best learned router,3,flat_nsw_router x3,0.7327586206896552,0.6687192118226603,0.7943349753694583,False
 "RouterEval n = 5,000",β=0.5 cartel,best learned router,5,"flat_nsw_router x3 | INCOMPLETE POOL, missing knn_router, knn_router_online",0.8177339901477834,0.7389162561576356,0.8645320197044336,False
 "RouterEval n = 5,000",honest,best bandit,1,warm_start_bandit[n0=0.5] x3,0.8201970443349754,0.7647783251231528,0.8608374384236456,False
 "RouterEval n = 5,000",honest,best bandit,3,warm_start_bandit[n0=0.5] x3,0.785714285714286,0.7573891625615764,0.8165024630541874,False
 "RouterEval n = 5,000",honest,best bandit,5,warm_start_bandit[n0=0.5] x3,0.8238916256157637,0.7795566502463057,0.8682266009852219,False
-"RouterEval n = 5,000",β=0.5 cartel,best bandit,1,linucb_honest x3,0.7401477832512318,0.6871921182266011,0.8017241379310346,False
+"RouterEval n = 5,000",β=0.5 cartel,best bandit,1,ucb_per_family x2; trueskill_per_family x1,0.6416256157635469,0.6059113300492611,0.7019704433497538,False
 "RouterEval n = 5,000",β=0.5 cartel,best bandit,3,thompson_per_family x2; ucb_per_family x1,0.6995073891625618,0.6465517241379312,0.746305418719212,False
-"RouterEval n = 5,000",β=0.5 cartel,best bandit,5,linucb_honest x3,0.7733990147783252,0.7389162561576356,0.8386699507389165,False
+"RouterEval n = 5,000",β=0.5 cartel,best bandit,5,thompson_per_family x3,0.7426108374384237,0.7019704433497538,0.7980295566502466,False
 "RouterEval n = 5,000",honest,declared argmax,-,declared_argmax,0.9581280788177342,0.9051724137931038,0.9864532019704436,True
 "RouterEval n = 5,000",β=0.5 cartel,declared argmax,-,declared_argmax,0.6810344827586209,0.6317733990147784,0.7167487684729065,True
 "RouterEval n = 5,000",honest,random,-,random,0.6096059113300493,0.5911330049261085,0.620689655172414,True
@@ -151,12 +151,12 @@ LLMRouterBench n = 20,honest,best learned router,5,cluster_head_router x5,0.9895
 LLMRouterBench n = 20,β=0.5 cartel,best learned router,1,mlp_router x2; knn_router_online x2; disrouter_cascade x1,0.7961379310344828,0.7053517241379308,0.8598620689655172,False
 LLMRouterBench n = 20,β=0.5 cartel,best learned router,3,mlp_router x5,0.9475862068965518,0.9233103448275862,0.9644137931034482,False
 LLMRouterBench n = 20,β=0.5 cartel,best learned router,5,knn_router_online x2; mlp_router x2; flat_nsw_router x1,0.9186206896551726,0.8995862068965519,0.9371034482758621,False
-LLMRouterBench n = 20,honest,best bandit,1,linucb_honest x5,0.9012413793103449,0.88,0.9208758620689652,False
-LLMRouterBench n = 20,honest,best bandit,3,linucb_honest x5,0.9365517241379311,0.9111724137931034,0.96,False
-LLMRouterBench n = 20,honest,best bandit,5,linucb_honest x5,0.9558620689655172,0.9266206896551724,0.9795862068965516,False
-LLMRouterBench n = 20,β=0.5 cartel,best bandit,1,linucb_honest x5,0.9012413793103449,0.88,0.9208758620689652,False
-LLMRouterBench n = 20,β=0.5 cartel,best bandit,3,linucb_honest x5,0.9365517241379311,0.9111724137931034,0.96,False
-LLMRouterBench n = 20,β=0.5 cartel,best bandit,5,linucb_honest x5,0.9558620689655172,0.9266206896551724,0.9795862068965516,False
+LLMRouterBench n = 20,honest,best bandit,1,warm_start_bandit[n0=0.5] x5,0.8902068965517242,0.8761379310344828,0.9120000000000001,False
+LLMRouterBench n = 20,honest,best bandit,3,warm_start_bandit[n0=0.5] x5,0.8937931034482759,0.8631724137931035,0.9238620689655174,False
+LLMRouterBench n = 20,honest,best bandit,5,warm_start_bandit[n0=0.5] x5,0.9186206896551725,0.903448275862069,0.9351724137931033,False
+LLMRouterBench n = 20,β=0.5 cartel,best bandit,1,warm_start_bandit[n0=0.5] x5,0.8496551724137931,0.8300689655172414,0.8689655172413794,False
+LLMRouterBench n = 20,β=0.5 cartel,best bandit,3,warm_start_bandit[n0=0.5] x5,0.8866206896551725,0.8714482758620689,0.9048275862068966,False
+LLMRouterBench n = 20,β=0.5 cartel,best bandit,5,warm_start_bandit[n0=0.5] x5,0.9131034482758623,0.8813655172413795,0.9451034482758621,False
 LLMRouterBench n = 20,honest,declared argmax,-,declared_argmax,0.9897931034482759,0.9702068965517242,1.0099310344827586,True
 LLMRouterBench n = 20,β=0.5 cartel,declared argmax,-,declared_argmax,0.7837241379310346,0.7426206896551725,0.8270413793103448,True
 LLMRouterBench n = 20,honest,random,-,random,0.6744827586206896,0.6502068965517241,0.7020689655172414,True

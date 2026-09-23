@@ -67,7 +67,8 @@ def main():
         if f"{g}|{m}|{only}|{s}" in packed: continue          # handed to a pack: counted via inflight if its job is alive
         for mm in m.split(","): held[(g, mm, str(s))].append(dict(kv.split("=") for kv in only.split(",") if kv))
     q = queue()                                              # whole-grid submitters (va_b / rivals_b / pool_fill jobs, *_pack)
-    whole = {n[len("rte_"):].removesuffix("_pack") for s, n in q.values() if n.startswith("rte_")}
+    whole = {n[len("rte_"):].removesuffix("_pack") for s, n in q.values() if n.startswith("rte_") and "__" not in n}
+    per_method = {tuple(n[len("rte_"):].split("__", 1)) for s, n in q.values() if n.startswith("rte_") and "__" in n}   # rte_<grid>__<method> jobs
     gaps = defaultdict(int); tot = defaultdict(lambda: [0, 0, 0])
     for grid in figure_grids(cfg):
         done = have(grid)
@@ -81,7 +82,7 @@ def main():
                         alt = [ls for ls in ("random", "low_skill_first") if cell["beta"] == 0] or [cell["liar_select"]]
                         if any(row_id({**cell, "liar_select": ls}, sp["name"], sp["params"], seed) in done for ls in alt): t[1] += 1; continue   # beta 0: the tag is inert
                         if (sp["name"], cell["backend"], cell["n"]) in pooled_elsewhere(cfg, grid): t[2] += 1; continue
-                        if grid in whole or any(covers(f, cell) for f in held.get((grid, sp["name"], str(seed)), [])): t[2] += 1; continue
+                        if grid in whole or (grid, sp["name"]) in per_method or any(covers(f, cell) for f in held.get((grid, sp["name"], str(seed)), [])): t[2] += 1; continue
                         only = ",".join(f"{k}={cell[k]}" for k in ("dist", "beta", "liar_select"))
                         gaps[(grid, sp["name"], only, seed)] += 1
     print(f"{'grid':42s} {'expected':>8s} {'done':>6s} {'queued':>6s} {'GAP':>5s}")

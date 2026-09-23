@@ -16,6 +16,7 @@
 set -u
 export RTE_DATA=/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte
 L=$RTE_DATA/logs; REPO=/n/home02/rsiegelmann/rte; PY=$RTE_DATA/env/rte/bin/python; cd $REPO
+RTE_DATA=$RTE_DATA $PY scripts/ops/prune_endpoints.py >> $L/prune_endpoints.log 2>&1   # dead replicas fail framework calls (2026-09-23)
 say() { echo "$(date -Is) $*"; }
 ABL='fw_live_n(1000|100)(_lowskill)?_sota'
 q() { squeue -u "$USER" -h -o "%i %j %T"; }

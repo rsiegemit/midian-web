@@ -35,9 +35,16 @@ def load(family="live"):
     return d[keep & d.regime.isin(list(REG))]
 
 
+MIN_FW = 6                                                   # a bar needs >= 6 frameworks, each with the full seed count
+
+
 def summarise(d):
-    """(n, regime, shortlist) -> mean over frameworks, best framework, any rerun outstanding; plus the reference lines."""
+    """(n, regime, shortlist) -> mean over frameworks, best framework, any rerun outstanding; plus the reference lines.
+    Only frameworks with the full seed count at that n count, and a bar needs MIN_FW of them; a thinner cell is left out
+    (an empty slot, which puts the title * on) instead of averaging a different, smaller framework set."""
     fw = d[d.shortlist != "-"]
+    fw = fw[fw.seeds == fw.groupby("n").seeds.transform("max")]
+    fw = fw[fw.groupby(["n", "regime", "shortlist"]).arm.transform("nunique") >= MIN_FW]
     s = fw.groupby(["n", "regime", "shortlist"]).agg(mean=("mean", "mean"), best=("mean", "max"), k=("arm", "nunique"),
                                                      star=("rerun_outstanding", "any")).reset_index()
     ref = d[d.shortlist == "-"].pivot_table(index=["n", "regime"], columns="arm", values="mean")
@@ -103,12 +110,14 @@ def finish(ax, fig, s, title, name, ncol, inside=False):
 
 
 def fig_G(d, n=100000):
-    fw = d[(d.shortlist != "-") & (d.n == n)]
+    fw = d[(d.shortlist != "-") & (d.n == n)]; fw = fw[fw.seeds == fw.seeds.max()]   # full-seed frameworks only, as in summarise
     base = fw[fw.shortlist == "tfidf"].set_index(["regime", "arm"])["mean"]
     rows = []
     for (r, src), q in fw[fw.shortlist != "tfidf"].groupby(["regime", "shortlist"]):
         diff = (q.set_index(["regime", "arm"])["mean"] - base).dropna()
-        k = len(diff); half = 1.96 * diff.std(ddof=1) / np.sqrt(k) if k > 1 else np.nan
+        k = len(diff)
+        if k < MIN_FW: INCOMPLETE[0] = True; continue            # too few paired frameworks: left out, title *
+        half = 1.96 * diff.std(ddof=1) / np.sqrt(k) if k > 1 else np.nan
         rows.append(dict(regime=r, shortlist=src, lift=diff.mean(), half=half, frameworks=k, star=bool(q.rerun_outstanding.any())))
     t = pd.DataFrame(rows); order = t[t.regime == "beta0"].sort_values("lift", ascending=False).shortlist.tolist()
     fig, ax = plt.subplots(figsize=(7.2, 2.8)); w = 0.38
