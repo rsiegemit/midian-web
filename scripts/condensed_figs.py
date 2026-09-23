@@ -179,7 +179,13 @@ def add_budgets(C):
             for (n, b, beta, ls, l), q in df.groupby(["n", "b", "beta", "liar_select", "label"]):
                 key = (fam, grp, int(n), regime(beta, ls))
                 if key not in C or int(b) not in (1, 5) or l == "oracle" or excluded(l): continue
-                per = q.groupby("seed").success.mean(); lo, hi = ci(per.values)
+                if grp == "all shapes pooled":            # pooled shapes: only seeds that have EVERY shape, else a partial
+                    by = q.groupby(["seed", "dist"]).success.mean().unstack()   # run compares different populations
+                    by = by.dropna() if by.shape[1] == 3 else by.iloc[0:0]
+                    if by.empty: continue
+                    per = by.mean(axis=1)
+                else: per = q.groupby("seed").success.mean()
+                lo, hi = ci(per.values)
                 C[key]["raw"].setdefault(int(b), {})[l] = (float(per.mean()), float(lo), float(hi))
     names = {"beta=0 (no liars)": "beta0", "beta=0.5 CARTEL (low-skill-first)": "cartel"}
     for fam, grp, g in (("bernoulli", "specialist", "bernoulli_scale_v5"), ("replay", "all shapes pooled", "replay_scale_v5")):
