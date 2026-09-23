@@ -51,4 +51,5 @@ else
 fi
 
 # re-schedule (only if no other tick is already queued -- keeps exactly one tick alive)
-[ "$(q | grep -c ' rte_campaign_tick PENDING')" -eq 0 ] && sbatch --begin=now+30minutes $REPO/scripts/ops/campaign_tick.sh >/dev/null
+# TICK_LOOP=1: driven by a login-node setsid loop instead (test's 5-job cap is shared with the packs, OPS_RULES T3)
+[ -z "${TICK_LOOP:-}" ] && [ "$(q | grep -c ' rte_campaign_tick PENDING')" -eq 0 ] && sbatch --begin=now+30minutes $REPO/scripts/ops/campaign_tick.sh >/dev/null
