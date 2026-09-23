@@ -274,3 +274,15 @@ def test_midian_cohorts_are_never_prefetched(monkeypatch):
     m = _built(retrieval="midian_va", r=10)
     m.prefetch(list(_tasks(5)))
     assert m._pre == {}
+
+
+def test_content_keyed_cache_is_opt_in_and_keyed_on_the_texts(monkeypatch, tmp_path):
+    """Non-live backends: no cache unless RTE_EMBED_CACHE_DIR is set; then one directory per exact (agent, family) text set."""
+    m = _built(dedup=True, retrieval="tfidf")
+    monkeypatch.delenv("RTE_EMBED_CACHE_DIR", raising=False)
+    assert m._popdir(m.view) is None
+    monkeypatch.setenv("RTE_EMBED_CACHE_DIR", str(tmp_path))
+    d1 = m._popdir(m.view); assert d1 is not None and d1.parent == tmp_path and d1.is_dir()
+    assert m._popdir(m.view) == d1                                   # same texts -> same directory
+    m.desc = list(m.desc); m.desc[0] = m.desc[0] + " changed"
+    assert m._popdir(m.view) != d1                                   # any text change misses

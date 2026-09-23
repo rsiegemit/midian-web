@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import os
 import re
+from pathlib import Path
 
 import numpy as np
 
@@ -187,13 +188,24 @@ class FrameworkMethod(Method):
         return desc, fdesc, (lambda task: f"A task of family {fams[task.family]} (instance {task.instance}).")
 
     def _popdir(self, view):
-        """The population directory when the live backend is behind this view, else None (no cache: bernoulli/replay)."""
+        """Where this population's embedding / shortlist caches live. Live backend: the population directory. Any other
+        backend (RouterEval, whose descriptions are rendered at run time), only when RTE_EMBED_CACHE_DIR is set: a
+        directory under it keyed by a hash of the exact agent
+        and family TEXTS, so a GPU pre-warm (scripts/embed_routereval.py) and the CPU routing units meet on the same files,
+        and any text change misses. Needs self.desc / self.fdesc, i.e. call after _texts."""
         try:
             from rte.backends import llm as L
             be = L.current_backend()
-            return be.dir if be is not None and be.n == view.n else None
+            if be is not None and be.n == view.n: return be.dir
         except Exception:
-            return None
+            pass
+        root = os.environ.get("RTE_EMBED_CACHE_DIR")        # opt-in: unset (tests, every other grid) -> no cache, as before
+        if not root or getattr(self, "desc", None) is None: return None
+        import hashlib
+        h = hashlib.blake2b(digest_size=12)
+        for t in list(self.desc) + ["\x00"] + list(self.fdesc): h.update(t.encode()); h.update(b"\x00")
+        d = Path(root) / h.hexdigest(); d.mkdir(parents=True, exist_ok=True)
+        return d
 
     def _ltag(self):
         """Cache-name suffix when lie_text is on. Keyed on a hash of the DOCUMENTS, not on beta/liar_select: the view
