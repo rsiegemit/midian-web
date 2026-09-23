@@ -1,13 +1,14 @@
-# RTE / MIDIAN condensed figures A, B, E, F, G, H: data guide
+# RTE / MIDIAN condensed figures A, B, C, D, E, F, G, H: data guide
 
-A reference for anyone who has to write about figures A, B, E, F, G and H in `figures/condensed_sample/`. For every bar, line
+A reference for anyone who has to write about figures A, B, C, D, E, F, G and H in `figures/condensed_sample/`. For every bar, line
 and marker it says what the number is, which grids and cells and seeds it comes from, how it is averaged, and how each
 method and backend behind it is implemented. It was written from the code, not from the project's markdown docs. Where the
 two disagree, the code is taken as correct and the disagreement is listed. Citations are `path:line` in `~/rte` at the
-working tree of 2026-09-23 ~02:30 EDT. Figure values are those of the CSVs now in `figures/condensed_sample/` (A and B
-written 02:05–02:06, E–H 01:52). Result and seed counts are a snapshot from the same time: runs are still landing.
+working tree of 2026-09-23 ~02:30 EDT; Part 6 (C and D) and every `scripts/condensed_figs.py` citation are against the
+tree of ~12:00 EDT the same day. Figure values are those of the CSVs now in `figures/condensed_sample/` (A and B written
+02:05–02:06, C and D 12:16, E–H 01:52). Result and seed counts are a snapshot from the same time: runs are still landing.
 
-**How it was built.** Five independent passes, one per part, each re-reading the code and re-deriving plotted numbers from
+**How it was built.** Six independent passes, one per part, each re-reading the code and re-deriving plotted numbers from
 the raw rows (`$RTE_DATA/results/<grid>/rows.csv` + `rows.d/`). Each pass ends with its own list of discrepancies. Part 0
 (this page) gathers the ones that matter for the paper.
 
@@ -18,6 +19,7 @@ the raw rows (`$RTE_DATA/results/<grid>/rows.csv` + `rows.d/`). Each pass ends w
 | 3 Frameworks and shortlists | the framework adapters, supervisor LLM, fallback, prefetch, every shortlist variant (TF-IDF, BM25, MiniLM, Qwen3 dense ± instructions, fusion + reranker, declared top-k, VA cohort), caches, which combinations exist |
 | 4 Figures A and B | every bar, shade, star, error bar in A (live, n = 10^2…10^5) and B (all families, / oracle), with value tables |
 | 5 Figures E, F, G, H | the two-stage shortlist pipeline, each figure's bars, dots, lines, stars, the G lift, H on RouterEval, with value tables |
+| 6 Figures C and D | C (routing work per query vs n) and D (energy per query vs queries served): the ledger cache, MIDIAN-VA's build probes, the energy model of `scripts/energy.py`, the framework band, slopes and break-even tables |
 | Appendix | per-row A/B table with seed counts and source grid |
 
 ---
@@ -36,6 +38,17 @@ the raw rows (`$RTE_DATA/results/<grid>/rows.csv` + `rows.d/`). Each pass ends w
 - **B — every family at its largest pool, success / oracle.** The same arms and b layout, for live 10⁵,
   bernoulli 10⁷, replay 10⁶ (RouterBench models replayed on RouterBench categories), RouterEval (the 5,000-LLM leaderboard pool) and the
   LLMRouterBench pool. Every bar and its interval is divided by one number, the honest b = 3 oracle of that group. See §4.2.
+- **C — routing work per query vs n.** Messages plus comparisons that the ledger charges per routed query, for
+  n = 10² … 10⁷ on calibrated bernoulli (`bernoulli_scale_v5`, b = 3, honest), one line per arm, log-log. The legend
+  classifies each arm's fitted log-log slope over n ≥ 10³ as "constant", "∝ log n" or "∝ n^s". MIDIAN-VA goes 25 → 80 and
+  MIDIAN 46 → 161, a fixed step per tree level, so linear in depth ≈ log n (∝ log n). Flat probe argmax, declared argmax
+  and the two bandits are exactly n (∝ n^1.00). The flat-NSW index router is a constant 50.
+  It is a count, not an estimate, and there are no error bars (the counts are identical across seeds). See §6.2.
+- **D — energy per query vs queries served T (an estimate, marked `*`).** MIDIAN-VA's probing build divided by T plus its
+  per-query messages and comparisons, at n = 10³ / 10⁵ / 10⁷ (lighter to darker) and b = 1 / 3 / 5 (dotted, solid,
+  dashed), against a grey band: the per-query supervisor energy of the ten agent frameworks measured live at n = 1,000
+  (21–220 J, i.e. 1 to 10.7 supervisor-call equivalents, a latency ratio to AutoGen). Each × is a break-even point. Energies come from `scripts/energy.py` (a probe 4.04 J, a 7B supervisor call
+  20.6 J, a message 1e-3 J, a comparison 1e-8 J, 700 W). See §6.3.
 - **E — frameworks by shortlist across n (live, specialist).** For each n, one bar per shortlist: the unweighted mean
   over frameworks of each framework's seed mean. Solid is honest, hatched is cartel. The oracle is a dotted line and
   MIDIAN-VA on the whole population a solid line; both use honest values only. A `*` at the baseline marks an empty slot
@@ -92,6 +105,9 @@ Severity: **H** = can change a conclusion, **M** = comparability or labelling ca
 | 18 | **Live declarations are the model's own self-rating** (mean 0.686 vs true 0.419, correlation 0.36). On live, the description text includes an honest "Declared areas" clause that lying does not change (erratum 27), which helps every text shortlist. | E, F | M | §1.3, §3.9 #15 |
 | 19 | **Supervisor picks are not bit-reproducible on the real fleet:** random replica per call, no seed sent, batched vLLM. Pick-level run-to-run variance is unmeasured. | E–H | M | §3.9 #8 |
 | 20 | **RouterEval m ≤ 1,000 rows written before the family-order tie-break may come from the other of two subject orders**, so cross-grid pairing there is noisier than it looks. | H | M | §1.10 #1 |
+| 21 | **D's advantage is over the frameworks, not over flat probing.** Flat probe argmax pays an n·K·b build (MIDIAN-VA 3–5 % more) and 1e-5 to 0.1 J per query (n comparisons), so its curve would sit on MIDIAN-VA's. The advantage over flat methods is C's routing work, and the flat-NSW index router is constant in C because it is centralised. | C, D | H | §6.4 #3–4 |
+| 22 | **D's framework band is a live n = 1,000 measurement applied at every n**, pooled over all β and all three population shapes. Its upper edge is Magentic-One at 10.7 supervisor call-equivalents, a latency ratio to AutoGen rather than a count of calls. The mean latency is used, not the median the `energy.py` comments name, and there is no erratum-28 quarantine. The frameworks' retrieval scan over n descriptions and their n-message registration are not charged. | D | M | §6.4 #5–7 |
+| 23 | **D mixes sources.** Build probes at n = 10⁷ are bernoulli ledger counts, each priced at the live specialist probe energy (4.04 J), while 10³ and 10⁵ use live ledgers. Every row's `build_source` says "ledger" either way. | D | M | §6.4 #1–2 |
 
 Lower-severity documentation drift (stale docstrings, stale grid comments, METHODS.md / README.md vs code) is listed in each
 part's final section.
@@ -435,7 +451,7 @@ per-family max mean 0.725.
   `rte/methods/midian_a.py:8` as "≤ 1.05×"; observed up to 1.0625 on `routereval_mmlu`); `verify_on_claim` spends 0 at
   build and ≈ 2.4 probes per task at run time on live 10^5 (range 1.4–4.1 across cells); declared argmax and random spend 0.
 - **What changing b does**: more probes per cell → sharper estimates for probe users; declaration-only arms are
-  unaffected (the condensed figures draw declared argmax / random once, at b = 3, `scripts/condensed_figs.py:38`).
+  unaffected (the condensed figures draw declared argmax / random once, at b = 3, `scripts/condensed_figs.py:37`).
   For the verified MIDIAN variants the build splits b into `b0 = b − 1` level-0 probes and verification probes
   `e = (b − b0)·n / C` (`rte/methods/midian.py:104-112`); at **b = 1, b0 = 1 and e = 0, so verification is unfunded:
   MIDIAN-V ≡ plain MIDIAN and MIDIAN-VA ≡ MIDIAN-A** (also stated at `configs/grid.yaml:232-233`). The condensed A/B
@@ -511,7 +527,7 @@ All rows: `K = 16` unless noted, `collude = true`, `lie_mode = inflate`, `demand
 grids (`fw_live_n*_{dd,em,sota,verified_va,…}`) mirror their source grid cell for cell (same n, β, liar_select,
 seeds, Q); they are resolved in the frameworks part. For bernoulli and replay, β = 0 is run with `random` only and the
 b = 1 rows at 10^6 / 10^7 come from the scale grids, the b = 5 rows from `va_b_*`/`rivals_b_*`
-(`scripts/condensed_figs.py:168-200`).
+(`scripts/condensed_figs.py:151-183`).
 
 The `pool_fill_*` grids hold only the candidates of "best learned router" / "best bandit" that no other grid ran in
 that cell at that b, so that every b of a cell has the same pool (comment at `configs/grid.yaml:1099-1104`). Their
@@ -572,7 +588,7 @@ The oracle row has zero build/run communication except `tasks_per_task = 1`.
   midian_v`, `midian[cached=True,r=5,verify=True] → midian_v_r5`, `sequential_halving[peer_reported=True] →
   sequential_halving_peer`, `midian[stratify=True] → midian_stratified`, and the two churn-mode halving labels.
   `scripts/seed_tables.py:26-29` builds the same label for the b = 1/5 rows and the per-seed tables.
-- **Unit of replication = the seed.** The figure CSVs (`scripts/bar_figs.py:78-87`, `condensed_figs.py:186-192`, `seed_tables.py:48-62`,
+- **Unit of replication = the seed.** The figure CSVs (`scripts/bar_figs.py:78-87`, `condensed_figs.py:169-175`, `seed_tables.py:48-62`,
   `scale_matrix.py:41-52`) first average each label's rows **per seed** (over shapes where a family pools them, and
   over duplicate rows of the same cell from different grids), then report the mean of the per-seed means.
 - **95 % CIs are percentile bootstraps over seeds, B = 2000**, not t-intervals: `extra_figs.ci`
@@ -586,8 +602,8 @@ The oracle row has zero build/run communication except `tasks_per_task = 1`.
   the same world at β = 0.
 - **Paired comparisons**: `rte.analyze.paired` (`rte/analyze.py:108-129`) — per cell, pivot seed × label, delta
   `ref − rival` per seed, bootstrap CI + sign test, `WITHIN_FLOOR` if |mean delta| ≤ MIDIAN's seed envelope.
-  `scripts/paired_gaps.py:27-70` (figure C, b = 3 only): per condition, `midian_va − rival` per unit (unit = seed, or
-  seed|shape where shapes are not pooled), 95 % bootstrap CI of that difference, "win/loss/tie" by CI sign;
+  `scripts/paired_gaps.py:27-70` (b = 3 only, not a condensed figure): per condition, `midian_va − rival` per unit (unit =
+  seed, or seed|shape where shapes are not pooled), 95 % bootstrap CI of that difference, "win/loss/tie" by CI sign;
   requires ≥ 2 shared units.
 - **Figure filters**: `extra_figs.excluded` (`scripts/extra_figs.py:111-135`) drops MIDIAN variants with r ≠ 10 or
   δ ≠ 1/3, MIDIAN-SH / -SHA, trusted-observer `sequential_halving`, `route_to_k_majority`, the LLM-descent ablation,
@@ -638,7 +654,7 @@ and were biased *upward* (declared argmax scores 0.619 honest). Fix: envs restor
    restricted to the `fw_live_n{100,1000}[_lowskill]_sota` grids. On 2026-09-23 neither marker exists and the tsv has
    3,572 unit rows, so every combination listed there is starred **regardless of whether its rerun has already
    landed**, and a single quarantined seed stars the whole (grid, framework, dist, regime) bar.
-2. *Condensed A/B* (`scripts/condensed_figs.py:10, 106-108, 113`): a `*` at the baseline = that budget has no rows yet
+2. *Condensed A/B* (`scripts/condensed_figs.py:10, 105-107, 112`): a `*` at the baseline = that budget has no rows yet
    for an arm that exists in the cell; a `*` above a "best learned router" / "best bandit" bar = the pool still misses a
    candidate at that b (`INCOMPLETE POOL` in the CSV `chosen` column). Both are missing-data markers, unrelated to
    erratum 28.
@@ -756,7 +772,7 @@ is listed in §2.12.
 
 ### 2.1.1 The seven arms that are drawn
 
-`scripts/condensed_figs.py` draws exactly the arms in `ARMS` (`scripts/condensed_figs.py:32-34`):
+`scripts/condensed_figs.py` draws exactly the arms in `ARMS` (`scripts/condensed_figs.py:31-33`):
 
 | key in code | legend label | colour | what the key resolves to |
 |---|---|---|---|
@@ -768,45 +784,44 @@ is listed in §2.12.
 | `declared_argmax` | declared argmax | grey | method `declared_argmax`, params `{}` (not cached) |
 | `random` | random | light grey | method `random` |
 
-The **oracle** is not an arm. It is the dotted horizontal line (`scripts/condensed_figs.py:117`). In B every bar is divided by
+The **oracle** is not an arm. It is the dotted horizontal line (`scripts/condensed_figs.py:116`). In B every bar is divided by
 the oracle's mean (`norm=True`).
 
-Rows whose label starts with `fw_` (frameworks) are removed at load time (`scripts/condensed_figs.py:47`; `seed_tables.py:39` for the pooled arms). Every label also
-goes through the do-not-add filter `extra_figs.excluded` (`scripts/condensed_figs.py:57,185,199`). Because `ARMS` and the two
+Rows whose label starts with `fw_` (frameworks) are removed at load time (`scripts/condensed_figs.py:46`; `seed_tables.py:39` for the pooled arms). Every label also
+goes through the do-not-add filter `extra_figs.excluded` (`scripts/condensed_figs.py:56,168,182`). Because `ARMS` and the two
 pools list every drawable label, anything outside them is never drawn in A or B, whether or not it is excluded. That covers
 MIDIAN-V, MIDIAN-A, verify_on_claim, cnp_self_bid, declared_softmax, gossip, referral, sequential halving and the rest.
-They appear only in the appendix heatmap D (`fig_D`, `scripts/condensed_figs.py:152-165`), which draws every label that is
-not excluded.
+No condensed figure draws them; they are in the per-family bar figures (`figures/bars/`, `scripts/bar_figs.py`).
 
 ### 2.1.2 Where each budget's numbers come from
 
 - **The five single arms at b = 3** (MIDIAN-VA, MIDIAN, flat probe argmax, declared argmax, random). From
-  `figures/bars/<family>.csv` (`scripts/condensed_figs.py:45-58`). `scripts/bar_figs.py` writes those files from the
+  `figures/bars/<family>.csv` (`scripts/condensed_figs.py:44-57`). `scripts/bar_figs.py` writes those files from the
   grids listed in `LIVE_GRIDS` (`scripts/bar_figs.py:29-31`) and the equivalents for the other families.
 - **The same arms at b = 1 and b = 5.** From the `va_b_*` grids (MIDIAN-VA only) and the `rivals_b_*` grids (the
-  budget-matched rivals) (`scripts/condensed_figs.py:168-193`; grids at `configs/grid.yaml:1047-1056` and `1068-1075`).
+  budget-matched rivals) (`scripts/condensed_figs.py:151-176`; grids at `configs/grid.yaml:1047-1056` and `1068-1075`).
   For bernoulli and replay, b = 1 comes from the `bernoulli_scale_v5` and `replay_scale_v5` matrices
-  (`scripts/condensed_figs.py:194-200`).
+  (`scripts/condensed_figs.py:177-183`).
 - **"Best learned router" and "best bandit" at every b.** From per-seed tables built straight from the raw rows by
-  `seed_tables.tables()` (`scripts/seed_tables.py:65-81`, attached to each cell at `condensed_figs.py:205-206`). Per cell
+  `seed_tables.tables()` (`scripts/seed_tables.py:65-81`, attached to each cell at `condensed_figs.py:188-189`). Per cell
   it reads: live, `LIVE_GRIDS[n]` + `va_b_*` + `rivals_b_*` + `pool_fill_*` + `tuned_wsb_*` + `pool_seeds_*`;
   RouterEval 5,000, `routereval_mmlu5k` + the b-grids; LLMRouterBench, `llmrouterbench_pool` + the b-grids; bernoulli 10^7
   and replay 10^6, their scale grids + the b-grids. The `pool_fill_*`, `pool_seeds_n1000` and `tuned_wsb_*` grids are
   queued and have no rows yet (§1.6.3).
 - **Budgetless arms.** `declared_argmax` and `random` are drawn only from the b = 3 data, as one bar each (`BUDGETLESS`,
-  `scripts/condensed_figs.py:38,75`).
+  `scripts/condensed_figs.py:37,74`).
 
 ### 2.1.3 How "best learned router" and "best bandit" are chosen (`arms_at`, `crossfit`)
 
 Both are **cross-fitted**: no bar is the maximum of noisy means over the seeds it reports.
 
-- **Pools** (`POOLS`, `scripts/condensed_figs.py:35`):
+- **Pools** (`POOLS`, `scripts/condensed_figs.py:34`):
   - `LEARNED = [knn_router, knn_router_online, mlp_router, flat_nsw_router, cluster_head_router, disrouter_cascade]`
-    (`:30`);
+    (`:29`);
   - `BANDIT = [ucb_per_family, thompson_per_family, warm_start_bandit, linucb_honest, trueskill_per_family]`, plus
-    `warm_start_bandit[n0=0.5]` (`:31, 35`).
-- **The pool is the same at every b of a cell.** `arms_at` (`:61-76`) takes the pool minus `NOT_RUNNABLE(family, n)`
-  (`:36-37`): `trueskill_per_family` at n ≥ 10^5, `mlp_router` at n ≥ 5,000, and `knn_router`, `knn_router_online`,
+    `warm_start_bandit[n0=0.5]` (`:30, 34`).
+- **The pool is the same at every b of a cell.** `arms_at` (`:60-75`) takes the pool minus `NOT_RUNNABLE(family, n)`
+  (`:35-36`): `trueskill_per_family` at n ≥ 10^5, `mlp_router` at n ≥ 5,000, and `knn_router`, `knn_router_online`,
   `mlp_router` on bernoulli and replay (no prompt text).
 - **Per-seed tables.** `seed_tables.tables()` gives, for each (cell, regime, b), a seed × arm table of mean success
   (`seed_tables.py:48-62`). Rows of one (seed, arm) from several grids are averaged, as `bar_figs` does. β = 0 counts as
@@ -816,11 +831,11 @@ Both are **cross-fitted**: no bar is the maximum of noisy means over the seeds i
 - **Cross-fitting** (`crossfit`, `seed_tables.py:84-94`). For each seed s, among the arms that ran on s, the arm with
   the highest mean over the **other** seeds is picked, and its success **on s** is s's score. The bar is the mean of
   those per-seed scores. The CI is the 95 % percentile bootstrap over the same per-seed scores (`extra_figs.ci`,
-  `condensed_figs.py:70`). A cell with fewer than 2 scored seeds gets no bar (`:69`).
-- **The CSV `chosen` column holds the pick counts**, e.g. `warm_start_bandit x5; linucb_honest x5` (`:71`). The picked
+  `condensed_figs.py:69`). A cell with fewer than 2 scored seeds gets no bar (`:68`).
+- **The CSV `chosen` column holds the pick counts**, e.g. `warm_start_bandit x5; linucb_honest x5` (`:70`). The picked
   arm can differ between seeds, regimes and b values.
 - **Incomplete pools.** If a candidate has no column in the table at that b, `chosen` ends with
-  `| INCOMPLETE POOL, missing <arms>` and a `*` is drawn above the bar (`:70-71`, `:113`). The flag covers only
+  `| INCOMPLETE POOL, missing <arms>` and a `*` is drawn above the bar (`:69-70`, `:112`). The flag covers only
   candidates with no rows at all. A candidate that ran on some seeds only competes on those seeds: at live 10^3 b = 3,
   `warm_start_bandit`, `cluster_head_router`, `disrouter_cascade`, `flat_nsw_router`, `ucb`, `thompson` and `trueskill`
   have seeds 1–5 only (`live_f1_n1000`), so seeds 6–10 choose among the rest. `pool_seeds_n1000` supplies seeds 6–10.
@@ -976,7 +991,7 @@ it. Routing a task walks down the tree from the root, about log_r n steps, inste
 
 - It is `Midian(verify=True, cached=True)`. The ALIAS `midian[cached=True,verify=True]` maps to `midian_v`
   (`rte/analyze.py:21`).
-- It is not drawn in A or B (it is not in `ARMS`). It appears only in heatmap D.
+- It is not drawn in A or B (it is not in `ARMS`); it is in the per-family bar figures (`figures/bars/`).
 - It differs from VA only in level 0: plain MIDIAN's `peer_reported_estimates` with `by_reporter=True` (per-peer trim),
   and no audits.
 
@@ -1128,7 +1143,7 @@ it. Routing a task walks down the tree from the root, about log_r n steps, inste
   separate (`rte/world.py:244,255-256,287-292`). The world seed does not include b either, so the oracle is also
   independent of b.
 - In B, each group divides **both regimes'** bars by the **honest** cell's oracle mean
-  (`scripts/condensed_figs.py:98`), and that oracle comes from the b = 3 bar CSV for all b.
+  (`scripts/condensed_figs.py:97`), and that oracle comes from the b = 3 bar CSV for all b.
 
 ---
 
@@ -1221,7 +1236,7 @@ and charge n comparisons per fetch.
     seeds 1-10) and that the result was 0.762 for n0 = 0.5 against 0.745-0.750 for the others.
   - The tuned arm is run "beside" the pre-registered one in `tuned_wsb_n{100,1000,10k,100k}` at b = 3
     (`:1060-1063`) and in the live `rivals_b_n*` grids at b = 1 and 5 (`:1068-1071`).
-  - In the condensed figures it only enters the best-bandit pool (`scripts/condensed_figs.py:35`), at every b. None of
+  - In the condensed figures it only enters the best-bandit pool (`scripts/condensed_figs.py:34`), at every b. None of
     its grids has rows yet, so every best-bandit bar that could include it carries the incomplete-pool `*` (§2.1.3).
   - §8d as written does **not** mention the tuning run. The "CHANGES 8d" citation in `grid.yaml:1029` points at the
     motivation, not at a record of the tuning.
@@ -1399,7 +1414,7 @@ and charge n comparisons per fetch.
 4. **At b = 1, MIDIAN-VA has no promotion verification** (e = 0), so its b = 1 bar is "MIDIAN-A + cached root". This
    matches DEVIATIONS Erratum 22 (`:838-839`). Paper text should not describe VA's b = 1 bars as "verified".
 5. **The tuned warm-start bandit has no rows yet.** `warm_start_bandit[n0=0.5]` is in the bandit pool at every b
-   (`condensed_figs.py:35`). Its live b = 3 rows are to come from `tuned_wsb_*` and its b = 1 / 5 rows from `rivals_b_n*`
+   (`condensed_figs.py:34`). Its live b = 3 rows are to come from `tuned_wsb_*` and its b = 1 / 5 rows from `rivals_b_n*`
    and `pool_fill_*`; none has landed, so every best-bandit bar that could include it carries the incomplete-pool `*`.
 6. **CHANGES §8d does not record the tuning.** §8d (`CHANGES_AND_ERRATA.md:388-398`) says "Reported numbers are
    unchanged (the rival is as pre-registered)" and does not mention the n0 = 0.5 tuning or its 0.762 result. The only
@@ -2004,8 +2019,8 @@ I resolved these with `rte.run.blocks` (mirror chains followed) on `configs/grid
 
 ## 4. Figures A and B: where every bar, line, colour and number comes from
 
-Scope: `figures/condensed_sample/A_live_allb.{png,pdf,csv}`, `A_live_stacked.*`, `B_families_allb.*` and `B_families_stacked.*`. A was written at **2026-09-23 02:05** and B at **02:06** by `python scripts/condensed_figs.py`. The script also writes `D_heatmap_all_arms` (covered briefly in 4.4). C is a separate script (`scripts/paired_gaps.py`, `condensed_figs.py:207`).
-Code, repo-relative to `~/rte`: `scripts/condensed_figs.py` (207 lines) and `scripts/seed_tables.py` (94 lines). They import `scripts/extra_figs.py` (legend wrapper, `excluded`, `ci`), `scripts/fw_variant_numbers.py` (`load`, `regime`) and `rte/analyze.py` (`ALIAS`). `condensed_figs.py` also reads the CSVs that `scripts/bar_figs.py` wrote.
+Scope: `figures/condensed_sample/A_live_allb.{png,pdf,csv}`, `A_live_stacked.*`, `B_families_allb.*` and `B_families_stacked.*`. A was written at **2026-09-23 02:05** and B at **02:06** by `python scripts/condensed_figs.py`. Figures C and D (efficiency) are written by `scripts/efficiency_figs.py` and covered in Part 6.
+Code, repo-relative to `~/rte`: `scripts/condensed_figs.py` (190 lines) and `scripts/seed_tables.py` (94 lines). They import `scripts/extra_figs.py` (legend wrapper, `excluded`, `ci`), `scripts/fw_variant_numbers.py` (`load`, `regime`) and `rte/analyze.py` (`ALIAS`). `condensed_figs.py` also reads the CSVs that `scripts/bar_figs.py` wrote.
 Data root: `RTE_DATA=/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte`, with results under `$RTE_DATA/results/<grid>/`.
 
 **How this section was checked (read-only).**
@@ -2029,23 +2044,25 @@ Data root: `RTE_DATA=/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte`, with re
 
 ### 4.0 Machinery shared by A and B (read this first)
 
-#### 4.0.1 The pipeline (`condensed_figs.py:203-207`)
+#### 4.0.1 The pipeline (`condensed_figs.py:186-190`)
 ```
 d = load(); C = cells(d); add_budgets(C)
-for key, bb in tables().items(): C[key]["seeds"] = bb     # per-seed tables for the pooled arms
-fig_A(C); fig_B(C); fig_D(d)
+for key, bb in tables().items():                 # per-seed tables for the cross-fitted pooled arms
+    if key in C: C[key]["seeds"] = bb
+fig_A(C); fig_B(C)                    # C / D: scripts/efficiency_figs.py
 ```
-1. **`load()`** (`:45-47`) concatenates the five per-family bar CSVs `figures/bars/{live,bernoulli,replay,routereval,llmrouterbench}.csv` and **drops every label starting with `fw_`**, so framework arms are never drawn.
+A per-seed table whose cell has no b = 3 bar row is dropped (`if key in C`). This script draws only A and B.
+1. **`load()`** (`:44-46`) concatenates the five per-family bar CSVs `figures/bars/{live,bernoulli,replay,routereval,llmrouterbench}.csv` and **drops every label starting with `fw_`**, so framework arms are never drawn.
    - These CSVs are *not* regenerated by condensed_figs. They were written by `scripts/bar_figs.py` at **2026-09-22 22:39**.
    - They hold **b = 3 only** (see 4.0.2).
-2. **`cells(d)`** (`:50-58`) groups the rows by `(family, group, n, regime)`.
+2. **`cells(d)`** (`:49-57`) groups the rows by `(family, group, n, regime)`.
    - A cell is kept only if it has an `oracle` row.
    - Each cell stores `oracle = (mean, ci_lo, ci_hi)` and `raw[3] = {label: (mean, lo, hi)}` for every non-oracle label that is not on the do-not-add list (`excluded(l)`).
    - **So every b=3 number of the five single arms in A/B is a bar_figs number, unchanged.**
-3. **`add_budgets(C)`** (`:168-200`) adds `raw[1]` and `raw[5]`. See 4.0.3.
+3. **`add_budgets(C)`** (`:151-183`) adds `raw[1]` and `raw[5]`. See 4.0.3.
 4. **`seed_tables.tables()`** (`seed_tables.py:65-81`) builds seed × arm tables per (cell, regime, b) from the raw rows; they feed only the two pooled arms. See 4.0.4.
-5. **`arms_at(cell)`** (`:61-76`) turns `raw[b]` and the tables into the seven plotted "arms". See 4.0.4.
-6. **`budget_bars(...)`** (`:88-122`) draws the figure and writes the CSV. See 4.0.5.
+5. **`arms_at(cell)`** (`:60-75`) turns `raw[b]` and the tables into the seven plotted "arms". See 4.0.4.
+6. **`budget_bars(...)`** (`:87-121`) draws the figure and writes the CSV. See 4.0.5.
 
 #### 4.0.2 Where the b = 3 numbers come from (`scripts/bar_figs.py`)
 - **live** (`family_live`, `bar_figs.py:127-142`):
@@ -2068,11 +2085,11 @@ fig_A(C); fig_B(C); fig_D(d)
 - **routereval** (`bar_figs.py:159-177`):
   - n=5000 comes from `big = routereval_mmlu5k + fw_routereval_5k` (`:161`). `fw_routereval_5k` contains only `oracle` rows once frameworks are dropped.
   - Cell axes: `dist = all`, K=16, Q=300, b=3, `declared_source = programmatic`.
-  - **`big` is not filtered by pool** (`:172`), so the n=5000 bars are identical in the `strong_to_weak`, `all_strong` and `all_weak` groups. B picks the `strong_to_weak` copy (`PRIMARY`, `condensed_figs.py:40`), but the data is the 5000-LLM leaderboard pool, `dist = all`.
+  - **`big` is not filtered by pool** (`:172`), so the n=5000 bars are identical in the `strong_to_weak`, `all_strong` and `all_weak` groups. B picks the `strong_to_weak` copy (`PRIMARY`, `condensed_figs.py:39`), but the data is the 5000-LLM leaderboard pool, `dist = all`.
 - **llmrouterbench** (`bar_figs.py:180-187`): grid `llmrouterbench_pool`, n=20, K=15, Q=1000, b=3, programmatic, 5 seeds.
 
-#### 4.0.3 Where the b = 1 and b = 5 numbers of the single arms come from (`add_budgets`, `condensed_figs.py:168-200`)
-- **Grid list** (`:175-177`, `:179`): for each tag, both `va_b_<tag>` (MIDIAN-VA only) and `rivals_b_<tag>` (budget-matched rivals) are read. The tags are:
+#### 4.0.3 Where the b = 1 and b = 5 numbers of the single arms come from (`add_budgets`, `condensed_figs.py:151-183`)
+- **Grid list** (`:158-160`, `:162`): for each tag, both `va_b_<tag>` (MIDIAN-VA only) and `rivals_b_<tag>` (budget-matched rivals) are read. The tags are:
   - `n100, n1000, n10k, n100k` → key `("live","specialist",n)`
   - `routereval5k` → `("routereval","strong_to_weak",5000)`
   - `llmrouterbench` → `("llmrouterbench","20 models",20)`
@@ -2082,23 +2099,23 @@ fig_A(C); fig_B(C); fig_D(d)
   - it reads `rows.d/*.json` plus `rows.csv` directly, with **no consolidate** and no write;
   - `drop_duplicates("rid")`;
   - then `drop_duplicates` on `(n, b, dist, beta, liar_select, seed, method, params)`.
-- **Labels.** `label(method, params)` (`seed_tables.py:26-29`, imported at `condensed_figs.py:24`) rebuilds the same label string as `rte.analyze.prepare` (`analyze.py:71`), then applies `ALIAS` (`analyze.py:20-24`). For example, `flat_probe_argmax{"online":true}` becomes `flat_probe_argmax_online`, and `knn_router{"online":true}` becomes `knn_router_online`.
-- **Grouping** (`:183`): `groupby(["n","b","beta","liar_select","label"])`, mapped to a regime by `fw_variant_numbers.regime(beta, ls)` (`fw_variant_numbers.py:55-59`):
+- **Labels.** `label(method, params)` (`seed_tables.py:26-29`, imported at `condensed_figs.py:23`) rebuilds the same label string as `rte.analyze.prepare` (`analyze.py:71`), then applies `ALIAS` (`analyze.py:20-24`). For example, `flat_probe_argmax{"online":true}` becomes `flat_probe_argmax_online`, and `knn_router{"online":true}` becomes `knn_router_online`.
+- **Grouping** (`:166`): `groupby(["n","b","beta","liar_select","label"])`, mapped to a regime by `fw_variant_numbers.regime(beta, ls)` (`fw_variant_numbers.py:55-59`):
   - β = 0 → `beta0`, whatever `liar_select` is;
   - β = 0.5 with `low_skill_first` → `cartel`.
-- **Rows kept** (`:185`): only if the key already exists in `C` (so the b=3 bar CSV must have that cell), b ∈ {1, 5}, the label is not `oracle`, and `excluded(l)` is false.
+- **Rows kept** (`:168`): only if the key already exists in `C` (so the b=3 bar CSV must have that cell), b ∈ {1, 5}, the label is not `oracle`, and `excluded(l)` is false.
 - **Aggregation**:
-  - **Non-replay** (`:191-192`): `per = q.groupby("seed").success.mean()`; value = `per.mean()`; CI = `extra_figs.ci(per.values)`, which is the numpy-array path of `ci` (`extra_figs.py:89-97`: 2000 resamples with `rng.choice`, `default_rng(0)`, 2.5 and 97.5 percentiles).
-  - **Replay, "all shapes pooled"** (`:186-190`):
+  - **Non-replay** (`:174-175`): `per = q.groupby("seed").success.mean()`; value = `per.mean()`; CI = `extra_figs.ci(per.values)`, which is the numpy-array path of `ci` (`extra_figs.py:89-97`: 2000 resamples with `rng.choice`, `default_rng(0)`, 2.5 and 97.5 percentiles).
+  - **Replay, "all shapes pooled"** (`:169-173`):
     - `by = groupby(["seed","dist"]).success.mean().unstack()`;
     - if all 3 shapes (specialist, heavy_tail, bimodal) exist, keep only **seeds that have every shape** (`by.dropna()`); otherwise the cell is empty;
     - per-seed value = mean over the 3 shapes; value = mean over those seeds; CI = seed bootstrap.
     - **For the single arms the intersection rule only exists at b = 5.** Their b=1 and b=3 replay numbers come from the matrix, which averages all (shape, seed) units. That matrix is balanced, 100 × 3, so the two rules agree there.
-- **Matrices for b=1** (`:194-200`): bernoulli and replay b=1 come from `bernoulli_scale_v5` / `replay_scale_v5` `matrix_success.csv`, filtered to `b == 1`, the `success` metric, and regimes `"beta=0 (no liars)"` / `"beta=0.5 CARTEL (low-skill-first)"`. Mean and CI are copied from the matrix. The `va_b_*` / `rivals_b_*` bernoulli and replay grids contain only b=5, so nothing is overwritten.
+- **Matrices for b=1** (`:177-183`): bernoulli and replay b=1 come from `bernoulli_scale_v5` / `replay_scale_v5` `matrix_success.csv`, filtered to `b == 1`, the `success` metric, and regimes `"beta=0 (no liars)"` / `"beta=0.5 CARTEL (low-skill-first)"`. Mean and CI are copied from the matrix. The `va_b_*` / `rivals_b_*` bernoulli and replay grids contain only b=5, so nothing is overwritten.
 - **Nothing is ever pooled across b.** Each bar is one budget.
 
-#### 4.0.4 The seven arms and how "best learned" / "best bandit" are chosen (`arms_at`, `:61-76`)
-`ARMS` (`:32-34`), in plotting order, with key, legend label and colour:
+#### 4.0.4 The seven arms and how "best learned" / "best bandit" are chosen (`arms_at`, `:60-75`)
+`ARMS` (`:31-33`), in plotting order, with key, legend label and colour:
 
 | order | key | legend label | colour |
 |---|---|---|---|
@@ -2110,12 +2127,12 @@ fig_A(C); fig_B(C); fig_D(d)
 | 6 | `declared_argmax` | declared argmax | `#5d6d7e` |
 | 7 | `random` | random | `#bbbbbb` |
 
-- **Single arms** (1–3, 6, 7): `arms_at` copies `raw[b][key]` for every b that has it (`:73-75`).
-- **Pooled arms** (4, 5): for each b with a per-seed table in the cell (`:65-72`):
-  - `want` = the pool (`POOLS`, `:35`) minus `NOT_RUNNABLE(family, n)` (`:36-37`). It is the same at every b of a cell.
-  - `crossfit(T, want)` (`seed_tables.py:84-94`) scores each seed with the arm that has the best mean on the other seeds, among arms that ran on that seed. The bar is the mean of the per-seed scores, and the CI the seed bootstrap of those scores (`:70`).
-  - Fewer than 2 scored seeds: no bar (`:69`).
-  - `chosen` = the pick counts, plus `| INCOMPLETE POOL, missing …` when a `want` arm has no column at that b (`:71`).
+- **Single arms** (1–3, 6, 7): `arms_at` copies `raw[b][key]` for every b that has it (`:72-74`).
+- **Pooled arms** (4, 5): for each b with a per-seed table in the cell (`:64-71`):
+  - `want` = the pool (`POOLS`, `:34`) minus `NOT_RUNNABLE(family, n)` (`:35-36`). It is the same at every b of a cell.
+  - `crossfit(T, want)` (`seed_tables.py:84-94`) scores each seed with the arm that has the best mean on the other seeds, among arms that ran on that seed. The bar is the mean of the per-seed scores, and the CI the seed bootstrap of those scores (`:69`).
+  - Fewer than 2 scored seeds: no bar (`:68`).
+  - `chosen` = the pick counts, plus `| INCOMPLETE POOL, missing …` when a `want` arm has no column at that b (`:70`).
   - The rules and caveats are in §2.1.3.
 - **What the pools really contain**, per METHODS.md:
   - `cluster_head_router` and `disrouter_cascade` are **"Declared channel only"** arms (METHODS.md:35-44). They read declared skill D and never probe. They are also in `bar_figs.DECL` (`bar_figs.py:90`).
@@ -2138,42 +2155,42 @@ fig_A(C); fig_B(C); fig_D(d)
 | LLMRouterBench | 3 | `flat_nsw_router`, `cluster_head_router`, `disrouter_cascade` | `ucb`, `thompson`, `trueskill`, `warm_start_bandit[n0=0.5]` |
 
   The `pool_fill_*`, `pool_seeds_n1000` and `tuned_wsb_*` grids supply these (§1.6.3). Pooled bars at live b = 1 / 5 (except 10^4 honest b = 1), RouterEval b = 1 / 5 and bernoulli b = 5 are absent from the figure: no rows yet.
-- **Budget-less arms** (`BUDGETLESS = {declared_argmax, random}`, `:38`, `:75`): only their b=3 entry is used, drawn as **one bar per regime in its base colour** (no shading), and written to the CSV with `b = "-"`. They spend no probes, so b does not apply. Their b=3 value is the bar_figs number.
+- **Budget-less arms** (`BUDGETLESS = {declared_argmax, random}`, `:37`, `:74`): only their b=3 entry is used, drawn as **one bar per regime in its base colour** (no shading), and written to the CSV with `b = "-"`. They spend no probes, so b does not apply. Their b=3 value is the bar_figs number.
 - **Every other arm** has a bar for each b ∈ {1, 3, 5} for which data exists.
 
-#### 4.0.5 Drawing (`budget_bars`, `:88-122`)
-- **Groups**: one group per x tick (A: n; B: family). **Regimes**: `REG = {"beta0": "honest", "cartel": "β=0.5 cartel"}` (`:42`).
-- **Slots within a group** (`:92-95`):
+#### 4.0.5 Drawing (`budget_bars`, `:87-121`)
+- **Groups**: one group per x tick (A: n; B: family). **Regimes**: `REG = {"beta0": "honest", "cartel": "β=0.5 cartel"}` (`:41`).
+- **Slots within a group** (`:91-94`):
   - `arms` = the ARMS present in any cell.
   - **_allb** has one slot per (arm, regime, b), ordered arm → regime (honest, then cartel) → b (1, 3, 5). Budget-less arms get one slot per regime.
   - With 5 budgeted and 2 budget-less arms that is 5·2·3 + 2·2 = **34 slots**, bar width `w = 0.86/34`.
   - **_stacked** has one slot per (arm, regime): **14 slots**, `w = 0.86/14`.
   - Slot positions are fixed, so a missing bar leaves a gap (or a star).
-- **Colour and shade** (`shade`, `:83-85`):
+- **Colour and shade** (`shade`, `:82-84`):
   - b=1 = the base colour mixed 50% toward white (light);
   - b=3 = the base colour;
   - b=5 = base × 0.6 (dark).
-- **Hatch**: the cartel regime has `hatch="////"` and `alpha=0.8`; honest bars are solid (`:111-112`). Every bar has a black edge, lw 0.3. There are no hollow bars in A/B.
+- **Hatch**: the cartel regime has `hatch="////"` and `alpha=0.8`; honest bars are solid (`:110-111`). Every bar has a black edge, lw 0.3. There are no hollow bars in A/B.
 - **Stars.** Two kinds:
-  - **Missing budget** (`:106-108`): if an arm has at least one b in that (cell, regime) but not this b, a `*` is placed at the slot's x, at y = 0.205, just above the 0.2 axis floor. If an arm has **no** b at all in a (cell, regime), nothing is drawn: no bar and no star. Currently every arm has b=3 wherever the cell exists, so every gap carries a star.
-  - **Incomplete pool** (`:113`): a pooled bar whose `chosen` contains `INCOMPLETE` gets a `*` 0.004 above its CI top (above the bar top in _stacked).
-- **Oracle line** (`:117`): a dotted grey (`#7f8c8d`, lw 1.2) horizontal line across each group (±0.46).
+  - **Missing budget** (`:105-107`): if an arm has at least one b in that (cell, regime) but not this b, a `*` is placed at the slot's x, at y = 0.205, just above the 0.2 axis floor. If an arm has **no** b at all in a (cell, regime), nothing is drawn: no bar and no star. Currently every arm has b=3 wherever the cell exists, so every gap carries a star.
+  - **Incomplete pool** (`:112`): a pooled bar whose `chosen` contains `INCOMPLETE` gets a `*` 0.004 above its CI top (above the bar top in _stacked).
+- **Oracle line** (`:116`): a dotted grey (`#7f8c8d`, lw 1.2) horizontal line across each group (±0.46).
   - A: y = the **honest (β=0) b=3 oracle mean** from the bars CSV.
   - B: y = 1.0.
   - The cartel oracle is not drawn separately. It is numerically identical: oracle success does not depend on liars, and I verified this in every grid here, e.g. live oracle 0.8449 / 0.8612 / 0.8589 / 0.8622 in both regimes and in the va_b grids.
-- **Y axis** (`:119`): A shows `success` on ylim (0.2, 0.95); B shows `success / oracle` on ylim (0.2, 1.05). Bars start at 0, so anything below 0.2 is hidden. None currently is: the lowest bar is replay random at 0.242.
-- **Normalisation (B only)** (`:98`, `:109`): `z = C[(family, group, n, "beta0")]["oracle"][0]`, the **β=0, b=3 oracle mean from the bar CSV**. Mean, `ci_lo` and `ci_hi` of **every** bar in the group (both regimes, all b) are divided by that one scalar.
+- **Y axis** (`:118`): A shows `success` on ylim (0.2, 0.95); B shows `success / oracle` on ylim (0.2, 1.05). Bars start at 0, so anything below 0.2 is hidden. None currently is: the lowest bar is replay random at 0.242.
+- **Normalisation (B only)** (`:97`, `:108`): `z = C[(family, group, n, "beta0")]["oracle"][0]`, the **β=0, b=3 oracle mean from the bar CSV**. Mean, `ci_lo` and `ci_hi` of **every** bar in the group (both regimes, all b) are divided by that one scalar.
   - This is a ratio of means, not a per-seed ratio.
   - The CI ignores the oracle's own uncertainty.
   - For live, RouterEval and LLMRouterBench, the b=1/5 grids' own oracles equal the b=3 oracle exactly: 0.8622, 0.9022 and 0.7250. They mirror the same task streams.
   - For bernoulli and replay, the b=5 bars cover a seed subset whose own oracle differs slightly: MIDIAN-VA's 51 honest bernoulli seeds have 0.8456 against 0.8462, and its 38 honest replay seeds 0.7885 against 0.7900. So the b=5 ratios are 0.1–0.2 % off a same-seed normalisation.
-- **Error bars** (`:114-115`): drawn **on every bar in _allb** as `yerr = [m − lo, hi − m]` (dark grey, lw 0.4, cap 0.6). They are **95% percentile-bootstrap CIs over seeds**, using per-seed means (for replay b=5, the per-seed mean of the 3 shape means). The implementation is `extra_figs.ci` (`:89-97`) with B = 2000 and `default_rng(0)`:
+- **Error bars** (`:113-114`): drawn **on every bar in _allb** as `yerr = [m − lo, hi − m]` (dark grey, lw 0.4, cap 0.6). They are **95% percentile-bootstrap CIs over seeds**, using per-seed means (for replay b=5, the per-seed mean of the 3 shape means). The implementation is `extra_figs.ci` (`:89-97`) with B = 2000 and `default_rng(0)`:
   - seed-indexed Series (b=3 live/RouterEval/LLMRouterBench via bar_figs; b=1/3 matrices): resample seeds with `rng.integers`;
   - plain arrays (`add_budgets`, b=1/5; the cross-fitted scores of the pooled arms): resample with `rng.choice`.
   
   With 3 seeds (live n ≥ 10^4, RouterEval) the bootstrap has at most 10 distinct resample means, so those CIs are coarse.
-- **_stacked has no error bars.** The condition `if not nested or (b == 3 and not stacked)` is false whenever `stacked=True` (`nested` is forced true at `:94`). The comment gives the reason: "an interval inside the stack misreads; see _allb" (`:114`).
-- **Legend** (`:110`, `:121`):
+- **_stacked has no error bars.** The condition `if not nested or (b == 3 and not stacked)` is false whenever `stacked=True` (`nested` is forced true at `:93`). The comment gives the reason: "an interval inside the stack misreads; see _allb" (`:113`).
+- **Legend** (`:109`, `:120`):
   - Each arm gets its handle from **group 0, honest, b=3** (`first = i == 0 and not h and b == 3`); the oracle gets its handle from group 0.
   - `ax.legend(ncol=4, loc="lower center", bbox_to_anchor=(0.5, 1.07))` goes through the global wrapper `extra_figs._ranked` (`extra_figs.py:38-54`, installed at `:58`). That wrapper sorts entries by `_plotted(handle)`, descending:
     - a bar handle's value = the height of that single bar, i.e. group 0's honest b=3 value;
@@ -2183,7 +2200,7 @@ fig_A(C); fig_B(C); fig_D(d)
   - **B** ranks by live-1e5 honest b=3 ratios: oracle 1.0, VA .969, MIDIAN .872, flat .869 / learned .860, bandit .856, declared .722, random .513.
   - Both orders match the PNGs.
   - An arm that lacked an honest b=3 bar in group 0 would get **no legend entry**. That does not happen currently.
-- **CSV** (`:116`, `:122`): one row per drawn bar with columns `group, regime, arm, b ('-' for budget-less), chosen, value, ci_lo, ci_hi`. The values are **absolute bar heights**; in B they are already divided by the oracle. **_stacked CSVs contain the same rows as _allb** in a different order (`sort | diff` is empty). Neither CSV lists the missing-budget stars or seed counts; the incomplete-pool flag is in `chosen`, and the pooled arms' pick counts add up to their seed count.
+- **CSV** (`:115`, `:121`): one row per drawn bar with columns `group, regime, arm, b ('-' for budget-less), chosen, value, ci_lo, ci_hi`. The values are **absolute bar heights**; in B they are already divided by the oracle. **_stacked CSVs contain the same rows as _allb** in a different order (`sort | diff` is empty). Neither CSV lists the missing-budget stars or seed counts; the incomplete-pool flag is in `chosen`, and the pooled arms' pick counts add up to their seed count.
 
 #### 4.0.6 What "honest" and "β=0.5 cartel" mean here
 - **honest** = β = 0, no liars.
@@ -2214,7 +2231,7 @@ fig_A(C); fig_B(C); fig_D(d)
 
 **Question answered.** On the live LLM backend with the specialist population, how does MIDIAN-VA compare with plain MIDIAN, the flat probe-argmax control, the best learned router, the best bandit, declared argmax and random, at every scale n, honest versus a β = 0.5 low-skill colluding cartel, and at each probe budget b = 1, 3, 5? It also shows how much each budget step buys.
 
-**Groups** (`fig_A`, `:130-134`): n = the n values with a `("live","specialist",n,"beta0")` cell in `C`, i.e. 100, 1000, 10000 and 100000. The x labels are `n = 100`, `n = 1,000`, etc.
+**Groups** (`fig_A`, `:129-133`): n = the n values with a `("live","specialist",n,"beta0")` cell in `C`, i.e. 100, 1000, 10000 and 100000. The x labels are `n = 100`, `n = 1,000`, etc.
 
 **_allb** (`A_live_allb`): in each group, for each arm left to right (MIDIAN-VA, MIDIAN, flat, best learned, best bandit, declared, random):
 - solid bars for honest b=1, b=3 and b=5 (light, mid, dark), then hatched bars for cartel b=1, b=3 and b=5;
@@ -2223,8 +2240,8 @@ fig_A(C); fig_B(C); fig_D(d)
 - dotted line = oracle success, i.e. the honest b=3 oracle: 0.8449, 0.8612, 0.8589, 0.8622;
 - y = success, not normalised.
 
-**_stacked** (`A_live_stacked`, `stacked=True`, `:134`): one full-width slot per (arm, regime).
-- The b values present are sorted **tallest first** (`:103`) and each is drawn **from 0 to its own full height**, with the full slot width. Drawing order is z-order 2, 3, 4 (tallest behind, shorter in front).
+**_stacked** (`A_live_stacked`, `stacked=True`, `:133`): one full-width slot per (arm, regime).
+- The b values present are sorted **tallest first** (`:102`) and each is drawn **from 0 to its own full height**, with the full slot width. Drawing order is z-order 2, 3, 4 (tallest behind, shorter in front).
 - So what you see is the shortest bar in its shade at the bottom, and above it the part of each taller bar that sticks out. When success rises with b, that reads as "b=1 base, gain to b=3, gain to b=5", which is what the title says.
 - **Negative gains are never drawn as negative segments.** If b=3 < b=1, the bar just shows the lighter b=1 shade *above* the mid shade: out-of-order shades, as the docstring (`:9`) warns.
 - In A, the arms with more than one b are MIDIAN-VA (every n) and, at n = 10^4 honest, MIDIAN, flat probe argmax and the two pooled arms (b = 1 and 3). All are monotone in b, so A's stacks are all in order.
@@ -2318,9 +2335,9 @@ Method and params behind each label:
 
 **Question answered.** Does the ordering in A hold across every experiment family (live LLM, calibrated Bernoulli, RouterBench replay, RouterEval real-LLM pool, LLMRouterBench) at each family's largest population, on a common oracle-normalised scale, honest versus cartel, at b = 1, 3, 5?
 
-**Group selection** (`fig_B`, `:140-149`). For each family in `FAMILY` order (live, bernoulli, replay, routereval, llmrouterbench):
+**Group selection** (`fig_B`, `:139-148`). For each family in `FAMILY` order (live, bernoulli, replay, routereval, llmrouterbench):
 - n = the **largest** n whose primary group has **both** a cartel and a β=0 cell in `C`;
-- primary group = `specialist` for live, `strong_to_weak` for routereval, and otherwise whatever group exists (`primary`, `:137`; `PRIMARY`, `:40`).
+- primary group = `specialist` for live, `strong_to_weak` for routereval, and otherwise whatever group exists (`primary`, `:136`; `PRIMARY`, `:39`).
 
 Result:
 
@@ -2462,14 +2479,8 @@ The source grids are still being written, so a regeneration would change A and B
 
 ---
 
-### 4.4 D, briefly (`fig_D`, `:152-165`)
-- Uses only the bars CSVs (**b = 3 only**), keeping primary groups and regimes beta0 / cartel, without `excluded` labels and without frameworks.
-- Each cell value is `rel = mean / oracle` of the same (family, n, regime); note this is the *same-regime* oracle, whereas B uses the β=0 oracle (the values are identical).
-- Pivot: rows = label, columns = (family, n, regime) in FAMILY order, then n, honest first. Rows are sorted by mean `rel` across columns.
-- Colours: viridis colormap, vmin 0.3, vmax 1. Blank = not run.
-- No b axis, no "best" selection, no CIs.
-
----
+### 4.4 Figures C and D
+They are not drawn by `condensed_figs.py`. See Part 6.
 
 ### 4.5 Discrepancies, open questions and possible issues
 
@@ -2496,7 +2507,7 @@ The source grids are still being written, so a regeneration would change A and B
 8. **Normalisation in B uses one scalar**: the β=0, b=3 oracle from the bars CSV, for every bar in the group.
    - For bernoulli and replay, MIDIAN-VA's honest b=5 subsets have their own oracles 0.8456 and 0.7885 against 0.8462 and 0.7900. That is a small bias, 0.1–0.2 %.
    - The ratio CIs ignore oracle uncertainty and are not per-seed ratios.
-9. **Replay pooling rules differ by b.** b=1/3 (matrix) average all (shape, seed) units; b=5 keeps only seeds with every shape (`:186-190`); the pooled arms keep only complete-shape seeds at every b (`seed_tables.py:55-58`). They are equivalent only when complete. The b=1/3 matrices are complete (100 × 3); b=5 is not.
+9. **Replay pooling rules differ by b.** b=1/3 (matrix) average all (shape, seed) units; b=5 keeps only seeds with every shape (`:169-173`); the pooled arms keep only complete-shape seeds at every b (`seed_tables.py:55-58`). They are equivalent only when complete. The b=1/3 matrices are complete (100 × 3); b=5 is not.
 10. **Live rivals at b = 1 / 5 are still to come.** `rivals_b_n100` and `rivals_b_n1000` (`configs/grid.yaml:1068-1069`) are queued in the focus pack plan and have no rows; `rivals_b_n100k` is pending; `rivals_b_n10k` has b = 1 honest only. Until they land, the A stars at those slots stay.
 11. **Documentation tension about b=1.** README.md:344-345 says "never run b = 1 beside b = 3 in one table (verification is unfunded at b = 1)". A and B put them side by side, and MIDIAN-VA b=1 honest equals MIDIAN b=1 honest in bernoulli (0.8015), replay (0.8272) and LLMRouterBench (0.8880), consistent with verification being unfunded at b=1.
 12. **Stacked presentation.**
@@ -2505,13 +2516,12 @@ The source grids are still being written, so a regeneration would change A and B
     - The stacked CSV holds absolute values, not the gains its title describes.
     - Two missing budgets stack two stars at one x.
     - There are no CIs, by design.
-13. **Stale docstring and dead code.**
-    - The module docstring (`:2`) says it writes `{A,B}_{allb,nested}`; main writes `_allb` and `_stacked`.
-    - The `nested` rendering path (`:89-90`, `:105`, `KEY_NEST` `:126`) is never called.
+13. **Dead code and a title that is easy to misread.**
+    - The `nested` rendering path (`:88-89`, `:104`, `KEY_NEST` `:125`) is never called.
     - The `_allb` title says "light / mid / dark = b = 1 / 3 / 5", but budget-less arms are drawn in the mid (base) colour for their single bar. Correct, but easy to misread as b=3 only.
 14. **Latent loader hazard (no effect today).** `fw_variant_numbers.load` deduplicates on `(n, b, dist, beta, liar_select, seed, method, params)` (`:32`), which omits `declared_source`, `K`, `Q`, `collude` and `lie_mode`. For a grid that mixes declared sources (e.g. `live_f1_n1000` has both `programmatic` and `self_described` rows with identical keys) it silently keeps one of the two. All `va_b_*` / `rivals_b_*` grids have a single value of each omitted axis today (verified), so A and B are unaffected. It would bite if a b-grid ever mixes them.
-15. **`HIDE_HALVING` has no effect on A/B.** `extra_figs.HIDE_HALVING = True` (`:120`) and the do-not-add list (`excluded`, `:123-135`) are applied (`cells` `:57`, `add_budgets` `:185`), but no ARMS entry or pool member is a halving, SH/SHA or r≠10 arm, so A/B are unchanged by them.
-    - Frameworks are dropped at `load()` (`:47`) and in `seed_tables.rows` (`seed_tables.py:39`).
+15. **`HIDE_HALVING` has no effect on A/B.** `extra_figs.HIDE_HALVING = True` (`:120`) and the do-not-add list (`excluded`, `:123-135`) are applied (`cells` `:56`, `add_budgets` `:168`), but no ARMS entry or pool member is a halving, SH/SHA or r≠10 arm, so A/B are unchanged by them.
+    - Frameworks are dropped at `load()` (`:46`) and in `seed_tables.rows` (`seed_tables.py:39`).
     - **No erratum-28 filtering and no fallback-row filtering** happens anywhere in this path. Neither matters for A/B, since those issues affect framework rows only, and frameworks are not drawn.
 16. **The "RouterEval strong_to_weak" key is a misnomer at n=5000.** `bar_figs.py:172` does not filter the 5000-LLM pool by `dist` (it is `all`), so B's RouterEval group is the leaderboard pool, not a strong-to-weak pool.
 17. **Live n=100 cartel MIDIAN-VA b=5 equals honest (0.8121) seed for seed.** I checked this. It is genuine and not a duplicated-row bug: `n_liars` 0 vs 50, `misroute_to_liar` > 0 in the cartel rows, same oracle. It does warrant a sentence in any caption, because it looks like a copy error.
@@ -3182,6 +3192,348 @@ cosmetic or documentation only.
 - **Open question: is the per-framework "best" dot comparable across bars?** It is the max over frameworks of a 3-seed mean
   (10^5), so it is upward-biased by selection. More frameworks means more selection: for TF-IDF all 10 tie, so no issue
   there.
+
+---
+
+## 6. Figures C and D: routing work and energy per query
+
+Scope: `figures/condensed_sample/C_routing_work_vs_n.{png,pdf,csv}` and `D_energy_per_query.{png,pdf,csv}`, both written
+at **2026-09-23 12:16** by `python scripts/efficiency_figs.py` (120 lines). That script imports `scripts/energy.py`
+(130 lines) for the energy model and the framework numbers. It also takes `ARMS`, `OUT` and `save` from
+`scripts/condensed_figs.py` (`efficiency_figs.py:18`), `label` from `scripts/seed_tables.py` (`:17`) and the legend rule
+from `scripts/extra_figs.py` (`:16`). Importing `condensed_figs` also applies its rcParams (`condensed_figs.py:27-28`), so C
+and D share A and B's fonts. Line citations in this part are to `efficiency_figs.py` unless another file is named.
+
+**How this part was checked (read-only).**
+- The C CSV was compared with `cost_by_n.csv`, and the cache itself was re-derived from `bernoulli_scale_v5/rows.csv`: the
+  same medians for all 51 (arm, n, b) rows.
+- Every D row was re-derived from the cache and the energy constants (`build_J`, `marginal_J` to 1e-6 J).
+- The `va_build` inputs were re-read from the five grids, with row counts per source, and `va_build` itself was called on
+  the current cache. It returns the nine values of D's CSV, all tagged `ledger`.
+- `energy.table()` was re-run with its row loader swapped for a read-only one (rows.csv plus rows.d, deduplicated on
+  `rid`). The stock loader, `rte.analyze.load`, runs `consolidate`, which writes rows.csv (`rte/analyze.py:57`). The band
+  edges came out the same: 20.600235 and 219.754123 J.
+
+---
+
+### 6.1 Shared inputs
+
+#### 6.1.1 The ledger cache `cost_by_n.csv` (`costs`, `:29-36`)
+- **Source.** `$RTE_DATA/results/bernoulli_scale_v5/rows.csv`, read in chunks of 500,000 rows. Only the columns in
+  `COLS` are kept (`:22`). The grid has no `rows.d` files, so rows.csv is complete.
+- **Filter** (`:31-32`). `beta == 0`, and either `b == 3` or `method == "midian_va"`. So the SHOW arms are kept at b = 3, and
+  MIDIAN-VA at every b the grid ran: b = 3 at every n, plus b = 1 at 10^6 and 10^7 (the grid's only b = 1 cells, §1.6.3).
+  The b = 1 rows are there for D's build ledger. There is no filter on `dist`, `liar_select` or `declared_source`. It
+  needs none: every kept row is `dist = specialist`, `liar_select = random`, `declared_source = programmatic` (checked).
+- **Labels.** `seed_tables.label(method, params)` (`:34`), which applies `ALIAS`, so `flat_probe_argmax{"online":true}`
+  becomes `flat_probe_argmax_online`. Only the seven labels in `SHOW` are kept (`:23-25`, `:35`).
+- **Aggregation.** The median over rows per (label, n, b) of `messages_per_task`, `comparisons_per_task`, `build_probes`
+  and `build_messages` (`:35`). There is one row per seed. The file has 51 rows: 7 arms × 7 n at b = 3, plus MIDIAN-VA
+  b = 1 at 10^6 (16,799,988.5 build probes) and 10^7 (167,999,523.5). It has a `b` column.
+
+  | n | 10, 100, 1,000, 10^4 | 10^5 | 10^6 | 10^7 |
+  |---|---|---|---|---|
+  | seeds per (arm, n, b) | 1,000 | 500 | 200 | 100 |
+
+  The seed counts are the same for all seven arms, and for MIDIAN-VA b = 1. The per-query counts are identical across seeds for every arm, so the
+  median is the only value. Only MIDIAN-VA's `build_probes` varies (e.g. 49,325–49,586 at n = 10^3; 495,989,791–496,008,863
+  at 10^7).
+- **Caching.** When the file exists it is read back and the rows are not touched (`:30`). The docstring says to delete it
+  to re-read (`:10`). The current file was written at 12:16, in the same run as the figures. It covers n = 10 … 10^7; C
+  draws n ≥ 100 at b = 3 (`:73`, `:75`).
+- **Arm labels in the figures** (`SHOW`, `:23-25`; colours `COL`, `:26`):
+
+  | cache label | figure label | colour | also in A/B? |
+  |---|---|---|---|
+  | `midian_va` | MIDIAN-VA | `#2ecc71` (A/B's) | yes |
+  | `midian` | MIDIAN | `#c0392b` | yes |
+  | `flat_probe_argmax_online` | flat probe argmax (online) | `#3498db` | yes |
+  | `warm_start_bandit` | warm-start bandit | `#9467bd` (A/B's "best bandit" purple) | as a pool candidate |
+  | `ucb_per_family` | UCB bandit | `#c5b0d5` | as a pool candidate |
+  | `flat_nsw_router` | flat NSW index router | `#ff7f0e` (A/B's "best learned" orange) | as a pool candidate |
+  | `declared_argmax` | declared argmax | `#5d6d7e` | yes |
+
+  Random, the oracle, the cross-fitted pooled arms and the frameworks are not in C. D uses only the `midian_va` rows.
+
+#### 6.1.2 What "routing work" counts
+C's y value is `messages_per_task + comparisons_per_task` at b = 3 (`:73`). These are the ledger's per-task counts (§1.1.7). Hops
+and reports are not counted, and neither is the build. Per arm (§2.11), with depth = ⌈log₁₀ n⌉ at r = 10:
+- MIDIAN-VA: 2 + depth messages and 1 + 10·depth comparisons, so work = 3 + 11·depth.
+- MIDIAN: 3·depth messages and 20·depth comparisons, so work = 23·depth.
+- Flat probe argmax, the bandits and declared argmax: 0 messages and n comparisons.
+- Flat-NSW router: 0 messages and ef = 50 comparisons. Its ⌈log₂ n⌉ hops are not in C.
+
+The cache confirms each formula at every n. MIDIAN's and MIDIAN-VA's work is therefore linear in tree depth, which is
+log₁₀ n rounded up: it grows like log n, not like a power of n. MIDIAN-VA's b = 1 rows at 10^6 / 10^7 have the same
+per-query counts as its b = 3 rows. Messages and comparisons are added one for one, although they cost very different
+amounts (§6.3.2: 1e-3 J against 1e-8 J).
+
+---
+
+### 6.2 Figure C: `C_routing_work_vs_n`
+
+**Question answered.** How does the communication and computation a router spends on each query grow with the population
+n, for MIDIAN and MIDIAN-VA against flat arms that scan every agent?
+
+**What is drawn** (`draw_I`, `:72-83`):
+- One line per arm in `SHOW` order. Circle markers (ms 3), lw 1.6, at n = 10², 10³ … 10⁷, b = 3 rows only (`:73`, `:75`, `:78`). There are no
+  error bars: the counts do not vary across seeds.
+- Both axes are log (`:79`). x = "population n (agents)", y = "messages + comparisons per query". The major grid is lw
+  0.3, α 0.4 (`:80`).
+- **Four lines coincide.** Flat probe argmax, warm-start bandit, UCB bandit and declared argmax are all exactly n.
+  Declared argmax is drawn last, so only its grey shows. The blue, purple and lilac lines are underneath it.
+- **Legend** (`:82`): two columns, top left, font 6. Each entry is `name  (growth)` (`:78`). `growth(s)` (`:67-69`) turns
+  the fitted slope s into words: "constant" if |s| < 0.02, "∝ log n" if s < 0.3, otherwise "∝ n^s" with two decimals.
+  The current entries are: flat NSW index router (constant), MIDIAN-VA (∝ log n), MIDIAN (∝ log n), and "∝ n^1.00" for
+  the four flat arms.
+  It goes through the `extra_figs` wrapper with `rank="asc"`: entries are sorted by the mean of the plotted y values,
+  lowest first, and laid out row-major (`extra_figs.py:16-54`). The four tied arms keep `SHOW` order. The legend reads:
+  flat NSW index router, MIDIAN-VA / MIDIAN, flat probe argmax (online) / warm-start bandit, UCB bandit / declared argmax.
+- **Title** (`:81`): "C  routing work per query: MIDIAN grows like log n, flat methods like n (calibrated bernoulli, b = 3,
+  exact ledger)".
+- Figure size 7.2 × 2.8 in; PNG at 250 dpi, plus a PDF (`:113-116`, `condensed_figs.py:78-79`).
+
+**The slope** (`slope`, `:62-64`). An ordinary least-squares line through (log₁₀ n, log₁₀ work) for n ≥ 10³ and work > 0,
+via `np.polyfit(..., 1)`. That is five points, n = 10³ … 10⁷. n = 10² is drawn but not fitted. The slope is written to the
+CSV but is only a classifier for the legend. MIDIAN's and MIDIAN-VA's work is 23·depth and 3 + 11·depth (§6.1.2), linear
+in log n. A power law fitted to such a curve has a small slope (0.09) that falls as n grows, so `growth` labels it
+"∝ log n". The thresholds 0.02 and 0.3 are fixed in the code. They separate the three classes here with wide margins
+(|−2.6e-17|, 0.086–0.091, 1.000).
+
+**Values** (`C_routing_work_vs_n.csv`: columns `arm, n, work, slope`; one row per drawn point, the slope repeated on
+each row):
+
+| n | MIDIAN-VA | MIDIAN | flat probe argmax, warm-start, UCB, declared argmax | flat NSW index router |
+|---|---|---|---|---|
+| 10² | 25 | 46 | 100 | 50 |
+| 10³ | 36 | 69 | 1,000 | 50 |
+| 10⁴ | 47 | 92 | 10,000 | 50 |
+| 10⁵ | 58 | 115 | 100,000 | 50 |
+| 10⁶ | 69 | 138 | 1,000,000 | 50 |
+| 10⁷ | 80 | 161 | 10,000,000 | 50 |
+| fitted slope (n ≥ 10³) | 0.0860 | 0.0912 | 1.0000 | −2.6e-17 |
+
+**Reading.** At n = 10² the flat-NSW router (50) and MIDIAN-VA (25) are both below the flat arms (100). MIDIAN (46) is
+below flat as well. MIDIAN-VA is under the flat-NSW router up to 10⁴ (47 vs 50) and over it from 10⁵ (58).
+
+---
+
+### 6.3 Figure D: `D_energy_per_query`
+
+**Question answered.** Counting LLM calls, messages and comparisons in joules, after how many routed queries does
+MIDIAN-VA's one-off probing build cost less than a framework that calls a supervisor LLM on every query? How does that
+point move with n and b?
+
+**What is drawn** (`draw_J`, `:86-110`):
+- **x** = queries served T, 200 log-spaced points from 10² to 10⁹ (`:91`). **y** = energy per query in J, with the build
+  amortised (`:106`). Both axes are log.
+- **MIDIAN-VA lines.** Nine lines, one per (n, b) with n ∈ {10³, 10⁵, 10⁷} and b ∈ {1, 3, 5} (`:96-102`):
+  `y(T) = build_J / T + marginal_J`.
+  - The shade is the base green `#2ecc71` times (1.35 − s), with s = 0.55 / 0.8 / 1.0 for n = 10³ / 10⁵ / 10⁷. That is ×0.80,
+    ×0.55 and ×0.35: darker means a larger n (`:96`, `:101`).
+  - The line style gives b: dotted `:` for b = 1, solid for b = 3, dashed `--` for b = 5 (`:98`). lw 1.4.
+  - As T grows each line falls with slope −1 and flattens at `marginal_J`. At T = 10⁹ only the n = 10³ lines have
+    reached their floor, about 0.005 J.
+- **The grey band** (`:93-94`) spans all T, from the cheapest to the costliest framework's per-query energy: 20.60 J
+  (AutoGen) to 219.75 J (Magentic-One, 7B). `#bbbbbb`, α 0.5. Legend: "frameworks: 1-10.7 supervisor-call equivalents per
+  query (21-220 J)". The call-equivalent range is the min and max of `sup_call_equiv` over the drawn frameworks (`:92`),
+  printed as `.0f` and `.1f`: 1.000 (AutoGen) and 10.673 (Magentic-One). §6.3.3 says what a call-equivalent is.
+- **The ×s** (`:103-104`): black, ms 3, drawn above the lines. Each is at (break-even T, framework J), where a MIDIAN-VA line
+  crosses the lower edge (vs the cheapest framework) or the upper edge (vs the costliest). There are 18: 9 lines × 2 edges.
+- **Legend** (`:109`): four columns above the axes, font 5.5, `rank="asc"`. The lines are ranked by the mean of their y
+  values, which is set by build energy, so the order runs from n = 10³, b = 1 to n = 10⁷, b = 5. The band has no y data
+  (`extra_figs._plotted` returns None for it), so it comes last. The legend reads, row by row: 10³ b1, 10³ b3, 10³ b5,
+  10⁵ b1 / 10⁵ b3, 10⁵ b5, 10⁷ b1, 10⁷ b3 / 10⁷ b5, band.
+- **Title** (`:108`): "D  energy per query (\*): MIDIAN-VA pays one probing build, then ~0.01 J / query; frameworks pay
+  supervisor LLM calls every query". The `*` marks an estimate, as in `energy.py`'s docstring ("ESTIMATE (\*)", `energy.py:1`). It is
+  not an erratum-28 star.
+
+#### 6.3.1 MIDIAN-VA's build probes (`va_build`, `:42-59`)
+- **Grids read** (`VA_GRIDS`, `:39`): `va_b_bernoulli_1e7`, `va_b_n1000`, `va_b_n100k`, `fw_live_n1000`, `live_n100k`. For
+  each, every `rows.d/*.json` and the `rows.csv` are read (`:48-52`). rows.csv and rows.d hold the same rows in four of
+  the five grids. Rows are deduplicated on `rid`; rows without a `rid` are all kept (`:54`). Every rows.csv here has a
+  `rid` column.
+- **Aggregation** (`:55`): `method == "midian_va"`, then the median of `build_probes` per (n, b). There is no filter on
+  β, `dist`, `liar_select` or channel.
+- **Bernoulli fill-in** (`:56`): for every (n, b) of MIDIAN-VA in the cache, the grid value is kept if there is one, else the
+  cache's value (the `bernoulli_scale_v5` median) is used. So the live and `va_b` ledgers come first, then the bernoulli
+  sweep. D uses the sweep for (10⁷, 1) and (10⁷, 3). The cache values at 10³ (49,440) and 10⁵ (4,959,820) are overridden
+  by the live grids.
+- **Ratio fallback** (`:57-58`): for each b, `ratio[b]` = the median over the n available at that b of
+  `build_probes / (n · 16 · b)`. Any (n, b) with no value would become `ratio[b] · n · 16 · b` and be tagged
+  `ratio r x nKb` in the CSV's `build_source` column. K = 16 is hard-coded. No D cell uses it now; the docstring says so
+  (`:44-45`).
+
+| n | b | build probes | ÷ n·K·b | CSV `build_source` | where the number comes from |
+|---|---|---|---|---|---|
+| 10³ | 1 | 16,805 | 1.0503 | ledger | `va_b_n1000`: 10 seeds × β {0, 0.5}, live specialist (20 rows) |
+| 10³ | 3 | 49,427.5 | 1.0297 | ledger | `fw_live_n1000`: 10 seeds × β {0, 0.1, 0.25, 0.5} × 3 shapes (120 rows) |
+| 10³ | 5 | 83,007.5 | 1.0376 | ledger | `va_b_n1000` (20 rows) |
+| 10⁵ | 1 | 1,680,005 | 1.0500 | ledger | `va_b_n100k`: 3 seeds × β {0, 0.5} (6 rows, rows.d only) |
+| 10⁵ | 3 | 4,959,662 | 1.0333 | ledger | `live_n100k`: 3 seeds, β {0, 0.25, 0.5} (18 rows) |
+| 10⁵ | 5 | 8,319,642 | 1.0400 | ledger | `va_b_n100k`: 3 seeds, β = 0 only (3 rows; the cartel b = 5 rows had not landed) |
+| 10⁷ | 1 | 167,999,523.5 | 1.0500 | ledger | the cache: `bernoulli_scale_v5`, 100 seeds, β = 0 |
+| 10⁷ | 3 | 495,999,294.5 | 1.0333 | ledger | the cache: `bernoulli_scale_v5`, 100 seeds, β = 0 |
+| 10⁷ | 5 | 831,998,807 | 1.0400 | ledger | `va_b_bernoulli_1e7`: 100 seeds × β {0, 0.5} (200 rows) |
+
+Every build overspends n·K·b by 3–5 % (§2.3.4). "ledger" means a median of measured `build_probes`, from a live or a
+bernoulli run: the column does not say which backend.
+
+#### 6.3.2 The energy model (`scripts/energy.py`)
+Everything is estimated from call counts, not measured on a power meter. The module docstring gives the model
+(`energy.py:1-4`).
+- **GPU-seconds per LLM call** (`call`, `energy.py:17`): `params_b · (A · prompt_tokens + B · gen_tokens)`. `params_b` comes
+  from `configs/models.yaml:14-20` (0.5, 1.5, 2, 3, 7, 9 and 14 B; `energy.py:12`).
+- **B = 5A** (`energy.py:8`). A decode token is taken as 5× a prefill token on H100 / vLLM (docstring). This ratio is
+  assumed, not measured.
+- **A is calibrated to one measurement** (`energy.py:7-8`). A 7B supervisor call has 1,900 prompt and 65 generated tokens
+  (`SUP_TOK`). It is set to cost 1/34 GPU-s: 34 req/s is the throughput of a saturated 1-GPU 7B replica, measured on
+  2026-09-03 from 4 samples of 32–36 req/s (docstring). So A = (1/34) / (7 · (1,900 + 5·65)) = 1.888e-6 and B = 9.442e-6.
+- **A supervisor call** (`SUP`, `energy.py:19`) = 1/34 = 0.029412 GPU-s. At 700 W that is **20.588 J**.
+- **A probe** is one call by the probed agent's own model, using that model's measured token means (`PROBE_TOK`,
+  `energy.py:13-14`, "measured per-server lifetime means"). 7B and 14B use the 3B means as a proxy (294 prompt / 86
+  generated tokens, the tool-enabled prompt). The expected cost per probe is the mix-weighted mean over the population's
+  models (`MIX`, `energy.py:15-16`; `probe_cost`, `energy.py:18`). The mixes follow `draw_profiles` (`rte/backends/population.py:60-70`):
+
+  | shape | model mix | GPU-s per probe | J at 700 W |
+  |---|---|---|---|
+  | specialist (used in D) | all 7 models, 1/7 each | 0.0057697 | **4.0388** |
+  | heavy_tail | 90 % split over 0.5B / 1.5B, 10 % over 7B / 9B / 14B | 0.0017557 | 1.2290 |
+  | bimodal | 80 % 0.5B, 20 % 7B | 0.0020319 | 1.4223 |
+
+  Per model at 700 W: 0.5B 0.10 J, 1.5B 0.86 J, 2B 0.50 J, 3B 2.87 J, 7B 6.70 J, 9B 3.84 J, 14B 13.40 J.
+- **Watts.** 700 W, the H100 TDP (`WATTS`, `energy.py:9`; `table(watts=700)`, `energy.py:28`). `draw_J` multiplies by 700 itself
+  (`:90`). The 400 W "typical draw" entry is used only in the RESULTS_energy.md table (`energy.py:72`).
+- **Message = 1e-3 J** (`J_MSG`, `energy.py:10`): one RPC handled in about 100 µs on a 10 W core (`energy.py:44`).
+- **Comparison = 1e-8 J** (`J_CMP`, `energy.py:10`): one float compare.
+- **Pessimistic messages.** `table()` also computes `*_pess` columns with 10 × J_MSG = 1e-2 J (`energy.py:45-48`). D
+  does not use them. With them, every break-even in §6.3.4 moves by less than 0.31 %.
+- **Excluded.** The routed task's own execution. `exec_gpu_s_per_task` is computed (`energy.py:38`) but left out of
+  `per_task_gpu_s` (`energy.py:37`). It is the same for every method: 0.0058 GPU-s per task on specialist (`energy.py:68`).
+  CPU-side routing work (tree descent, TF-IDF) is left out of the LLM term (`energy.py:67`). It enters only through the
+  ledger's message and comparison counts.
+
+**MIDIAN-VA in D** (`:95-100`):
+- `build_J = build_probes · 4.0388 + build_messages · 1e-3`. The build messages are the b = 3 cache value at every b
+  (1,010 / 101,110 / 10,111,110 at n = 10³ / 10⁵ / 10⁷), a rounding term (`:95`, `:100`). Build comparisons are not charged.
+- `marginal_J = messages_per_task · 1e-3 + comparisons_per_task · 1e-8` from the cache (b = 3). That is 5 msgs + 31 cmp =
+  0.00500031 J at 10³, 7 + 51 = 0.00700051 J at 10⁵ and 9 + 71 = 0.00900071 J at 10⁷. It is the same at every b, as the
+  ledger's per-query counts are.
+- No LLM term per query: MIDIAN-VA routes without an LLM call and without run-time probes (§2.3.6).
+
+#### 6.3.3 The framework band (`energy.table()`, `energy.py:28-54`; filter at `:88`)
+- **Rows** (`rows`, `energy.py:21-26`): grids `live_f1_n1000`, `variants_f1` and `fw_live_n1000` at n = 1,000, filtered to
+  `declared_source == "self_described"`. The per-method **mean** of each ledger column is taken over every such row. β,
+  `dist`, seed and quarantine are not filtered. Every `fw_` row comes from `fw_live_n1000`: 10 seeds × 3 shapes ×
+  β {0, 0.1, 0.25, 0.5}, `liar_select = random`. That is 120 rows per framework (CAMEL 114, LlamaIndex 119, Magentic-One
+  204 over its 7B and 14B arms). No erratum-28 quarantine is applied, so CrewAI and ADK, which E–H drop, are in the band.
+- **Supervisor call-equivalents** (`energy.py:29, 35`) = the framework's mean `wall_clock_per_task` divided by
+  AutoGen's (1.8987 s). AutoGen makes one supervisor call per task, so it is 1.0 by construction. The code comments call
+  the latency a "measured median" (`energy.py:49-50`), but it is the mean over rows. This assumes latency is proportional
+  to GPU work. It was measured on a shared fleet.
+- **The 14B Magentic-One arm** would be scaled by 14/7 (`energy.py:36`). D excludes it: `~fw.index.str.contains("supervisor")`
+  (`:88`) drops the `fw_magentic_one{"supervisor":"Qwen/Qwen2.5-14B-Instruct"}` row (8.93 call-equivalents, 367.87 J).
+  The band is also restricted to `fw_*` rows, so `llm_supervisor` is not in it.
+- **`per_task_J`** (`energy.py:37, 47`) = `(probes_per_task · probe_cost + call-equivalents · SUP) · 700 +
+  messages_per_task · 1e-3 + comparisons_per_task · 1e-8`. For every framework, probes_per_task = 0, messages = 12
+  (k + 2) and comparisons = 10 (k) per task (`_common.py:364-365`, k = 10).
+
+| framework | mean latency, s | call-equivalents | `per_task_J` |
+|---|---|---|---|
+| AutoGen (band floor) | 1.899 | 1.000 | **20.600** |
+| MAF | 2.309 | 1.216 | 25.051 |
+| Google ADK | 2.327 | 1.226 | 25.250 |
+| smolagents | 2.873 | 1.513 | 31.166 |
+| LangGraph | 3.772 | 1.987 | 40.911 |
+| OpenAI Agents | 3.995 | 2.104 | 43.327 |
+| CrewAI | 6.015 | 3.168 | 65.230 |
+| LlamaIndex | 8.978 | 4.728 | 97.361 |
+| CAMEL Workforce | 9.668 | 5.092 | 104.843 |
+| Magentic-One, 7B (band ceiling) | 20.265 | 10.673 | **219.754** |
+| *Magentic-One, 14B (excluded)* | 16.962 | 8.934 | 367.870 |
+
+Only the two edges are drawn. The per-framework values are not in D's CSV. They are in the `fw_J` column only as the
+edges.
+
+#### 6.3.4 Break-even points
+A MIDIAN-VA line meets a framework level F where build/T + marginal = F, so (`:104`)
+
+  **T\* = build_J / (F − marginal_J)**.
+
+The framework build (n registry messages, 1 J at n = 10³) is not in the band, so it does not enter T\*. T\*/n is given
+as queries per agent.
+
+| n | b | build probes | build J | marginal J | T\* vs AutoGen (20.60 J) | per agent | T\* vs Magentic-One (219.75 J) | per agent |
+|---|---|---|---|---|---|---|---|---|
+| 10³ | 1 | 16,805 | 6.787e4 | 0.00500 | 3,296 | 3.30 | 309 | 0.31 |
+| 10³ | 3 | 49,427.5 | 1.996e5 | 0.00500 | 9,693 | 9.69 | 908 | 0.91 |
+| 10³ | 5 | 83,007.5 | 3.353e5 | 0.00500 | 16,278 | 16.28 | 1,526 | 1.53 |
+| 10⁵ | 1 | 1,680,005 | 6.785e6 | 0.00700 | 329,492 | 3.29 | 30,878 | 0.31 |
+| 10⁵ | 3 | 4,959,662 | 2.003e7 | 0.00700 | 972,709 | 9.73 | 91,156 | 0.91 |
+| 10⁵ | 5 | 8,319,642 | 3.360e7 | 0.00700 | 1,631,678 | 16.32 | 152,910 | 1.53 |
+| 10⁷ | 1 | 167,999,523.5 | 6.785e8 | 0.00900 | 32,952,258 | 3.30 | 3,087,794 | 0.31 |
+| 10⁷ | 3 | 495,999,294.5 | 2.003e9 | 0.00900 | 97,286,799 | 9.73 | 9,116,267 | 0.91 |
+| 10⁷ | 5 | 831,998,807 | 3.360e9 | 0.00900 | 163,190,424 | 16.32 | 15,291,772 | 1.53 |
+
+`D_energy_per_query.csv` has two rows per (n, b), one per edge. Its columns are `n, b, build_probes, build_source,
+build_J, marginal_J, vs` ("cheapest" / "costliest"), `fw_J, break_even_queries`. Since the build is about 1.03–1.05 ·
+n·K·b probes and the marginal is tiny, T\* ≈ 16·b·1.04·4.04 J · n / F. It is linear in n and in b: about 3.3 / 9.7 / 16.3
+queries per agent at b = 1 / 3 / 5 against AutoGen, and 0.31 / 0.91 / 1.53 against Magentic-One.
+
+---
+
+### 6.4 Caveats, discrepancies and open questions
+
+1. **Bernoulli counts, live prices.** At n = 10⁷ the build probe counts come from bernoulli ledgers (`bernoulli_scale_v5`
+   via the cache for b = 1 and 3, `va_b_bernoulli_1e7` for b = 5), but every probe is priced at the live specialist per-probe energy (4.04 J).
+   No live run exists at 10⁷. Probe counts do not depend on the backend (the 10³ / 10⁵ live counts match the bernoulli
+   cache to 0.03 %), so the price is the assumption, not the count.
+2. **`build_source` does not name the backend.** All nine D rows say "ledger". Six are live or `va_b` ledgers at 10³ / 10⁵
+   (live) and 10⁷ b = 5 (`va_b_bernoulli_1e7`), and two are the `bernoulli_scale_v5` sweep at 10⁷ b = 1 and 3. The table
+   in §6.3.1 gives each one's source. The ratio fallback (`:57-58`) is still in the code but unused.
+3. **The flat-NSW router is constant in C because it is centralised.** It is an ANN index over flat probe means held in one
+   place (§2.8.3; METHODS.md calls it a verified-centralised arm). It shows that sublinear routing is possible centrally.
+   What MIDIAN adds is routing that is sublinear, decentralised and verified. C does not show that difference, and C
+   leaves out the router's ⌈log₂ n⌉ hops.
+4. **D's advantage is over the frameworks, not over flat probing.** Flat probe argmax builds with exactly n·K·b probes,
+   slightly fewer than MIDIAN-VA's 1.03–1.05 × n·K·b. Its per-query energy is n comparisons: 1e-5 J at 10³, 1e-3 J at 10⁵,
+   0.1 J at 10⁷. Its D curve is not drawn. It would lie within a few percent of MIDIAN-VA's: its build is 3–5 % smaller,
+   and its per-query floor is lower at 10³ and higher at 10⁷. The asymptotic advantage over flat methods is C's routing work, which D prices at near zero.
+5. **The framework band is a live n = 1,000 measurement, applied at every n.**
+   - Retrieval over the n descriptions (TF-IDF or embedding scoring) is not charged. The ledger charges each framework
+     query `compare(k)` and `message(k + 2)` (`_common.py:364-365`), which is 10 comparisons and 12 messages whatever n
+     is. `energy.py` says CPU-side routing is "microseconds per task and omitted" (`energy.py:67`).
+   - The framework build is not drawn: `message(n)` for registration (`_common.py:289`), 1 J at n = 10³ and 1e4 J at 10⁷.
+     Neither is any description-embedding cost.
+   - The supervisor prompt holds k = 10 descriptions, so its token count, and hence the call-equivalents, is taken as
+     constant in n. It was measured only at n = 1,000.
+   
+   Every omission favours the frameworks, so the band is a lower bound on their cost at large n under this model.
+6. **The band pools regimes and shapes.** It averages over β ∈ {0, 0.1, 0.25, 0.5} and all three population shapes. Per-β
+   means of AutoGen's latency range from 0.92 s to 3.13 s. It includes CrewAI and ADK rows that E–H drop (no quarantine
+   filter). Only the edges matter for D: AutoGen and Magentic-One.
+7. **Call-equivalents are a latency ratio, not a count of calls.** The legend says "1-10.7 supervisor-call equivalents per
+   query" (`:93-94`). The floor is AutoGen, one call by construction. The 10.7 at the ceiling is Magentic-One's mean latency
+   divided by AutoGen's (§6.3.3). No call count was recorded.
+8. **Energy is an estimate** (the `*`). Its uncertain parts: B = 5A is assumed; A rests on one 34 req/s throughput figure;
+   7B / 14B probe tokens are 3B proxies; latency stands in for GPU work; 700 W is the TDP. A 400 W draw would scale every
+   LLM term by 4/7. That lowers every y value but leaves T\* almost unchanged, because the build and the band scale
+   together. Messages at 1e-3 J are a guess. The 1e-2 J variant moves T\* by under 0.31 %.
+9. **MIDIAN-VA's build is pooled over regimes and shapes.** `va_build` does not filter β or `dist`. The 10³ b = 3 value
+   mixes 3 live shapes and 4 β values. The spread is small (49,368–49,468 at 10³ b = 3), so the effect is under 0.2 %.
+10. **The 10⁵, b = 5 build rests on 3 honest rows.** Those were the rows present at 12:16, and still at 12:19. The cartel b = 5 rows of
+    `va_b_n100k` were still running (§4.3).
+11. **The cache does not refresh itself.** `cost_by_n.csv` is reused until it is deleted (`:30`). The `va_build` grids and
+    the framework rows are re-read on every run. A rerun can therefore mix a new build with an old cache. For the counts in
+    C this does not matter, because they are deterministic. A cache written before the `b` column was added would fail in
+    `draw_I` (`d.b`, `:73`), so an old file has to be deleted. The current one was rebuilt at 12:16.
+12. **Running `efficiency_figs.py` writes to result directories.** `energy.table()` loads through `rte.analyze.load`,
+    which consolidates rows.d into rows.csv for `live_f1_n1000`, `variants_f1` and `fw_live_n1000` (`rte/analyze.py:57`),
+    unless a grid has a `.merge_owner` file (`rte/run.py:190-191`). Without `RTE_DATA`, the default
+    `/scratch/rte/results` (`:20`) holds no grids. The script then stops with an error (`rte/analyze.py:60`) and draws
+    nothing.
+13. **C adds unlike units.** A message and a comparison each count 1 in C, although the energy model prices them 1e5 apart.
+    In messages alone, the flat arms send 0 per query and MIDIAN-VA sends 2 + depth.
 
 ---
 

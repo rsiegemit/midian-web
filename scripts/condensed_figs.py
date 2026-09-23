@@ -1,5 +1,5 @@
 """SAMPLE condensed replacements for the 48 figures/bars files -- one panel and one row each.
-    python scripts/condensed_figs.py      -> figures/condensed_sample/{A,B}_{allb,nested}, D_*.{png,pdf,csv}
+    python scripts/condensed_figs.py      -> figures/condensed_sample/{A,B}_{allb,stacked}.{png,pdf,csv}
 b = 3 cells from figures/bars/<family>.csv; b = 1 / 5 from the va_b_* (MIDIAN-VA) and rivals_b_* (budget-matched rivals)
 rows and, for bernoulli / replay b = 1, their scale matrices. b is NEVER pooled: every bar is one budget.
   A  live headline: n = 10^2..10^5 (specialist), solid = honest, hatched = beta = 0.5 low-skill cartel.
@@ -8,8 +8,7 @@ rows and, for bernoulli / replay b = 1, their scale matrices. b is NEVER pooled:
                         _stacked -- one full-width bar per (arm, regime): b = 1 at the bottom, then the gain to b = 3,
                                     then to b = 5 (drawn tallest-first, so a non-monotone arm shows out-of-order shades).
   declared argmax and random spend no probes: one bar (b does not apply). * = a budget not in yet.
-  C  scripts/paired_gaps.py: MIDIAN-VA minus each FIXED rival, seed-paired, every condition.
-  D  appendix heatmap: every arm x every (family, n, regime) cell, success / oracle.
+  C / D (routing work vs n; energy per query) are scripts/efficiency_figs.py.
 "Best learned router" / "best bandit" are CROSS-FITTED (scripts/seed_tables.py): for each seed the arm is chosen on the
 OTHER seeds and scored on this one, so no bar is the maximum of noisy means over the seeds it reports (no winner's curse).
 The pool is the same at every b in a cell (POOL minus the arms that cannot run there, NOT_RUNNABLE); a bar whose pool is
@@ -37,7 +36,7 @@ NOT_RUNNABLE = lambda fam, n: ({"trueskill_per_family"} if n >= 10 ** 5 else set
                               | ({"knn_router", "knn_router_online", "mlp_router"} if fam in ("bernoulli", "replay") else set())   # grid.yaml pool_fill_*
 BUDGETLESS = {"declared_argmax", "random"}
 BS = (1, 3, 5)
-PRIMARY = {"live": "specialist", "routereval": "strong_to_weak"}          # one population shape per family in A / B / D
+PRIMARY = {"live": "specialist", "routereval": "strong_to_weak"}          # one population shape per family in A / B
 FAMILY = {"live": "live", "bernoulli": "bernoulli", "replay": "RouterBench replay", "routereval": "RouterEval", "llmrouterbench": "LLMRouterBench"}
 REG = {"beta0": "honest", "cartel": "β=0.5 cartel"}
 
@@ -149,22 +148,6 @@ def fig_B(C):
     budget_bars(C, groups, f"B  each family at its largest n, / oracle; hatched = cartel; {KEY_STACK}", "B_families_stacked", norm=True, stacked=True)
 
 
-def fig_D(d):
-    q = d[np.array([primary(f, g) for f, g in zip(d.family, d.group)]) & d.regime.isin(list(REG)) & ~d.label.map(excluded)]
-    o = q[q.label == "oracle"].set_index(["family", "n", "regime"])["mean"]
-    q = q[q.label != "oracle"].assign(rel=lambda x: x["mean"].values / o.reindex(pd.MultiIndex.from_frame(x[["family", "n", "regime"]])).values)
-    cols = sorted({(f, n, r) for f, n, r in zip(q.family, q.n, q.regime)}, key=lambda t: (list(FAMILY).index(t[0]), t[1], t[2] != "beta0"))
-    M = q.pivot_table(index="label", columns=["family", "n", "regime"], values="rel").reindex(columns=pd.MultiIndex.from_tuples(cols))
-    M = M.loc[M.mean(axis=1).sort_values(ascending=False).index]
-    fig, ax = plt.subplots(figsize=(7.2, 0.14 * len(M) + 1.4))
-    im = ax.imshow(M.values, aspect="auto", cmap="viridis", vmin=0.3, vmax=1.0, interpolation="nearest")
-    ax.set_yticks(range(len(M))); ax.set_yticklabels([l.replace("_", " ") for l in M.index], fontsize=5.5)
-    ax.set_xticks(range(len(cols))); ax.set_xticklabels([f"{FAMILY[f]} {n:,} {'H' if r == 'beta0' else 'C'}" for f, n, r in cols], rotation=60, ha="right", fontsize=5, rotation_mode="anchor")
-    fig.colorbar(im, ax=ax, fraction=0.02, pad=0.01, label="success / oracle")
-    ax.set_title("D  every arm × every cell (H = honest, C = β = 0.5 low-skill cartel), success / oracle; blank = not run")
-    save(fig, "D_heatmap_all_arms"); M.to_csv(f"{OUT}/D_heatmap_all_arms.csv")
-
-
 def add_budgets(C):
     """b = 1 / 5 for every arm: live / RouterEval / LLMRouterBench / bernoulli 10^7 / replay 10^6 from the va_b_* (MIDIAN-VA)
     and rivals_b_* (budget-matched rivals) rows (per-seed means, seed-bootstrap CI); bernoulli / replay b = 1 from their
@@ -204,4 +187,4 @@ if __name__ == "__main__":
     d = load(); C = cells(d); add_budgets(C)
     for key, bb in tables().items():                 # per-seed tables for the cross-fitted pooled arms
         if key in C: C[key]["seeds"] = bb
-    fig_A(C); fig_B(C); fig_D(d)          # C: scripts/paired_gaps.py (needs per-seed rows)
+    fig_A(C); fig_B(C)                    # C / D: scripts/efficiency_figs.py
