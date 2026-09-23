@@ -1025,3 +1025,32 @@ grids:
   # ---- 2026-09-22: the one missing bar -- random at n = 10^4 under the beta = 0.5 low-skill cartel (live_n10k_v2 ran
   # random only at beta in {0, 0.25}; learned_n10k and fw_live_n10k_cartel never listed it). Same cells as learned_n10k.
   live_n10k_cartel_random: {mirror_of: learned_n10k, beta: [0.5], liar_select: [low_skill_first], methods: [random]}
+
+  # ---- 2026-09-22 rival tuning (CHANGES 8d): the warm-start bandit's claim weight n0, chosen on seeds NEVER reported
+  # (11-15; every reported live 10^3 cell uses seeds 1-10). Honest cell only: that is where the default n0 = 5 is weak.
+  tune_wsb_n1000:
+    backend: llm
+    n: [1000]
+    dist: [specialist]
+    beta: [0]
+    declared_source: [self_described]
+    b: [3]
+    seeds: "11-15"
+    Q: 1000
+    methods: [{name: warm_start_bandit, params: {n0: 0.5}}, {name: warm_start_bandit, params: {n0: 1.0}},
+              {name: warm_start_bandit, params: {n0: 2.0}}, {name: warm_start_bandit, params: {n0: 5.0}}]
+
+  # ---- 2026-09-22 PROBE-BUDGET axis for MIDIAN-VA in condensed figures A / B: b in {1, 5} beside the existing b = 3,
+  # specialist, beta = 0 and the beta = 0.5 low-skill cartel only (b = 10 deferred). Each grid mirrors the cell source of
+  # A / B so rows pair with the b = 3 arms; at beta = 0 the liar selection is inert, so both regimes share one grid and a
+  # per-seed job builds each population's probes ONCE (cached for the second regime).
+  va_b_n100:   {mirror_of: fw_live_n100,  dist: [specialist], beta: [0, 0.5], liar_select: [low_skill_first], b: [1, 5], methods: [midian_va]}
+  va_b_n1000:  {mirror_of: fw_live_n1000, dist: [specialist], beta: [0, 0.5], liar_select: [low_skill_first], b: [1, 5], methods: [midian_va]}
+  va_b_n10k:   {mirror_of: learned_n10k,  beta: [0, 0.5], liar_select: [low_skill_first], b: [1, 5], methods: [midian_va]}
+  va_b_n100k:  {mirror_of: live_n100k,    beta: [0, 0.5], liar_select: [low_skill_first], b: [1, 5], methods: [midian_va]}
+  va_b_routereval5k:     {mirror_of: routereval_mmlu5k,   beta: [0, 0.5], liar_select: [low_skill_first], b: [1, 5], methods: [midian_va]}
+  va_b_llmrouterbench:   {mirror_of: llmrouterbench_pool, beta: [0, 0.5], liar_select: [low_skill_first], b: [1, 5], methods: [midian_va]}
+  va_b_bernoulli_1e7:    {mirror_of: bernoulli_scale_v5, methods: [midian_va],     # b = 1 already in bernoulli_scale_v5
+                          blocks: [{n: [10000000], b: [5], seeds: "1-100", beta: [0, 0.5], liar_select: [low_skill_first]}]}
+  va_b_replay_1e6:       {mirror_of: replay_scale_v5, methods: [midian_va],        # b = 1 already in replay_scale_v5
+                          blocks: [{n: [1000000], b: [5], seeds: "1-100", beta: [0, 0.5], liar_select: [low_skill_first]}]}
