@@ -28,9 +28,10 @@ SHORT = {"tfidf": "TF-IDF (pre-reg.)", "embed": "MiniLM", "dense_icomp": "dense,
 MAIN = [k for k in ORDER if k not in ("bm25", "dense")]     # E: the shortlists run (or queued) at every n; BM25 / plain dense are 10^3 ablation only
 
 
-def load():
-    d = pd.read_csv(f"{ROOT}/figures/shortlist/live.csv")
-    return d[(d.dist == "specialist") & d.regime.isin(list(REG))]
+def load(family="live"):
+    d = pd.read_csv(f"{ROOT}/figures/shortlist/{family}.csv")
+    keep = (d.dist == "specialist") if family == "live" else ((d.dist == "strong_to_weak") | (d.n == 5000))   # RouterEval: the mixed pool; 5,000 = the leaderboard
+    return d[keep & d.regime.isin(list(REG))]
 
 
 def summarise(d):
@@ -67,17 +68,17 @@ def pair(ax, x, w, q, src, label, dots=True):
     return drawn
 
 
-def fig_E(s, ref):
-    """x = n; bars packed per n (only the shortlists that ran there), one colour per shortlist."""
-    fig, ax = plt.subplots(figsize=(7.2, 2.8)); ns = sorted(s.n.unique()); seen = set()
+def fig_E(s, ref, name="E_shortlists_by_n", title=None, srcs=None, xlab="n"):
+    """x = n; fixed slots per n (a cell not in yet stays visible, starred), one colour per shortlist."""
+    fig, ax = plt.subplots(figsize=(7.2, 2.8)); ns = sorted(s.n.unique()); seen = set(); srcs = srcs or MAIN
     for i, n in enumerate(ns):
-        srcs = MAIN; w = 0.86 / (2 * len(srcs))                                  # fixed slots: not-yet-run cells stay visible
+        w = 0.86 / (2 * len(srcs))
         for j, src in enumerate(srcs):
             q = s[(s.n == n) & (s.shortlist == src)].set_index("regime")
             if pair(ax, i + (2 * j + 1 - len(srcs)) * w, w, q, src, None if src in seen else SHORT[src], dots=False): seen.add(src)
         lines(ax, ref, n, i - 0.46, i + 0.46, i == 0)
-    ax.set_xticks(range(len(ns))); ax.set_xticklabels([f"n = {n:,}" for n in ns]); finish(ax, fig, s,
-        "E  frameworks by shortlist (live, specialist): bar = mean of frameworks; solid honest, hatched cartel; * = not in yet", "E_shortlists_by_n", 6)
+    ax.set_xticks(range(len(ns))); ax.set_xticklabels([f"{xlab} = {n:,}" for n in ns]); finish(ax, fig, s,
+        title or "E  frameworks by shortlist (live, specialist): bar = mean of frameworks; solid honest, hatched cartel; * = not in yet", name, 6)
 
 
 def fig_F(s, ref, n=100000):
@@ -130,3 +131,5 @@ def fig_G(d, n=100000):
 if __name__ == "__main__":
     d = load(); s, ref = summarise(d)
     fig_E(s, ref); fig_F(s, ref); fig_G(d)
+    s, ref = summarise(load("routereval"))                                  # RouterEval ran three shortlists only
+    fig_E(s, ref, "H_routereval_shortlists", "H  RouterEval (strong-to-weak pools, leaderboard at 5,000): mean of frameworks; hatched = cartel", ["tfidf", "embed", "va_cohort"], "pool m")
