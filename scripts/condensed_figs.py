@@ -10,15 +10,18 @@ rows and, for bernoulli / replay b = 1, their scale matrices. b is NEVER pooled:
   declared argmax and random spend no probes: one bar (b does not apply). * = a budget not in yet.
   C  scripts/paired_gaps.py: MIDIAN-VA minus each FIXED rival, seed-paired, every condition.
   D  appendix heatmap: every arm x every (family, n, regime) cell, success / oracle.
-"Best learned router" / "best bandit" are chosen PER CONDITION (the most flattering choice for the rivals); the chosen arm
-is written to the csv. Frameworks are not drawn (figures/shortlist). The do-not-add list applies, and with it the
+"Best learned router" / "best bandit" are CROSS-FITTED (scripts/seed_tables.py): for each seed the arm is chosen on the
+OTHER seeds and scored on this one, so no bar is the maximum of noisy means over the seeds it reports (no winner's curse).
+The pool is the same at every b in a cell (POOL minus the arms that cannot run there, NOT_RUNNABLE); a bar whose pool is
+still missing a candidate at that b carries a * above it. The csv lists how often each arm was chosen. Frameworks are not drawn (figures/shortlist). The do-not-add list applies, and with it the
 TEMPORARY extra_figs.HIDE_HALVING switch."""
 from __future__ import annotations
 import os, sys
 import numpy as np, pandas as pd, matplotlib
 matplotlib.use("Agg"); import matplotlib.pyplot as plt
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from extra_figs import excluded
+from extra_figs import excluded, ci
+from seed_tables import tables, crossfit, label
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BARS, OUT = f"{ROOT}/figures/bars", f"{ROOT}/figures/condensed_sample"; os.makedirs(OUT, exist_ok=True)
@@ -29,6 +32,9 @@ BANDIT = ["ucb_per_family", "thompson_per_family", "warm_start_bandit", "linucb_
 ARMS = [("midian_va", "MIDIAN-VA", "#2ecc71"), ("midian", "MIDIAN", "#c0392b"), ("flat_probe_argmax_online", "flat probe argmax (online)", "#3498db"),
         ("best_learned", "best learned router", "#ff7f0e"), ("best_bandit", "best bandit", "#9467bd"),
         ("declared_argmax", "declared argmax", "#5d6d7e"), ("random", "random", "#bbbbbb")]
+POOLS = {"best_learned": LEARNED, "best_bandit": BANDIT + ["warm_start_bandit[n0=0.5]"]}
+NOT_RUNNABLE = lambda fam, n: ({"trueskill_per_family"} if n >= 10 ** 5 else set()) | ({"mlp_router"} if n >= 5000 else set()) \
+                              | ({"knn_router", "knn_router_online", "mlp_router"} if fam in ("bernoulli", "replay") else set())   # grid.yaml pool_fill_*
 BUDGETLESS = {"declared_argmax", "random"}
 BS = (1, 3, 5)
 PRIMARY = {"live": "specialist", "routereval": "strong_to_weak"}          # one population shape per family in A / B / D
@@ -47,18 +53,24 @@ def cells(d):
     for key, q in d.groupby(["family", "group", "n", "regime"]):
         s = q.set_index("label")
         if "oracle" not in s.index: continue
-        out[key] = {"oracle": (s.at["oracle", "mean"], s.at["oracle", "ci_lo"], s.at["oracle", "ci_hi"], "oracle"),
+        out[key] = {"key": key, "oracle": (s.at["oracle", "mean"], s.at["oracle", "ci_lo"], s.at["oracle", "ci_hi"], "oracle"),
                     "raw": {3: {l: (s.at[l, "mean"], s.at[l, "ci_lo"], s.at[l, "ci_hi"]) for l in s.index if l != "oracle" and not excluded(l)}}}
     return out
 
 
 def arms_at(cell):
-    """{arm key: {b: (mean, lo, hi, chosen label)}}; best learned router / best bandit are chosen per b, per cell."""
+    """{arm key: {b: (mean, lo, hi, chosen)}}; best learned router / best bandit are cross-fitted from the per-seed tables."""
     out = {}
+    fam, n = cell["key"][0], cell["key"][2]
+    for b, T in cell.get("seeds", {}).items():
+        for k, pool in POOLS.items():
+            want = [a for a in pool if a not in NOT_RUNNABLE(fam, n)]
+            vals, picks = crossfit(T, want)
+            if len(vals) < 2: continue                       # one seed cannot be cross-fitted: no bar, never the biased pick
+            lo, hi = ci(vals.values); miss = [a for a in want if a not in T.columns]
+            chosen = "; ".join(f"{a} x{c}" for a, c in picks.value_counts().items()) + (f" | INCOMPLETE POOL, missing {', '.join(miss)}" if miss else "")
+            out.setdefault(k, {})[b] = (float(vals.mean()), float(lo), float(hi), chosen)
     for b, raw in cell["raw"].items():
-        for k, pool in (("best_learned", LEARNED), ("best_bandit", BANDIT + ["warm_start_bandit[n0=0.5]"])):
-            have = [a for a in pool if a in raw]
-            if have: c = max(have, key=lambda a: raw[a][0]); out.setdefault(k, {})[b] = (*raw[c], c)
         for k, _, _ in ARMS:
             if k in raw and (b == 3 or k not in BUDGETLESS): out.setdefault(k, {})[b] = (*raw[k], k)
     return out
@@ -98,6 +110,7 @@ def budget_bars(C, groups, title, name, norm=False, nested=False, stacked=False)
                 first = i == 0 and not h and (b == 3)
                 ax.bar(x, m, ww, color=shade(col[k], b) if k not in BUDGETLESS else col[k], edgecolor="black", lw=0.3,
                        hatch="////" if h else None, alpha=0.8 if h else 1, label=lab[k] if first else None, zorder=2 + depth)
+                if "INCOMPLETE" in chosen: ax.text(x, (hi if not stacked else m) + 0.004, "*", ha="center", va="bottom", fontsize=5.5, zorder=8)
                 if not nested or (b == 3 and not stacked):          # stacked: an interval inside the stack misreads; see _allb
                     ax.errorbar(x, m, yerr=[[m - lo], [hi - m]], fmt="none", ecolor="#222", elinewidth=0.4, capsize=0.6, zorder=6)
                 rec.append(dict(group=xl.replace("\n", " "), regime=REG[r], arm=lab[k], b=b if k not in BUDGETLESS else "-", chosen=chosen, value=m, ci_lo=lo, ci_hi=hi))
@@ -152,21 +165,12 @@ def fig_D(d):
     save(fig, "D_heatmap_all_arms"); M.to_csv(f"{OUT}/D_heatmap_all_arms.csv")
 
 
-def label(method, params):
-    import json
-    from rte.analyze import ALIAS
-    p = json.loads(params) if isinstance(params, str) and params.startswith("{") else {}
-    short = ",".join(f"{k}={v:.3g}" if isinstance(v, float) else f"{k}={v}" for k, v in sorted(p.items()))
-    l = method if not p else f"{method}[{short}]"; return ALIAS.get(l, l)
-
-
 def add_budgets(C):
     """b = 1 / 5 for every arm: live / RouterEval / LLMRouterBench / bernoulli 10^7 / replay 10^6 from the va_b_* (MIDIAN-VA)
     and rivals_b_* (budget-matched rivals) rows (per-seed means, seed-bootstrap CI); bernoulli / replay b = 1 from their
     scale matrices. A cell the runs have not reached simply has no bar (a * marks it)."""
     sys.path.insert(0, ROOT)
     from fw_variant_numbers import load as rows, regime
-    from extra_figs import ci
     R = os.environ.get("RTE_DATA", "/scratch/rte") + "/results"
     fams = [("live", "specialist", "n100"), ("live", "specialist", "n1000"), ("live", "specialist", "n10k"), ("live", "specialist", "n100k"),
             ("routereval", "strong_to_weak", "routereval5k"), ("llmrouterbench", "20 models", "llmrouterbench"),
@@ -198,4 +202,6 @@ def add_budgets(C):
 
 if __name__ == "__main__":
     d = load(); C = cells(d); add_budgets(C)
+    for key, bb in tables().items():                 # per-seed tables for the cross-fitted pooled arms
+        if key in C: C[key]["seeds"] = bb
     fig_A(C); fig_B(C); fig_D(d)          # C: scripts/paired_gaps.py (needs per-seed rows)

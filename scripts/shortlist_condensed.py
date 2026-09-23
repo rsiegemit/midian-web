@@ -131,5 +131,5 @@ def fig_G(d, n=100000):
 if __name__ == "__main__":
     d = load(); s, ref = summarise(d)
     fig_E(s, ref); fig_F(s, ref); fig_G(d)
-    s, ref = summarise(load("routereval"))                                  # RouterEval ran three shortlists only
-    fig_E(s, ref, "H_routereval_shortlists", "H  RouterEval (strong-to-weak pools, leaderboard at 5,000): mean of frameworks; hatched = cartel", ["tfidf", "embed", "va_cohort"], "pool m")
+    s, ref = summarise(load("routereval"))                                  # the re_sl_* grids bring declared, Qwen3 dense and rerank; * until they land
+    fig_E(s, ref, "H_routereval_shortlists", "H  RouterEval (strong-to-weak pools, leaderboard at 5,000): mean of frameworks; hatched = cartel; * = not in yet", MAIN, "pool m")

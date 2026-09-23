@@ -36,7 +36,7 @@ SOURCES = [("tfidf", "hashed TF-IDF (pre-registered)", "#b0b0b0"), ("bm25", "BM2
            ("va_cohort", "MIDIAN-VA leaf cohort", "#117a3d")]
 SRC_NAME = {k: v for k, v, _ in SOURCES}; SRC_COLOR = {k: c for k, _, c in SOURCES}
 GRIDS = {"live": lambda g: g.startswith("fw_live_n") and "lietext" not in g or g in ("live_n10k_v2", "live_n100k"),
-         "routereval": lambda g: g.startswith("fw_routereval_")}
+         "routereval": lambda g: g.startswith(("fw_routereval_", "re_sl_"))}
 
 
 def source(params):

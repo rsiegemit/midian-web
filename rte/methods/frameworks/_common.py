@@ -23,6 +23,10 @@ RERANKER = "Qwen/Qwen3-Reranker-4B"          # cross-encoder over the fused pool
 DENSE = ("embed", "hybrid", "sota")          # modes that need the dense block
 DECLARED = "declared"                        # top-k by the declared claim; no text retrieval at all
 LEXICAL = ("bm25", "hybrid", "sota")        # modes that need the BM25 block
+# Framework errors that are the supervisor LLM's own invalid action, not infrastructure (every class that has failed a
+# unit, 2026-09-23): ADK / OpenAI Agents -- a tool named after the agent instead of the routing tool; MAF -- no next
+# speaker. Anything else stays an infrastructure error (erratum 28).
+INVALID_ACTION = re.compile(r"Tool '?[\w.-]+'? not found|ModelBehaviorError|next_speaker must be provided")
 _TOK = re.compile(r"[a-z0-9]+")
 
 
@@ -155,7 +159,7 @@ class FrameworkMethod(Method):
         # would put in front of a framework. Embeddings are cached per population dir (descriptions_minilm.npy).
         if retrieval in ("midian", "midian_va"):             # verified shortlist: MIDIAN-V's (or MIDIAN-VA's) leaf cohort (k = r)
             self.needs = self.needs | {"probe", "reports"}
-        self.stats = {"picks": 0, "fallbacks": 0, "failures": 0, "bad_name": 0, "success_strict": 0.0, "fallback_rate": 0.0}
+        self.stats = {"picks": 0, "fallbacks": 0, "failures": 0, "bad_name": 0, "invalid_action": 0, "success_strict": 0.0, "fallback_rate": 0.0}
         self._picked, self._n, self._strict, self._calls = False, 0, 0, 0
 
     # ---- world accessors (llm backend provides real text; bernoulli/replay get synthesized descriptions)
@@ -279,6 +283,17 @@ class FrameworkMethod(Method):
 
     def build(self, view, budget):
         super().build(view, budget)
+        self._index(view)
+        self.bridge = Bridge(self.env, self.worker); self._pre = {}
+        self.base_url = self._base_url or _endpoint(self.supervisor)
+        view.ledger.message(view.n)                         # every agent sends its description to the registry once
+        if self.retrieval in ("midian", "midian_va"):
+            from ..midian import Midian; from ..midian_va import MidianVA
+            self.mid = (MidianVA(r=self.r) if self.retrieval == "midian_va" else Midian(verify=True, cached=True, r=self.r)); self.mid.build(view, budget)
+
+    def _index(self, view):
+        """Texts, retrieval vectors and shortlist tables: everything build() derives from the population alone, with no
+        supervisor. scripts/embed_routereval.py calls exactly this on a GPU to pre-warm the RTE_EMBED_CACHE_DIR files."""
         self.desc, self.fdesc, self._task_text = self._texts(view)
         if self.lie_text: self.desc = self._relabel(self.desc, view)
         self.names = [f"agent_{a:06d}" for a in range(view.n)]
@@ -293,12 +308,6 @@ class FrameworkMethod(Method):
         for a, t in enumerate(self.desc): first.setdefault(t, a)
         self._pool = np.array(sorted(first.values()), dtype=np.int64)   # lowest id per distinct description (dedup)
         self._sota = self._sota_table(view) if self.retrieval == "sota" else None   # (K, k) -- needs _pool, so after it
-        self.bridge = Bridge(self.env, self.worker); self._pre = {}
-        self.base_url = self._base_url or _endpoint(self.supervisor)
-        view.ledger.message(view.n)                         # every agent sends its description to the registry once
-        if self.retrieval in ("midian", "midian_va"):
-            from ..midian import Midian; from ..midian_va import MidianVA
-            self.mid = (MidianVA(r=self.r) if self.retrieval == "midian_va" else Midian(verify=True, cached=True, r=self.r)); self.mid.build(view, budget)
 
     def retrieve(self, task) -> np.ndarray:
         if self.retrieval in ("midian", "midian_va"):         # MIDIAN's pick first, then the rest of its leaf cohort
@@ -324,7 +333,7 @@ class FrameworkMethod(Method):
     def observe(self, task, agent, outcome):
         self._n += 1; self._strict += int(outcome) if self._picked else 0
         self.stats["success_strict"] = self._strict / self._n
-        self.stats["fallback_rate"] = 1 - self.stats["picks"] / max(1, sum(self.stats[k] for k in ("picks", "fallbacks", "failures", "bad_name")))
+        self.stats["fallback_rate"] = 1 - self.stats["picks"] / max(1, sum(self.stats[k] for k in ("picks", "fallbacks", "failures", "bad_name", "invalid_action")))
         if self.retrieval in ("midian", "midian_va"):
             self.mid.observe(task, agent, outcome)
 
@@ -357,8 +366,16 @@ class FrameworkMethod(Method):
         payload = [{"name": self.names[a], "description": self.desc[a]} for a in cand]
         ask = lambda: self.bridge.select(self._task_text(task), payload, self.supervisor, self._base_url or _endpoint(self.supervisor), params=self.params)   # re-pick per call: replicas that join mid-run get used
         resp = self._pre.pop(id(task), None) or ask()      # prefetched response, if prefetch() ran
-        if resp.get("error"): resp = ask()                  # one retry: the bridge restarts a dead worker on the next call
+        if resp.get("error") and not INVALID_ACTION.search(resp["error"]): resp = ask()   # one retry: the bridge restarts a dead worker
         self._calls += 1
+        if resp.get("error") and INVALID_ACTION.search(resp["error"]):
+            # the SUPERVISOR's invalid action, raised by the framework itself (a tool named after the agent instead of the
+            # routing tool, no next speaker): the framework did not delegate -- a non-pick like an unparseable reply, with
+            # the same declared-argmax fallback inside the shortlist, counted in fallback_rate. Not retried (no other
+            # non-pick gets a second sample), and never an infrastructure error.
+            self.stats["invalid_action"] += 1; self._picked = False
+            D = self.view.declared
+            return int(cand[np.argmax(D[cand, task.family])])
         if resp.get("error"):
             # INFRASTRUCTURE, not framework behaviour: a crashed worker, a missing shared library, a dead endpoint. These
             # used to fall through to declared argmax and write a normal-looking row that measured declared argmax under
@@ -368,7 +385,7 @@ class FrameworkMethod(Method):
             if self.stats["infra_errors"] > max(3, 0.02 * self._calls):
                 raise RuntimeError(f"{self.name}: {self.stats['infra_errors']} of {self._calls} supervisor calls failed "
                                    f"({resp['error'][:160]}) -- refusing to write a fallback-contaminated row")
-            D = self.view.declared
+            D = self.view.declared; self._picked = False
             return int(cand[np.argmax(D[cand, task.family])])
         choice = resp.get("choice")
         self._picked = choice in self._name2id and self._name2id[choice] in set(int(a) for a in cand)

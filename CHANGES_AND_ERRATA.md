@@ -385,6 +385,29 @@ rows moved to `results/<grid>/quarantine/` (not deleted) and their 2,904 units r
 
 ---
 
+## 8e. Erratum 29 -- the supervisor's own invalid actions were failing units as "infrastructure" (2026-09-23)
+
+The erratum-28 rule counted EVERY framework-side exception as an infrastructure error, so units stopped writing rows once
+max(3, 2%) of calls failed. The only exceptions that ever tripped it were the supervisor LLM's own invalid actions:
+- ADK: 58 failed unit logs, "Tool 'agent_000030' not found" (a tool named after the agent, not `transfer_to_agent`);
+- OpenAI Agents: 1, "Tool transfer_to_agent_00128 not found" (ModelBehaviorError);
+- MAF: 1, "next_speaker must be provided".
+ADK's honest 10^2 / 10^3 units therefore never landed, and ADK was absent from those shortlist bars with no mark.
+
+These are the framework failing to route, not our infrastructure. `FrameworkMethod.fetch` now treats them as a non-pick
+exactly like an unparseable reply: declared argmax inside the shortlist, counted as `invalid_action` in `fallback_rate`,
+0 under `success_strict`, and not retried (no other non-pick gets a second sample). The classes are listed in
+`_common.INVALID_ACTION`; every other error still fails the unit. Rows already written are unchanged (their few
+tolerated errors took the old retry-then-fallback path); the failed units are rerun.
+
+Also 2026-09-23: RouterEval's MMLU family order depended on PYTHONHASHSEED ("high school biology" and "philosophy" tie at
+248 train prompts, family index 9 / 10). Each unit was internally consistent, but rows of one (cell, seed) run in
+different processes could come from the two orders (two distinct oracle values in 240 of 270 `routereval_mmlu` units,
+spread <= 0.013). Ties are now broken by name (`rte/backends/routereval.py`); means are unaffected, cross-grid pairing on
+RouterEval m <= 1,000 is noisier for older rows.
+
+---
+
 ## 8d. Rival note -- the warm-start bandit scores HIGHER under the cartel than honest (2026-09-22, post hoc)
 
 Live, specialist, b = 3: warm_start_bandit is +0.04 under the β = 0.5 low-skill cartel at 10^4 and 10^5 (0.743 -> 0.783,

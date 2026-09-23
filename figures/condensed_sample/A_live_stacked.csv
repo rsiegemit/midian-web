@@ -9,10 +9,10 @@ n = 100,honest,MIDIAN,3,midian,0.7746833333333333,0.7565962500000001,0.79223375
 n = 100,β=0.5 cartel,MIDIAN,3,midian,0.7358666666666667,0.7218316666666666,0.7513666666666665
 n = 100,honest,flat probe argmax (online),3,flat_probe_argmax_online,0.7805,0.7660975,0.7931
 n = 100,β=0.5 cartel,flat probe argmax (online),3,flat_probe_argmax_online,0.7805,0.7660975,0.7931
-n = 100,honest,best learned router,3,knn_router_online,0.7375999999999999,0.7163875,0.7579025000000001
-n = 100,β=0.5 cartel,best learned router,3,knn_router_online,0.7375999999999999,0.7163875,0.7579025000000001
-n = 100,honest,best bandit,3,warm_start_bandit,0.73,0.7154974999999999,0.7435999999999999
-n = 100,β=0.5 cartel,best bandit,3,warm_start_bandit,0.7182999999999999,0.7036,0.7319
+n = 100,honest,best learned router,3,"knn_router_online x10 | INCOMPLETE POOL, missing flat_nsw_router, cluster_head_router, disrouter_cascade",0.7375999999999999,0.7163875,0.7579025000000001
+n = 100,β=0.5 cartel,best learned router,3,"knn_router_online x10 | INCOMPLETE POOL, missing flat_nsw_router, cluster_head_router, disrouter_cascade",0.7375999999999999,0.7163875,0.7579025000000001
+n = 100,honest,best bandit,3,"warm_start_bandit x10 | INCOMPLETE POOL, missing ucb_per_family, thompson_per_family, linucb_honest, trueskill_per_family, warm_start_bandit[n0=0.5]",0.73,0.7154974999999999,0.7435999999999999
+n = 100,β=0.5 cartel,best bandit,3,"warm_start_bandit x10 | INCOMPLETE POOL, missing ucb_per_family, thompson_per_family, linucb_honest, trueskill_per_family, warm_start_bandit[n0=0.5]",0.7182999999999999,0.7036,0.7319
 n = 100,honest,declared argmax,-,declared_argmax,0.5991666666666667,0.5798958333333334,0.6178008333333332
 n = 100,β=0.5 cartel,declared argmax,-,declared_argmax,0.5181,0.4831999999999999,0.5504
 n = 100,honest,random,-,random,0.42575,0.4078,0.4416025
@@ -27,10 +27,10 @@ n = 100,β=0.5 cartel,random,-,random,0.42575,0.4078,0.4416025
 "n = 1,000",β=0.5 cartel,MIDIAN,3,midian,0.7379166666666667,0.72446625,0.7497
 "n = 1,000",honest,flat probe argmax (online),3,flat_probe_argmax_online,0.7871000000000001,0.7809000000000001,0.7929025000000002
 "n = 1,000",β=0.5 cartel,flat probe argmax (online),3,flat_probe_argmax_online,0.7869,0.7806975,0.7925000000000001
-"n = 1,000",honest,best learned router,3,knn_router_online,0.7656,0.7534974999999999,0.7759
-"n = 1,000",β=0.5 cartel,best learned router,3,knn_router_online,0.7656,0.7534974999999999,0.7759
-"n = 1,000",honest,best bandit,3,warm_start_bandit,0.7634000000000001,0.7564,0.7704000000000001
-"n = 1,000",β=0.5 cartel,best bandit,3,warm_start_bandit,0.7678,0.7605999999999999,0.7752000000000001
+"n = 1,000",honest,best learned router,3,knn_router_online x10,0.7656,0.7534974999999999,0.7759
+"n = 1,000",β=0.5 cartel,best learned router,3,knn_router_online x10,0.7656,0.7534974999999999,0.7759
+"n = 1,000",honest,best bandit,3,"warm_start_bandit x5; linucb_honest x5 | INCOMPLETE POOL, missing warm_start_bandit[n0=0.5]",0.75015,0.73739875,0.7614
+"n = 1,000",β=0.5 cartel,best bandit,3,"warm_start_bandit x5; linucb_honest x5 | INCOMPLETE POOL, missing warm_start_bandit[n0=0.5]",0.7518,0.738,0.7638025
 "n = 1,000",honest,declared argmax,-,declared_argmax,0.6154499999999999,0.5926475,0.6356499999999999
 "n = 1,000",β=0.5 cartel,declared argmax,-,declared_argmax,0.5202000000000001,0.4930974999999999,0.5461025
 "n = 1,000",honest,random,-,random,0.43215,0.42289875,0.4402999999999999
@@ -42,13 +42,17 @@ n = 100,β=0.5 cartel,random,-,random,0.42575,0.4078,0.4416025
 "n = 10,000",β=0.5 cartel,MIDIAN-VA,3,midian_va,0.81,0.7866666666666666,0.8533333333333334
 "n = 10,000",β=0.5 cartel,MIDIAN-VA,1,midian_va,0.6699999999999999,0.6466666666666666,0.69
 "n = 10,000",honest,MIDIAN,3,midian,0.785,0.7566666666666667,0.8249999999999998
+"n = 10,000",honest,MIDIAN,1,midian,0.6677777777777778,0.6433333333333333,0.68
 "n = 10,000",β=0.5 cartel,MIDIAN,3,midian,0.7522222222222222,0.7066666666666667,0.8033333333333333
 "n = 10,000",honest,flat probe argmax (online),3,flat_probe_argmax_online,0.7744444444444444,0.7150000000000002,0.83
+"n = 10,000",honest,flat probe argmax (online),1,flat_probe_argmax_online,0.6522222222222221,0.6,0.6866666666666666
 "n = 10,000",β=0.5 cartel,flat probe argmax (online),3,flat_probe_argmax_online,0.7744444444444444,0.7166666666666667,0.83
-"n = 10,000",honest,best learned router,3,knn_router_online,0.7311111111111112,0.6833333333333332,0.7866666666666666
-"n = 10,000",β=0.5 cartel,best learned router,3,knn_router_online,0.7311111111111112,0.6833333333333332,0.7866666666666666
-"n = 10,000",honest,best bandit,3,warm_start_bandit,0.7433333333333333,0.685,0.775
-"n = 10,000",β=0.5 cartel,best bandit,3,warm_start_bandit,0.7833333333333333,0.7233333333333333,0.84
+"n = 10,000",honest,best learned router,3,"knn_router_online x3 | INCOMPLETE POOL, missing flat_nsw_router, cluster_head_router, disrouter_cascade",0.7311111111111112,0.6833333333333332,0.7866666666666666
+"n = 10,000",honest,best learned router,1,"knn_router_online x3 | INCOMPLETE POOL, missing flat_nsw_router, cluster_head_router, disrouter_cascade",0.57,0.47,0.6833333333333332
+"n = 10,000",β=0.5 cartel,best learned router,3,"knn_router_online x3 | INCOMPLETE POOL, missing flat_nsw_router, cluster_head_router, disrouter_cascade",0.7311111111111112,0.6833333333333332,0.7866666666666666
+"n = 10,000",honest,best bandit,3,"warm_start_bandit x3 | INCOMPLETE POOL, missing ucb_per_family, thompson_per_family, trueskill_per_family, warm_start_bandit[n0=0.5]",0.7414814814814815,0.6822222222222223,0.7733333333333334
+"n = 10,000",honest,best bandit,1,"warm_start_bandit x3 | INCOMPLETE POOL, missing ucb_per_family, thompson_per_family, trueskill_per_family",0.6988888888888889,0.6466666666666666,0.7266666666666667
+"n = 10,000",β=0.5 cartel,best bandit,3,"warm_start_bandit x3 | INCOMPLETE POOL, missing ucb_per_family, thompson_per_family, linucb_honest, trueskill_per_family, warm_start_bandit[n0=0.5]",0.7833333333333333,0.7233333333333333,0.84
 "n = 10,000",honest,declared argmax,-,declared_argmax,0.6577777777777777,0.5866666666666667,0.7066666666666667
 "n = 10,000",β=0.5 cartel,declared argmax,-,declared_argmax,0.5322222222222223,0.47,0.6066666666666667
 "n = 10,000",honest,random,-,random,0.4166666666666667,0.3833333333333333,0.4666666666666666
@@ -60,10 +64,10 @@ n = 100,β=0.5 cartel,random,-,random,0.42575,0.4078,0.4416025
 "n = 100,000",β=0.5 cartel,MIDIAN,3,midian,0.7055555555555556,0.68,0.7466666666666667
 "n = 100,000",honest,flat probe argmax (online),3,flat_probe_argmax_online,0.7488888888888888,0.7033333333333335,0.8066666666666666
 "n = 100,000",β=0.5 cartel,flat probe argmax (online),3,flat_probe_argmax_online,0.7488888888888888,0.7033333333333335,0.8066666666666666
-"n = 100,000",honest,best learned router,3,knn_router_online,0.7411111111111112,0.71,0.7766666666666667
-"n = 100,000",β=0.5 cartel,best learned router,3,knn_router_online,0.7411111111111112,0.71,0.7766666666666667
-"n = 100,000",honest,best bandit,3,warm_start_bandit,0.7377777777777778,0.68,0.7833333333333333
-"n = 100,000",β=0.5 cartel,best bandit,3,warm_start_bandit,0.7777777777777777,0.7399999999999999,0.8166666666666668
+"n = 100,000",honest,best learned router,3,"knn_router_online x3 | INCOMPLETE POOL, missing flat_nsw_router, cluster_head_router, disrouter_cascade",0.7411111111111112,0.71,0.7766666666666667
+"n = 100,000",β=0.5 cartel,best learned router,3,"knn_router_online x3 | INCOMPLETE POOL, missing flat_nsw_router, cluster_head_router, disrouter_cascade",0.7411111111111112,0.71,0.7766666666666667
+"n = 100,000",honest,best bandit,3,"warm_start_bandit x3 | INCOMPLETE POOL, missing ucb_per_family, thompson_per_family, warm_start_bandit[n0=0.5]",0.7377777777777778,0.68,0.7833333333333333
+"n = 100,000",β=0.5 cartel,best bandit,3,"warm_start_bandit x3 | INCOMPLETE POOL, missing ucb_per_family, thompson_per_family, warm_start_bandit[n0=0.5]",0.7777777777777777,0.7399999999999999,0.8166666666666668
 "n = 100,000",honest,declared argmax,-,declared_argmax,0.6222222222222222,0.5933333333333334,0.6733333333333333
 "n = 100,000",β=0.5 cartel,declared argmax,-,declared_argmax,0.5777777777777778,0.5433333333333333,0.6133333333333333
 "n = 100,000",honest,random,-,random,0.4422222222222222,0.42,0.4733333333333333

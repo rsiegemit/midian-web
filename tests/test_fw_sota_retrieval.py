@@ -252,6 +252,25 @@ def test_a_framework_naming_nobody_is_still_a_fallback_not_an_error():
     assert m.stats["fallbacks"] == 10 and m.stats.get("infra_errors", 0) == 0
 
 
+@pytest.mark.parametrize("err", ["ValueError: Tool 'agent_000030' not found.\nAvailable tools: transfer_to_agent",
+                                 "ModelBehaviorError: Tool transfer_to_agent_00128 not found in agent triage",
+                                 "ValueError: next_speaker must be provided if not terminating the conversation."])
+def test_a_supervisor_invalid_action_is_a_non_pick_not_an_infrastructure_error(err):
+    """Every error class that ever failed a unit (2026-09-23) was the supervisor LLM's own invalid action raised by the
+    framework (ADK / OpenAI Agents: a tool named after the agent; MAF: no next speaker). That is the framework failing to
+    route: a non-pick with the usual declared-argmax fallback, counted in fallback_rate, never retried, never fatal."""
+    m = _built(dedup=True, retrieval="tfidf"); calls = []
+    m.bridge.select = lambda *a, **k: calls.append(1) or {"choice": None, "error": err, "raw": None}
+    tasks = list(_tasks(40))
+    for t in tasks:
+        D = m.view.declared; cand = m.retrieve(t)
+        assert m.fetch(t) == int(cand[np.argmax(D[cand, t.family])]) and m._picked is False
+    assert len(calls) == 40                                              # no retry: one sample, like any other non-pick
+    assert m.stats["invalid_action"] == 40 and m.stats.get("infra_errors", 0) == 0
+    for t in tasks: m.observe(t, 0, 0)
+    assert m.stats["fallback_rate"] == 1.0
+
+
 @pytest.mark.parametrize("retrieval", ["tfidf", "bm25", "declared"])
 def test_parallel_prefetch_gives_exactly_the_sequential_picks(monkeypatch, retrieval):
     """RTE_FW_PARALLEL runs the (stateless) framework requests concurrently before the run loop; fetch must return the

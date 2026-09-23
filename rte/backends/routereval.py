@@ -70,7 +70,7 @@ class RouterEvalBackend:
         s_tr = [(SUBJECT.search(str(p)) or [None, None])[1] for p in Ptr]
         if dataset == "mmlu" and all(s_tr):
             s_te = [(SUBJECT.search(str(p)) or [None, "?"])[1] for p in Pte]
-            top = [s for s, _ in sorted(((s, s_tr.count(s)) for s in set(s_tr)), key=lambda x: -x[1])[:K]]
+            top = [s for s, _ in sorted(((s, s_tr.count(s)) for s in set(s_tr)), key=lambda x: (-x[1], x[0]))[:K]]   # name breaks count ties (set order varies with PYTHONHASHSEED)
             idx = {s: i for i, s in enumerate(top)}
             return (np.array([idx.get(s, -1) for s in s_tr]), np.array([idx.get(s, -1) for s in s_te]), top)
         from sklearn.cluster import KMeans
