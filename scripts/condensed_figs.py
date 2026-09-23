@@ -98,7 +98,8 @@ def budget_bars(C, groups, title, name, norm=False, nested=False, stacked=False)
                 first = i == 0 and not h and (b == 3)
                 ax.bar(x, m, ww, color=shade(col[k], b) if k not in BUDGETLESS else col[k], edgecolor="black", lw=0.3,
                        hatch="////" if h else None, alpha=0.8 if h else 1, label=lab[k] if first else None, zorder=2 + depth)
-                if not nested or b == 3: ax.errorbar(x, m, yerr=[[m - lo], [hi - m]], fmt="none", ecolor="#222", elinewidth=0.4, capsize=0.6, zorder=6)
+                if not nested or (b == 3 and not stacked):          # stacked: an interval inside the stack misreads; see _allb
+                    ax.errorbar(x, m, yerr=[[m - lo], [hi - m]], fmt="none", ecolor="#222", elinewidth=0.4, capsize=0.6, zorder=6)
                 rec.append(dict(group=xl.replace("\n", " "), regime=REG[r], arm=lab[k], b=b if k not in BUDGETLESS else "-", chosen=chosen, value=m, ci_lo=lo, ci_hi=hi))
         if o: ax.hlines(1.0 if norm else o[0], i - 0.46, i + 0.46, colors="#7f8c8d", linestyles=":", lw=1.2, zorder=7, label="oracle" if i == 0 else None)
     ax.set_xticks(range(len(groups))); ax.set_xticklabels([xl for xl, _ in groups])
@@ -110,14 +111,14 @@ def budget_bars(C, groups, title, name, norm=False, nested=False, stacked=False)
 
 KEY_ALL = "light / mid / dark = probe budget b = 1 / 3 / 5"
 KEY_NEST = "in each slot: wide = b 5, mid = b 3, narrow = b 1"
-KEY_STACK = "stacked: light = b 1, + mid = gain to b 3, + dark = gain to b 5"
+KEY_STACK = "stack: b = 1, +gain to b = 3, +gain to b = 5 (CIs in _allb)"
 
 
 def fig_A(C):
     ns = sorted(n for (f, g, n, r) in C if f == "live" and g == "specialist" and r == "beta0")
     g = [(f"n = {n:,}", ("live", "specialist", n)) for n in ns]
     budget_bars(C, g, f"A  live RTE, specialist; solid honest, hatched β = 0.5 cartel; {KEY_ALL}", "A_live_allb")
-    budget_bars(C, g, f"A  live RTE, specialist; solid honest, hatched β = 0.5 cartel; {KEY_STACK}", "A_live_stacked", stacked=True)
+    budget_bars(C, g, f"A  live, specialist; hatched = β 0.5 cartel; {KEY_STACK}", "A_live_stacked", stacked=True)
 
 
 def primary(f, g): return g == PRIMARY.get(f, g)
@@ -132,7 +133,7 @@ def fig_B(C):
         n = max(ns); g = next(g for (ff, g, nn, r) in C if ff == f and nn == n and primary(f, g))
         groups.append((f"{FAMILY[f]}\nn = {n:,}", (f, g, n)))
     budget_bars(C, groups, f"B  each family at its largest n, success / oracle; hatched = cartel; {KEY_ALL}", "B_families_allb", norm=True)
-    budget_bars(C, groups, f"B  each family at its largest n, success / oracle; hatched = cartel; {KEY_STACK}", "B_families_stacked", norm=True, stacked=True)
+    budget_bars(C, groups, f"B  each family at its largest n, / oracle; hatched = cartel; {KEY_STACK}", "B_families_stacked", norm=True, stacked=True)
 
 
 def fig_D(d):
