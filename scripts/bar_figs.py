@@ -2,8 +2,8 @@
 is a dotted line across the top; error bars are the 95% seed bootstrap.
     python scripts/bar_figs.py [live bernoulli replay routereval llmrouterbench]   -> figures/bars/<family>__<regime>__<group>.{png,pdf}
                                                                                     + figures/bars/<family>.csv + figures/bars/INDEX.md
-One panel and one row per figure, always. Families: live (RTE live backend, 10^2-10^5, grouped by population shape; self-described channel; the ten frameworks are the
-pre-registered TF-IDF adapter -- at 10^5 that row is the clone artefact of erratum 25, see M6 for the other shortlists),
+One panel and one row per figure, always. No framework arms: they are drawn per shortlist in figures/shortlist (scripts/shortlist_figs.py).
+Families: live (RTE live backend, 10^2-10^5, grouped by population shape; self-described channel),
 bernoulli (calibrated synthetic, 10..10^7, 1000 seeds, b = 3), replay (RouterBench outcomes, 10..10^6, shapes pooled),
 routereval (real LLM pools 10 / 100 / 1,000 per pool config and the 5,000-LLM leaderboard pool), llmrouterbench (20 models).
 Do-not-add list (extra_figs.excluded): MIDIAN with r != 10, MIDIAN-SH, MIDIAN-SHA, the trusted-observer halving arm.
@@ -109,14 +109,14 @@ def _panel(ax, labels, series, oracle, ns, ylim, legend=True):
     ax.set_xticks(x); ax.set_xticklabels([f"n = {n:,}" for n in ns]); ax.set_ylim(*ylim); ax.set_ylabel("success"); ax.grid(axis="y", alpha=.3, lw=0.4)
     h, l = ax.get_legend_handles_labels(); seen = {}; [seen.setdefault(b, a) for a, b in zip(h, l)]
     order = ["oracle"] + [name(x) for x in labels if name(x) in seen]                      # legend in bar order (best at n_max first)
-    if legend: ax.legend([seen[k] for k in order if k in seen], [k for k in order if k in seen], loc="upper center", bbox_to_anchor=(0.5, -0.12), ncol=min(12, len(seen)), frameon=False, handlelength=1.0, columnspacing=0.8, labelspacing=0.15)
+    if legend: ax.legend([seen[k] for k in order if k in seen], [k for k in order if k in seen], loc="upper center", bbox_to_anchor=(0.5, -0.12), ncol=max(1, min(12, len(seen), int(ax.figure.get_figwidth() / 1.35))), frameon=False, handlelength=1.0, columnspacing=0.8, labelspacing=0.15)
 
 
 def draw(series, oracle, title, fname, ns, ylim=(0.2, 1.0), _jobs=None):
     """series: label -> {n: (mean, lo, hi, seeds)}; oracle: {n: mean}. ONE panel, ONE row, always (every n group side by side,
     every arm as a bar); the figure widens with the number of bars."""
     if _jobs is not None: _jobs.append((series, oracle, title, fname, ns, ylim)); return fname      # deferred: colours are assigned once all labels are known
-    labels = [l for l in series if l not in NEVER and not excluded(l)]
+    labels = [l for l in series if l not in NEVER and not excluded(l) and not l.startswith("fw_")]   # frameworks: figures/shortlist
     nmax = max(ns); labels.sort(key=lambda l: -series[l].get(nmax, series[l][max(series[l])])[0])
     nbars = sum(1 for l in labels for n in ns if n in series[l])
     fig, ax = plt.subplots(figsize=(cm(max(14.0, 0.28 * nbars + 5)), cm(7.0)))

@@ -281,7 +281,7 @@ class FrameworkMethod(Method):
         for a, t in enumerate(self.desc): first.setdefault(t, a)
         self._pool = np.array(sorted(first.values()), dtype=np.int64)   # lowest id per distinct description (dedup)
         self._sota = self._sota_table(view) if self.retrieval == "sota" else None   # (K, k) -- needs _pool, so after it
-        self.bridge = Bridge(self.env, self.worker)
+        self.bridge = Bridge(self.env, self.worker); self._pre = {}
         self.base_url = self._base_url or _endpoint(self.supervisor)
         view.ledger.message(view.n)                         # every agent sends its description to the registry once
         if self.retrieval in ("midian", "midian_va"):
@@ -316,13 +316,35 @@ class FrameworkMethod(Method):
         if self.retrieval in ("midian", "midian_va"):
             self.mid.observe(task, agent, outcome)
 
+    def prefetch(self, stream):
+        """Ask the framework about every task at once, PARALLEL requests in flight, before the run loop consumes them in
+        order. Only for stateless shortlists: the workers build a fresh team per request at temperature 0 and keep no
+        memory, so a pick cannot depend on which requests came before it -- fetch() sees exactly the response a
+        sequential run would. The MIDIAN cohorts learn online (retrieve depends on earlier observes) and stay sequential."""
+        n = int(os.environ.get("RTE_FW_PARALLEL", "1"))
+        if n <= 1 or self.retrieval in ("midian", "midian_va"): return
+        import queue
+        from concurrent.futures import ThreadPoolExecutor
+        free = queue.Queue()
+        for _ in range(n): free.put(Bridge(self.env, self.worker))
+
+        def one(task):
+            cand = self.retrieve(task); b = free.get()
+            try:
+                payload = [{"name": self.names[a], "description": self.desc[a]} for a in cand]
+                return b.select(self._task_text(task), payload, self.supervisor, self._base_url or _endpoint(self.supervisor), params=self.params)
+            finally: free.put(b)
+        with ThreadPoolExecutor(max_workers=n) as ex:
+            self._pre = dict(zip(map(id, stream), ex.map(one, stream)))
+        while not free.empty(): free.get().close()
+
     def fetch(self, task) -> int:
         cand = self.retrieve(task)
         self.view.ledger.compare(len(cand)); self.view.ledger.hop(1)
         self.view.ledger.message(len(cand) + 2)             # k descriptions read + supervisor request/reply
         payload = [{"name": self.names[a], "description": self.desc[a]} for a in cand]
         ask = lambda: self.bridge.select(self._task_text(task), payload, self.supervisor, self._base_url or _endpoint(self.supervisor), params=self.params)   # re-pick per call: replicas that join mid-run get used
-        resp = ask()
+        resp = self._pre.pop(id(task), None) or ask()      # prefetched response, if prefetch() ran
         if resp.get("error"): resp = ask()                  # one retry: the bridge restarts a dead worker on the next call
         self._calls += 1
         if resp.get("error"):

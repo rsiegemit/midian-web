@@ -135,6 +135,8 @@ def run_method(world, stream, spec, b, churn=None):
     if build["probes"] > Budget(b).total_probes(world.n, world.K):
         log(f"  [WARNING] {spec['name']}: build spent {build['probes']} probes > budget {Budget(b).total_probes(world.n, world.K)}")
     outcomes, liar, route, t_run, repair, events = [], [], 0.0, time.perf_counter(), dict.fromkeys(build, 0), 0
+    if not churn and hasattr(m, "prefetch"):                          # concurrent framework requests (FrameworkMethod.prefetch)
+        t = time.perf_counter(); m.prefetch(stream); route += time.perf_counter() - t
     for i, task in enumerate(stream):
         if churn_due(churn, i):                                        # replace agents, let the method repair; cost is
             ids = world.churn(churn["frac"]); before = world.ledger.snapshot(); m.churn(ids, ids); events += 1

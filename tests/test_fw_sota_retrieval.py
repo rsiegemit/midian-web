@@ -250,3 +250,27 @@ def test_a_framework_naming_nobody_is_still_a_fallback_not_an_error():
     m.bridge.select = lambda *a, **k: {"choice": None, "error": None, "raw": "I would pick the arithmetic expert"}
     for t in _tasks(10): m.fetch(t)
     assert m.stats["fallbacks"] == 10 and m.stats.get("infra_errors", 0) == 0
+
+
+@pytest.mark.parametrize("retrieval", ["tfidf", "bm25", "declared"])
+def test_parallel_prefetch_gives_exactly_the_sequential_picks(monkeypatch, retrieval):
+    """RTE_FW_PARALLEL runs the (stateless) framework requests concurrently before the run loop; fetch must return the
+    same agent for every task, with the same stats and ledger, and never touch the sequential bridge."""
+    tasks = list(_tasks(60)); runs = {}
+    for par in ("1", "8"):
+        monkeypatch.setenv("RTE_FW_PARALLEL", par)
+        m = _Fw(base_url="http://127.0.0.1:1/v1", dedup=True, retrieval=retrieval)
+        m.build(World(N, K, "specialist", 0.5, seed=1, liar_select="low_skill_first").view(m.needs), Budget(1))
+        m.prefetch(tasks)
+        if par != "1": m.bridge.select = lambda *a, **k: pytest.fail("prefetched run called the sequential bridge")
+        runs[par] = ([m.fetch(t) for t in tasks], dict(m.stats), m.view.ledger.snapshot())
+        m.bridge.close()
+    assert runs["1"] == runs["8"] and runs["1"][1]["picks"] == len(tasks)
+
+
+def test_midian_cohorts_are_never_prefetched(monkeypatch):
+    """The cohort shortlists learn online, so their requests must stay in order."""
+    monkeypatch.setenv("RTE_FW_PARALLEL", "8")
+    m = _built(retrieval="midian_va", r=10)
+    m.prefetch(list(_tasks(5)))
+    assert m._pre == {}
