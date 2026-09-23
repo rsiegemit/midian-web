@@ -80,33 +80,16 @@ def fig_E(s, ref):
         "E  frameworks by shortlist (live, specialist): bar = mean of frameworks; solid honest, hatched cartel; * = not in yet", "E_shortlists_by_n", 6)
 
 
-def tally(n):
-    """(regime, shortlist) -> how many frameworks get their BEST result (highest seed mean) from that shortlist at n."""
-    d = load(); fw = d[(d.shortlist != "-") & (d.n == n) & (d.shortlist.isin(MAIN))]
-    have = fw.groupby(["regime", "arm"]).shortlist.nunique(); full = fw.groupby("regime").shortlist.nunique()
-    keep = [(r, a) for (r, a), k in have.items() if k == full[r]]          # only frameworks with EVERY shortlist in the regime
-    fw = fw.set_index(["regime", "arm"]).loc[keep].reset_index()
-    best = fw.loc[fw.groupby(["regime", "arm"])["mean"].idxmax()]
-    out = best.groupby(["regime", "shortlist"]).size().to_dict()
-    out["_k"] = {r: sum(1 for rr, _ in keep if rr == r) for r in REG}
-    return out
-
-
 def fig_F(s, ref, n=100000):
     """x = shortlist at one n, sorted by the honest mean; the ticks name the shortlists."""
     q = s[s.n == n]; order = q[q.regime == "beta0"].sort_values("mean", ascending=False).shortlist.tolist()
     fig, ax = plt.subplots(figsize=(7.2, 2.8)); w = 0.38
-    wins = tally(n)
-    for i, src in enumerate(order):
-        pair(ax, i, w, q[q.shortlist == src].set_index("regime"), src, None)
-        ax.text(i, 1.01, f"{wins.get(('beta0', src), 0)} | {wins.get(('cartel', src), 0)}", transform=ax.get_xaxis_transform(),
-                ha="center", va="bottom", fontsize=6)
+    for i, src in enumerate(order): pair(ax, i, w, q[q.shortlist == src].set_index("regime"), src, None)
     lines(ax, ref, n, -0.5, len(order) - 0.5, True)
     ax.plot([], [], "o", ms=2.5, color="black", label="best single framework")
     ax.set_xticks(range(len(order))); ax.set_xticklabels([NAME[x] for x in order], rotation=28, ha="right", rotation_mode="anchor")
     ax.set_xlim(-0.6, len(order) - 0.4)
-    finish(ax, fig, q, f"F  n = {n:,} (solid honest, hatched cartel); above: frameworks whose best shortlist it is, "
-                f"honest | cartel, of {wins['_k']['beta0']} | {wins['_k']['cartel']}", "F_shortlists_1e5", 3, inside=True)
+    finish(ax, fig, q, f"F  n = {n:,}: every shortlist, best to worst; solid honest, hatched β = 0.5 cartel", "F_shortlists_1e5", 3, inside=True)
 
 
 def finish(ax, fig, s, title, name, ncol, inside=False):
