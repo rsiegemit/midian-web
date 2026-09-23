@@ -385,6 +385,18 @@ rows moved to `results/<grid>/quarantine/` (not deleted) and their 2,904 units r
 
 ---
 
+## 8d. Rival note -- the warm-start bandit scores HIGHER under the cartel than honest (2026-09-22, post hoc)
+
+Live, specialist, b = 3: warm_start_bandit is +0.04 under the β = 0.5 low-skill cartel at 10^4 and 10^5 (0.743 -> 0.783,
+0.738 -> 0.778), paired per seed in all 3 seeds at both sizes, while routing 42-47 % of its tasks to liars (10^3: +0.004).
+Not a lie benefit. Its prior is Beta(n0 D, n0 (1 - D)), n0 = 5, on the self-described claims; the lie clips liars' D near 1,
+so their prior failure count is ~0 and every probe failure dominates -- for them the bandit becomes "trust the b probes".
+An offline Thompson simulation on the real 10^4 populations (Bernoulli outcomes at true S; diagnostic only) reproduces it:
+honest D 0.752 / 0.750 / 0.734, cartel D 0.758 / 0.789 / 0.769, EVERYONE +0.4 with no liars 0.755 / 0.780 / 0.766, flat
+prior 0.689 / 0.697 / 0.700. So the honest warm-start rival is under-tuned (its prior is too pessimistic on self-described
+claims); a tuned honest version would sit near its cartel number. Reported numbers are unchanged (the rival is as
+pre-registered); state it beside any honest-vs-cartel comparison of this arm.
+
 ## 9. Still open (not results)
 
 - Coverage fill and expansions (COVERAGE.md §7-§9, 2026-09-17): the synthetic and live fills are complete and folded; three
