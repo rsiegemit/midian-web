@@ -8,6 +8,55 @@ matplotlib.use("Agg"); import matplotlib.pyplot as plt
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from rte.analyze import RTE_DATA, load as _load, FLAT, FLAT_ON
 
+# ---- LEGEND RULE for every figure (every figure script imports this module): entries ranked best first by the value
+# each one plots, laid out ROW-MAJOR -- best top left, then left to right, then the next row. matplotlib fills legend
+# columns top to bottom, so the ranked list is permuted to read row-major. Entries that plot nothing (style keys such
+# as "hollow = honest") keep their order after the ranked ones. rank="asc" where lower is better (cost axes);
+# rank=None keeps the given order (still row-major).
+def _plotted(h):
+    from matplotlib.container import BarContainer, ErrorbarContainer
+    from matplotlib.collections import LineCollection, PathCollection
+    try:
+        if isinstance(h, BarContainer): v = [p.get_height() for p in h.patches]
+        elif isinstance(h, ErrorbarContainer): v = list(h[0].get_ydata()) if h[0] is not None else []
+        elif isinstance(h, LineCollection): v = [y for s in h.get_segments() for _, y in s]
+        elif isinstance(h, PathCollection): v = [y for _, y in h.get_offsets()]
+        elif hasattr(h, "get_ydata"): v = list(h.get_ydata())
+        else: v = []
+        v = np.asarray(v, float); v = v[np.isfinite(v)]
+        return float(v.mean()) if v.size else None
+    except Exception:
+        return None
+
+
+def _rowmajor(items, ncol):
+    n = len(items); ncol = max(1, min(ncol, n)); q, rem = divmod(n, ncol)
+    rows = [q + 1] * rem + [q] * (ncol - rem)
+    return [items[r * ncol + c] for c in range(ncol) for r in range(rows[c])]
+
+
+def _ranked(orig):
+    def legend(self, *args, rank="desc", **kw):
+        if len(args) == 1: return orig(self, *args, **kw)              # labels only: nothing to pair with
+        if len(args) >= 2: hs, ls, args = list(args[0]), list(args[1]), args[2:]
+        elif "handles" in kw: hs = list(kw.pop("handles")); ls = list(kw.pop("labels", [h.get_label() for h in hs]))
+        else: hs, ls = (self.get_legend_handles_labels() if hasattr(self, "get_legend_handles_labels") else ([], []))
+        if not hs: return orig(self, *args, **kw)
+        items = list(zip(hs, ls))
+        if rank:
+            val = [_plotted(h) for h, _ in items]
+            data = sorted([i for i, v in enumerate(val) if v is not None], key=lambda i: val[i], reverse=(rank == "desc"))
+            items = [items[i] for i in data] + [it for i, it in enumerate(items) if val[i] is None]
+        items = _rowmajor(items, kw.get("ncol", kw.get("ncols", 1)))
+        return orig(self, [h for h, _ in items], [l for _, l in items], *args, **kw)
+    return legend
+
+
+import matplotlib.axes, matplotlib.figure
+if not getattr(matplotlib.axes.Axes.legend, "_rte_ranked", False):
+    for _cls in (matplotlib.axes.Axes, matplotlib.figure.Figure):
+        _cls.legend = _ranked(_cls.legend); _cls.legend._rte_ranked = True
+
 O = f"{RTE_DATA}/results/extra_figs"; os.makedirs(O, exist_ok=True)
 RED, ORG, YEL, BLU, GRN, PUR, GRY, DRK = "#c0392b", "#e67e22", "#f1c40f", "#3498db", "#27ae60", "#8e44ad", "#999999", "#2c3e50"
 HAL, HALP = "sequential_halving", "sequential_halving_peer"
@@ -209,7 +258,7 @@ def H5():
         for l, ls in keep.items():
             s = d[d.label == l].groupby("n")[c].mean() if len(d) else pd.Series(dtype=float); s = s[s > 0]
             if len(s): ax.plot(s.index, s.values, marker="o", ls=ls, color=col(l), label=l, lw=2.5 if l.startswith("midian") else 1.3)
-        ax.set_xscale("log"); ax.set_yscale("log"); ax.set_xlabel("n (agents)"); ax.set_title(ttl + " (0 omitted)"); ax.grid(alpha=.3, which="both"); ax.legend(fontsize=8)
+        ax.set_xscale("log"); ax.set_yscale("log"); ax.set_xlabel("n (agents)"); ax.set_title(ttl + " (0 omitted)"); ax.grid(alpha=.3, which="both"); ax.legend(fontsize=8, rank="asc")   # cost: lower is better
     ax = axes[3]; f = rows("fw_live_n100", "fw_live_n1000"); f = f[f.label.str.startswith("fw_")] if len(f) else f
     if len(f) and "wall_clock_per_task" in f:
         q = f.groupby(["label", "n"]).wall_clock_per_task.median().unstack("n"); q.index = [fw(i) for i in q.index]

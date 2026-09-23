@@ -108,7 +108,7 @@ if __name__ == "__main__":
         x = max(crossing(t, a_, "fw_autogen", "build_msgs", "msgs_per_task"), T[0]); y = t.loc[a_, "build_msgs"] + x * t.loc[a_, "msgs_per_task"]
         axes[2].plot([x], [y], "kx", ms=10, mew=2); axes[2].annotate(f"{a_} vs any framework: t={crossing(t, a_, 'fw_autogen', 'build_msgs', 'msgs_per_task'):.0f}", (x, y), textcoords="offset points", xytext=(8, 14 + 16 * i), fontsize=8)
     axes[0].set_title("LLM compute (x = MIDIAN's break-even vs a framework)"); axes[1].set_title("energy"); axes[2].set_title("messages: frameworks 1,000+12t, MIDIAN 1,010+9t, MIDIAN-V 1,010+5t\n(2 per level to fetch + 1 per level to update; flat, halving, LinUCB send none)", fontsize=10); axes[2].set_ylim(bottom=5e2); axes[3].set_title("comparisons per task: flat 1,000, MIDIAN 60 (30 descent + 30 update), MIDIAN-V 31,\nframeworks 10, halving 1", fontsize=10)
-    h, l = axes[0].get_legend_handles_labels(); fig.legend(h, l, loc="center left", bbox_to_anchor=(1.0, 0.5), fontsize=7, title="dashed = frameworks;\nmidian_sh/sha, flat frozen, warm-start coincide with midian/midian_a", title_fontsize=7)
+    h, l = axes[0].get_legend_handles_labels(); fig.legend(h, l, rank="asc", loc="center left", bbox_to_anchor=(1.0, 0.5), fontsize=7, title="dashed = frameworks;\nmidian_sh/sha, flat frozen, warm-start coincide with midian/midian_a", title_fontsize=7)
     fig.suptitle("H10*  Cumulative cost vs tasks routed, n=1000 specialist, self-described channel. LLM compute is an estimate: GPU-s per call = params x (A*prompt + 5A*gen tokens),\n"
                  "A from a saturated 7B replica (34 req/s); 700 W per H100; the routed task's own execution excluded. Messages and comparisons are exact ledger counts from the rows.", fontsize=9)
     plt.tight_layout(); plt.savefig(os.path.dirname(__file__) + "/../figures/H10_runtime_energy.png", dpi=300, bbox_inches="tight")
@@ -125,6 +125,6 @@ if __name__ == "__main__":
     lat = t.loc[show, "latency_s"].sort_values(); ax2[1].barh(range(len(lat)), lat.values, color=[style.get(m, ("#7f8c8d", 1))[0] or "#7f8c8d" for m in lat.index])
     ax2[1].set_yticks(range(len(lat))); ax2[1].set_yticklabels(lat.index, fontsize=8); ax2[1].set_xscale("log"); ax2[1].set_xlabel("critical-path latency per task (s)"); ax2[1].grid(axis="x", alpha=.3, which="both")
     ax2[1].set_title("latency: 1 ms per sequential hop, 10 ns per comparison, supervisor call at measured median")
-    h2, l2 = ax2[0].get_legend_handles_labels(); fig2.legend(h2, l2, loc="center left", bbox_to_anchor=(1.0, 0.5), fontsize=7)
+    h2, l2 = ax2[0].get_legend_handles_labels(); fig2.legend(h2, l2, rank="asc", loc="center left", bbox_to_anchor=(1.0, 0.5), fontsize=7)
     fig2.suptitle("H11*  Combined currencies, n=1000 specialist: cumulative joules vs tasks routed (x = MIDIAN's break-even) and per-task critical-path latency", fontsize=10)
     plt.tight_layout(); fig2.savefig(os.path.dirname(__file__) + "/../figures/H11_joules_latency.png", dpi=300, bbox_inches="tight")

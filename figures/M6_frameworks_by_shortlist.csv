@@ -1,5 +1,5 @@
 panel,source,n,frameworks_mean,best,best_framework,partial,grid
-"honest, β = 0",TF-IDF (pre-registered),100,0.47745277777777784,0.5585555555555556,Magentic-One,*,fw_live_n100
+"honest, β = 0",TF-IDF (pre-registered),100,0.47743888888888886,0.5585555555555556,Magentic-One,*,fw_live_n100
 "honest, β = 0",TF-IDF (pre-registered),1000,0.38077222222222223,0.43130000000000007,Magentic-One,*,fw_live_n1000
 "honest, β = 0",TF-IDF (pre-registered),10000,0.2950617283950617,0.36666666666666664,Magentic-One,*,live_n10k_v2
 "honest, β = 0",TF-IDF (pre-registered),100000,0.37888888888888883,0.37888888888888883,AutoGen,,live_n100k

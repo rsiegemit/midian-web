@@ -70,7 +70,6 @@ def fig_A(C):
                 rec.append(dict(n=n, regime=REG[r], arm=lbl, chosen=v[3], mean=v[0], ci_lo=v[1], ci_hi=v[2]))
         o = C.get(("live", "specialist", n, "beta0"), {}).get("oracle")
         if o: ax.hlines(o[0], i - 0.45, i + 0.45, colors="#7f8c8d", linestyles=":", lw=1.2, zorder=4, label="oracle" if i == 0 else None)
-    ax.bar([], [], color="white", edgecolor="black", hatch="////", label="hatched = β=0.5 low-skill cartel")
     ax.set_xticks(range(len(ns))); ax.set_xticklabels([f"n = {n:,}" for n in ns]); ax.set_ylim(0.2, 0.95); ax.set_ylabel("success")
     ax.grid(axis="y", lw=0.3, alpha=0.35); ax.set_axisbelow(True)
     ax.set_title("A  live RTE, specialist: solid = honest, hatched = β = 0.5 low-skill cartel (b = 3)")
