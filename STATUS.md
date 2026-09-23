@@ -1,3 +1,14 @@
+## v10 -- 2026-09-23 01:15 (read ~/.claude memory project_rte_jobs_pending_sync v10 for the full handoff)
+- Priority MIDIAN-VA > focus reruns > rest. MIDIAN-VA b = 1/5 (va_b_*) done at 10^2-10^4 / RouterEval / LLMRouterBench;
+  replay, bernoulli, live 10^5 running as `test` packs. Budget-matched rivals rivals_b_* partly done.
+- Throughput levers now in use: parallel framework calls (T1), per-seed packs on `test` (T2-T3), Kempner kpacks (T6),
+  `shared` + 3 h walltimes on pending sapphire jobs (T7). Focus units flow through scripts/ops/pack_driver.sh.
+- New: lie_mode max (+ lie_max_* grids), RouterEval shortlist grids re_sl_* (declared launched; embed needs GPU pre-warm),
+  content-keyed embedding cache (opt-in RTE_EMBED_CACHE_DIR), tuned warm-start bandit, CHANGES 8d.
+- Cache-memory fix on branch cache-index (~/rte_cachefix), NOT live; trial 3 + verification gate running; activation
+  needs the user's go.
+- Condensed figures: figures/condensed_sample A/B (_allb, _stacked), E, F, G, H (C, D secondary).
+
 # STATUS.md — RTE handoff
 
 > **Before launching anything, read [OPS_RULES.md](OPS_RULES.md)** -- mandatory operating rules (1-CPU units via
