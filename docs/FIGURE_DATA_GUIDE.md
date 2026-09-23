@@ -4,9 +4,9 @@ A reference for anyone who has to write about figures A, B, C, D, E, F, G and H 
 and marker it says what the number is, which grids and cells and seeds it comes from, how it is averaged, and how each
 method and backend behind it is implemented. It was written from the code, not from the project's markdown docs. Where the
 two disagree, the code is taken as correct and the disagreement is listed. Citations are `path:line` in `~/rte` at the
-working tree of 2026-09-23 ~02:30 EDT; Part 6 (C and D) and every `scripts/condensed_figs.py` citation are against the
-tree of ~12:30 EDT the same day. Figure values are those of the CSVs now in `figures/condensed_sample/` (A and B written
-02:05–02:06, C and D 12:26, E–H 01:52). Result and seed counts are a snapshot from the same time: runs are still landing.
+working tree of 2026-09-23 ~02:30 EDT; every `scripts/condensed_figs.py` citation is against the tree of ~12:30 EDT the
+same day, and Part 6 (C and D) against that of ~12:50. Figure values are those of the CSVs now in `figures/condensed_sample/` (A and B written
+02:05–02:06, C 12:48, D 12:49, E–H 01:52). Result and seed counts are a snapshot from the same time: runs are still landing.
 
 **How it was built.** Six independent passes, one per part, each re-reading the code and re-deriving plotted numbers from
 the raw rows (`$RTE_DATA/results/<grid>/rows.csv` + `rows.d/`). Each pass ends with its own list of discrepancies. Part 0
@@ -43,7 +43,9 @@ the raw rows (`$RTE_DATA/results/<grid>/rows.csv` + `rows.d/`). Each pass ends w
   and colours are used.
   - MIDIAN-VA, MIDIAN, flat probe argmax and declared argmax are one line each.
   - "Best learned router" and "best bandit" are bands from the cheapest to the costliest pool member that can run at that n.
-    Learned runs from 24.6 / 50 (cluster head, flat-NSW) up to about n (DisRouter). Bandit is exactly n.
+    A member whose own work is constant in n is left out of the band; only the flat-NSW router is. Learned runs from
+    cluster head (24.6 at 10², about n/10 at 10⁷) to DisRouter (about 0.37·n at 10⁷), legend "∝ n^0.97–0.99". Bandit is
+    exactly n. Flat-NSW is still a candidate in A and B's cross-fit, so the learned band is not the whole pool.
   - Random is a legend entry only (no routing work).
   - The legend classifies each fitted log-log slope over n ≥ 10³ as "constant", "∝ log n" or "∝ n^s".
   - MIDIAN-VA goes 25 → 80 and MIDIAN 46 → 161, a fixed step per tree level: linear in depth, ∝ log n. Flat probe argmax,
@@ -112,7 +114,7 @@ Severity: **H** = can change a conclusion, **M** = comparability or labelling ca
 | 18 | **Live declarations are the model's own self-rating** (mean 0.686 vs true 0.419, correlation 0.36). On live, the description text includes an honest "Declared areas" clause that lying does not change (erratum 27), which helps every text shortlist. | E, F | M | §1.3, §3.9 #15 |
 | 19 | **Supervisor picks are not bit-reproducible on the real fleet:** random replica per call, no seed sent, batched vLLM. Pick-level run-to-run variance is unmeasured. | E–H | M | §3.9 #8 |
 | 20 | **RouterEval m ≤ 1,000 rows written before the family-order tie-break may come from the other of two subject orders**, so cross-grid pairing there is noisier than it looks. | H | M | §1.10 #1 |
-| 21 | **D's advantage is over the frameworks, not over flat probing.** Flat probe argmax pays an n·K·b build (MIDIAN-VA 3–5 % more) and 1e-5 to 0.1 J per query (n comparisons), so its curve would sit on MIDIAN-VA's. The advantage over flat methods is C's routing work. The constant floor of C's learned band is the flat-NSW index router, a centralised index, and B's cross-fit never picks it at bernoulli 10⁷ (it picks cluster head or DisRouter, order-n work). | C, D | H | §6.2, §6.4 #3–4 |
+| 21 | **D's advantage is over the frameworks, not over flat probing.** Flat probe argmax pays an n·K·b build (MIDIAN-VA 3–5 % more) and 1e-5 to 0.1 J per query (n comparisons), so its curve would sit on MIDIAN-VA's. The advantage over flat methods is C's routing work. C's learned band leaves out the flat-NSW index router, a centralised index whose cost is constant (50). It is still a candidate in A and B's cross-fit, where it is the majority pick in 2 of 29 bars (replay 10⁶ cartel, b = 3 and 5). The drawn band, cluster head to DisRouter, grows like n^0.97–0.99. | C, D | H | §6.2, §6.4 #3–4 |
 | 22 | **D's framework band is a live n = 1,000 measurement applied at every n**, pooled over all β and all three population shapes. Its upper edge is Magentic-One at 10.7 supervisor call-equivalents, a latency ratio to AutoGen rather than a count of calls. The mean latency is used, not the median the `energy.py` comments name, and there is no erratum-28 quarantine. The frameworks' retrieval scan over n descriptions and their n-message registration are not charged. | D | M | §6.4 #5–7 |
 | 23 | **D mixes sources.** Build probes at n = 10⁷ are bernoulli ledger counts, each priced at the live specialist probe energy (4.04 J), while 10³ and 10⁵ use live ledgers. Every row's `build_source` says "ledger" either way. | D | M | §6.4 #1–2 |
 
@@ -3204,15 +3206,16 @@ cosmetic or documentation only.
 
 ## 6. Figures C and D: routing work and energy per query
 
-Scope: `figures/condensed_sample/C_routing_work_vs_n.{png,pdf,csv}` and `D_energy_per_query.{png,pdf,csv}`, both written
-at **2026-09-23 12:26** by `python scripts/efficiency_figs.py` (131 lines). That script imports `scripts/energy.py`
+Scope: `figures/condensed_sample/C_routing_work_vs_n.{png,pdf,csv}` and `D_energy_per_query.{png,pdf,csv}`, written
+at **2026-09-23 12:48** (C) and **12:49** (D) by `python scripts/efficiency_figs.py` (133 lines). The run reused the
+ledger cache `cost_by_n.csv` written at 12:26 (§6.1.1). That script imports `scripts/energy.py`
 (130 lines) for the energy model and the framework numbers. It also takes `ARMS`, `BANDIT`, `LEARNED`, `NOT_RUNNABLE`,
 `OUT`, `POOLS` and `save` from `scripts/condensed_figs.py` (`efficiency_figs.py:18`), `label` from `scripts/seed_tables.py` (`:17`) and the legend rule
 from `scripts/extra_figs.py` (`:16`). Importing `condensed_figs` also applies its rcParams (`condensed_figs.py:27-28`), so C
 and D share A and B's fonts. Line citations in this part are to `efficiency_figs.py` unless another file is named.
 
 **How this part was checked (read-only).**
-- The C CSV was compared with `cost_by_n.csv`. The cache itself was re-derived from `bernoulli_scale_v5/rows.csv`
+- The C CSV was re-derived from `cost_by_n.csv`, including the flat-NSW exclusion and both edges' slopes. The cache itself was re-derived from `bernoulli_scale_v5/rows.csv`
   (medians, row counts and the across-seed ranges of every pool member): all 83 rows agree.
 - Every D row was re-derived from the cache and the energy constants (`build_J`, `marginal_J` to 1e-6 J).
 - The `va_build` inputs were re-read from the five grids, with row counts per source, and `va_build` itself was called on
@@ -3254,8 +3257,8 @@ and D share A and B's fonts. Line citations in this part are to `efficiency_figs
   example, at n = 10^7 the per-seed range is 1,000,011–1,000,018 and 3,471,301–4,023,174. Among build counts, only
   MIDIAN-VA's `build_probes` varies (e.g. 49,325–49,586 at n = 10^3).
 - **Caching.** When the file exists it is read back and the rows are not touched (`:28`). The docstring says to delete it
-  to re-read (`:10`). The current file was written at 12:26, in the same run as the figures. It covers n = 10 … 10^7; C
-  draws n ≥ 100 at b = 3 (`:73`, `:79`, `:87`).
+  to re-read (`:10`). The current file was written at 12:26 and reused for the 12:48 figures. It covers n = 10 … 10^7; C
+  draws n ≥ 100 at b = 3 (`:73`, `:80`, `:89`).
 - **Arms, labels and colours.** C draws exactly A and B's `ARMS` (`condensed_figs.py:31-33`), in that order and with the
   same labels and colours (`:74`): MIDIAN-VA `#2ecc71`, MIDIAN `#c0392b`, flat probe argmax (online) `#3498db`, best learned
   router `#ff7f0e`, best bandit `#9467bd`, declared argmax `#5d6d7e`, random `#bbbbbb`. The oracle and the frameworks are
@@ -3285,48 +3288,54 @@ amounts (§6.3.2: 1e-3 J against 1e-8 J).
 **Question answered.** For the arms of A and B, how does the communication and computation a router spends on each query
 grow with the population n? In particular, how do MIDIAN and MIDIAN-VA compare with flat arms that scan every agent?
 
-**What is drawn** (`draw_I`, `:70-94`):
-- **Single arms** (MIDIAN-VA, MIDIAN, flat probe argmax, declared argmax; `:87-89`). One line each: circle markers (ms 3),
+**What is drawn** (`draw_I`, `:70-96`):
+- **Single arms** (MIDIAN-VA, MIDIAN, flat probe argmax, declared argmax; `:89-91`). One line each: circle markers (ms 3),
   lw 1.6, at n = 10², 10³ … 10⁷ (b = 3 rows only). There are no error bars.
-- **Pooled arms** (best learned router, best bandit; `:77-86`). A pooled bar in B is a different member per cell and per
+- **Pooled arms** (best learned router, best bandit; `:77-88`). A pooled bar in B is a different member per cell and per
   seed (§2.1.3), so C draws the pool's range instead of one line.
   - At each n ≥ 10², the pool is `POOLS[k]` minus `NOT_RUNNABLE("bernoulli", n)` (`:78`), limited to the members that
     have cache rows.
-  - The band spans the smallest to the largest member's work at that n (`:79`). It is filled in the arm's colour at α 0.3
-    (`:81`), with a lw 1.0 line along each edge (`:82`). There are no markers.
+  - **Constant-cost members are left out** (`:79`). A member whose own work over n ≥ 10² has `growth(slope) ==
+    "constant"` is dropped from the band at every n. Only `flat_nsw_router` qualifies: its work is ef = 50 at every n, slope
+    about 0. Its cost is constant, so the band would otherwise run from a flat floor, and the cross-fit rarely picks it
+    (majority pick in 2 of 29 A / B bars; table below). Every bandit member is n, so nothing is dropped from that pool.
+  - The band spans the smallest to the largest remaining member's work at that n (`:80`). It is filled in the arm's
+    colour at α 0.3 (`:82`), with a lw 1.0 line along each edge (`:83`). There are no markers.
   - The pools' CSV rows hold the lower edge in `work` and the upper edge in `work_max`, with a slope for each (`slope`,
-    `slope_max`, `:85`).
+    `slope_max`, `:87`).
 - **Random** (`:75-76`) routes blindly and does no routing work, which a log axis cannot show. It gets a legend entry only:
   "random  (0: no routing work)". It has no CSV rows.
 - **Overlap.** Flat probe argmax, declared argmax and the whole best-bandit band are exactly n at every n. Every bandit
   member is n, so the band has zero height and both its edges lie on the line. Declared argmax is drawn after them in
   `ARMS` order, so only its grey line shows. Blue (flat) and the purple bandit edges are underneath.
-- Both axes are log (`:90`). x = "population n (agents)", y = "messages + comparisons per query". The major grid is lw
-  0.3, α 0.4 (`:91`).
-- **Legend** (`:93`): two columns, top left, font 6.
-  - A single arm's entry is `name  (growth)` (`:89`). `growth(s)` (`:65-67`) turns the fitted slope s into words:
+- Both axes are log (`:92`). x = "population n (agents)", y = "messages + comparisons per query". The major grid is lw
+  0.3, α 0.4 (`:93`).
+- **Legend** (`:95`): two columns, top left, font 6.
+  - A single arm's entry is `name  (growth)` (`:91`). `growth(s)` (`:65-67`) turns the fitted slope s into words:
     "constant" if |s| < 0.02, "∝ log n" if s < 0.3, otherwise "∝ n^s" with two decimals.
-  - A pool's entry (`:83-84`) gives `growth` of both edges' slopes: one phrase if they agree, else "X to Y across its
-    pool". Its handle is an empty line in the arm's colour, with a marker.
+  - A pool's entry (`:84-86`) gives `growth` of both edges' slopes. If the two phrases agree it is that phrase. Else,
+    if both slopes are ≥ 0.3, it is a range "∝ n^a–z" with the smaller slope first, two decimals. Else it is "X to Y
+    across its pool". Its handle is an empty line in the arm's colour, with a marker.
   - The current entries are: MIDIAN-VA (∝ log n), MIDIAN (∝ log n), flat probe argmax (online) (∝ n^1.00), declared
-    argmax (∝ n^1.00), best learned router (constant to ∝ n^0.97 across its pool), best bandit (∝ n^1.00), random (0: no
-    routing work).
+    argmax (∝ n^1.00), best learned router (∝ n^0.97–0.99), best bandit (∝ n^1.00), random (0: no routing work). The
+    learned range runs from the upper edge's slope (0.971) to the lower edge's (0.987).
   - The legend goes through the `extra_figs` wrapper with `rank="asc"` (`extra_figs.py:16-54`). Entries with data are
     sorted by the mean of their plotted y values, lowest first. The two pool handles and random's plot no data, so they
     keep `ARMS` order after the ranked ones. The layout is row-major, and it reads: MIDIAN-VA / MIDIAN, flat probe argmax /
     declared argmax, best learned router / best bandit, random. The pools are therefore placed last whatever their cost.
-- **Title** (`:92`): "C  routing work per query, the arms of A / B: MIDIAN grows like log n (calibrated bernoulli, b = 3,
+- **Title** (`:94`): "C  routing work per query, the arms of A / B: MIDIAN grows like log n (calibrated bernoulli, b = 3,
   exact ledger)".
-- Figure size 7.2 × 2.8 in; PNG at 250 dpi, plus a PDF (`:124-127`, `condensed_figs.py:78-79`).
+- Figure size 7.2 × 2.8 in; PNG at 250 dpi, plus a PDF (`:126-129`, `condensed_figs.py:78-79`).
 
 **The slope** (`slope`, `:60-62`). An ordinary least-squares line through (log₁₀ n, log₁₀ work) for n ≥ 10³ and work > 0,
 via `np.polyfit(..., 1)`. That is five points, n = 10³ … 10⁷; n = 10² is drawn but not fitted. For a pool it is fitted to
-each edge separately (`:80`). The slope goes into the CSV but only picks the legend's wording.
+each edge separately (`:81`). The slope goes into the CSV but only picks the legend's wording.
 - MIDIAN's and MIDIAN-VA's work is 23·depth and 3 + 11·depth (§6.1.2), linear in log n. A power law fitted to such a curve
   has a small slope (0.09) that falls as n grows, so `growth` labels it "∝ log n".
-- The learned band's lower edge is 50 from 10³ on, so it is "constant". Its upper edge (DisRouter) has slope 0.971.
-- The thresholds 0.02 and 0.3 are fixed in the code. The fitted values here are about 0, 0.086–0.091, 0.971 and 1.000,
-  so the thresholds sit far from all of them.
+- The learned band's lower edge (cluster head) has slope 0.987 and its upper edge (DisRouter) 0.971. The flat-NSW
+  router's slope is about 0, which is what removes it from the band.
+- The thresholds 0.02 and 0.3 are fixed in the code. The fitted values here are about 0 (flat-NSW), 0.086–0.091,
+  0.971, 0.987 and 1.000, so the thresholds sit far from all of them.
 
 **Values** (`C_routing_work_vs_n.csv`: columns `arm, n, work, slope, work_max, slope_max`; one row per drawn n per arm;
 random has none):
@@ -3334,43 +3343,73 @@ random has none):
 | n | MIDIAN-VA | MIDIAN | flat probe argmax, declared argmax, best bandit (both edges) | best learned router, lower edge | best learned router, upper edge |
 |---|---|---|---|---|---|
 | 10² | 25 | 46 | 100 | 24.58 (cluster head) | 54.35 (DisRouter) |
-| 10³ | 36 | 69 | 1,000 | 50 (flat NSW) | 488.06 (DisRouter) |
-| 10⁴ | 47 | 92 | 10,000 | 50 (flat NSW) | 4,533.7 (DisRouter) |
-| 10⁵ | 58 | 115 | 100,000 | 50 (flat NSW) | 42,499.9 (DisRouter) |
-| 10⁶ | 69 | 138 | 1,000,000 | 50 (flat NSW) | 394,053.4 (DisRouter) |
-| 10⁷ | 80 | 161 | 10,000,000 | 50 (flat NSW) | 3,742,795.6 (DisRouter) |
-| fitted slope (n ≥ 10³) | 0.0860 | 0.0912 | 1.0000 | −2.6e-17 | 0.9709 |
+| 10³ | 36 | 69 | 1,000 | 114.74 (cluster head) | 488.06 (DisRouter) |
+| 10⁴ | 47 | 92 | 10,000 | 1,014.0 (cluster head) | 4,533.7 (DisRouter) |
+| 10⁵ | 58 | 115 | 100,000 | 10,013.8 (cluster head) | 42,499.9 (DisRouter) |
+| 10⁶ | 69 | 138 | 1,000,000 | 100,013.8 (cluster head) | 394,053.4 (DisRouter) |
+| 10⁷ | 80 | 161 | 10,000,000 | 1,000,013.7 (cluster head) | 3,742,795.6 (DisRouter) |
+| fitted slope (n ≥ 10³) | 0.0860 | 0.0912 | 1.0000 | 0.9875 | 0.9709 |
 
 **Pool members' work per query** (`cost_by_n.csv`, b = 3, medians over seeds; messages + comparisons). "—" means no row.
-The pool at a given n is the members with a value there.
+The pool at a given n is the members with a value there. The band column says whether C draws the member.
 
-| member | pool | 10² | 10³ | 10⁴ | 10⁵ | 10⁶ | 10⁷ |
-|---|---|---|---|---|---|---|---|
-| `cluster_head_router` | learned | 24.58 | 114.74 | 1,014.0 | 10,013.8 | 100,013.8 | 1,000,013.7 |
-| `flat_nsw_router` | learned | 50 | 50 | 50 | 50 | 50 | 50 |
-| `disrouter_cascade` | learned | 54.35 | 488.06 | 4,533.7 | 42,499.9 | 394,053.4 | 3,742,795.6 |
-| `knn_router`, `knn_router_online`, `mlp_router` | learned | — | — | — | — | — | — |
-| `ucb_per_family`, `thompson_per_family`, `warm_start_bandit`, `linucb_honest` | bandit | 100 | 1,000 | 10,000 | 100,000 | 1,000,000 | 10,000,000 |
-| `trueskill_per_family` | bandit | 100 | 1,000 | 10,000 | — | — | — |
-| `warm_start_bandit[n0=0.5]` | bandit | — | — | — | — | — | — |
+| member | pool | in band | 10² | 10³ | 10⁴ | 10⁵ | 10⁶ | 10⁷ |
+|---|---|---|---|---|---|---|---|---|
+| `cluster_head_router` | learned | yes (lower edge) | 24.58 | 114.74 | 1,014.0 | 10,013.8 | 100,013.8 | 1,000,013.7 |
+| `flat_nsw_router` | learned | no (constant) | 50 | 50 | 50 | 50 | 50 | 50 |
+| `disrouter_cascade` | learned | yes (upper edge) | 54.35 | 488.06 | 4,533.7 | 42,499.9 | 394,053.4 | 3,742,795.6 |
+| `knn_router`, `knn_router_online`, `mlp_router` | learned | no rows | — | — | — | — | — | — |
+| `ucb_per_family`, `thompson_per_family`, `warm_start_bandit`, `linucb_honest` | bandit | yes | 100 | 1,000 | 10,000 | 100,000 | 1,000,000 | 10,000,000 |
+| `trueskill_per_family` | bandit | yes | 100 | 1,000 | 10,000 | — | — | — |
+| `warm_start_bandit[n0=0.5]` | bandit | no rows | — | — | — | — | — | — |
+
+`knn_router`, `knn_router_online` and `mlp_router` cannot run on bernoulli, so C has no values for them. Where they did
+run, their work is exactly n per query: 0 messages plus n comparisons. This was checked on every rows.csv that holds
+them (live `learned_n100`, `learned_f1`, `learned_n10k*`, `live_n100k*`, plus RouterEval and LLMRouterBench): the
+minimum and maximum of `messages_per_task + comparisons_per_task` equal n in every row, at n = 10 … 10⁵ for kNN and
+n = 10 … 10³ for MLP (MLP is `NOT_RUNNABLE` from n = 5,000).
 
 **Reading.**
 - At n = 10² the learned band's floor (cluster head, 24.58) is just under MIDIAN-VA (25), and MIDIAN (46) is under the
   flat arms (100).
-- From 10³ the floor is the flat-NSW router's constant 50. MIDIAN-VA is under it up to 10⁴ (47) and over it from 10⁵ (58).
-- The band's ceiling (DisRouter) grows almost like n.
+- From 10³ on, both edges of the learned band are above MIDIAN and MIDIAN-VA and grow almost like n: the floor is about
+  n/10 + 14 (cluster head), the ceiling about 0.37·n at 10⁷ (DisRouter).
+- The flat-NSW router's constant 50, if it were drawn, would sit under MIDIAN-VA up to 10⁴ (47) and over it from 10⁵ (58).
 
 **A band is not the cost of the arm B reports.** B's "best learned router" and "best bandit" bars are the cross-fitted
-pick of one member per seed (§2.1.3). C's band only brackets what the pick could cost.
+pick of one member per seed (§2.1.3). C's band brackets what the pick could cost only among the members it draws.
+- **The band is not the whole pool.** `flat_nsw_router` is left out of C's band, but it is still a candidate in A and
+  B's "best learned router": `POOLS` (`condensed_figs.py:29, 34`) feeds `arms_at` (`condensed_figs.py:60-75`), which
+  calls `seed_tables.crossfit` (`seed_tables.py:84-94`) with the whole runnable pool. A seed that picks it pays 50
+  comparisons per query, below the band.
+- **Who the cross-fit picks.** A snapshot from `A_live_allb.csv` (02:05) and `B_families_allb.csv` (02:06), "best
+  learned router" rows, `chosen` column. It will change when the pool-fill runs land: 17 of these 29 bars are marked
+  INCOMPLETE POOL. The live 10⁵ bars appear in both files and are counted in each. "Majority" is the number of bars
+  whose most-picked member it is. Two LLMRouterBench cartel bars (b = 1 and 5) are 2–2 ties between `mlp_router` and
+  `knn_router_online`; each is counted for the member listed first in `chosen` (`mlp_router` at b = 1,
+  `knn_router_online` at b = 5). "Seed-level" sums the per-seed picks over all 29 bars (929 seeds). Growth is the member's
+  work per query over n: C's cache for the three declared / probe-index members, the live and other ledgers for kNN and
+  MLP (above).
+
+  | member | growth | majority (of 29 bars) | seed-level picks |
+  |---|---|---|---|
+  | `flat_nsw_router` | constant (50) | 2 (replay 10⁶ cartel, b = 3 and 5) | 113 |
+  | `knn_router_online` | n | 12 | 65 |
+  | `cluster_head_router` | ~n^0.99 | 9 | 630 |
+  | `mlp_router` | n | 3 | 14 |
+  | `knn_router` | n | 2 | 6 |
+  | `disrouter_cascade` | ~n^0.97 | 1 | 101 |
+
+  So a constant-cost member is the majority pick in 2 of 29 bars, both on replay; every other bar's majority pick does
+  work of order n.
 - In `B_families_allb.csv` (02:06), bernoulli n = 10⁷ at b = 3 (C's budget):
   - honest best learned router: `cluster_head_router` ×100, about n/10 = 1,000,014 per query, mid-band;
   - cartel best learned router: `disrouter_cascade` ×100, the band's ceiling (3.7M);
   - best bandit: `warm_start_bandit` ×100 in both regimes, n per query.
 - At b = 1, `cluster_head_router` is picked in both regimes. `disrouter_cascade` is missing from that pool (INCOMPLETE).
-- The band's floor, the flat-NSW router (constant 50), is never picked at bernoulli 10⁷.
+- The flat-NSW router (constant 50, not in the band) is never picked at bernoulli 10⁷.
 
-So the arm B reports as "best learned router" does routing work of order n there. It is not the constant-cost router at
-the bottom of the band.
+So the arm B reports as "best learned router" does routing work of order n there.
 
 ### 6.3 Figure D: `D_energy_per_query`
 
@@ -3378,28 +3417,28 @@ the bottom of the band.
 MIDIAN-VA's one-off probing build cost less than a framework that calls a supervisor LLM on every query? How does that
 point move with n and b?
 
-**What is drawn** (`draw_J`, `:97-121`):
-- **x** = queries served T, 200 log-spaced points from 10² to 10⁹ (`:102`). **y** = energy per query in J, with the build
-  amortised (`:117`). Both axes are log. The figure carries no asterisk; the title and y label say "estimated".
-- **MIDIAN-VA lines.** Nine lines, one per (n, b) with n ∈ {10³, 10⁵, 10⁷} and b ∈ {1, 3, 5} (`:107-113`):
+**What is drawn** (`draw_J`, `:99-123`):
+- **x** = queries served T, 200 log-spaced points from 10² to 10⁹ (`:104`). **y** = energy per query in J, with the build
+  amortised (`:119`). Both axes are log. The figure carries no asterisk; the title and y label say "estimated".
+- **MIDIAN-VA lines.** Nine lines, one per (n, b) with n ∈ {10³, 10⁵, 10⁷} and b ∈ {1, 3, 5} (`:109-115`):
   `y(T) = build_J / T + marginal_J`.
   - The shade is the base green `#2ecc71` times (1.35 − s), with s = 0.55 / 0.8 / 1.0 for n = 10³ / 10⁵ / 10⁷. That is ×0.80,
-    ×0.55 and ×0.35: darker means a larger n (`:107`, `:112`).
-  - The line style gives b: dotted `:` for b = 1, solid for b = 3, dashed `--` for b = 5 (`:109`). lw 1.4.
+    ×0.55 and ×0.35: darker means a larger n (`:109`, `:114`).
+  - The line style gives b: dotted `:` for b = 1, solid for b = 3, dashed `--` for b = 5 (`:111`). lw 1.4.
   - As T grows each line falls with slope −1 and flattens at `marginal_J`. At T = 10⁹ only the n = 10³ lines have
     reached their floor, about 0.005 J.
-- **The grey band** (`:104-105`) spans all T, from the cheapest to the costliest framework's per-query energy: 20.60 J
+- **The grey band** (`:106-107`) spans all T, from the cheapest to the costliest framework's per-query energy: 20.60 J
   (AutoGen) to 219.75 J (Magentic-One, 7B). `#bbbbbb`, α 0.5. Legend: "frameworks: 1-10.7 supervisor-call equivalents per
-  query (21-220 J)". The call-equivalent range is the min and max of `sup_call_equiv` over the drawn frameworks (`:103`),
+  query (21-220 J)". The call-equivalent range is the min and max of `sup_call_equiv` over the drawn frameworks (`:105`),
   printed as `.0f` and `.1f`: 1.000 (AutoGen) and 10.673 (Magentic-One). §6.3.3 says what a call-equivalent is.
-- **The ×s** (`:114-115`): black, ms 3, drawn above the lines. Each is at (break-even T, framework J), where a MIDIAN-VA line
+- **The ×s** (`:116-117`): black, ms 3, drawn above the lines. Each is at (break-even T, framework J), where a MIDIAN-VA line
   crosses the lower edge (vs the cheapest framework) or the upper edge (vs the costliest). There are 18: 9 lines × 2 edges.
-- **Legend** (`:120`): four columns above the axes, font 5.5, `rank="asc"`. The lines are ranked by the mean of their y
+- **Legend** (`:122`): four columns above the axes, font 5.5, `rank="asc"`. The lines are ranked by the mean of their y
   values, which is set by build energy, so the order runs from n = 10³, b = 1 to n = 10⁷, b = 5. The band has no y data
   (`extra_figs._plotted` returns None for it), so it comes last. The legend reads, row by row: 10³ b1, 10³ b3, 10³ b5,
   10⁵ b1 / 10⁵ b3, 10⁵ b5, 10⁷ b1, 10⁷ b3 / 10⁷ b5, band.
-- **Title** (`:119`): "D  estimated energy per query: MIDIAN-VA pays one probing build, then ~0.01 J / query; frameworks
-  pay supervisor LLM calls every query". The y label is "estimated energy per query, J (build amortised)" (`:117`).
+- **Title** (`:121`): "D  estimated energy per query: MIDIAN-VA pays one probing build, then ~0.01 J / query; frameworks
+  pay supervisor LLM calls every query". The y label is "estimated energy per query, J (build amortised)" (`:119`).
 
 #### 6.3.1 MIDIAN-VA's build probes (`va_build`, `:40-57`)
 - **Grids read** (`VA_GRIDS`, `:37`): `va_b_bernoulli_1e7`, `va_b_n1000`, `va_b_n100k`, `fw_live_n1000`, `live_n100k`. For
@@ -3456,7 +3495,7 @@ Everything is estimated from call counts, not measured on a power meter. The mod
 
   Per model at 700 W: 0.5B 0.10 J, 1.5B 0.86 J, 2B 0.50 J, 3B 2.87 J, 7B 6.70 J, 9B 3.84 J, 14B 13.40 J.
 - **Watts.** 700 W, the H100 TDP (`WATTS`, `energy.py:9`; `table(watts=700)`, `energy.py:28`). `draw_J` multiplies by 700 itself
-  (`:101`). The 400 W "typical draw" entry is used only in the RESULTS_energy.md table (`energy.py:72`).
+  (`:103`). The 400 W "typical draw" entry is used only in the RESULTS_energy.md table (`energy.py:72`).
 - **Message = 1e-3 J** (`J_MSG`, `energy.py:10`): one RPC handled in about 100 µs on a 10 W core (`energy.py:44`).
 - **Comparison = 1e-8 J** (`J_CMP`, `energy.py:10`): one float compare.
 - **Pessimistic messages.** `table()` also computes `*_pess` columns with 10 × J_MSG = 1e-2 J (`energy.py:45-48`). D
@@ -3466,15 +3505,15 @@ Everything is estimated from call counts, not measured on a power meter. The mod
   CPU-side routing work (tree descent, TF-IDF) is left out of the LLM term (`energy.py:67`). It enters only through the
   ledger's message and comparison counts.
 
-**MIDIAN-VA in D** (`:106-111`):
+**MIDIAN-VA in D** (`:108-113`):
 - `build_J = build_probes · 4.0388 + build_messages · 1e-3`. The build messages are the b = 3 cache value at every b
-  (1,010 / 101,110 / 10,111,110 at n = 10³ / 10⁵ / 10⁷), a rounding term (`:106`, `:111`). Build comparisons are not charged.
+  (1,010 / 101,110 / 10,111,110 at n = 10³ / 10⁵ / 10⁷), a rounding term (`:108`, `:113`). Build comparisons are not charged.
 - `marginal_J = messages_per_task · 1e-3 + comparisons_per_task · 1e-8` from the cache (b = 3). That is 5 msgs + 31 cmp =
   0.00500031 J at 10³, 7 + 51 = 0.00700051 J at 10⁵ and 9 + 71 = 0.00900071 J at 10⁷. It is the same at every b, as the
   ledger's per-query counts are.
 - No LLM term per query: MIDIAN-VA routes without an LLM call and without run-time probes (§2.3.6).
 
-#### 6.3.3 The framework band (`energy.table()`, `energy.py:28-54`; filter at `:99`)
+#### 6.3.3 The framework band (`energy.table()`, `energy.py:28-54`; filter at `:101`)
 - **Rows** (`rows`, `energy.py:21-26`): grids `live_f1_n1000`, `variants_f1` and `fw_live_n1000` at n = 1,000, filtered to
   `declared_source == "self_described"`. The per-method **mean** of each ledger column is taken over every such row. β,
   `dist`, seed and quarantine are not filtered. Every `fw_` row comes from `fw_live_n1000`: 10 seeds × 3 shapes ×
@@ -3485,7 +3524,7 @@ Everything is estimated from call counts, not measured on a power meter. The mod
   the latency a "measured median" (`energy.py:49-50`), but it is the mean over rows. This assumes latency is proportional
   to GPU work. It was measured on a shared fleet.
 - **The 14B Magentic-One arm** would be scaled by 14/7 (`energy.py:36`). D excludes it: `~fw.index.str.contains("supervisor")`
-  (`:99`) drops the `fw_magentic_one{"supervisor":"Qwen/Qwen2.5-14B-Instruct"}` row (8.93 call-equivalents, 367.87 J).
+  (`:101`) drops the `fw_magentic_one{"supervisor":"Qwen/Qwen2.5-14B-Instruct"}` row (8.93 call-equivalents, 367.87 J).
   The band is also restricted to `fw_*` rows, so `llm_supervisor` is not in it.
 - **`per_task_J`** (`energy.py:37, 47`) = `(probes_per_task · probe_cost + call-equivalents · SUP) · 700 +
   messages_per_task · 1e-3 + comparisons_per_task · 1e-8`. For every framework, probes_per_task = 0, messages = 12
@@ -3509,7 +3548,7 @@ Only the two edges are drawn. The per-framework values are not in D's CSV. They 
 edges.
 
 #### 6.3.4 Break-even points
-A MIDIAN-VA line meets a framework level F where build/T + marginal = F, so (`:115`)
+A MIDIAN-VA line meets a framework level F where build/T + marginal = F, so (`:117`)
 
   **T\* = build_J / (F − marginal_J)**.
 
@@ -3545,11 +3584,18 @@ queries per agent at b = 1 / 3 / 5 against AutoGen, and 0.31 / 0.91 / 1.53 again
    cells at 10³ / 10⁵, and 10⁷ b = 5 from `va_b_bernoulli_1e7`), and two are the `bernoulli_scale_v5` sweep at 10⁷ b = 1
    and 3. The table
    in §6.3.1 gives each one's source. The ratio fallback (`:55-56`) is still in the code but unused.
-3. **The learned band's constant floor is the flat-NSW router, which is centralised.** It is an ANN index over flat probe
-   means held in one place (§2.8.3; METHODS.md calls it a verified-centralised arm). It shows that sublinear routing is
-   possible centrally. What MIDIAN adds is routing that is sublinear, decentralised and verified. C does not show that
-   difference, and C leaves out the router's ⌈log₂ n⌉ hops. B never picks it at bernoulli 10⁷ (§6.2), and the band floor
-   is not a cost any drawn bar pays.
+3. **The learned band leaves out the one constant-cost member, the flat-NSW router.** `draw_I` drops any pool member whose
+   own growth over n ≥ 10² is "constant" (`:79`), and only `flat_nsw_router` is (50 comparisons at every n). It is an ANN
+   index over flat probe means held in one place (§2.8.3; METHODS.md calls it a verified-centralised arm). It shows that
+   sublinear routing is possible centrally; what MIDIAN adds is routing that is sublinear, decentralised and verified.
+   - It is left out because its cost is constant and the cross-fit rarely picks it: majority pick in 2 of 29 A / B bars,
+     both replay 10⁶ cartel (b = 3 and 5), and never at bernoulli 10⁷ (§6.2).
+   - It is still a candidate in A and B's cross-fitted "best learned router" (`condensed_figs.py:34`,
+     `seed_tables.py:84-94`). In those two replay bars, and in 113 seed-level picks in all, the arm B reports pays 50
+     per query, below the drawn band. The band is not the whole pool, and a caption should say so.
+   - The pick counts in §6.2 are a 02:06 snapshot. The exclusion rule itself does not depend on them: it reads only C's
+     cache. If the pool-fill runs make flat-NSW a common pick, the band would under-state how cheap the reported arm is.
+   - C also leaves out the router's ⌈log₂ n⌉ hops.
 4. **D's advantage is over the frameworks, not over flat probing.** Flat probe argmax builds with exactly n·K·b probes,
    slightly fewer than MIDIAN-VA's 1.03–1.05 × n·K·b. Its per-query energy is n comparisons: 1e-5 J at 10³, 1e-3 J at 10⁵,
    0.1 J at 10⁷. Its D curve is not drawn. It would lie within a few percent of MIDIAN-VA's: its build is 3–5 % smaller,
@@ -3568,7 +3614,7 @@ queries per agent at b = 1 / 3 / 5 against AutoGen, and 0.31 / 0.91 / 1.53 again
    means of AutoGen's latency range from 0.92 s to 3.13 s. It includes CrewAI and ADK rows that E–H drop (no quarantine
    filter). Only the edges matter for D: AutoGen and Magentic-One.
 7. **Call-equivalents are a latency ratio, not a count of calls.** The legend says "1-10.7 supervisor-call equivalents per
-   query" (`:104-105`). The floor is AutoGen, one call by construction. The 10.7 at the ceiling is Magentic-One's mean latency
+   query" (`:106-107`). The floor is AutoGen, one call by construction. The 10.7 at the ceiling is Magentic-One's mean latency
    divided by AutoGen's (§6.3.3). No call count was recorded.
 8. **Energy is an estimate** (the title and y label say "estimated"). Its uncertain parts: B = 5A is assumed; A rests on one 34 req/s throughput figure;
    7B / 14B probe tokens are 3B proxies; latency stands in for GPU work; 700 W is the TDP. A 400 W draw would scale every
@@ -3576,12 +3622,12 @@ queries per agent at b = 1 / 3 / 5 against AutoGen, and 0.31 / 0.91 / 1.53 again
    together. Messages at 1e-3 J are a guess. The 1e-2 J variant moves T\* by under 0.31 %.
 9. **MIDIAN-VA's build is pooled over regimes and shapes.** `va_build` does not filter β or `dist`. The 10³ b = 3 value
    mixes 3 live shapes and 4 β values. The spread is small (49,368–49,468 at 10³ b = 3), so the effect is under 0.2 %.
-10. **The 10⁵, b = 5 build rests on 3 honest rows.** Those were the rows present at 12:26, and still at 12:32. The cartel b = 5 rows of
+10. **The 10⁵, b = 5 build rests on 3 honest rows.** Those were the rows present at 12:26, and still when D was redrawn at 12:49. The cartel b = 5 rows of
     `va_b_n100k` were still running (§4.3).
 11. **The cache does not refresh itself.** `cost_by_n.csv` is reused until it is deleted (`:28`). The `va_build` grids and
     the framework rows are re-read on every run. A rerun can therefore mix a new build with an old cache. For the counts in
     C this does not matter, because they are deterministic. A cache written before the `b` column was added would fail in
-    `draw_I` (`d.b`, `:73`), so an old file has to be deleted. The current one was rebuilt at 12:26.
+    `draw_I` (`d.b`, `:73`), so an old file has to be deleted. The current one was rebuilt at 12:26 and reused by the 12:48 run.
 12. **Running `efficiency_figs.py` writes to result directories.** `energy.table()` loads through `rte.analyze.load`,
     which consolidates rows.d into rows.csv for `live_f1_n1000`, `variants_f1` and `fw_live_n1000` (`rte/analyze.py:57`),
     unless a grid has a `.merge_owner` file (`rte/run.py:190-191`). Without `RTE_DATA`, the default
