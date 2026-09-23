@@ -301,6 +301,7 @@ live,beta05_random,heavy_tail,100,openai,tfidf,0.5437000000000001,0.5360975,0.55
 live,beta05_random,heavy_tail,100,smol,tfidf,0.5643999999999999,0.5543975,0.5747,10,False
 live,beta05_random,heavy_tail,100,autogen,embed,0.6631000000000001,0.6533,0.6721000000000001,10,False
 live,beta05_random,heavy_tail,100,camel,embed,0.6694000000000001,0.6549000000000001,0.6833025000000001,10,False
+live,beta05_random,heavy_tail,100,crewai,embed,0.616,0.616,0.616,1,True
 live,beta05_random,heavy_tail,100,langgraph,embed,0.6458,0.6296975,0.6613,10,False
 live,beta05_random,heavy_tail,100,llama,embed,0.5948,0.5811975,0.6077,10,False
 live,beta05_random,heavy_tail,100,maf,embed,0.663,0.6532000000000002,0.6720025000000001,10,False

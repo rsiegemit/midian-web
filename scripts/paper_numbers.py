@@ -31,6 +31,16 @@ def put(key, s, grid, note=None):
     return N[key]["value"]
 
 
+def fws(w):
+    """The frameworks with rows in `w` -- after the erratum-28 quarantine some cells have none until their rerun lands."""
+    return [f for f in FWS if f in w]
+
+
+def missing(w):
+    m = [f for f in FWS if f not in w]
+    return f"* frameworks with no rows yet (erratum-28 rerun outstanding): {', '.join(m)}" if m else None
+
+
 def put_v(key, value, grid, note=None, units=None):
     N[key] = dict(value=value, grid=grid, units=units, ci=None) | ({"note": note} if note else {})
 
@@ -41,7 +51,7 @@ def paired(key, w, a, b, grid, note=None):
 
 # ------------------------------------------------------------------------------------------------ (a) headline
 fw = rows("fw_live_n1000"); wf = W(fw, FWS + ["midian", "midian_va", "midian_v", "oracle", "random", MAG14])
-fmeans = wf[FWS].mean(); put_v("a.frameworks_all_beta_range_n1000", [round(fmeans.min(), 3), round(fmeans.max(), 3)], "fw_live_n1000", "min/max over the ten frameworks of the mean over 120 units", 120)
+fmeans = wf[fws(wf)].mean(); put_v("a.frameworks_all_beta_range_n1000", [round(fmeans.min(), 3), round(fmeans.max(), 3)], "fw_live_n1000", missing(wf) or "min/max over the ten frameworks of the mean over 120 units", 120)
 f1 = rows("variants_f1", "learned_f1", "live_f1_n1000"); w0 = W(f1, ["midian", "midian_va", "midian_v", "midian_a", "oracle", HALP, HAL, FLAT_ON, "knn_router", "mlp_router", "declared_argmax", "random"], beta=0.0)
 for s in ("midian", "midian_va", "midian_v", "oracle"):
     put(f"a.{s}_beta0_n1000", w0[s], "variants_f1 (β = 0, both liar-selection cells, 3 shapes, 10 seeds)")
@@ -49,13 +59,13 @@ for s in ("midian", "midian_va", "midian_v", "oracle"):
 put("a.midian_all_beta_n1000_table1", wf["midian"], "fw_live_n1000 (all β, random liars)"); put("a.midian_va_all_beta_n1000_table1", wf["midian_va"], "fw_live_n1000 (all β)")
 for f in FWS: paired(f"a.paired_{f}_minus_midian", wf, f, "midian", "fw_live_n1000, 120 units")
 put_v("a.paired_framework_minus_midian_range", [round(min(N[f"a.paired_{f}_minus_midian"]["value"] for f in FWS), 3), round(max(N[f"a.paired_{f}_minus_midian"]["value"] for f in FWS), 3)], "fw_live_n1000")
-sp = wf.xs("specialist", level="dist"); put("a.specialist_frameworks_mean", sp[FWS].stack(), "fw_live_n1000 specialist cells (4 β × 10 seeds × 10 frameworks)")
+sp = wf.xs("specialist", level="dist"); put("a.specialist_frameworks_mean", sp[fws(sp)].stack(), "fw_live_n1000 specialist cells (4 β × 10 seeds × 10 frameworks)", missing(sp))
 for s in ("midian", "midian_v", "midian_va", "oracle"): put(f"a.specialist_{s}", sp[s], "fw_live_n1000 specialist cells")
-put_v("a.specialist_pairs_framework_beats_midian", f"{int((sp[FWS].gt(sp['midian'], axis=0)).sum().sum())} / {sp[FWS].size}", "fw_live_n1000 specialist cells")
+put_v("a.specialist_pairs_framework_beats_midian", f"{int((sp[fws(sp)].gt(sp['midian'], axis=0)).sum().sum())} / {sp[fws(sp)].size}", "fw_live_n1000 specialist cells", missing(sp))
 n10 = rows("live_n10k_v2"); w10 = W(n10, FWS + ["midian", "midian_v", "midian_va", "random", "oracle"], beta=0.0)
-put_v("a.n10k_frameworks_range", [round(w10[FWS].mean().min(), 3), round(w10[FWS].mean().max(), 3)], "live_n10k_v2 (β = 0, specialist, 3 seeds, Q = 300)", units=3)
+put_v("a.n10k_frameworks_range", [round(w10[fws(w10)].mean().min(), 3), round(w10[fws(w10)].mean().max(), 3)], "live_n10k_v2 (β = 0, specialist, 3 seeds, Q = 300)", missing(w10), units=3)
 put("a.n10k_random", w10["random"], "live_n10k_v2 β = 0"); put("a.n10k_midian", w10["midian"], "live_n10k_v2 β = 0"); put("a.n10k_midian_v", w10["midian_v"], "live_n10k_v2 β = 0"); put("a.n10k_midian_va", w10["midian_va"], "live_n10k_v2 β = 0")
-w10b = W(n10, FWS + ["midian", "midian_v", "midian_va", "random"], beta=0.25); put_v("a.n10k_frameworks_range_beta025", [round(w10b[FWS].mean().min(), 3), round(w10b[FWS].mean().max(), 3)], "live_n10k_v2 (β = 0.25)")
+w10b = W(n10, FWS + ["midian", "midian_v", "midian_va", "random"], beta=0.25); put_v("a.n10k_frameworks_range_beta025", [round(w10b[fws(w10b)].mean().min(), 3), round(w10b[fws(w10b)].mean().max(), 3)], "live_n10k_v2 (β = 0.25)", missing(w10b))
 # VA − KNN / MLP
 w100 = W(rows("learned_n100"), ["midian_va", "knn_router", "mlp_router", HALP, "oracle"], beta=0.0); paired("a.va_minus_knn_n100_beta0", w100, "midian_va", "knn_router", "learned_n100 β = 0 (3 shapes × 2 liar-selection cells × 10 seeds)")
 paired("a.va_minus_knn_n1000_beta0", w0, "midian_va", "knn_router", "variants_f1 + learned_f1, β = 0"); w10k = W(rows("learned_n10k"), ["midian_va", "knn_router", HALP, "oracle", "midian", FLAT_ON], beta=0.0)
