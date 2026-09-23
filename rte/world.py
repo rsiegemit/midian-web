@@ -122,20 +122,22 @@ def select_liars(S: np.ndarray, beta: float, how: str, rng: np.random.Generator)
 
 def apply_lying(D_honest: np.ndarray, liars: np.ndarray, mode: str = "inflate",
                 demand: np.ndarray | None = None, delta: float = DELTA_INFLATE) -> np.ndarray:
-    """Declared-channel lie. `inflate`: D[a] = clip(D_honest[a] + delta). `squat`: D[a, f*] = 1
+    """Declared-channel lie. `inflate`: D[a] = clip(D_honest[a] + delta). `max`: D[a] = 1 everywhere. `squat`: D[a, f*] = 1
     on the top-3 highest-demand families. Liars still execute at true skill."""
     D = D_honest.copy()
     if not liars.any():
         return D
     if mode == "inflate":
         D[liars] = np.clip(D[liars] + delta, 0.0, 1.0)
+    elif mode == "max":                                   # the strongest declared lie: claim perfect skill in every family
+        D[liars] = 1.0
     elif mode == "squat":
         if demand is None:
             raise ValueError("squat needs the family demand vector")
         top = np.argsort(-demand, kind="stable")[:3]
         D[np.ix_(liars, top)] = 1.0
     else:
-        raise ValueError(f"lie_mode must be inflate|squat, got {mode!r}")
+        raise ValueError(f"lie_mode must be inflate|max|squat, got {mode!r}")
     return D
 
 
