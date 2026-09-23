@@ -7,7 +7,8 @@ rows and, for bernoulli / replay b = 1, their scale matrices. b is NEVER pooled:
   Two versions of each: _allb  -- one bar per (arm, regime, b), shade light -> dark = b = 1, 3, 5;
                         _stacked -- one full-width bar per (arm, regime): b = 1 at the bottom, then the gain to b = 3,
                                     then to b = 5 (drawn tallest-first, so a non-monotone arm shows out-of-order shades).
-  declared argmax and random spend no probes: one bar (b does not apply). * = a budget not in yet.
+  declared argmax and random spend no probes: one bar (b does not apply). No markers on bars: a budget not in yet is an
+  empty slot, and the title ends in ONE * while any bar of the figure is missing or its pool is incomplete.
   C / D (routing work vs n; energy per query) are scripts/efficiency_figs.py.
 "Best learned router" / "best bandit" are CROSS-FITTED (scripts/seed_tables.py): for each seed the arm is chosen on the
 OTHER seeds and scored on this one, so no bar is the maximum of noisy means over the seeds it reports (no winner's curse).
@@ -15,7 +16,7 @@ The pool is the same at every b in a cell (POOL minus the arms that cannot run t
 still missing a candidate at that b carries a * above it. The csv lists how often each arm was chosen. Frameworks are not drawn (figures/shortlist). The do-not-add list applies, and with it the
 TEMPORARY extra_figs.HIDE_HALVING switch."""
 from __future__ import annotations
-import os, sys
+import os, re, sys
 import numpy as np, pandas as pd, matplotlib
 matplotlib.use("Agg"); import matplotlib.pyplot as plt
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -31,7 +32,9 @@ BANDIT = ["ucb_per_family", "thompson_per_family", "warm_start_bandit", "linucb_
 ARMS = [("midian_va", "MIDIAN-VA", "#2ecc71"), ("midian", "MIDIAN", "#c0392b"), ("flat_probe_argmax_online", "flat probe argmax (online)", "#3498db"),
         ("best_learned", "best learned router", "#ff7f0e"), ("best_bandit", "best bandit", "#9467bd"),
         ("declared_argmax", "declared argmax", "#5d6d7e"), ("random", "random", "#bbbbbb")]
-POOLS = {"best_learned": LEARNED, "best_bandit": BANDIT + ["warm_start_bandit[n0=0.5]"]}
+POOLS = {"best_learned": LEARNED,                      # the bandit pool takes the TUNED warm-start bandit (n0 = 0.5) and drops the
+         "best_bandit": [a for a in BANDIT if a != "warm_start_bandit"] + ["warm_start_bandit[n0=0.5]"]}   # pre-registered n0 = 5
+B_INVARIANT = {"declared_argmax", "random", "cluster_head_router", "disrouter_cascade"}   # never probe (needs has no probe / reports)
 NOT_RUNNABLE = lambda fam, n: ({"trueskill_per_family"} if n >= 10 ** 5 else set()) | ({"mlp_router"} if n >= 5000 else set()) \
                               | ({"knn_router", "knn_router_online", "mlp_router"} if fam in ("bernoulli", "replay") else set())   # grid.yaml pool_fill_*
 BUDGETLESS = {"declared_argmax", "random"}
@@ -92,7 +95,7 @@ def budget_bars(C, groups, title, name, norm=False, nested=False, stacked=False)
     slots = [(k, r) for k, _, _ in arms for r in REG]                      # nested: one slot each
     nested = nested or stacked                                          # both: one slot per (arm, regime)
     if not nested: slots = [(k, r, b) for k, _, _ in arms for r in REG for b in ((3,) if k in BUDGETLESS else BS)]
-    w = 0.86 / len(slots); fig, ax = plt.subplots(figsize=(7.2, 2.8)); rec = []; col = {k: c for k, _, c in ARMS}; lab = {k: l for k, l, _ in ARMS}
+    w = 0.86 / len(slots); fig, ax = plt.subplots(figsize=(7.2, 2.8)); rec = []; incomplete = False; col = {k: c for k, _, c in ARMS}; lab = {k: l for k, l, _ in ARMS}
     for i, (xl, key) in enumerate(groups):
         o = C.get(key[:3] + ("beta0",), {}).get("oracle"); z = o[0] if (norm and o) else 1.0
         for j, sl in enumerate(slots):
@@ -103,20 +106,20 @@ def budget_bars(C, groups, title, name, norm=False, nested=False, stacked=False)
             for depth, b in enumerate(bs):
                 ww = w * 0.95 * (1.0 if (not nested or stacked) else (1.0, 0.66, 0.36)[depth])
                 if b not in got:
-                    if k in A.get((key, r), {}): ax.text(x, 0.205 if not norm else 0.205, "*", ha="center", va="bottom", fontsize=5.5)
-                    continue
+                    incomplete = True; continue
                 m, lo, hi, chosen = got[b]; m, lo, hi = m / z, lo / z, hi / z
+                incomplete |= "INCOMPLETE" in chosen
                 first = i == 0 and not h and (b == 3)
                 ax.bar(x, m, ww, color=shade(col[k], b) if k not in BUDGETLESS else col[k], edgecolor="black", lw=0.3,
                        hatch="////" if h else None, alpha=0.8 if h else 1, label=lab[k] if first else None, zorder=2 + depth)
-                if "INCOMPLETE" in chosen: ax.text(x, (hi if not stacked else m) + 0.004, "*", ha="center", va="bottom", fontsize=5.5, zorder=8)
                 if not nested or (b == 3 and not stacked):          # stacked: an interval inside the stack misreads; see _allb
                     ax.errorbar(x, m, yerr=[[m - lo], [hi - m]], fmt="none", ecolor="#222", elinewidth=0.4, capsize=0.6, zorder=6)
-                rec.append(dict(group=xl.replace("\n", " "), regime=REG[r], arm=lab[k], b=b if k not in BUDGETLESS else "-", chosen=chosen, value=m, ci_lo=lo, ci_hi=hi))
+                rec.append(dict(group=xl.replace("\n", " "), regime=REG[r], arm=lab[k], b=b if k not in BUDGETLESS else "-", chosen=chosen, value=m, ci_lo=lo, ci_hi=hi,
+                                b_invariant=k in B_INVARIANT or (k in POOLS and set(re.findall(r"([\w\[\]=.]+) x\d+", chosen.split("|")[0])) <= B_INVARIANT)))
         if o: ax.hlines(1.0 if norm else o[0], i - 0.46, i + 0.46, colors="#7f8c8d", linestyles=":", lw=1.2, zorder=7, label="oracle" if i == 0 else None)
     ax.set_xticks(range(len(groups))); ax.set_xticklabels([xl for xl, _ in groups])
     ax.set_ylim(0.2, 1.05 if norm else 0.95); ax.set_ylabel("success / oracle" if norm else "success")
-    ax.grid(axis="y", lw=0.3, alpha=0.35); ax.set_axisbelow(True); ax.set_title(title)
+    ax.grid(axis="y", lw=0.3, alpha=0.35); ax.set_axisbelow(True); ax.set_title(title + (" *" if incomplete else ""))
     ax.legend(ncol=4, frameon=False, loc="lower center", bbox_to_anchor=(0.5, 1.07)); save(fig, name)
     pd.DataFrame(rec).to_csv(f"{OUT}/{name}.csv", index=False)
 

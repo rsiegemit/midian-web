@@ -958,7 +958,7 @@ routereval,cartel,strong_to_weak,1000,declared_argmax,0.4806,0.4636,0.4998,5
 routereval,cartel,strong_to_weak,1000,flat_probe_argmax_frozen,0.2684,0.25479500000000005,0.2872,5
 routereval,cartel,strong_to_weak,1000,flat_probe_argmax_online,0.5065999999999999,0.4968,0.5194149999999998,5
 routereval,cartel,strong_to_weak,1000,fw_autogen,0.544,0.516,0.5720000000000001,5
-routereval,cartel,strong_to_weak,1000,fw_camel_workforce,0.554,0.5355000000000001,0.5725,4
+routereval,cartel,strong_to_weak,1000,fw_camel_workforce,0.5584,0.5411950000000001,0.5758,5
 routereval,cartel,strong_to_weak,1000,fw_crewai,0.5314,0.5190000000000001,0.5442,5
 routereval,cartel,strong_to_weak,1000,fw_google_adk,0.5318,0.5168,0.5474,5
 routereval,cartel,strong_to_weak,1000,fw_langgraph,0.5372,0.5214000000000001,0.55,5

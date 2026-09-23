@@ -25,6 +25,7 @@ NAME = {k: v for k, v, _ in SOURCES}; COL = {k: c for k, _, c in SOURCES}; ORDER
 SHORT = {"tfidf": "TF-IDF (pre-reg.)", "embed": "MiniLM", "dense_icomp": "dense, I-comp", "dense_idemo": "dense, I-demo",
          "sota": "rerank", "sota_icomp": "rerank, I-comp", "sota_idemo": "rerank, I-demo", "declared": "declared top-k",
          "va_cohort": "VA cohort", "bm25": "BM25", "dense": "dense"}
+INCOMPLETE = [False]                                         # set while drawing a figure: any slot empty or rerun outstanding -> " *" in its title
 MAIN = [k for k in ORDER if k not in ("bm25", "dense")]     # E: the shortlists run (or queued) at every n; BM25 / plain dense are 10^3 ablation only
 
 
@@ -52,19 +53,18 @@ def lines(ax, ref, n, x0, x1, first):
 
 def pair(ax, x, w, q, src, label, dots=True):
     """solid honest + hatched cartel bar for one (n, shortlist); a black dot on each = the best framework. A cell not run
-    yet is an EMPTY slot with * at the baseline; a bar whose framework reruns are outstanding gets * above it. Returns
-    whether the labelled (honest) bar was drawn, so a legend entry is never spent on an empty slot."""
+    yet is an EMPTY slot; it, or a bar whose framework reruns are outstanding, sets INCOMPLETE (one * in the title, no
+    marker on the bar). Returns whether the labelled (honest) bar was drawn, so a legend entry is never spent on an empty slot."""
     drawn = False
     for h, r in enumerate(REG):
         xx = x + (h - 0.5) * w
         if r not in q.index:
-            ax.text(xx, 0.205, "*", ha="center", va="bottom", fontsize=6, zorder=5); continue
-        v = q.loc[r]
+            INCOMPLETE[0] = True; continue                   # not run yet: an empty slot, no marker
+        v = q.loc[r]; INCOMPLETE[0] |= bool(v["star"])
         ax.bar(xx, v["mean"], w * 0.95, color=COL[src], edgecolor="black", lw=0.3, hatch="////" if h else None, alpha=0.75 if h else 1,
                label=label if h == 0 else None, zorder=2)
         if h == 0: drawn = True
         if dots: ax.plot(xx, v["best"], "o", ms=2.2, color="black", zorder=3)
-        if v["star"]: ax.text(xx, (max(v["mean"], v["best"]) if dots else v["mean"]) + 0.008, "*", ha="center", va="bottom", fontsize=6, zorder=5)
     return drawn
 
 
@@ -78,7 +78,7 @@ def fig_E(s, ref, name="E_shortlists_by_n", title=None, srcs=None, xlab="n"):
             if pair(ax, i + (2 * j + 1 - len(srcs)) * w, w, q, src, None if src in seen else SHORT[src], dots=False): seen.add(src)
         lines(ax, ref, n, i - 0.46, i + 0.46, i == 0)
     ax.set_xticks(range(len(ns))); ax.set_xticklabels([f"{xlab} = {n:,}" for n in ns]); finish(ax, fig, s,
-        title or "E  frameworks by shortlist (live, specialist): bar = mean of frameworks; solid honest, hatched cartel; * = not in yet", name, 6)
+        title or "E  frameworks by shortlist (live, specialist): bar = mean of frameworks; solid honest, hatched cartel", name, 6)
 
 
 def fig_F(s, ref, n=100000):
@@ -95,7 +95,7 @@ def fig_F(s, ref, n=100000):
 
 def finish(ax, fig, s, title, name, ncol, inside=False):
     ax.set_ylim(0.2, 0.95); ax.set_ylabel("success"); ax.grid(axis="y", lw=0.3, alpha=0.35); ax.set_axisbelow(True)
-    ax.set_title(title, pad=14 if inside else 6)
+    ax.set_title(title + (" *" if INCOMPLETE[0] else ""), pad=14 if inside else 6); INCOMPLETE[0] = False
     if inside: ax.legend(ncol=ncol, frameon=False, loc="upper right", bbox_to_anchor=(1.0, 0.82))   # the band between bars and lines
     else: ax.legend(ncol=ncol, frameon=False, loc="lower center", bbox_to_anchor=(0.5, 1.07))
     fig.savefig(f"{OUT}/{name}.png", dpi=250); fig.savefig(f"{OUT}/{name}.pdf"); plt.close(fig); print(f"[{name}] written")
@@ -115,15 +115,14 @@ def fig_G(d, n=100000):
     for i, src in enumerate(order):
         for h, r in enumerate(REG):
             q = t[(t.shortlist == src) & (t.regime == r)]
-            if q.empty: ax.text(i + (h - 0.5) * w, 0.002, "*", ha="center", va="bottom", fontsize=6); continue
-            v = q.iloc[0]; xx = i + (h - 0.5) * w
+            if q.empty: INCOMPLETE[0] = True; continue
+            v = q.iloc[0]; xx = i + (h - 0.5) * w; INCOMPLETE[0] |= bool(v.star)
             ax.bar(xx, v.lift, w * 0.95, color=COL[src], edgecolor="black", lw=0.3, hatch="////" if h else None, alpha=0.75 if h else 1, zorder=2)
             ax.errorbar(xx, v.lift, yerr=v.half, fmt="none", ecolor="#222", elinewidth=0.5, capsize=1.2, zorder=3)
-            if v.star: ax.text(xx, v.lift + (v.half if np.isfinite(v.half) else 0) + 0.004, "*", ha="center", va="bottom", fontsize=6)
     ax.axhline(0, color="black", lw=0.6)
     ax.set_xticks(range(len(order))); ax.set_xticklabels([NAME[x] for x in order], rotation=28, ha="right", rotation_mode="anchor")
     ax.set_xlim(-0.6, len(order) - 0.4); ax.set_ylabel("success gain over TF-IDF"); ax.grid(axis="y", lw=0.3, alpha=0.35); ax.set_axisbelow(True)
-    ax.set_title(f"G  gain over the pre-registered TF-IDF shortlist at n = {n:,}, paired within framework: solid honest, hatched cartel")
+    ax.set_title(f"G  gain over the pre-registered TF-IDF shortlist at n = {n:,}, paired within framework: solid honest, hatched cartel" + (" *" if INCOMPLETE[0] else "")); INCOMPLETE[0] = False
     fig.savefig(f"{OUT}/G_shortlist_lift_1e5.png", dpi=250); fig.savefig(f"{OUT}/G_shortlist_lift_1e5.pdf"); plt.close(fig)
     t.to_csv(f"{OUT}/G_shortlist_lift_1e5.csv", index=False); print("[G_shortlist_lift_1e5] written")
 
@@ -132,4 +131,4 @@ if __name__ == "__main__":
     d = load(); s, ref = summarise(d)
     fig_E(s, ref); fig_F(s, ref); fig_G(d)
     s, ref = summarise(load("routereval"))                                  # the re_sl_* grids bring declared, Qwen3 dense and rerank; * until they land
-    fig_E(s, ref, "H_routereval_shortlists", "H  RouterEval (strong-to-weak pools, leaderboard at 5,000): mean of frameworks; hatched = cartel; * = not in yet", MAIN, "pool m")
+    fig_E(s, ref, "H_routereval_shortlists", "H  RouterEval (strong-to-weak pools, leaderboard at 5,000): mean of frameworks; hatched = cartel", MAIN, "pool m")

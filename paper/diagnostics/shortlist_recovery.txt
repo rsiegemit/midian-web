@@ -1,0 +1,49 @@
+Diagnostic ONLY: what each framework shortlist is worth, and how much of it the frameworks recover.
+    RTE_DATA=... python scripts/shortlist_recovery.py   -> paper/diagnostics/shortlist_recovery.{txt,csv}
+Per (n, regime, shortlist source), live specialist populations, seeds 1-3, top-10 per family, averaged over families
+and seeds, from the MEASURED S (read for measurement only; no method ever sees it):
+  list mean   S of a uniform pick from the list        best in list   the ceiling a competent consumer reaches
+  position 1  S of the list's first entry               liar frac      fraction of the list that is a liar
+Lists are built exactly as the framework adapter builds them (rte/methods/frameworks/_common.py retrieve): TF-IDF
+without dedup (pre-registered), every other source over the dedup pool; declared = top-k by the regime's lied-to D;
+dense / rerank from the cached Qwen3 files. The VA cohort is MIDIAN-VA's pick + its leaf cohort, rebuilt on a bernoulli
+world carrying the population's exact S (as scripts/declared_cohort.py), so it is a reconstruction.
+Recovery per framework = (framework success - list mean) / (best in list - list mean), framework success from
+figures/shortlist/live.csv (seed mean, same cell); 0 = a uniform pick from the list, 1 = the list's best agent.
+     n regime   shortlist  list_mean  best  pos1  liar_frac  frameworks  fw_mean  rec_mean  rec_min  rec_max
+ 10000  beta0    declared      0.610 0.751 0.652      0.000         NaN      NaN       NaN      NaN      NaN
+ 10000  beta0 dense_icomp      0.487 0.770 0.447      0.000         NaN      NaN       NaN      NaN      NaN
+ 10000  beta0 dense_idemo      0.486 0.762 0.420      0.000         NaN      NaN       NaN      NaN      NaN
+ 10000  beta0       embed      0.455 0.699 0.387      0.000         8.0    0.437    -0.076   -0.294    0.475
+ 10000  beta0        sota      0.376 0.595 0.293      0.000         8.0    0.414     0.173   -0.185    0.636
+ 10000  beta0  sota_icomp      0.443 0.748 0.366      0.000         NaN      NaN       NaN      NaN      NaN
+ 10000  beta0  sota_idemo      0.416 0.720 0.354      0.000         NaN      NaN       NaN      NaN      NaN
+ 10000  beta0       tfidf      0.321 0.529 0.290      0.000         9.0    0.295    -0.125   -0.309    0.220
+ 10000  beta0   va_cohort      0.447 0.836 0.831      0.000         8.0    0.590     0.368    0.171    0.594
+ 10000 cartel    declared      0.504 0.741 0.510      0.475         NaN      NaN       NaN      NaN      NaN
+ 10000 cartel dense_icomp      0.487 0.770 0.447      0.517         NaN      NaN       NaN      NaN      NaN
+ 10000 cartel dense_idemo      0.486 0.762 0.420      0.490         NaN      NaN       NaN      NaN      NaN
+ 10000 cartel       embed      0.455 0.699 0.387      0.646         7.0    0.417    -0.155   -0.285   -0.003
+ 10000 cartel        sota      0.376 0.595 0.293      0.654         7.0    0.405     0.132   -0.180    0.459
+ 10000 cartel  sota_icomp      0.443 0.748 0.366      0.552         NaN      NaN       NaN      NaN      NaN
+ 10000 cartel  sota_idemo      0.416 0.720 0.354      0.596         NaN      NaN       NaN      NaN      NaN
+ 10000 cartel       tfidf      0.321 0.529 0.290      0.800         8.0    0.288    -0.161   -0.304   -0.010
+ 10000 cartel   va_cohort      0.447 0.836 0.831      0.483         7.0    0.546     0.256    0.077    0.449
+100000  beta0    declared      0.614 0.750 0.627      0.000         8.0    0.620     0.044   -0.064    0.190
+100000  beta0 dense_icomp      0.485 0.751 0.428      0.000         8.0    0.486     0.005   -0.308    0.533
+100000  beta0 dense_idemo      0.473 0.726 0.410      0.000         8.0    0.465    -0.032   -0.174    0.577
+100000  beta0       embed      0.455 0.700 0.385      0.000         8.0    0.460     0.021   -0.302    0.596
+100000  beta0        sota      0.373 0.583 0.247      0.000         8.0    0.403     0.143   -0.310    0.664
+100000  beta0  sota_icomp      0.428 0.738 0.350      0.000         8.0    0.432     0.013   -0.126    0.405
+100000  beta0  sota_idemo      0.410 0.699 0.377      0.000         8.0    0.423     0.045   -0.219    0.384
+100000  beta0       tfidf      0.384 0.384 0.384      0.000        10.0    0.379      -inf     -inf     -inf
+100000  beta0   va_cohort      0.462 0.838 0.836      0.000         8.0    0.568     0.281    0.029    0.541
+100000 cartel    declared      0.527 0.747 0.567      0.421         8.0    0.544     0.080    0.010    0.196
+100000 cartel dense_icomp      0.485 0.751 0.428      0.515         8.0    0.488     0.011   -0.187    0.466
+100000 cartel dense_idemo      0.473 0.726 0.410      0.502         8.0    0.458    -0.057   -0.213    0.388
+100000 cartel       embed      0.455 0.700 0.385      0.638         8.0    0.448    -0.027   -0.315    0.174
+100000 cartel        sota      0.373 0.583 0.247      0.656         8.0    0.405     0.152   -0.326    0.537
+100000 cartel  sota_icomp      0.428 0.738 0.350      0.569         8.0    0.428     0.000   -0.126    0.323
+100000 cartel  sota_idemo      0.410 0.699 0.377      0.602         8.0    0.416     0.022   -0.226    0.392
+100000 cartel       tfidf      0.384 0.384 0.384      0.729        10.0    0.379      -inf     -inf     -inf
+100000 cartel   va_cohort      0.459 0.838 0.836      0.510         8.0    0.552     0.245   -0.001    0.548

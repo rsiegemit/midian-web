@@ -39,7 +39,25 @@ def pending_reruns():
     if not os.path.exists(p) or os.path.exists(f"{RTE_DATA}/logs/DONE_stage2"): return set()
     u = pd.read_csv(p, sep="\t")
     if os.path.exists(f"{RTE_DATA}/logs/DONE_stage1"): u = u[u.grid.str.fullmatch(r"fw_live_n(1000|100)(_lowskill)?_sota")]
+    u = u[[not landed(*k) for k in zip(u.grid, u.method, u.dist, u.beta, u.liar_select, u.seed)]]   # a rerun on disk is not outstanding
     return {(g, m, d, regime(b, l)) for g, m, d, b, l in zip(u.grid, u.method, u.dist, u.beta, u.liar_select)}
+
+
+def landed(grid, method, dist, beta, ls, seed, _c={}):
+    """True when every param variant of `method` in `grid` has a row for (dist, beta, liar_select, seed)."""
+    if grid not in _c:
+        import yaml, sys
+        sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        from rte.run import blocks, method_specs
+        cfg = yaml.safe_load(open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "configs", "grid.yaml")))
+        want = {}
+        for blk in (blocks(cfg, grid) if grid in cfg["grids"] else []):
+            for sp in method_specs(blk): want.setdefault(sp["name"], set()).add(json.dumps(sp["params"], sort_keys=True, separators=(",", ":")))
+        df = load(grid)
+        have = df.groupby(["method", "dist", "beta", "liar_select", "seed"]).params.nunique().to_dict() if not df.empty else {}
+        _c[grid] = (want, have)
+    want, have = _c[grid]
+    return have.get((method, dist, float(beta), ls, int(seed)), 0) >= len(want.get(method, {None}))
 
 
 def select(df, kind):

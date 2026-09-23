@@ -141,12 +141,11 @@ def draw(family, key, cell, csv_rows):
         if not xs: continue
         ax.bar(xs, ys, w * 0.9, color=SRC_COLOR[src], edgecolor="black", linewidth=0.25, label=SRC_NAME[src], zorder=2)
         ax.errorbar(xs, ys, yerr=[el, eu], fmt="none", ecolor="#222", elinewidth=0.4, capsize=0.8, zorder=3)
-    for x, y in stars: ax.text(x, y + 0.004, "*", ha="center", va="bottom", fontsize=6, zorder=5)
 
     ax.set_xticks(xfw); ax.set_xticklabels([ABBR.get(m, m) for m in fws], rotation=30, ha="right", rotation_mode="anchor")
     ax.set_xlim(-0.55, xfw[-1] + 0.55); ax.set_ylabel("success"); ax.grid(axis="y", lw=0.3, alpha=0.35, zorder=0); ax.set_axisbelow(True)
     seeds = max((len(s) for m in fws for s in cell["fw"][m].values()), default=0)
-    note = "   * = erratum-28 rerun outstanding" if stars else ""
+    note = ""
     ax.set_title(f"{family} · n = {n:,} · {dist} · {REGIME_NAME.get(reg, reg)}   ({len(fws)} frameworks × {len(srcs)} shortlists, ≤ {seeds} seeds){note}")
     ax.legend(ncol=min(6, len(srcs) + 2), frameon=False, loc="lower center", bbox_to_anchor=(0.5, 1.06))
     stem = f"{OUT}/{family}__n{n}__{dist}__{reg}"
