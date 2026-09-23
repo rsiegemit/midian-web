@@ -29,7 +29,7 @@ def load(grid):
     if df.empty: return df
     if "rid" in df: df = df.drop_duplicates("rid")
     df["params"] = df.params.astype(str)
-    return df.drop_duplicates(["n", "dist", "beta", "liar_select", "seed", "method", "params"])   # n: some grids hold several sizes
+    return df.drop_duplicates([c for c in ("n", "b", "dist", "beta", "liar_select", "seed", "method", "params") if c in df])   # n, b: some grids hold several
 
 
 def pending_reruns():

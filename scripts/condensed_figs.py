@@ -21,7 +21,7 @@ plt.rcParams.update({"pdf.fonttype": 42, "font.family": "DejaVu Sans", "font.siz
                      "xtick.labelsize": 6.5, "ytick.labelsize": 6.5, "axes.linewidth": 0.6, "figure.constrained_layout.use": True})
 LEARNED = ["knn_router", "knn_router_online", "mlp_router", "flat_nsw_router", "cluster_head_router", "disrouter_cascade"]
 BANDIT = ["ucb_per_family", "thompson_per_family", "warm_start_bandit", "linucb_honest", "trueskill_per_family"]
-ARMS = [("midian_va", "MIDIAN-VA", "#2ecc71"), ("midian", "MIDIAN", "#c0392b"), ("flat_probe_argmax_online", "flat probe argmax (online)", "#3498db"),
+ARMS = [("va_b1", "MIDIAN-VA, b = 1", "#a9dfbf"), ("midian_va", "MIDIAN-VA, b = 3", "#2ecc71"), ("va_b5", "MIDIAN-VA, b = 5", "#1e8449"), ("midian", "MIDIAN", "#c0392b"), ("flat_probe_argmax_online", "flat probe argmax (online)", "#3498db"),
         ("best_learned", "best learned router", "#ff7f0e"), ("best_bandit", "best bandit", "#9467bd"),
         ("declared_argmax", "declared argmax", "#5d6d7e"), ("random", "random", "#bbbbbb")]
 PRIMARY = {"live": "specialist", "routereval": "strong_to_weak"}          # one population shape per family in A / B / D
@@ -82,7 +82,7 @@ def paired_bars(C, groups, title, name, norm=False):
 def fig_A(C):
     ns = sorted(n for (f, g, n, r) in C if f == "live" and g == "specialist" and r == "beta0")
     paired_bars(C, [(f"n = {n:,}", ("live", "specialist", n)) for n in ns],
-                "A  live RTE, specialist: solid = honest, hatched = β = 0.5 low-skill cartel (b = 3)", "A_live_headline")
+                "A  live RTE, specialist: solid = honest, hatched = β = 0.5 low-skill cartel (other arms b = 3)", "A_live_headline")
 
 
 def primary(f, g): return g == PRIMARY.get(f, g)
@@ -116,6 +116,33 @@ def fig_D(d):
     save(fig, "D_heatmap_all_arms"); M.to_csv(f"{OUT}/D_heatmap_all_arms.csv")
 
 
+def add_budgets(C):
+    """MIDIAN-VA at b = 1 and 5 beside the b = 3 arm, never pooled with it: live / RouterEval / LLMRouterBench from the
+    va_b_* grids (rows, per-seed means, seed-bootstrap CI), bernoulli / replay b = 1 from their scale matrices (b = 5
+    from va_b_bernoulli_1e7 / va_b_replay_1e6 once they land). A cell the runs have not reached simply has no bar."""
+    from fw_variant_numbers import load as rows, regime
+    from extra_figs import ci
+    R = os.environ.get("RTE_DATA", "/scratch/rte") + "/results"
+    src = [("live", "specialist", "va_b_n100"), ("live", "specialist", "va_b_n1000"), ("live", "specialist", "va_b_n10k"),
+           ("live", "specialist", "va_b_n100k"), ("routereval", "strong_to_weak", "va_b_routereval5k"),
+           ("llmrouterbench", "20 models", "va_b_llmrouterbench"), ("bernoulli", "specialist", "va_b_bernoulli_1e7"),
+           ("replay", "all shapes pooled", "va_b_replay_1e6")]
+    for fam, grp, g in src:
+        df = rows(g)
+        if df.empty: continue
+        df = df[df.method == "midian_va"]
+        for (n, b, beta, ls), q in df.groupby(["n", "b", "beta", "liar_select"]):
+            reg = regime(beta, ls); per = q.groupby("seed").success.mean()
+            if (fam, grp, int(n), reg) not in C or int(b) not in (1, 5): continue
+            lo, hi = ci(per.values); C[(fam, grp, int(n), reg)][f"va_b{int(b)}"] = (float(per.mean()), float(lo), float(hi), f"midian_va b={int(b)}")
+    names = {"beta=0 (no liars)": "beta0", "beta=0.5 CARTEL (low-skill-first)": "cartel"}
+    for fam, grp, g in (("bernoulli", "specialist", "bernoulli_scale_v5"), ("replay", "all shapes pooled", "replay_scale_v5")):
+        m = pd.read_csv(f"{R}/{g}/matrix_success.csv"); m = m[(m.label == "midian_va") & (m.b == 1) & m.regime.isin(list(names))]
+        for r in m.itertuples():
+            key = (fam, grp, int(r.n), names[r.regime])
+            if key in C: C[key]["va_b1"] = (float(r.mean), float(r.ci_lo), float(r.ci_hi), "midian_va b=1")
+
+
 if __name__ == "__main__":
-    d = load(); C = cells(d)
+    d = load(); C = cells(d); add_budgets(C)
     fig_A(C); fig_B(C); fig_D(d)          # C: scripts/paired_gaps.py (needs per-seed rows)

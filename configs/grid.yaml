@@ -1054,3 +1054,10 @@ grids:
                           blocks: [{n: [10000000], b: [5], seeds: "1-100", beta: [0, 0.5], liar_select: [low_skill_first]}]}
   va_b_replay_1e6:       {mirror_of: replay_scale_v5, methods: [midian_va],        # b = 1 already in replay_scale_v5
                           blocks: [{n: [1000000], b: [5], seeds: "1-100", beta: [0, 0.5], liar_select: [low_skill_first]}]}
+
+  # ---- 2026-09-22: the TUNED warm-start bandit (n0 = 0.5, chosen on unreported seeds 11-15 by tune_wsb_n1000: 0.762
+  # vs 0.745-0.750 for n0 in {1, 2, 5}) on the reported focus cells, reported BESIDE the pre-registered n0 = 5 arm.
+  tuned_wsb_n100:  {mirror_of: fw_live_n100,  dist: [specialist], beta: [0, 0.5], liar_select: [low_skill_first], methods: [{name: warm_start_bandit, params: {n0: 0.5}}]}
+  tuned_wsb_n1000: {mirror_of: fw_live_n1000, dist: [specialist], beta: [0, 0.5], liar_select: [low_skill_first], methods: [{name: warm_start_bandit, params: {n0: 0.5}}]}
+  tuned_wsb_n10k:  {mirror_of: learned_n10k,  beta: [0, 0.5], liar_select: [low_skill_first], methods: [{name: warm_start_bandit, params: {n0: 0.5}}]}
+  tuned_wsb_n100k: {mirror_of: live_n100k,    beta: [0, 0.5], liar_select: [low_skill_first], methods: [{name: warm_start_bandit, params: {n0: 0.5}}]}
