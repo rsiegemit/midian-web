@@ -35,7 +35,7 @@ rep=$($PY -c "import json; print(sum(k.startswith('Qwen/Qwen2.5-7B') for k in js
 [ "$rep" -lt 2 ] && { say "ALERT only $rep supervisor replica(s)"; echo "$(date -Is) $rep supervisor replicas" >> $L/ALERT_fleet; }
 
 # 3-4. finalize stages, gated on explicit job IDs from the launcher logs
-ids() { cat $L/rerun_quarantine.txt $L/launch_lietext_th.txt $L/resubmit_parallel.txt 2>/dev/null | grep -Ev "$1" | awk '{print $1}' | sort -u; }
+ids() { cat $L/rerun_quarantine.txt $L/launch_lietext_th.txt $L/resubmit_parallel.txt $L/resubmit_drip.txt $L/focus_packed.txt 2>/dev/null | grep -Ev "$1" | awk '{print $1}' | sort -u; }
 live() { comm -12 <(ids "$1") <(squeue -u "$USER" -h -o "%i" | sort -u) | wc -l; }
 fin() {
   $PY scripts/ops/build_job_sizing.py
