@@ -50,7 +50,9 @@ def test_ledger_build_n_messages_fetch_2k_messages_and_k_comparisons():
     ("<answer>7</answer>", 0.7), ("<answer>10</answer>", 1.0), ("0", 0.0), ("8/10", 0.8), ("7 out of 10", 0.7),
     ("I'd say 85%", 0.85), ("<answer>0.6</answer>", 0.6), ("1.0", 1.0), ("<answer>8.5</answer>", 0.85),
     ("think 3 ... <answer>9</answer>", 0.9), (CONF_MAX, 1.0),
-    ("", None), (None, None), ("no idea", None), ("<answer>eleven</answer>", None), ("42", None), ("5/0", None), ("150%", None)])
+    ("On a scale of 0 to 10, I'd say 8", 0.8), ("85", 0.85), ("<10></answer>", 1.0), ("<answer>7</answer> (out of 10)", 0.7),
+    ("", None), (None, None), ("no idea", None), ("<answer>eleven</answer>", None), ("-3", None), ("<answer>-3</answer>", None),
+    ("5/0", None), ("150%", None), ("250", None)])
 def test_parse_confidence(text, want):
     got = parse_confidence(text)
     assert got == pytest.approx(want) if want is not None else got is None
@@ -104,6 +106,7 @@ def test_cartel_wins_whenever_a_liar_is_shortlisted():
         if w.liars[cand].any(): assert m.fetch(t) == cand[w.liars[cand]][0]
 
 
+# all_methods() computed at 0570629; equal at master 8c38981 (no method file added in between)
 ALL_AT_0570629 = ["cluster_head_router", "cnp_self_bid", "declared_argmax", "declared_softmax", "disrouter_cascade", "flat_nsw_router",
                   "flat_probe_argmax", "gossip_reputation_greedy", "knn_router", "linucb_honest", "llm_supervisor", "midian",
                   "midian_llm_descent", "mlp_router", "random", "referral_network", "route_to_k_majority", "sequential_halving",
@@ -116,3 +119,27 @@ def test_methods_all_expansion_unchanged(backend):
     from rte.run import all_methods
     want = [m for m in ALL_AT_0570629 if backend == "llm" or m not in ("llm_supervisor", "midian_llm_descent")]
     assert all_methods(backend) == want
+
+
+def test_rejects_unknown_shortlist_and_params():
+    cls = load_method("verbal_confidence")
+    with pytest.raises(ValueError): cls(shortlist="tfidf")
+    with pytest.raises(TypeError): cls(shortlst="embed")
+
+
+def test_llm_backend_asks_each_agent_its_own_model_and_prompt_deduplicated(monkeypatch, tmp_path):
+    """The real path below the World: LLMBackend.confidence -> llm_client.complete_batch, with only the network stubbed."""
+    from rte import llm_client
+    from rte.backends import families, llm as L
+    monkeypatch.setattr(L, "_CURRENT", L._CURRENT)                     # restored after: other tests read current_backend()
+    shard = type("Shard", (), {"execute": lambda *a: None, "executemany": lambda *a: None, "commit": lambda *a: None})()
+    monkeypatch.setattr(llm_client, "_memo", lambda: ({}, shard)); monkeypatch.setattr(llm_client, "_refresh", lambda force=False: None)
+    sent = []
+    monkeypatch.setattr(llm_client, "_generate", lambda model, msgs, mt: sent.append((model, msgs, mt)) or "<answer>7</answer>")
+    be = L.LLMBackend(n=40, K=16, dist="specialist", seed=1, population_dir=str(tmp_path))
+    agents, f, inst = np.arange(40), 3, 7
+    fam = be.families[f]; q = families.question(fam, inst)
+    assert be.confidence(agents, f, inst) == ["<answer>7</answer>"] * 40
+    want = {(s[0], str(rate_task(fam, q, s[1], s[2]))) for s in (be._sig(int(a), f) for a in agents)}
+    assert {(m, str(msgs)) for m, msgs, _ in sent} == want and len(sent) == len(want) < 40   # one generation per signature
+    assert {mt for *_, mt in sent} == {32}
