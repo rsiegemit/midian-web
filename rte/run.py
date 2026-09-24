@@ -29,10 +29,13 @@ def seeds(spec):
     return out
 
 
+NOT_IN_ALL = ("base", "keys", "verbal_confidence")    # not methods, or rivals added after the `all` grids ran (listed explicitly)
+
+
 def all_methods(backend):
     """Every algorithmic method file (frameworks are listed explicitly in their own grids: one supervisor call per task);
     LLM-only classes only on the llm backend."""
-    names = [m.name for m in pkgutil.iter_modules(rte.methods.__path__) if not m.ispkg and not m.name.startswith("_") and m.name not in ("base", "keys")]
+    names = [m.name for m in pkgutil.iter_modules(rte.methods.__path__) if not m.ispkg and not m.name.startswith("_") and m.name not in NOT_IN_ALL]
     return [n for n in names if backend == "llm" or not getattr(load_method(n), "requires_llm", False)]
 
 

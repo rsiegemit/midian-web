@@ -102,3 +102,17 @@ def test_cartel_wins_whenever_a_liar_is_shortlisted():
     for t in w.tasks(30):
         cand = np.argsort(-w.D[:, t.family], kind="stable")[:10]
         if w.liars[cand].any(): assert m.fetch(t) == cand[w.liars[cand]][0]
+
+
+ALL_AT_0570629 = ["cluster_head_router", "cnp_self_bid", "declared_argmax", "declared_softmax", "disrouter_cascade", "flat_nsw_router",
+                  "flat_probe_argmax", "gossip_reputation_greedy", "knn_router", "linucb_honest", "llm_supervisor", "midian",
+                  "midian_llm_descent", "mlp_router", "random", "referral_network", "route_to_k_majority", "sequential_halving",
+                  "thompson_per_family", "trueskill_per_family", "ucb_per_family", "verify_on_claim", "warm_start_bandit"]
+
+
+@pytest.mark.parametrize("backend", ["llm", "bernoulli"])
+def test_methods_all_expansion_unchanged(backend):
+    """`methods: all` grids must not grow a verbal_confidence arm: their stored units stay complete."""
+    from rte.run import all_methods
+    want = [m for m in ALL_AT_0570629 if backend == "llm" or m not in ("llm_supervisor", "midian_llm_descent")]
+    assert all_methods(backend) == want
