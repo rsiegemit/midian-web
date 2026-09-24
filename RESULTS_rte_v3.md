@@ -1,5 +1,7 @@
 # RESULTS_rte_v3.md — external comparisons (FINAL, 2026-09-04)
 
+> Names: this document predates the 2026-09-24 rename — MIDIAN-VA is now MIDIAN; MIDIAN is now MIDIAN w/o defenses; MIDIAN-V is MIDIAN w/o audits; MIDIAN-A is MIDIAN w/o verification; MIDIAN-SH/SHA are withdrawn (CHANGES_AND_ERRATA §8g).
+
 Pre-registration: `TARGETS_rte_v3.md` (A, B written 18:10; C 18:20–18:45; all before the runs). Motivation: RESULTS_rte_v2.md
 §11, last bullet. Three parts: **A** our arm on RouterBench's own protocol against its own routers (done);
 **B** RouteLLM's released routers against our arm on their model pair with their metrics (done, incl. their own harness);

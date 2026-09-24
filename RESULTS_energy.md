@@ -1,5 +1,7 @@
 # Runtime and energy — ESTIMATE (*)
 
+> Names: this document predates the 2026-09-24 rename — MIDIAN-VA is now MIDIAN; MIDIAN is now MIDIAN w/o defenses; MIDIAN-V is MIDIAN w/o audits; MIDIAN-A is MIDIAN w/o verification; MIDIAN-SH/SHA are withdrawn (CHANGES_AND_ERRATA §8g).
+
 Runtime/energy ESTIMATE (*) per method from LLM-call counts x measured per-call GPU cost.  python scripts/energy.py
 Wall-clock in the rows is not used for probe methods (memo hits). Model: GPU-seconds per call = params_b * (A*prompt_tok + B*gen_tok),
 B = 5A (decode is ~5x prefill per token on H100/vLLM), A calibrated so a 7B supervisor call (1,900 prompt + 65 gen tokens) costs

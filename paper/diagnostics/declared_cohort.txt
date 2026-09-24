@@ -6,12 +6,12 @@ Cohort sources at n = 10^5 specialist, top-10, mean over 3 seeds
 regime               source              mean skill  best in list  liar frac
 ----------------------------------------------------------------------------
 beta=0 (honest)      declared top-10          0.615         0.750       0.00
-beta=0 (honest)      MIDIAN-VA cohort         0.462         0.838       0.00
+beta=0 (honest)      MIDIAN cohort            0.462         0.838       0.00
 beta=0.25 random     declared top-10          0.572         0.744       0.57
-beta=0.25 random     MIDIAN-VA cohort         0.464         0.838       0.25
+beta=0.25 random     MIDIAN cohort            0.464         0.838       0.25
 beta=0.25 CARTEL     declared top-10          0.526         0.663       0.19
-beta=0.25 CARTEL     MIDIAN-VA cohort         0.462         0.838       0.24
+beta=0.25 CARTEL     MIDIAN cohort            0.462         0.838       0.24
 beta=0.5 random      declared top-10          0.568         0.752       0.74
-beta=0.5 random      MIDIAN-VA cohort         0.463         0.839       0.53
+beta=0.5 random      MIDIAN cohort            0.463         0.839       0.53
 beta=0.5 CARTEL      declared top-10          0.529         0.747       0.41
-beta=0.5 CARTEL      MIDIAN-VA cohort         0.459         0.838       0.49
+beta=0.5 CARTEL      MIDIAN cohort            0.459         0.838       0.49

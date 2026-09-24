@@ -1,5 +1,7 @@
 # RTE from scratch — plain MIDIAN vs. self-contained rivals, along three axes
 
+> Names: this document predates the 2026-09-24 rename — here "MIDIAN" is the plain tree, now **MIDIAN w/o defenses**; the full method MIDIAN (formerly MIDIAN-VA) came later (CHANGES_AND_ERRATA §8g).
+
 Start clean. New package `rte/`. No dependence on the old repo except copying `stable_hash.py`. Plain MIDIAN only (no -P, no -H). Every method is one self-contained file with a `build()` and a `fetch()`. One runner sweeps **n × β × skill-distribution × method × seed** with paired task streams.
 
 ---

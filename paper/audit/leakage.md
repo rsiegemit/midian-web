@@ -1,6 +1,8 @@
 # Leakage audit (information / test-to-train leakage)
 
 Auditor: audit-leakage agent, 2026-09-23. Read-only on code and data. Findings appended as confirmed.
+Names follow the 2026-09-24 rename (CHANGES_AND_ERRATA §8g): MIDIAN = both defenses (formerly VA); MIDIAN w/o defenses = the
+plain tree; MIDIAN w/o audits / w/o verification = the single-defense ablations. Code references are to the code audited.
 
 ## Findings
 
@@ -35,7 +37,7 @@ Auditor: audit-leakage agent, 2026-09-23. Read-only on code and data. Findings a
   dense, rerank) and `llm_supervisor` therefore see a cleaner skill signal than any declared-channel arm and than MIDIAN's
   inputs. This is information outside the View's contract.
 - Bias direction: in favour of framework / supervisor rivals (figures E, F, G; live parts of A if llm_supervisor appears),
-  against MIDIAN / MIDIAN-VA. Does not inflate MIDIAN. Should be stated in captions (guide §0.3 #18 already flags the text clause;
+  against MIDIAN w/o defenses / MIDIAN. Does not inflate either. Should be stated in captions (guide §0.3 #18 already flags the text clause;
   it does not mention that the prose also carries the base-model id).
 - Minor: `current_backend()` is a process-global "last LLMBackend constructed" (`llm.py:270-277`), gated only on `be.n == view.n`
   (`_common.py:183, 203`). A process that ran a live unit and then a non-live unit with equal n (run.py forces workers=1 when any
@@ -84,7 +86,7 @@ Auditor: audit-leakage agent, 2026-09-23. Read-only on code and data. Findings a
   At n >= 10^4 (>= 30,000 probes per family) the probe coverage of these families is higher still.
 - Because the memo keys on the full request (`llm_client.py:127-139`) and the prompt depends only on the signature and the question
   (`backends/llm.py:108-119`), a probe of any same-signature agent on a colliding question returns **exactly** the routed task's
-  outcome. Impact on arms: per-(agent, family) estimators (MIDIAN*, flat, bandits, declared) cannot exploit this. Only
+  outcome. Impact on arms: per-(agent, family) estimators (MIDIAN and its ablations, flat, bandits, declared) cannot exploit this. Only
   `knn_router` sees question text, and it keeps only the routed agent's *own* b probes per family (`knn_router.py:28-36`), so
   the chance that agent a itself probed task q is about b / (#distinct problems), ~0.3 % even for prime_factorization. Negligible.
 - The oracle's S is partly measured in-sample for prime_factorization (19 % of task questions are in the 200-question
@@ -123,12 +125,12 @@ Auditor: audit-leakage agent, 2026-09-23. Read-only on code and data. Findings a
   | RouterEval mmlu m = 1,000 | 0.522 vs 0.280 | **+0.117** (0.103-0.133) |
 
   Offline `knn_router` (same probes, no store growth) shows no repeat advantage at mmlu (first 0.392 vs repeat 0.396 at m = 100).
-- Affected arms/figures: `knn_router_online` is a candidate of B's "best learned router" and is the cross-fitted pick at
+- Affected arms/figures: `knn_router_online` is a candidate of B's "best learned/declared router" and is the cross-fitted pick at
   LLMRouterBench cartel b = 1 (2 of 5 seeds) and b = 5 (2 of 5) (`figures/condensed_sample/B_families_allb.csv`); it is in the RouterEval
   5k pool (not yet landed there: "INCOMPLETE POOL, missing knn_router_online"); `routereval_mmlu` (`configs/grid.yaml:316-357`) and any
   RESULTS table built on it. On RouterEval 5k (leaderboard, 80/20 split per subject, Q = 300) the test pools are larger and repeats rarer,
   so the gain there will be smaller; on live, tasks are fresh generations (L4), so memorisation needs a text collision (rare).
-- Direction: **inflates a rival**, i.e. biases AGAINST MIDIAN / MIDIAN-VA. Also makes the per-seed "best learned router"
+- Direction: **inflates a rival**, i.e. biases AGAINST MIDIAN w/o defenses / MIDIAN. Also makes the per-seed "best learned/declared router"
   pick partly a memorisation contest on LLMRouterBench cartel cells.
 
 ### L6. Live "Declared areas: <true specialty>" clause (erratum 27): who benefits (MEDIUM, favours text-shortlist RIVALS under the cartel; not MIDIAN)
@@ -137,8 +139,8 @@ Auditor: audit-leakage agent, 2026-09-23. Read-only on code and data. Findings a
   identical in every liar regime; only `view.declared` moves with lying.
 - Who reads it: (a) every text retriever (TF-IDF, BM25, MiniLM, Qwen3 dense, hybrid, rerank; `_common.py:294-331`);
   (b) **every** framework supervisor, whatever the shortlist, because the payload is `self.desc[a]` for each candidate
-  (`_common.py:355, 366`), including the `declared` top-k and the `va_cohort` (MIDIAN-VA cohort) shortlists in E/F/H;
-  (c) `llm_supervisor` (`llm_supervisor.py:74-75`). Nobody else: MIDIAN*, flat, bandits, learned routers, declared argmax never
+  (`_common.py:355, 366`), including the `declared` top-k and the `va_cohort` (MIDIAN cohort) shortlists in E/F/H;
+  (c) `llm_supervisor` (`llm_supervisor.py:74-75`). Nobody else: MIDIAN and its ablations, flat, bandits, learned routers, declared argmax never
   read descriptions (grep: `desc` only in `frameworks/_common.py` and `llm_supervisor.py`).
 - Measured with the paired `lie_text` condition at live n = 10^5 (`$RTE_DATA/results/fw_live_n100k_lietext`, 8 frameworks x 3 seeds per
   cell, dedup on). `lie_text=True` rewrites the clause from `view.declared`:
@@ -155,7 +157,7 @@ Auditor: audit-leakage agent, 2026-09-23. Read-only on code and data. Findings a
   texts change the dedup pool; so the clause is not a clean "oracle hint" for frameworks at 10^5.
 - Direction: under the cartel it makes text-shortlist framework bars look more liar-robust than they are (E, F, G hatched bars; erratum 27
   already says so). It inflates rivals, not MIDIAN. Caveat for the `va_cohort` bars: their supervisor also reads true-specialty text,
-  so any "MIDIAN-VA cohort + framework" gain is partly a text-channel gain the adversary never attacks.
+  so any "MIDIAN cohort + framework" gain is partly a text-channel gain the adversary never attacks.
 
 ### L7. LLM memo cache: no cross-method information channel (CLEAN; one reproducibility caveat, LOW)
 
@@ -177,7 +179,7 @@ Auditor: audit-leakage agent, 2026-09-23. Read-only on code and data. Findings a
   is appended after observe; the next task is not visible to observe. `world.reset` and `m.build` happen before the loop (`:132-133`).
 - `FrameworkMethod.prefetch(stream)` (`frameworks/_common.py:340-360`) sees the whole stream up front but only calls
   `retrieve` + the supervisor; it executes nothing and reads no outcomes, and is skipped for the online MIDIAN-cohort modes. Clean.
-- `MidianA.observe` (`midian_a.py:39-51`) audits reporters against the routed outcome it has just been given; that outcome is legitimately
+- `MidianA.observe` (`midian_a.py:39-51`; since 2026-09-24 `Midian.observe` in `midian.py`) audits reporters against the routed outcome it has just been given; that outcome is legitimately
   known to every arm via observe. The build-time audit `view.probe_at` (`world.py:385-389`) re-executes an already-drawn probe instance,
   charged as a probe; it returns the same deterministic outcome on every backend (llm memo; bernoulli `execute_many` hashes (inst, seed)
   only, `bernoulli.py:274-276`; replay/routereval table lookups). This is a trusted re-observation of 5 % of probes, a protocol choice
@@ -189,14 +191,14 @@ Auditor: audit-leakage agent, 2026-09-23. Read-only on code and data. Findings a
   (`$RTE_DATA/results/tune_wsb_n1000`): n0 = 0.5 -> 0.7624, 1.0 -> 0.7450, 2.0 -> 0.7500, 5.0 -> 0.7448 (oracle 0.8618), seeds 11-15 only.
 - Disjointness: every reported live 10^3 cell uses seeds 1-10 (`fw_live_n1000` seeds 1-10, `pool_seeds_n1000` 6-10, `va_b_n1000`/
   `rivals_b_n1000` mirror those); resolving every live n = 1,000 block with `rte.run.blocks` finds seeds 11-15 only in `tune_wsb_n1000` and
-  `midian_v_replication` (seeds 11-20, a MIDIAN-V replication, not a WSB cell). Live populations are per-seed directories, task instances
+  `midian_v_replication` (seeds 11-20, a MIDIAN w/o audits replication, not a WSB cell). Live populations are per-seed directories, task instances
   are seeded by the world seed, so seeds 11-15 share no agents, tasks or probe instances with reported cells. The bernoulli grids calibrate
   S from `specialist_n1000_K16_seed1` (a reported seed, not a tuning seed). Tuning did not touch n = 100 / 10^4 / 10^5, bernoulli, replay,
   RouterEval or LLMRouterBench, where the tuned value is applied out of sample. CLEAN.
 - Note: 0.5 is the smallest value tried and the curve is still rising toward it, so the rival may be under-tuned (n0 < 0.5 untested). Slight
   bias in favour of MIDIAN in every "best bandit" bar that picks `warm_start_bandit[n0=0.5]` (A: live 10^5; B: bernoulli, replay). LOW.
 
-### L10. Repeated test prompts also leak into per-(agent, family) ONLINE learners, incl. MIDIAN and MIDIAN-VA (MEDIUM on RouterEval mmlu m <= 1,000: H's MIDIAN-VA line inflated vs stateless frameworks; none detected on the 5k pool or LLMRouterBench)
+### L10. Repeated test prompts also leak into per-(agent, family) ONLINE learners, incl. MIDIAN w/o defenses and MIDIAN (MEDIUM on RouterEval mmlu m <= 1,000: H's MIDIAN line inflated vs stateless frameworks; none detected on the 5k pool or LLMRouterBench)
 
 - Repeat rates per backend (share of the Q tasks whose exact prompt already occurred in the same stream):
   live and bernoulli: task instance seeds all distinct (1,000 / 1,000 at Q = 1,000), prompts collide only as in L4;
@@ -208,7 +210,7 @@ Auditor: audit-leakage agent, 2026-09-23. Read-only on code and data. Findings a
 
   | arm | mmlu m = 10 | mmlu m = 100 | LLMRouterBench 20 |
   |---|---|---|---|
-  | midian_va | +0.011 (0.006) | +0.005 (0.005) | -0.001 (0.006) |
+  | MIDIAN | +0.011 (0.006) | +0.005 (0.005) | -0.001 (0.006) |
   | midian | +0.004 (0.004) | **+0.021 (0.004)** | -0.003 (0.007) |
   | flat_probe_argmax online | -0.002 (0.004) | +0.014 (0.006) | +0.002 (0.009) |
   | warm_start_bandit | -0.003 (0.006) | +0.016 (0.005) | -0.002 (0.007) |
@@ -219,23 +221,23 @@ Auditor: audit-leakage agent, 2026-09-23. Read-only on code and data. Findings a
   | oracle | -0.003 | +0.003 | -0.002 |
 
   Only 13.5 pp of mmlu's 48 pp repeat share was removed, so the full repeat effect is roughly 2.5-3.5x these numbers (for knn the
-  exact counterfactual of L5 gives +0.116 vs +0.045 here, ratio 2.6): about +0.05 for plain MIDIAN and the online bandits, ~+0.015 for
-  MIDIAN-VA, at mmlu m = 100.
-- mmlu m = 1,000 (5 seeds; repeats 0.483 -> 0.348): midian_va **+0.023 (se 0.011)**, midian +0.020 (0.014), linucb +0.026 (0.010),
+  exact counterfactual of L5 gives +0.116 vs +0.045 here, ratio 2.6): about +0.05 for MIDIAN w/o defenses and the online bandits, ~+0.015 for
+  MIDIAN, at mmlu m = 100.
+- mmlu m = 1,000 (5 seeds; repeats 0.483 -> 0.348): MIDIAN **+0.023 (se 0.011)**, MIDIAN w/o defenses +0.020 (0.014), linucb +0.026 (0.010),
   thompson +0.017 (0.009), flat online +0.007 (0.006), warm_start_bandit -0.004 (0.005), knn online +0.036 (0.013); offline flat /
-  knn / declared +0.003 / 0.000 / -0.002; oracle -0.004. Extrapolated to zero repeats (x2.5-3.5): **MIDIAN-VA ~+0.06-0.08 at
+  knn / declared +0.003 / 0.000 / -0.002; oracle -0.004. Extrapolated to zero repeats (x2.5-3.5): **MIDIAN ~+0.06-0.08 at
   m = 1,000** from test-prompt repeats, versus ~0 for the offline arms and for the stateless frameworks.
 - RouterEval 5,000-LLM leaderboard (the B "RouterEval n = 5,000" group; Q = 300; test prompts per family 53-307): repeat share
   **0.104** (seeds 1-3), fully removed in the re-drawn stream. Differences (3 seeds, noisy at Q = 300, offline flat moved -0.043 by
-  prompt mix alone): midian_va -0.018, midian -0.004, flat online -0.014, warm_start_bandit -0.001, declared argmax -0.001. No detectable
+  prompt mix alone): MIDIAN -0.018, MIDIAN w/o defenses -0.004, flat online -0.014, warm_start_bandit -0.001, declared argmax -0.001. No detectable
   repeat gain there; knn_router online not run (no shipped embeddings; MiniLM on 5,000 agents too heavy for a login node), by analogy
   with L5 its memorisation gain would be about 0.10 x 0.24 ~ +0.02.
 - Affected: every online arm on `routereval_mmlu` (and anything built on it, e.g. cohort_routereval, the H reference line
-  "MIDIAN-VA on the whole population" at m = 10 / 100 / 1,000). Framework arms are stateless (no online learning, `_common.py:340-344`),
-  so in **H the MIDIAN-VA line at m = 1,000 gains roughly +0.02 (measured, partial removal) to +0.06-0.08 (extrapolated) from repeats the
-  framework bars cannot use**: a bias in favour of MIDIAN-VA (smaller at m = 10 / 100, none detectable on the 5k leaderboard).
-  Exception: the `va_cohort` framework bars run MIDIAN-VA online inside the adapter (`_common.py:337-338`), so they share the gain.
-  In A/B, MIDIAN-VA's main comparators (flat online, bandits, knn online) are also online and gain as much or more; the offline arms
+  "MIDIAN on the whole population" at m = 10 / 100 / 1,000). Framework arms are stateless (no online learning, `_common.py:340-344`),
+  so in **H the MIDIAN line at m = 1,000 gains roughly +0.02 (measured, partial removal) to +0.06-0.08 (extrapolated) from repeats the
+  framework bars cannot use**: a bias in favour of MIDIAN (smaller at m = 10 / 100, none detectable on the 5k leaderboard).
+  Exception: the `va_cohort` framework bars run MIDIAN online inside the adapter (`_common.py:337-338`), so they share the gain.
+  In A/B, MIDIAN's main comparators (flat online, bandits, knn online) are also online and gain as much or more; the offline arms
   (declared argmax, mlp_router, cluster_head, disrouter) do not. LLMRouterBench: no measurable per-family effect.
 - Fix options: draw test rows without replacement where the pool allows (and set Q <= pool size per family), or report success on
   first occurrences only.
@@ -243,21 +245,21 @@ Auditor: audit-leakage agent, 2026-09-23. Read-only on code and data. Findings a
 ### L11. Report channel is honour-system: MIDIAN holds the true probe outcomes before passing them through `report_many` (CLEAN as coded; LOW)
 
 - `World.report_many(reporters, agents, outcomes)` (`world.py:358-383`) takes the outcomes FROM THE CALLER; the method got them
-  from `view.probe_many` a line earlier (`_est.py:73-75`, `midian_sh.py:69`, `_est.py:104-120`). So MIDIAN's "the router only
+  from `view.probe_many` a line earlier (`_est.py:73-75`, `midian_sh.py:69`, a file deleted on 2026-09-24, `_est.py:104-120`). So MIDIAN's "the router only
   sees peer reports" is a coding discipline, not an enforced one: the true outcomes sit in local variables.
-- Checked every MIDIAN path used by the drawn arms: plain MIDIAN level 0 (`_est.peer_reported_estimates`) and MIDIAN-VA level 0
-  (`MidianSH._level0` with `halving=False`) keep only the reports (`_, per = peer_estimate(...)`, `midian_sh.py:69`); verification
+- Checked every MIDIAN path used by the drawn arms: MIDIAN w/o defenses' level 0 (`_est.peer_reported_estimates`) and MIDIAN's level 0
+  (`MidianSH._level0` with `halving=False`) keep only the reports (`_, per = peer_estimate(...)`, `midian_sh.py:69`; since 2026-09-24 `Midian._level0_audited` in `midian.py`); verification
   (`midian.py:79-97`) folds only `peer_estimate`'s trimmed report mean; audits use `probe_at`, charged. The only direct uses of true
   probe outcomes in MIDIAN code are the labelled cohort variants `stratify` / `block` / `specialty` (`midian.py:38-46`, grouping key,
-  not drawn in A-H) and `churn()` for a cohort with no peers (`midian.py:181-182`, no churn in A-H). CLEAN for MIDIAN / MIDIAN-VA.
+  not drawn in A-H) and `churn()` for a cohort with no peers (`midian.py:181-182`, no churn in A-H). CLEAN for MIDIAN and its ablations.
 - `Bus` (`world.py:145-159`) delivers nothing but the sender's own payload; it only charges. No information path.
 
-### L12. Note for the protocol audit (not leakage in the code): MIDIAN-VA was composed after seeing V and A on the reported cells
+### L12. Note for the protocol audit (not leakage in the code): MIDIAN was composed after seeing its two single-defense ablations on the reported cells
 
-- `midian_va` = MIDIAN-V + MIDIAN-A, "added 2026-09-03 15:00 before any run" (`TARGETS_rte_v2.md:23-26`), after V and A had been run on
-  the same live cells and seeds; audit rate 0.05 and STRIKES = 2 are fixed defaults (`midian_a.py:13, 19`), not tuned per cell (guide §2.3.8).
-  No held-out seed set exists for the choice of VA as the headline among >= 6 MIDIAN variants, whereas the one tuned rival (L9) was tuned on
-  held-out seeds. Selection among variants on the reporting seeds is a mild winner's-curse bias in favour of MIDIAN-VA on live; the other
+- MIDIAN = verification (MIDIAN w/o audits) + audits (MIDIAN w/o verification), "added 2026-09-03 15:00 before any run" (`TARGETS_rte_v2.md:23-26`), after both ablations had been run on
+  the same live cells and seeds; audit rate 0.05 and STRIKES = 2 are fixed defaults (then `midian_a.py:13, 19`; now `STRIKES` / `AUDIT_RATE` in `midian.py`), not tuned per cell (guide §2.3.8).
+  No held-out seed set exists for the choice of MIDIAN (both defenses) as the headline among >= 6 variants of the tree, whereas the one tuned rival (L9) was tuned on
+  held-out seeds. Selection among variants on the reporting seeds is a mild winner's-curse bias in favour of MIDIAN on live; the other
   backends (bernoulli, replay, RouterEval, LLMRouterBench) postdate the choice and are out of sample. Flagged for audit-protocol2.
 
 ---
@@ -278,7 +280,7 @@ Auditor: audit-leakage agent, 2026-09-23. Read-only on code and data. Findings a
    test-split prompts (L5).
 5. `run_method` ordering fetch -> execute -> observe; prefetch reads no outcomes (L8).
 6. LLM memo: no method-visible channel; cached answers are content-addressed (L7).
-7. MIDIAN / MIDIAN-VA use only reports for estimates; audits are charged re-probes (L8, L11).
+7. MIDIAN and its ablations use only reports for estimates; audits are charged re-probes (L8, L11).
 8. Tuned warm-start bandit: tuning seeds 11-15 disjoint from every reported cell (L9).
 9. Guide claims verified against code: §1.1.6 (View, `_w`, `current_backend`), §1.4.3 (replay shares the pool), §1.4.4 (train/test),
    §1.5 ("three different seed families": true for seeds, not for problem texts, L4).
@@ -288,16 +290,16 @@ Auditor: audit-leakage agent, 2026-09-23. Read-only on code and data. Findings a
 | # | Finding | Severity | Direction | Figures |
 |---|---|---|---|---|
 | L5 | knn_router online memorises repeated TEST prompts: +0.024 (LLMRouterBench), +0.067 / +0.116 / +0.117 (RouterEval mmlu m = 10 / 100 / 1,000) absolute success | MEDIUM | inflates a rival (against MIDIAN) | B (LLMRouterBench cartel best-learned picks), routereval_mmlu tables |
-| L10 | Repeats also lift per-family online learners, incl. MIDIAN-VA (~+0.02 measured with partial removal, ~+0.06-0.08 extrapolated at mmlu m = 1,000); offline arms and stateless frameworks get 0 | MEDIUM | favours MIDIAN-VA over frameworks in H m <= 1,000 and over offline arms; neutral vs other online arms | H, routereval_mmlu tables; not B's 5k / LLMRouterBench |
+| L10 | Repeats also lift per-family online learners, incl. MIDIAN (~+0.02 measured with partial removal, ~+0.06-0.08 extrapolated at mmlu m = 1,000); offline arms and stateless frameworks get 0 | MEDIUM | favours MIDIAN over frameworks in H m <= 1,000 and over offline arms; neutral vs other online arms | H, routereval_mmlu tables; not B's 5k / LLMRouterBench |
 | L2 / L6 | Live descriptions carry the true specialty and base model (outside the View); shields text shortlists from the cartel by ~0.01-0.04 (TF-IDF) at 10^5 | MEDIUM | favours framework rivals (against MIDIAN) | E, F, G |
 | L3 | Replay: probes and tasks share rows; every (row, model) of the 10^6 cell is probed during the build | LOW | none found (no arm can map task to row) | B replay |
 | L4 | Live problem texts collide across seed families (prime_factorization 95 % of tasks appear among probes; 19 % among S-measurement questions) | LOW | none systematic; oracle slightly in-sample | A, B normaliser |
 | L7 | Memo first-writer-wins across processes | LOW | noise | A (live drift) |
 | L9 | n0 = 0.5 at the edge of the tuning grid | LOW | slightly favours MIDIAN | A, B best bandit |
-| L12 | VA chosen among variants on reporting seeds (protocol) | LOW | favours MIDIAN-VA on live | A |
+| L12 | MIDIAN (both defenses) chosen among variants on reporting seeds (protocol) | LOW | favours MIDIAN on live | A |
 
 No finding lets any method read S, the liar set, the oracle or a task's outcome before routing it. The one mechanism that inflates
-MIDIAN-VA is test-prompt repetition on RouterEval mmlu m <= 1,000 (L10). The fix is to draw test rows without replacement (Q per family
+MIDIAN is test-prompt repetition on RouterEval mmlu m <= 1,000 (L10). The fix is to draw test rows without replacement (Q per family
 <= pool) or to score first occurrences only; the same fix removes L5.
 
 Scratch scripts (not part of the repo): `/tmp/claude-68287/-n-home02-rsiegelmann/bdcd0628-942c-4cea-8c96-748671ba0e73/scratchpad/`

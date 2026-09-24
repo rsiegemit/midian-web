@@ -1,4 +1,9 @@
 # DEVIATIONS.md — where the implementation departs from SPEC.md, and why
+
+Names: dated entries keep the method names of their day, with the 2026-09-24 name in parentheses at the first mention in
+each entry (CHANGES_AND_ERRATA §8g): plain MIDIAN is now MIDIAN w/o defenses, MIDIAN-V is MIDIAN w/o audits, MIDIAN-A is
+MIDIAN w/o verification, MIDIAN-VA is MIDIAN; MIDIAN-SH / SHA are withdrawn. The last entry records the rename.
+
 - 2026-09-02: cluster is NVIDIA/CUDA (FAS RC), not ROCm; `VLLM_ROCM_USE_AITER=0` is irrelevant here.
 - 2026-09-02: declared-channel lie uses `clip(D_honest + 0.4)` (so it "inflates on top" of the self-described channel too);
   for `programmatic` D_honest = S + N(0,0.05) this is the spec's `clip(S + 0.4)` up to the declaration noise.
@@ -139,7 +144,7 @@
   `probe_successes(view, b) / b` already is, and renaming it would churn seven files owned by another agent.
 - 2026-09-02 (midian_llm_descent): the LLM sees only the r children's summary numbers for the task's family and
   answers with an index; a parse failure, an out-of-range index, or an empty padding slot falls back to the arithmetic
-  argmax and is counted in `stats`. Ledger charges are identical to plain MIDIAN, so the ablation is quality-only.
+  argmax and is counted in `stats`. Ledger charges are identical to plain MIDIAN (now MIDIAN w/o defenses), so the ablation is quality-only.
 - 2026-09-02 (llm backend): the ladder's non-Qwen half is `google/gemma-2-{2b,9b}-it`, not
   Llama-3.2 (SPEC §1 offers either). Both gemma repos are `gated=manual` on the Hub but this
   account's token has access, so all 7 models downloaded; no Qwen-only fallback was needed.
@@ -226,7 +231,7 @@
   $RTE_DATA. The from-source path is still in the script behind `RTE_LLGUIDANCE_SRC`.
 - 2026-09-02: MIDIAN's optional `stratify` flag (cohorts stratified by declared mean, SPEC §5 comment) is NOT implemented:
   it was the only path by which MIDIAN could read the declared channel, no grid used it, and its padding layout broke the
-  estimator's one-short-cohort assumption. Plain MIDIAN never reads D, full stop.
+  estimator's one-short-cohort assumption. Plain MIDIAN (now MIDIAN w/o defenses) never reads D, full stop.
 - 2026-09-02: `check_methods.py`'s exact-estimate argmax check applies to argmax-type routers only; `gossip_reputation_greedy`
   (greedy walk of depth 6 on a 10-neighbour overlay from a random start) is not one and scores ~0.1 on it by design.
   (An earlier note here blamed `flat_nsw_router`'s 0.70 at n=1000 on approximate search; it was a swapped hnswlib argument
@@ -602,7 +607,8 @@
 - 2026-09-02 (ops): the live grids run as one SLURM job per (grid, method, seed) against the vLLM fleet; the memo is sharded per
   process with a 30 s incremental refresh so concurrent jobs share generations; replicas of saturated models are registered as
   "<model>#<job>" and clients pick one uniformly. The routed-agent mix decides which server saturates (argmax routers → the 14B).
-- 2026-09-02 (MIDIAN-V, added after the CPU-side mirrors, before any live result was read): plain MIDIAN at b=3 rests its pick on 3
+- 2026-09-02 (MIDIAN-V, now MIDIAN w/o audits, added after the CPU-side mirrors, before any live result was read): plain MIDIAN
+  (now MIDIAN w/o defenses) at b=3 rests its pick on 3
   probes; ~116 agents per family tie at est=1.0 and the argmax breaks ties blindly, which is why sequential halving (winner on ~12
   probes) beats it. `midian(verify=True)` keeps the same tree and the same n·K·b budget but spends b-1 probes per cell at level 0 and
   re-probes every promoted candidate at each parent (e = floor((b-b0)·n/#candidates) probes, observed and reported by RANDOM members
@@ -610,23 +616,23 @@
   ~b(r-1) probes. Bernoulli n=1000, 3 seeds: +0.03..+0.14 over plain at β≤0.25 with liar-route rate = β; worse than plain at β=0.5
   (majority of reporters lie: beyond any trimmed mean, per TARGETS item 3). Plain MIDIAN is byte-identical to before (verified) and
   stays the pre-registered method; MIDIAN-V is reported alongside as a post-hoc variant.
-- 2026-09-02: `sequential_halving(peer_reported=True)` added as the apples-to-apples control for MIDIAN: same budget, same
+- 2026-09-02: `sequential_halving(peer_reported=True)` added as the apples-to-apples control for MIDIAN (then the plain tree, now MIDIAN w/o defenses): same budget, same
   peer-report channel (r-1 random reporters per probe, per-reporter trimming), no trusted observer. Plain sequential halving
   (trusted observer) is flat in β by construction — liars change what agents say, never what they do — so its flat line is not
   robustness; the peer-reported variant is what MIDIAN must be compared with. Both are reported.
-- 2026-09-02: MIDIAN-V reports one number per peer per (member, family) — the peer's mean of the b outcomes it saw — instead of
+- 2026-09-02: MIDIAN-V (now MIDIAN w/o audits) reports one number per peer per (member, family) — the peer's mean of the b outcomes it saw — instead of
   b separate reports (per-reporter trimming only ever uses that mean, so the estimates are bit-identical): reports fall from
-  n·K·b·(r-1) to n·K·(r-1) (+ (r-1) per verified candidate). Plain MIDIAN keeps the spec's per-outcome reports (§5 iii) since it is
+  n·K·b·(r-1) to n·K·(r-1) (+ (r-1) per verified candidate). Plain MIDIAN (now MIDIAN w/o defenses) keeps the spec's per-outcome reports (§5 iii) since it is
   pre-registered and trims per report. The report channel now carries floats (World.report_many keeps float inputs as float32).
-- 2026-09-02: MIDIAN-V knobs measured on bernoulli n=1000 (2 seeds): fewer observers per probe (5 or 3 instead of r-1) and a
+- 2026-09-02: MIDIAN-V (now MIDIAN w/o audits) knobs measured on bernoulli n=1000 (2 seeds): fewer observers per probe (5 or 3 instead of r-1) and a
   1-probe level 0 cut reports but cost 0.03-0.10 success; promoting top-2/3 per cohort is neutral-to-worse (verification budget
   per candidate shrinks); r ∈ {5,10,20} — see sweep in the log. Final live variant: `verify=True, cached=True` (top=1, b0=b-1,
   r-1 observers): the root caches its pick per family and refreshes it on the online path update, so a fetch is 1 comparison
   and 2 messages (root -> agent); picks are identical to the uncached descent. The residual gap to peer-reported halving at
   β≤0.25 is structural (a cohort discards 9 of 10 members after b-1 probes; halving never discards a top agent that early);
   at β=0.5 with low-skill liars the tree's locality is what survives (bimodal: MIDIAN 0.82-0.85 vs halving 0.36).
-- 2026-09-02 (user request): framework rivals get a labeled variant `retrieval: midian` (grids fw_live_n{100,1000}_verified): the
-  shared adapter's shortlist is MIDIAN-V's leaf cohort (its pick first, then the cohort; k = r ∈ {10, 5}) instead of the top-k by
+- 2026-09-02 (user request): framework rivals get a labeled variant `retrieval: midian` (now `retrieval: midian_wo_audit`; grids fw_live_n{100,1000}_verified): the
+  shared adapter's shortlist is MIDIAN-V's (now MIDIAN w/o audits') leaf cohort (its pick first, then the cohort; k = r ∈ {10, 5}) instead of the top-k by
   TF-IDF over self-descriptions; the framework's own primitive still chooses among the k using names + self-descriptions. Needs
   become {declared, probe, reports}; MIDIAN's build/fetch/observe are charged through the same ledger. The original description-only
   frameworks are unchanged. Shows whether a deployed framework becomes robust by swapping only its shortlist source.
@@ -650,25 +656,27 @@
   when set. Repair spend per event is recorded as `repair_<counter>_per_event`.
 - 2026-09-03 (0.3, peer-reported halving): it already charged one report per (peer, member, family, probe) via
   `report_many` on the per-pull outcomes, so no accounting change was needed there.
-- 2026-09-03 (0.3 report accounting): MIDIAN-V reported one number per peer (the peer's mean of the b0 or e outcomes it saw);
-  it now sends one report per (peer, member, family, probe) like plain MIDIAN, at level 0 and at verification. Estimates are
+- 2026-09-03 (0.3 report accounting): MIDIAN-V (now MIDIAN w/o audits) reported one number per peer (the peer's mean of the b0 or e outcomes it saw);
+  it now sends one report per (peer, member, family, probe) like plain MIDIAN (now MIDIAN w/o defenses), at level 0 and at verification. Estimates are
   unchanged (the per-peer mean is taken after the per-probe collusion lie, which is identical), only `reports` rises: MIDIAN-V
   n=1000 r=10 build reports 159,840 -> 430,560 (= probes × (r−1)); r=5: 80,000 -> 192,000. referral_network and
   gossip_reputation_greedy already reported per probe (one observer per outcome). Rows written before this bullet carry the old
   V report counts; RESULTS v2 recomputes §6 from the new formula.
 - 2026-09-03 (0.7): `rte/methods/midian_v.py` = `midian(verify=True, cached=True)` under the name `midian_v` (byte-identical
-  picks, verified by test); the docstring is the definition of record.
+  picks, verified by test); the docstring is the definition of record. (2026-09-24: the file is gone; the arm is MIDIAN w/o
+  audits, `midian{"audit": false}`, defined in `midian.py`.)
 - 2026-09-03 (1.5): `midian(stratify=True)` implemented: the level-0 probes are spent BEFORE grouping, cohorts take one random
   member from each of r equal strata of the measured probe mean (n mod r leftovers form one random short cohort); reports are
   charged on the same probes, so the budget is unchanged. SPEC's "stratify by declared mean" is NOT used (declared is lie-prone).
 - 2026-09-03 (churn): `Midian.churn(departed, arrived)` assumes ids are reused (arrived ⊆ former ids); each arrived agent is
   re-probed b times per family, reported by its cohort peers, and its path recomputed for all K families:
-  K*b probes + K*b*(r−1) reports + (r−1)+depth messages per arrived agent. MIDIAN-V does not re-verify on churn.
+  K*b probes + K*b*(r−1) reports + (r−1)+depth messages per arrived agent. MIDIAN-V (now MIDIAN w/o audits) does not re-verify on churn.
 - 2026-09-03 (analysis, 0.1): `rte.analyze` reports every declared-channel reader (methods whose `needs` include `declared`, plus all
   fw_*) separately per declaration channel whenever a grid has both (success x beta, success x dist, paired-vs-MIDIAN roll-up per
   channel); programmatic is captioned "upper bound (S + N(0,0.05))". Probe-only methods are pooled (identical across channels).
 - 2026-09-03 (analysis, 0.5): one label per arm: `flat_probe_argmax_frozen` / `flat_probe_argmax_online`, `midian_v` / `midian_v_r5`,
-  `sequential_halving_peer` (alias map in `rte.analyze.ALIAS`; row files keep method+params). T2/T5 text names the frozen scan.
+  `sequential_halving_peer` (alias map in `rte.analyze.ALIAS`; row files keep method+params). (2026-09-24: the MIDIAN labels
+  are now `midian`, `midian_wo_verify`, `midian_wo_audit`, `midian_wo_audit_r5`, `midian_wo_defenses`.) T2/T5 text names the frozen scan.
 - 2026-09-03 (analysis, 0.6): wall-clock removed from every analyzer table and figure (memo hits and misses were mixed). The one
   wall-clock table left is the frameworks' supervisor latency per task (their clients call vLLM directly, never memoised).
 - 2026-09-03 (0.2 frameworks): `FrameworkMethod` keeps two accountings. Lenient (unchanged): a task the framework did not
@@ -683,11 +691,12 @@
   times; the orchestrator may use the 14B via `supervisor` (asymmetric vs the other frameworks' 7B; labeled).
 - 2026-09-03 (0.2 Google ADK): a router that answers instead of transferring is a failure, not a fallback.
 - 2026-09-03 (variants fork) `midian_sh` / `midian_a` / `midian_sha` / `linucb_honest` added as labeled variants (TARGETS_rte_v2 V2-1..3, V2-5).
+  (2026-09-24: `midian_a` is now MIDIAN w/o verification; `midian_sh` / `midian_sha` are withdrawn.)
   MIDIAN-SH's per-round pulls follow `_schedule`: pulls = max(1, remaining // (survivors * rounds_left)), remainder to the winner, so a
   cohort spends exactly s*b probes (r=10, b=3: 10x1, 5x1, 3x2, 2x4, +1). Estimates in SH/A/SH+A are trimmed over PEERS of each peer's mean
-  report (`_est.trimmed_by_reporter`, as MIDIAN-V), not over individual reports as plain MIDIAN: with unequal probe counts per member a
+  report (`_est.trimmed_by_reporter`, as MIDIAN-V), not over individual reports as plain MIDIAN (now MIDIAN w/o defenses): with unequal probe counts per member a
   per-report trim has no single trim depth. Reports are still charged per (peer, member, family, probe).
-- 2026-09-03 (variants fork) MIDIAN-A audits 5% of level-0 PROBE INSTANCES (one re-run checks all s-1 peers' claims about it), not 5% of
+- 2026-09-03 (variants fork) MIDIAN-A (now MIDIAN w/o verification) audits 5% of level-0 PROBE INSTANCES (one re-run checks all s-1 peers' claims about it), not 5% of
   reports, which is what keeps build probes <= 1.05x plain; the same-instance re-run needs a `View.probe_at(agents, families, k)` accessor
   that `World` did not have (shimmed in tests/test_midian_variants.py until it lands). Audited builds exceed the n*K*b cap by the audit rate
   by design; the generic contract test's cap must allow `1 + rate` for audited variants. Online audits ask the cohort peers to report the
@@ -695,22 +704,22 @@
   discards its members' online running-mean updates (rare event; noted, not fixed). MIDIAN-A with `halving=False` runs plain MIDIAN's
   single round through the SH engine (so its per-peer trimming differs from plain's per-report trimming, see above).
 - 2026-09-03 (variants fork) `_repath` in midian_a.py duplicates the path-recompute loop of `Midian.observe`; fold it into midian.py
-  (observe -> _repath) when that file is next touched.
-- 2026-09-03 (MIDIAN-V definition, found by the equivalence guard): charging reports per probe (0.3) is not pure accounting for
+  (observe -> _repath) when that file is next touched. (Done 2026-09-24: midian_a.py folded into `midian.py`.)
+- 2026-09-03 (MIDIAN-V definition -- now MIDIAN w/o audits --, found by the equivalence guard): charging reports per probe (0.3) is not pure accounting for
   MIDIAN-V — the report channel's collusion rule ranks "top-20% honest" on what the reporter observed, so per-probe reports and
   per-peer means give different corrupted values under collusion (est differs in every n=1000 cell, picks in 2/12). The 2026-09-02
   MIDIAN-V rows therefore measure the per-peer-mean variant; every v2 row (`midian_v`, and `midian(verify=True, cached=True)` run
   after commit 5e40f9d) measures the per-probe definition in `midian_v.py`, which is the one plain MIDIAN uses and the one the
-  replication grid (2.3) confirms. Plain MIDIAN, r=5 and online=False are fingerprint-identical to the pre-v2 code (36/36 cells).
+  replication grid (2.3) confirms. Plain MIDIAN (now MIDIAN w/o defenses), r=5 and online=False are fingerprint-identical to the pre-v2 code (36/36 cells).
 - 2026-09-03 (simplification pass, byte-identical): `scripts/equivalence.py` fingerprints picks, ledgers and tree arrays for every
   MIDIAN variant before and after a refactor; 0/96 mismatches for the pass that brought midian.py to 150 lines and made
   midian_sh.py call `_est.peer_estimate` round by round.
 - 2026-09-03 15:20 (accounting, found by the user's question "is 1 comparison / 2 messages real?"): MIDIAN's observe-time path
-  recompute (r comparisons and one child->parent update per level, per observed task) was not charged to the ledger, for plain and
+  recompute (every variant) (r comparisons and one child->parent update per level, per observed task) was not charged to the ledger, for plain and
   cached MIDIAN alike, so per-task columns showed fetch-time cost only (plain 30/6, cached 1/2 at n=1000). Now charged in
   `Midian._recompute`; rows written before this (no `observe_charged` stat) get r*ceil(log_r n) comparisons and ceil(log_r n)
-  messages per task added in `analyze.prepare()`. Honest per-task cost at n=1000, r=10: plain MIDIAN 60 comparisons / 9 messages,
-  MIDIAN-V 31 / 5 (its saving is the descent, not the update); churn repairs charge K*r per level. Picks are unchanged.
+  messages per task added in `analyze.prepare()`. Honest per-task cost at n=1000, r=10: plain MIDIAN (now w/o defenses) 60 comparisons / 9
+  messages, MIDIAN-V (now w/o audits) 31 / 5 (its saving is the descent, not the update); churn repairs charge K*r per level. Picks are unchanged.
 
 ## v3 external comparisons (2026-09-03 evening; RESULTS_rte_v3.md)
 - Prompt embeddings for every router in part A/B are a local all-MiniLM-L6-v2, not OpenAI's (no API key in the project);
@@ -783,7 +792,8 @@
 - **Floor effect, not robustness.** At n = 10,000 the frameworks move by at most 0.012 between beta = 0 and the cartel
   (range 0.257-0.314 -> 0.258-0.319, i.e. slightly up). They cannot collapse because at 0.26-0.32 they are already
   0.10-0.16 BELOW random (0.417). The same caveat applies to the RouterEval pools. What the cell shows is the contrast:
-  MIDIAN-VA 0.810 under the cartel against a best framework of 0.319, while peer halving loses 0.142, MIDIAN-V 0.079
+  MIDIAN-VA (now MIDIAN) 0.810 under the cartel against a best framework of 0.319, while peer halving loses 0.142, MIDIAN-V
+  (now MIDIAN w/o audits) 0.079
   and declared argmax 0.126 on the same cells.
 - **The oracle is not a realized-success ceiling.** `World.oracle` returns argmax(S[:, family]) - the best agent in
   EXPECTATION - and `execute` then draws a stochastic outcome. At n = 10,000 specialist, 247-1,440 agents tie at the
@@ -797,8 +807,8 @@
 
 ## v4: non-random MIDIAN cohorts, and operational lessons (2026-09-07/08)
 
-- `Midian` gains one parameter, `cohort` (default `random` = plain MIDIAN, unchanged; `stratify` preserves the old
-  `stratify=True`). New modes `block`, `specialty`, `declared`; MIDIAN-A and MIDIAN-VA inherit it. `declared` widens
+- `Midian` gains one parameter, `cohort` (default `random` = plain MIDIAN -- now MIDIAN w/o defenses --, unchanged; `stratify` preserves the old
+  `stratify=True`). New modes `block`, `specialty`, `declared`; MIDIAN-A and MIDIAN-VA (now MIDIAN w/o verification and MIDIAN) inherit it. `declared` widens
   the instance's `needs` to include the declaration channel, which the View enforces. Pre-registered in
   TARGETS_rte_v4.md (commit 8ed4f47) BEFORE any v4 run; results in RESULTS_rte_v4.md.
 - Budget neutrality is measured, not assumed: `probe_outcomes` probes every agent b times per family before cohorts
@@ -836,7 +846,7 @@
     with no module-level import; the module imported fine, every live World died with NameError (15 jobs). `d5d796b`.
   - **`world._probe_idx` was uint16** (erratum 23). `ed9671a`.
   - **b = 1 above 10^5 was inherited from `bernoulli_scale` for probe-count reasons**, and at b = 1 verification is
-    unfunded (`midian.py`: e = (b − b0) n / C = 0), so V == plain and VA == A. Erratum 22; b = 3 reruns 2026-09-11.
+    unfunded (`midian.py`: e = (b − b0) n / C = 0), so V == plain and VA == A (MIDIAN w/o audits == w/o defenses, MIDIAN == w/o verification). Erratum 22; b = 3 reruns 2026-09-11.
   - A fold wrapper discarded `scale_matrix.py`'s stderr for two days; the (n, b) column change had a two-vs-three-tuple
     unpack error and every matrix regenerated since was a zero-line file. Fixed `acb0c81`; the wrapper now captures stderr.
   - `kill $(pgrep -f <pattern>)` inline matches the invoking shell and kills it (three times). Find the PID in one
@@ -862,7 +872,7 @@
   `fw_live_n10k_dd`, `fw_live_n10k_cartel_dd`, `fw_live_n100k_dd`, `fw_k_sensitivity_dd`, `fw_appendix_dd`,
   `budget_b10_fw_dd`, `churn_n1000_fw_dd`): same cells, seeds, Q and b, only the framework arms, `dedup: true` in the
   params so the rid differs. Separate results directories; nothing is overwritten and no analysis merges the two.
-  Verified-shortlist grids (`retrieval: midian`) and `fw_routereval_*` are not rerun.
+  Verified-shortlist grids (`retrieval: midian`, now `midian_wo_audit`) and `fw_routereval_*` are not rerun.
 - **Run.** 3,389 units, one per job, sharded (dist, beta) x seed, `RTE_CONSOLIDATE=0`; gate job `fwdd_gate` waits for
   fleet 46327112's /health; two extra 7B and one 14B supervisor replicas (`serve_replica.sbatch`) start with the fleet;
   `fwdd_fold` folds and analyzes all eleven grids after the last `rte_fw_*` job. The first `launch.sh` pass was cut off
@@ -894,12 +904,12 @@
   10^4: 0.475 / 0.434 (cartel). The shortlists' TRUE skill: TF-IDF 0.31 (10^5) / 0.36 (10^3), MiniLM 0.455 / 0.52,
   population 0.43 / 0.42, best-of-ten 0.70 / 0.74. RESULTS II.1, II.2, II.4c.
 
-## VA-cohort frameworks at scale and under the cartel (2026-09-16, POST-HOC, labeled variant)
+## VA-cohort frameworks at scale and under the cartel (2026-09-16, POST-HOC, labeled variant; VA cohort = MIDIAN cohort)
 
 - The verified-cohort grids (`fw_live_n{100,1000}_verified`, `fw_live_n1000_verified_va`) stopped at 10^3 and ran random
   liars only. Four mirror grids fill the gaps on the existing cells and seeds: `fw_live_n1000_verified_va_lowskill`
   (300 units), `fw_live_n10k_verified_va` (60), `fw_live_n10k_cartel_verified_va` (27), `fw_live_n100k_verified_va` (180;
-  each unit rebuilds VA at 10^5 on memoized probes, ~7 h, 22-24 GB). Params `retrieval: midian_va, r: 10` as in the 10^3
+  each unit rebuilds VA at 10^5 on memoized probes, ~7 h, 22-24 GB). Params `retrieval: midian_va, r: 10` (now `retrieval: midian`) as in the 10^3
   grid; sapphire, one unit per job; folds `fwva_fold` / `fwva_fold2`. Results in RESULTS II.2 (table) and II.4c.
 - The VA build in a framework unit spends VA's 5% audit probes on top of the n·K·b budget (the "build spent 49380
   probes > budget 48000" warning): identical to the standalone VA arm's accounting, recorded, not corrected.
@@ -923,7 +933,7 @@
 - Verification run (`verify_all`, sapphire): 285 tests pass, 90 skipped (framework venvs / live), 1 failed —
   `test_schedule_spends_exactly_s_times_b[10-1]` expected the pre-guard behaviour (a cohort of 10 at b = 1 now raises,
   erratum 23); the test now asserts the guard. `check_methods.py` and the three selfchecks ran clean.
-- Still running at sync time, marked * in RESULTS: Magentic-One at 10^2 with the VA cohort; the live 10^5 halving liar
+- Still running at sync time, marked * in RESULTS: Magentic-One at 10^2 with the VA cohort (now MIDIAN cohort); the live 10^5 halving liar
   cells (β = 0.5 both liar sets, β = 0.25 seeds 2-3). Figures regenerate after them.
 
 ## Coverage fill and expansions (2026-09-17, POST-HOC)
@@ -973,3 +983,14 @@
   occurrence of a cell in a call now uses instances k0 + j*reps ... k0 + (j+1)*reps - 1, and the index advances by
   (occurrences)*reps. Before, all occurrences shared instances k0 .. k0+reps-1. Only `trueskill_per_family` passes
   repeated cells (erratum 30), so only its rows change.
+
+## MIDIAN rename (2026-09-24)
+
+- The full method (formerly MIDIAN-VA, `midian_va`) is now MIDIAN, `midian` with its defaults (`audit` and `verify` on).
+  The ablations are parameters of the same class: `midian{"verify": false}` = MIDIAN w/o verification (was MIDIAN-A),
+  `midian{"audit": false}` = MIDIAN w/o audits (was MIDIAN-V and `midian{verify,cached}`), `midian{"audit": false,
+  "verify": false}` = MIDIAN w/o defenses (was plain MIDIAN, the pre-registered tree). The successive-halving variants
+  (MIDIAN-SH / SHA) are withdrawn: code deleted, stored rows moved to `_premigration_v2` backups. Framework shortlist
+  `retrieval: midian_va` -> `midian`, `retrieval: midian` -> `midian_wo_audit`. Each flag keeps its old level-0 path and the
+  world is seeded with the legacy key (`rte/methods/keys.py`), so every stored row is reproduced (216/216 parity rows
+  bit-identical). Grid and directory names are unchanged. Details and the data migration: CHANGES_AND_ERRATA §8g.

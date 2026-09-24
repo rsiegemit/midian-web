@@ -1,5 +1,5 @@
 ## v10 -- 2026-09-23 01:15 (read ~/.claude memory project_rte_jobs_pending_sync v10 for the full handoff)
-- Priority MIDIAN-VA > focus reruns > rest. MIDIAN-VA b = 1/5 (va_b_*) done at 10^2-10^4 / RouterEval / LLMRouterBench;
+- Priority MIDIAN > focus reruns > rest. MIDIAN b = 1/5 (va_b_*) done at 10^2-10^4 / RouterEval / LLMRouterBench;
   replay, bernoulli, live 10^5 running as `test` packs. Budget-matched rivals rivals_b_* partly done.
 - Throughput levers now in use: parallel framework calls (T1), per-seed packs on `test` (T2-T3), Kempner kpacks (T6),
   `shared` + 3 h walltimes on pending sapphire jobs (T7). Focus units flow through scripts/ops/pack_driver.sh.
@@ -52,14 +52,15 @@ Repo pushed to `origin/main`.
   `extra_figs.py`, `v3_figs.py`); update COVERAGE §9 and RESULTS Part VI; push.
 - **Figure rules**: one panel and one row per figure, always; the oracle is a piecewise dotted line; one persistent colour
   per arm (`figures/bars/COLOURS.json`); every script filters through the do-not-add list in `extra_figs.excluded`
-  (MIDIAN with r ≠ 10 or δ ≠ 1/3, SH, SHA, LLM-descent, online-off, cohort/churn variants, route-to-k, trusted halving).
+  (MIDIAN with r ≠ 10 or δ ≠ 1/3, LLM-descent, online-off, cohort/churn variants, route-to-k, trusted halving).
 - **Operating rules** that cost real time are in README §6, DEVIATIONS and the memory file: fleet readiness, replica
   aliases, one unit per job, `sapphire,serial_requeue` for large campaigns, `--methods` takes ONE comma-separated value,
   3-day limits for live halving cells, never `kill $(pgrep -f ...)`.
 
 ---
 
-*The sections below are the 2026-09-02/03 handoff, kept for the record.*
+*The sections below are the 2026-09-02/03 handoff, kept for the record. They use the method names of the day; the
+2026-09-24 rename (CHANGES_AND_ERRATA §8g) is given in parentheses at the first mention in each entry.*
 
 
 Read with `SPEC.md` (the experiment), `CONTRACT.md` (interfaces + directives), `TARGETS_rte.md` (pre-registration),
@@ -74,12 +75,13 @@ Read with `SPEC.md` (the experiment), `CONTRACT.md` (interfaces + directives), `
   simple_equations count_bits number_format time_intervals word_sequence_reversal binary_alternation calendar_arithmetic),
   `population.py`, `prompts.py`, `tools.py` (python tool only for agents ≥3B), `rte/measure.py`, `rte/llm_client.py`
   (content-hash memo, per-process shards + 30 s live refresh, replica endpoints "<model>#<job>", latency-aware pick, TTL 20 s).
-- Methods: `midian.py` (plain = pre-registered, byte-identical; params r, delta, online; `verify=True` = MIDIAN-V with
+- Methods: `midian.py` (plain = pre-registered, byte-identical, now MIDIAN w/o defenses; params r, delta, online;
+  `verify=True` = MIDIAN-V, now MIDIAN w/o audits, with
   observers/b0/cached/top), 17 rivals (declared: random declared_argmax declared_softmax cnp_self_bid disrouter_cascade
   cluster_head_router route_to_k_majority; central verified: flat_probe_argmax ucb thompson sequential_halving[peer_reported]
   verify_on_claim warm_start_bandit trueskill; decentralized: referral_network gossip_reputation_greedy flat_nsw_router),
   LLM-native: llm_supervisor, midian_llm_descent; frameworks `methods/frameworks/fw_*.py` (10 working + fw_metagpt
-  NotImplemented + fw_echo protocol check), shared `_common.py` (TF-IDF retrieval; `retrieval=midian` = MIDIAN-V leaf cohort),
+  NotImplemented + fw_echo protocol check), shared `_common.py` (TF-IDF retrieval; `retrieval=midian` = MIDIAN-V leaf cohort, now `retrieval=midian_wo_audit`),
   `_bridge.py` (JSON-lines worker subprocess per framework venv `$RTE_DATA/env/fw_*`).
 - Runner/analysis: `rte/run.py` (grid → rows.d/*.json → rows.csv; `--seeds`, `--methods`, `--only k=v`), `configs/grid.yaml`,
   `rte/analyze.py` (aggregate, paired-vs-midian, F1–F7 + F3b cost panels, targets_check, summary.md), `scripts/check_methods.py`.
@@ -125,8 +127,8 @@ churn fork's API. All five forks landed (commits 160d55c, 5e40f9d; suite 371 pas
 frameworks (+14B Magentic-One arm) on fw_live_n100/n1000 at Q=1000, 5 seeds (336 jobs; old Q=300 rows archived as
 rows_v1_Q300.d); then, via the scratch launcher, the paired MIDIAN-side arms on the fw grids, both _verified grids,
 midian_v_replication (360 units), internals_v2 (20), variants_f1 (120), midian_r20 (60), stratify (20), churn_n1000 (40),
-live_n10k_v2 (6), budget_b10_shapes (12). Monitor as before; new code paths run live for the first time (midian_a probe_at,
-churn redraw on the llm backend) so scan .err logs early. Then Phase 3 figures (H1-H9) and RESULTS_rte_v2.md.
+live_n10k_v2 (6), budget_b10_shapes (12). Monitor as before; new code paths run live for the first time (midian_a, now MIDIAN w/o
+verification: probe_at, churn redraw on the llm backend) so scan .err logs early. Then Phase 3 figures (H1-H9) and RESULTS_rte_v2.md.
 
 
 **2026-09-03 01:45 — v2 HANDOFF (user going offline).** Running: ~2,300 CPU shard jobs (sapphire + shared) against the fleet
@@ -140,13 +142,13 @@ To resume in a new session: read this file, then (1) check `squeue -u $USER | gr
 analyze.py-only tracebacks from old jobs), (2) for grids with rows missing, `RTE_GRIDS=<g> RTE_SHARD=dist,beta [RTE_SEED_SHARD=1]
 RTE_PARTITION=shared scripts/launch_live.sh`, (3) after finish_v2 ran: fill every TODO(grid) in RESULTS_rte_v2.md from
 results/<grid>/summary.md and results/v2_targets/summary.md, refresh README numbers, commit by explicit paths (single release author,
-no Claude trailers), push to origin main. Known: MIDIAN-V v2 definition = per-probe reports (DEVIATIONS 2026-09-03); CrewAI
+no Claude trailers), push to origin main. Known: MIDIAN-V (now MIDIAN w/o audits) v2 definition = per-probe reports (DEVIATIONS 2026-09-03); CrewAI
 2026-09-02 rows were a corrupted-store artefact (archived as rows_v1_Q300.d).
 
 
 **2026-09-03 15:05 — HANDOFF / COMPACT POINT.** Repo = the project's git remote, branch main, single author.
 DONE: v2 phases 0–1 code (all forks merged; suite 374+ green; `scripts/equivalence.py` guards MIDIAN refactors); grids complete:
-variants_f1 (98.5%, +midian_va shards running), internals_v2, midian_r20, stratify, live_f1_core_s6_10, churn (461/480, gap-fill
+variants_f1 (98.5%, +midian_va shards running; midian_va is now MIDIAN), internals_v2, midian_r20, stratify, live_f1_core_s6_10, churn (461/480, gap-fill
 running), budget_b10_shapes (103/108, tail-fill launched), live_n10k_v2 (120/126: the two peer-halving units died in the 12:52
 registry gap after 8 h and were relaunched — ~8 h more), midian_v_replication (88%: midian_va added, seeds 11-20).
 RUNNING (~1,650 CPU shards on shared+sapphire): fw_live_n100/n1000 (92%, 10 seeds, Q=1000; Magentic-One tail; ETA ~17:00),
@@ -166,22 +168,23 @@ churn_n1000,live_n10k_v2,budget_b10_shapes --out $RTE_DATA/results/v2_targets`);
 
 **2026-09-03 15:45 — INCIDENT: alias-only models.** After the primary fleet retired (12:52) every model existed in endpoints.d only
 as fleet 2's alias `<model>#44175863`; `_generate` required the bare key, so any uncached call to a member model (0.5B–14B, gemma)
-raised "not served" and ~300 shard processes died 14:10–15:25 (all 144 midian_va shards, churn/budget/n10k tails, 138 fw units).
+raised "not served" and ~300 shard processes died 14:10–15:25 (all 144 midian_va shards -- now MIDIAN --, churn/budget/n10k tails, 138 fw units).
 Fixes: (a) bare entries written for all 7 models via `scripts/_register_endpoint.py add` (endpoints.d = 21; the 7 bare files are NOT
 owned by any fleet job — remove them by hand when fleet 2 exits); (b) `llm_client._generate` now accepts alias-only models
 (7f4ed20); (c) all 300 units resubmitted from `sacct SubmitLine` (resumable, holes only). ETAs pushed ~1.5 h: fw ~18:30,
 verified n100 ~18:00, verified n1000 ~20:00, lowskill ~17:30, midian_va ~17:00, n=10k halving ~2026-09-04 00:00.
 
 ## 3. Method variants in the grids (all paired on the same streams)
-midian (v1, pre-registered), midian(online=false), midian(r=5), midian(verify,cached) = MIDIAN-V, midian(verify,cached,r=5),
+midian (v1, pre-registered; now MIDIAN w/o defenses), midian(online=false), midian(r=5), midian(verify,cached) = MIDIAN-V
+(now MIDIAN w/o audits), midian(verify,cached,r=5),
 midian_internals adds r∈{5,10,20}×δ∈{0,1/3} and V at r∈{5,10,20}; sequential_halving and sequential_halving(peer_reported);
-flat_probe_argmax and (online); frameworks fw_* and fw_*(retrieval=midian, r∈{10,5}).
+flat_probe_argmax and (online); frameworks fw_* and fw_*(retrieval=midian, r∈{10,5}; now retrieval=midian_wo_audit).
 
 ## 4. Findings so far (bernoulli/replay; live pending)
 - Self-described channel at β=0 on the live population: overclaim +0.27, corr 0.36 with S, argmax-by-self-rating success 0.63
   vs oracle 0.85 vs random 0.38.
-- Ties at b=3: ~116 agents/family tie at est=1.0 (n=1000) → flat argmax & plain MIDIAN pick blindly; halving's winner rests on ~12 probes.
-- MIDIAN-V: +0.03..+0.14 over v1 at β≤0.25; loses at β=0.5 random liars; the only survivor at β=0.5 low-skill liars (bimodal
+- Ties at b=3: ~116 agents/family tie at est=1.0 (n=1000) → flat argmax & plain MIDIAN (now MIDIAN w/o defenses) pick blindly; halving's winner rests on ~12 probes.
+- MIDIAN-V (now MIDIAN w/o audits): +0.03..+0.14 over v1 at β≤0.25; loses at β=0.5 random liars; the only survivor at β=0.5 low-skill liars (bimodal
   0.85 vs peer-reported halving 0.36). Peer-reported halving > MIDIAN-V by ~0.03–0.07 at β≤0.25 (structural: early cohort elimination).
 - Cost (calibrated bernoulli 10^2–10^7): MIDIAN comparisons/messages/hops ~ n^0.11, wall n^0.09; flat scans n^1.0.
   MIDIAN-V cached fetch = 1 comparison, 2 messages. Build: v1 48k probes/432k reports; V 47.8k/160k; peer halving 45k/404k (n=1000).
@@ -218,4 +221,4 @@ endpoints.d entries by hand when fleet 44175863 exits (2026-09-05 ~10:30). KNOWN
 (0.609) though a smoke run gave 0.257 (seed effect; reported as measured); Avengers K=64 below the probe table at
 m=1000 (over-partition); RouteLLM harness crashes at its metrics step (metrics recomputed from its prints).
 
-**2026-09-04 15:40 — ALL GRIDS COMPLETE / FINAL DOC SYNC.** fw_live_n100 and fw_live_n1000 (2,640 rows each), fw_live_n{100,1000}_verified (2,520 each) and fw_live_n1000_verified_va (1,320) finished; `rte.analyze` rerun on all five + the v2_targets merge; `extra_figs.py` (H1–H11) and `energy.py` regenerated (framework supervisor latency ratios re-measured on the final rows: crossings vs Magentic-One ~990 tasks, multi-call frameworks 1,900–2,300; the Reading sentence in energy.py updated). RESULTS_rte_v2.md §1 / by-shape / §1b (+ MIDIAN-VA-shortlist columns, T3-19 SPLIT: within ±0.02 of the V shortlist at β ≤ 0.25, +0.021 mean at β = 0.5 with 3/10 frameworks ≥ +0.03) / §2 / §6b / App. E de-asterisked; RESULTS.md II.1, II.2, II.6, Part V–VII FINAL; README headline updated (MIDIAN 0.65, V 0.66, VA 0.68 vs frameworks 0.52–0.55). Final table: Magentic-One 7B 0.546 (strict 0.172, 60% fallback), 14B arm 0.533; every framework −0.108 … −0.130 vs MIDIAN, paired over 120 pairs. REMAINING: (1) `python -m rte.llm_client compact` only after the two duplicate Magentic units 44268179 / 44268195 exit (they rewrite rows that already exist; compact deletes live shards); (2) remove the 7 bare endpoints.d entries when fleet 44175863 exits (~09-05 10:30). No new grids without a decision.
+**2026-09-04 15:40 — ALL GRIDS COMPLETE / FINAL DOC SYNC.** fw_live_n100 and fw_live_n1000 (2,640 rows each), fw_live_n{100,1000}_verified (2,520 each) and fw_live_n1000_verified_va (1,320) finished; `rte.analyze` rerun on all five + the v2_targets merge; `extra_figs.py` (H1–H11) and `energy.py` regenerated (framework supervisor latency ratios re-measured on the final rows: crossings vs Magentic-One ~990 tasks, multi-call frameworks 1,900–2,300; the Reading sentence in energy.py updated). RESULTS_rte_v2.md §1 / by-shape / §1b (+ MIDIAN-VA-shortlist columns -- MIDIAN-VA is now MIDIAN, V is MIDIAN w/o audits --, T3-19 SPLIT: within ±0.02 of the V shortlist at β ≤ 0.25, +0.021 mean at β = 0.5 with 3/10 frameworks ≥ +0.03) / §2 / §6b / App. E de-asterisked; RESULTS.md II.1, II.2, II.6, Part V–VII FINAL; README headline updated (MIDIAN 0.65, V 0.66, VA 0.68 vs frameworks 0.52–0.55; plain MIDIAN is now MIDIAN w/o defenses). Final table: Magentic-One 7B 0.546 (strict 0.172, 60% fallback), 14B arm 0.533; every framework −0.108 … −0.130 vs MIDIAN, paired over 120 pairs. REMAINING: (1) `python -m rte.llm_client compact` only after the two duplicate Magentic units 44268179 / 44268195 exit (they rewrite rows that already exist; compact deletes live shards); (2) remove the 7 bare endpoints.d entries when fleet 44175863 exits (~09-05 10:30). No new grids without a decision.

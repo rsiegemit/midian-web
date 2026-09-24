@@ -6,9 +6,9 @@ at trivial cost and simply was never scheduled. Do-not-add arms are listed for c
 
 ## 1. Live RTE (llm backend; n = 10^2, 10^3, 10^4, 10^5)
 
-Present at every n and regime: MIDIAN, V, A, VA, flat frozen / online, peer halving, warm-start bandit, KNN router
-(+ online), declared argmax, random, oracle, the ten frameworks (pre-registered adapter; plus dedup / MiniLM / V-cohort /
-VA-cohort variants where run). Full rival set (29 labels) at 10^3 only.
+Present at every n and regime: MIDIAN and its three ablations (w/o defenses, w/o audits, w/o verification), flat frozen / online, peer halving, warm-start bandit, KNN router
+(+ online), declared argmax, random, oracle, the ten frameworks (pre-registered adapter; plus dedup / MiniLM / cohort of MIDIAN w/o
+audits / MIDIAN-cohort variants where run). Full rival set (29 labels) at 10^3 only.
 
 | gap | where | verdict |
 |---|---|---|
@@ -29,7 +29,8 @@ VA-cohort variants where run). Full rival set (29 labels) at 10^3 only.
 
 ## 2. Calibrated bernoulli (`bernoulli_scale_v5`; n = 10 … 10^7, five regimes, 1000 seeds, b = 3)
 
-Present: 23 arms at all seven rungs and all five regimes (MIDIAN family incl. r = 5 variants, SH, SHA; flat frozen / online;
+Present: 23 arms at all seven rungs and all five regimes (MIDIAN family incl. r = 5 variants and the successive-halving MIDIAN variants, since withdrawn and their rows removed,
+CHANGES_AND_ERRATA §8g; flat frozen / online;
 NSW; UCB; Thompson; warm-start; verify-on-claim; peer halving; declared argmax / softmax; CNP; cluster-head; route-to-k;
 random; oracle).
 
@@ -55,7 +56,7 @@ Same 23 arms and five regimes at every rung; same arm gaps and verdicts as berno
 
 ## 4. RouterEval real LLM pools (`routereval_mmlu` 10 / 100 / 1,000 × 3 pool configs; `routereval_mmlu5k` 5,000; five regimes)
 
-Present: 18 arms (MIDIAN family incl. SH / SHA; flat frozen / online; both halvings; warm-start; LinUCB; KNN (+online);
+Present: 18 arms (MIDIAN family incl. the since-withdrawn successive-halving variants, §8g; flat frozen / online; both halvings; warm-start; LinUCB; KNN (+online);
 MLP; declared argmax; random; oracle) at 10 / 100 / 1,000; the nine frameworks at 1,000 and 5,000 (`fw_routereval_*`).
 
 | gap | verdict |
@@ -105,7 +106,7 @@ both v5 sweeps at every rung and regime (referral / gossip to 10^6); the twelve 
 - Live heavy_tail and bimodal at 10^4 (`learned_n10k_shapes`, `learned_n10k_fill_shapes`, `fw_live_n10k_shapes`,
   `fw_live_n10k_cartel_shapes`): six new populations (2 shapes × 3 seeds, ~480k generations each) warmed by one
   flat_probe_argmax job apiece (`warm10k_*`), the 950 other units launched by `shapes_gate` behind them.
-- The nine frameworks on RouterEval (10 / 100, 1,000, 5,000) with the MiniLM (`_em`) and VA-cohort (`_va`) shortlists.
+- The nine frameworks on RouterEval (10 / 100, 1,000, 5,000) with the MiniLM (`_em`) and MIDIAN-cohort (`_va`) shortlists.
 - Speed: every job of §7 and §8 is one unit (or one seed) and is submitted to `sapphire,serial_requeue`; §7's already-queued
   jobs were widened to both partitions by `logs/fill/spread.sh`. `kempner_requeue` refuses multi-partition submissions.
 - Fold `fill_fold_expand`; then matrices, tables, NUMBERS.json, bar figures (M-figures gain the 10^4 shapes and β = 0.1 cells).
@@ -120,13 +121,13 @@ both v5 sweeps at every rung and regime (referral / gossip to 10^6); the twelve 
 | real-pool arms (RouterEval 10/100/1,000 and 5,000, LLMRouterBench) | **complete** |
 | live 10^2 fill (12 rivals), 10^4 fill (11), 10^5 fill (10 incl. llm_supervisor) | **complete** |
 | live β = 0.1 at 10^4 and 10^5 (arms + frameworks + fill arms) | **complete** |
-| RouterEval frameworks, MiniLM and VA-cohort shortlists, m = 1,000 and 5,000 | **complete** |
+| RouterEval frameworks, MiniLM and MIDIAN-cohort shortlists, m = 1,000 and 5,000 | **complete** |
 | RouterEval frameworks on m = 10 / 100 (three shortlists) | * ~60% |
 | live 10^4 heavy_tail / bimodal (arms, fill arms, frameworks, cartel frameworks) | * ~40%; the six populations are built |
 | live 10^5 peer halving, β = 0.5 | * random liars 2/3 seeds; cartel 0/3 |
 | folds `fill_fold_live`, `fill_fold_expand` | waiting on the three * items |
 
 Findings already in the docs from this campaign (RESULTS II.4e): gossip reputation and the referral network collapse to
-random under the low-skill cartel (0.415 / 0.431 against random 0.419) while MIDIAN-VA holds 0.789 on the same channel;
+random under the low-skill cartel (0.415 / 0.431 against random 0.419) while MIDIAN holds 0.789 on the same channel;
 LinUCB-honest falls below random from 10^5 up (0.437 → 0.261 at 10^7) with bit-identical numbers in all five regimes,
 a pure scale failure rather than a robustness one.

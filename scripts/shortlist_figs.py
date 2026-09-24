@@ -7,8 +7,8 @@ MiniLM, BM25, Qwen3-Embedding-8B dense with and without a task instruction, BM25
 cross-encoder with and without an instruction, the declared-claim top-k and the MIDIAN leaf cohort). Not drawn:
 dedup TF-IDF, fusion without the reranker, the cohort of MIDIAN w/o audits; a condition with fewer than two shortlists is skipped).
 The oracle (dotted) and MIDIAN routing the whole population (solid) are horizontal lines across the panel
-with their 95% seed-bootstrap band. A source is recognised from each row's params, so a new shortlist grid needs only
-an entry in SOURCES. Bars whose rows still have an erratum-28 rerun outstanding carry an asterisk.
+with their +/- 1 s.e. band over seeds. A source is recognised from each row's params, so a new shortlist grid needs only
+an entry in SOURCES. Bars whose rows still have an erratum-28 rerun outstanding are flagged in the csv (rerun_outstanding), not drawn.
 Rows come from rows.csv AND rows.d (reruns write rows.d only). b = 3 only -- never pooled with b = 1.
 Do-not-add list (extra_figs.excluded) applies; MIDIAN cohorts other than r = 10, the shuffled MIDIAN cohort (a position control), the lying-text condition and the 14B
 Magentic-One supervisor arm are not shortlist sources and are never drawn."""
@@ -182,8 +182,8 @@ def main(families):
     with open(f"{OUT}/INDEX.md", "w") as f:
         f.write("# figures/shortlist -- every framework under every shortlist source, per condition\n\n"
                 "One figure per (family, n, population shape, liar regime); one panel and one row. The oracle (dotted) and MIDIAN routing\n"
-                "the whole population (solid) are horizontal lines with their 95% seed-bootstrap band; each framework group carries one bar per\n"
-                "shortlist source. Error bars are the 95% seed bootstrap; * marks a bar with an erratum-28 rerun outstanding. b = 3 only.\n"
+                "the whole population (solid) are horizontal lines with their +/- 1 s.e. band; each framework group carries one bar per\n"
+                "shortlist source. Error bars are +/- 1 s.e. over seeds; an erratum-28 rerun outstanding is flagged in the csv only. b = 3 only.\n"
                 "Do-not-add arms (extra_figs.excluded) are never drawn.\n\n"
                 "Shortlist sources: " + "; ".join(f"`{k}` = {v}" for k, v, _ in SOURCES) + ".\n\n")
         for family in families:

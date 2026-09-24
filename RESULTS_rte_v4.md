@@ -1,5 +1,7 @@
 # RESULTS_rte_v4.md — non-random MIDIAN cohorts (IN PROGRESS, 2026-09-08)
 
+> Names: this document predates the 2026-09-24 rename — MIDIAN-VA is now MIDIAN; MIDIAN is now MIDIAN w/o defenses; MIDIAN-V is MIDIAN w/o audits; MIDIAN-A is MIDIAN w/o verification; MIDIAN-SH/SHA are withdrawn (CHANGES_AND_ERRATA §8g).
+
 Pre-registration: `TARGETS_rte_v4.md`, committed in `8ed4f47` **before** any v4 run. Plain MIDIAN is unchanged; the
 three modes are labeled variants of one new parameter, `cohort`, on `Midian` (inherited by MIDIAN-A and MIDIAN-VA).
 

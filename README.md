@@ -14,12 +14,12 @@ skill structure. Every method is charged for every probe, report, message, hop a
 comparison is success *and* cost.
 
 The headline result (live LLM population, n = 1000, 10 seeds, Q = 1000, paired cells, 95% CI; all grids complete):
-MIDIAN routes correctly 0.65 of the time, MIDIAN-V 0.66 and MIDIAN-VA 0.68, versus 0.52–0.55 for every one of the ten
+MIDIAN w/o defenses routes correctly 0.65 of the time, MIDIAN w/o audits 0.66 and MIDIAN 0.68, versus 0.52–0.55 for every one of the ten
 frameworks, 0.61 for a flat probe scan, 0.57 for a one-call LLM supervisor and 0.72 for the oracle. The average hides
 a split: on populations where skill is legible from a self-description (a minority of big tool-using models) the
-frameworks sit on the oracle, and on populations where skill is family-specific they collapse to 0.39 against MIDIAN's
-0.78. Under low-skill-first collusion MIDIAN-VA holds 0.68 while every framework stays at 0.52–0.54 and unaudited
-MIDIAN falls to 0.57. MIDIAN-VA does it with 5 messages, 32 comparisons and no LLM call per task; a framework spends 12
+frameworks sit on the oracle, and on populations where skill is family-specific they collapse to 0.39 against MIDIAN w/o defenses'
+0.78. Under low-skill-first collusion MIDIAN holds 0.68 while every framework stays at 0.52–0.54 and MIDIAN w/o
+defenses falls to 0.57. MIDIAN does it with 5 messages, 32 comparisons and no LLM call per task; a framework spends 12
 messages, 10 comparisons and at least one supervisor LLM call. The consolidated dossier is [`RESULTS.md`](RESULTS.md);
 the per-grid write-ups are [`RESULTS_rte_v2.md`](RESULTS_rte_v2.md) (our benchmark) and
 [`RESULTS_rte_v3.md`](RESULTS_rte_v3.md) (external comparisons); [`RESULTS_rte.md`](RESULTS_rte.md) is the frozen
@@ -87,7 +87,13 @@ class M(Method):
     def observe(self, task, agent, outcome): ... # online update after the outcome is known
 ```
 
-**MIDIAN** (`midian.py`, pre-registered, byte-identical since the first run). Agents are grouped into random cohorts
+**MIDIAN** (`midian.py`) is one class with two defenses as parameters, both on by default: `audit` (report audits
+with reporter exclusion) and `verify` (verified promotion). The method the paper calls MIDIAN is `midian` with both on;
+its ablations switch them off. Names changed on 2026-09-24 (CHANGES_AND_ERRATA §8g): the old plain `midian` is now MIDIAN
+w/o defenses, `midian_v` is MIDIAN w/o audits, `midian_a` is MIDIAN w/o verification, `midian_va` is MIDIAN.
+
+**MIDIAN w/o defenses** (`midian{"audit": false, "verify": false}`, the pre-registered tree; every stored row reproduces
+bit for bit). Agents are grouped into random cohorts
 of r. At level 0 each member is probed b times per family and its cohort peers report what they saw; the cohort's
 estimate of each member is a trimmed mean over reporters (drop ⌊δ(r−1)⌋ from each end), so up to that many liars per
 cohort are absorbed. Each cohort's best member per family is its summary; cohorts are grouped again into cohorts of
@@ -95,19 +101,20 @@ r, up a tree of depth ⌈log_r n⌉. Routing descends the tree from the root fol
 family: 2 messages per level, r comparisons per level. After each outcome the running estimate of the chosen agent is
 updated and its path recomputed. Build costs O(n) probes and reports and O(n) messages; a route costs O(log n).
 
-**MIDIAN-V** (`midian(verify=True, cached=True, r=…)`, labeled post-hoc variant). Identical tree, but a promotion is
+**MIDIAN w/o audits** (`midian{"audit": false}`, labeled post-hoc variant). Identical tree, but a promotion is
 *verified*: candidates promoted to a parent node are re-probed, budget-exactly (level 0 spends b−1 per cell and the
 saved probes go to the promoted candidates), by reporters drawn from sibling subtrees, and the verified value is
 written back. The root's pick per family is cached, so a route costs 1 comparison and 2 messages. `r=5` halves the
 reports again. Other knobs (`observers`, `b0`, `top`) are documented in the file; `stratify=True` (v2) draws cohorts
 stratified by declared family instead of at random.
 
-**MIDIAN-A** (`midian_a.py`, v2). Plain MIDIAN plus audits: 5% of instances are re-probed by the auditor, a reporter
-whose report disagrees with the audit twice is excluded from every later estimate, and audits continue online. Costs
-1.05× build probes, nothing per task. **MIDIAN-VA** (`midian_va.py`, v2) is MIDIAN-A with V's verified promotion and
-cached root pick: the excluded reporters are also removed from the verification. The recommended order of adding
-mechanisms is A then V — see RESULTS_rte_v2.md §4. `midian_sh.py` (successive halving inside cohorts), `midian_sha.py`,
-`stratify` and `linucb_honest.py` are the v2 negative controls.
+**MIDIAN w/o verification** (`midian{"verify": false}`, v2). MIDIAN w/o defenses plus audits: 5% of instances are
+re-probed by the auditor, a reporter whose report disagrees with the audit twice is excluded from every later estimate,
+and audits continue online. Costs 1.05× build probes, nothing per task. **MIDIAN** (`midian`, both defenses, v2) adds
+verified promotion and the cached root pick on top: the excluded reporters are also removed from the verification. The
+recommended order of adding the defenses is audits, then verification — see RESULTS_rte_v2.md §4. `stratify` and
+`linucb_honest.py` are the v2 negative controls (the successive-halving MIDIAN variants were withdrawn on 2026-09-24,
+CHANGES_AND_ERRATA §8g).
 
 **Self-contained rivals** (SPEC §6), grouped by what they read:
 
@@ -117,7 +124,7 @@ mechanisms is A then V — see RESULTS_rte_v2.md §4. `midian_sh.py` (successive
 | declared channel only | `declared_argmax`, `declared_softmax`, `cnp_self_bid` (contract-net bidding), `route_to_k_majority`, `cluster_head_router` (k-means heads), `disrouter_cascade` (cost-ordered cascade), `llm_supervisor` (one LLM call over the top-20 declarations) |
 | verified outcomes, centralized | `flat_probe_argmax` (frozen or `online=True`), `flat_nsw_router` (HNSW over probe vectors), `ucb_per_family`, `thompson_per_family`, `trueskill_per_family`, `warm_start_bandit` (declarations as prior, probes as updates), `verify_on_claim`, `sequential_halving` (adaptive: halve the candidate set per family each round) and `sequential_halving(peer_reported=True)`, the fair control that spends the same budget adaptively but learns only through MIDIAN's trimmed report channel |
 | verified outcomes, decentralized | `referral_network` (d-regular referral walk), `gossip_reputation_greedy` (EigenTrust-style gossip) |
-| MIDIAN family | `midian`, variants above, `midian_llm_descent` (an LLM chooses the child at each level) |
+| MIDIAN family | `midian` (MIDIAN and its three ablations, via `audit` / `verify`), `midian_llm_descent` (an LLM chooses the child at each level) |
 
 **Frameworks** (SPEC §6A, `rte/methods/frameworks/`). Each `fw_*.py` is 6–11 lines: it hands a shortlist and the task
 to a worker running inside the framework's own virtual environment (`workers/*_worker.py`, JSON lines over
@@ -128,7 +135,7 @@ fallback when the framework returns no valid name. Four labeled shortlist varian
 with the pre-registered rows: `dedup=True` ranks distinct description texts (agents sharing a prompt share a memoized
 description and memoized answers, so above ~3,900 distinct prompts the plain top-10 is ten clones of one agent — erratum
 25); `retrieval="embed"` is MiniLM cosine over the deduped descriptions, the retriever a deployed stack would use;
-`retrieval="midian"` / `"midian_va"` hand the framework MIDIAN-V's / MIDIAN-VA's probed leaf cohort. RESULTS II.2 has
+`retrieval="midian_wo_audit"` / `"midian"` hand the framework the probed leaf cohort of MIDIAN w/o audits / of MIDIAN. RESULTS II.2 has
 the five-source table at every n; `scripts/doc_tables.py` generates and verifies it. Interception notes per framework are in `NOTES_*.md`; MetaGPT has
 no selection primitive to intercept and AgentScope is an appendix.
 
@@ -141,10 +148,10 @@ graph step), **comparisons** (a flat scan over n candidates is n; a max over r c
 **tasks** (executions at route time). Formulas per method are in `CONTRACT.md`; `scripts/check_methods.py` asserts
 them against the counters. Wall-clock is recorded too but mixes cache hits and misses, so cost claims use counts.
 
-Measured at n = 1000 (per task / at build): MIDIAN 6 messages, 30 comparisons / 48k probes, 432k reports, 1k
-messages; MIDIAN-V r=5 2 / 1 / 48k, 80k, 1k; flat probe argmax 0 / 1000 / 48k, 0, 0; a framework 12 / 10 + an LLM
-call / 0, 0, 1k. Across n = 10² … 10⁷, MIDIAN's per-task comparisons, messages and hops scale as n^0.14 (2⌈log_r n⌉),
-MIDIAN-V's as n^0, flat and declared scans as n^1.0.
+Measured at n = 1000 (per task / at build): MIDIAN w/o defenses 6 messages, 30 comparisons / 48k probes, 432k reports,
+1k messages; MIDIAN w/o audits (r=5) 2 / 1 / 48k, 80k, 1k; flat probe argmax 0 / 1000 / 48k, 0, 0; a framework 12 / 10 + an LLM
+call / 0, 0, 1k. Across n = 10² … 10⁷, the per-task comparisons, messages and hops of MIDIAN w/o defenses scale as n^0.14 (2⌈log_r n⌉),
+those of MIDIAN w/o audits as n^0, flat and declared scans as n^1.0.
 
 ## 4. Experimental design
 
@@ -154,15 +161,16 @@ MIDIAN-V's as n^0, flat and declared scans as n^1.0.
   memoised LLM answers are shared and deltas are paired.
 - **Metrics per row.** success, success on the last quarter of the stream, regret vs oracle, misroute-to-liar rate,
   the six counters at build and per task, wall-clock, and the method's own stats (e.g. framework fallbacks).
-- **Analysis** (`rte/analyze.py`): per-class tables with 95% percentile-bootstrap CIs over seeds, MIDIAN-vs-rival
-  paired deltas with sign tests and a `WITHIN_FLOOR` flag (delta inside MIDIAN's own seed envelope), log-log cost
+- **Analysis** (`rte/analyze.py`): per-class tables with 95% percentile-bootstrap CIs over seeds, reference-vs-rival
+  paired deltas (reference = MIDIAN w/o defenses, `analyze.REF`) with sign tests and a `WITHIN_FLOOR` flag (delta inside
+  the reference's own seed envelope), log-log cost
   exponent fits across n, the six pre-registered target checks, and figures F1–F7.
 - **Grids** (`configs/grid.yaml`): `live_core_n100`, `live_f1_n1000` (every rival), `live_extra_n1000` (two more
   shapes), `live_n10k`, `budget_sweep` (b = 1, 3, 10), `midian_internals` (r × δ × verification), `fw_live_n100`,
   `fw_live_n1000`, their `_verified` variants, `fw_k_sensitivity`, `fw_appendix`, `replay_scale`, `bernoulli_scale`,
   and `replay_mirror_*` / `bernoulli_mirror_*` twins of every live grid. Seeds: 5 (algorithmic), 3 (frameworks).
-- **Pre-registration.** `TARGETS_rte.md` was committed before the first run. Plain MIDIAN's parameters were never
-  changed; every improvement is a labeled variant, and misses are reported as misses.
+- **Pre-registration.** `TARGETS_rte.md` was committed before the first run. The parameters of MIDIAN w/o defenses (the
+  pre-registered plain tree) were never changed; every improvement is a labeled variant, and misses are reported as misses.
 
 ## 5. Repository layout
 
@@ -220,21 +228,21 @@ makes re-runs of finished units nearly free.
 
 ## 7. Results and figures
 
-`RESULTS_rte.md` is the write-up: the framework headline with CIs and fallback rates, the frameworks given MIDIAN's
-shortlist, every rival by β and by population shape, the MIDIAN-vs-halving control, the internals ablation, budget
+`RESULTS_rte.md` is the write-up: the framework headline with CIs and fallback rates, the frameworks given the
+leaf cohort of MIDIAN w/o audits, every rival by β and by population shape, the MIDIAN-vs-halving control, the internals ablation, budget
 and scale, cost exponents and break-even, the learning curve, target verdicts, replay, caveats and deviations.
 Per-grid machine summaries are `$RTE_DATA/results/<grid>/summary.md`. The figures are in [`figures/`](figures/) (regenerate with `scripts/extra_figs.py`; seed-bootstrap error bars within cells, 300 dpi):
 
 - **H1** headline by population shape, frameworks as a min–max band with fallback rates
-- **H2** legibility: Spearman(self-description, true skill) vs framework − MIDIAN
+- **H2** legibility: Spearman(self-description, true skill) vs framework − MIDIAN w/o defenses
 - **H3** consistency vs robustness: success at β=0 vs β=0.5 with colluding low-skill liars
 - **H4** cost–quality Pareto with break-even Q
 - **H5** cost scaling 10² to 10⁷, plus supervisor latency
-- **H6** MIDIAN, MIDIAN-A, MIDIAN-VA (and V, SH, SH+A) vs peer-reported sequential halving by β and liar selection; replay twin below (no trusted-observer arm, erratum 26)
-- **H7** frameworks given MIDIAN's verified shortlist at 10^2 / 10^3; **M6** the five shortlist sources × n at 10^2-10^5 (RESULTS II.2)
+- **H6** MIDIAN w/o defenses, MIDIAN w/o verification, MIDIAN w/o audits and MIDIAN vs peer-reported sequential halving by β and liar selection; replay twin below (no trusted-observer arm, erratum 26)
+- **H7** frameworks given the verified leaf cohort of MIDIAN w/o audits at 10^2 / 10^3; **M6** the five shortlist sources × n at 10^2-10^5 (RESULTS II.2)
 - `METHODS.md` describes every method (origin, what it is, what it does) and `COVERAGE.md` audits what exists per
   family with justification verdicts and the campaign state.
-- Every figure script filters its arms through one do-not-add list (`extra_figs.excluded`): MIDIAN variants with r ≠ 10, MIDIAN-SH, MIDIAN-SHA, the trusted-observer halving arm. Extend it there, never per figure.
+- Every figure script filters its arms through one do-not-add list (`extra_figs.excluded`): MIDIAN variants with r ≠ 10, the trusted-observer halving arm (the successive-halving MIDIAN variants are withdrawn, CHANGES_AND_ERRATA §8g). Extend it there, never per figure.
 - **bars/** (48 figures, `scripts/bar_figs.py`): every arm as bars grouped by n, one figure per experiment family × liar regime × grouping, oracle dotted on top, one colour per arm across all of them
 - **M1** success vs n with the live 10^2-10^5 points and the 1000-seed calibrated curve to 10^7; **M5** success vs probe budget b = 1..30 (RESULTS II.4e / II.4f)
 - **H8** budget sweep by declaration channel
@@ -243,32 +251,32 @@ Per-grid machine summaries are `$RTE_DATA/results/<grid>/summary.md`. The figure
 - appendix: internals, learning curve, k-sensitivity, replay mirror, fallback table, UCB/Thompson; the 2026-09-02 figures A–G are kept under `figures/v1/`
 - **X1–X5 (v3, external comparisons; RESULTS_rte_v3.md)**: X1 RouterBench on its own protocol (AIQ) vs its KNN/MLP
   routers; X2 RouteLLM's released BERT router vs the probe table on their model pair with their metrics; X3 RouterBench's
-  KNN/MLP routers as methods inside our benchmark vs the MIDIAN variants at n = 100 / 1k / 10k; X4 RouterEval (pools of
+  KNN/MLP routers as methods inside our benchmark vs MIDIAN and its ablations at n = 100 / 1k / 10k; X4 RouterEval (pools of
   10 / 100 / 1,000 real LLMs) on its own terms with its baselines, Avengers and EmbedLLM; X5 every arm with liars on
   RouterEval's real pools (10 / 100 / 1,000 and all 5,000 leaderboard LLMs)
 
 In one paragraph: the frameworks' only signal is self-description, which overclaims by +0.27 and correlates 0.36 with
 true skill, so they sit at 0.5 regardless of β and fall to 0.4 on specialist populations. The retriever sets that
 number and the orchestrator caps it: the pre-registered TF-IDF top-10 has lower true skill than a random agent (0.31 vs
-0.43 at 10^5), a MiniLM retriever lifts the specialist frameworks from 0.39 to 0.54 at 10^3, MIDIAN's probed cohort to
-0.57, and every framework then sits at its shortlist's mean, 0.19-0.26 below MIDIAN-VA routing to its own pick, at every
-n from 10^2 to 10^5 (RESULTS II.2). Among mechanisms that verify, peer-reported sequential halving beats MIDIAN-V by 0.04 at β ≤ 0.25 in every cell
-but collapses at β = 0.5 with low-skill liars (0.41) where MIDIAN holds 0.60: the tree's per-cohort trimming survives
-poisoned reports that early elimination does not. Adding audits (MIDIAN-A) makes MIDIAN flat in β at 5% more probes
-(+0.07 at β = 0.5, +0.10 with low-skill liars, nothing lost at β ≤ 0.25); adding verification on top (MIDIAN-VA) loses
+0.43 at 10^5), a MiniLM retriever lifts the specialist frameworks from 0.39 to 0.54 at 10^3, a MIDIAN leaf cohort to
+0.57, and every framework then sits at its shortlist's mean, 0.19-0.26 below MIDIAN routing to its own pick, at every
+n from 10^2 to 10^5 (RESULTS II.2). Among mechanisms that verify, peer-reported sequential halving beats MIDIAN w/o audits by 0.04 at β ≤ 0.25 in every cell
+but collapses at β = 0.5 with low-skill liars (0.41) where MIDIAN w/o defenses holds 0.60: the tree's per-cohort trimming survives
+poisoned reports that early elimination does not. Adding audits (MIDIAN w/o verification) makes the tree flat in β at 5% more probes
+(+0.07 at β = 0.5, +0.10 with low-skill liars, nothing lost at β ≤ 0.25); adding verification on top (MIDIAN) loses
 nothing at any β and halves the per-task cost (31.6 comparisons and 5 messages instead of 60 and 9). Verification alone
-(MIDIAN-V) is +0.02 at β ≤ 0.25 but the most exposed variant at β = 0.5 (−0.03 vs plain), which is why the order is A
-then V. (RESULTS_rte_v2.md §4.)
+(MIDIAN w/o audits) is +0.02 at β ≤ 0.25 but the most exposed variant at β = 0.5 (−0.03 vs MIDIAN w/o defenses), which
+is why the order is audits, then verification. (RESULTS_rte_v2.md §4.)
 
-**v3 in one paragraph (RESULTS_rte_v3.md, pre-registered in TARGETS_rte_v3.md).** With truthful labels every MIDIAN
-variant is the probe-family table, and that table is competitive with published routers at a fraction of the labels
+**v3 in one paragraph (RESULTS_rte_v3.md, pre-registered in TARGETS_rte_v3.md).** With truthful labels MIDIAN and
+every ablation is the probe-family table, and that table is competitive with published routers at a fraction of the labels
 (RouterBench: 0.707 vs their KNN's 0.713 AIQ with 7× fewer labels; RouterEval at 1,000 real LLMs: 0.615 with 13% of
 the labels vs their best linear router 0.661, EmbedLLM 0.658, best single model 0.629; RouteLLM's released BERT
 router scores below random on RouterBench outcomes for its own model pair). Inside our benchmark their KNN router is
-flat probe argmax exactly and their MLP router is +0.03–0.06 over it but below MIDIAN-VA at every β and n. On
-RouterEval's real pools with liars, MIDIAN-VA is the only arm besides MIDIAN-A that holds its accuracy under low-skill
-collusion (0.61 at 1,000, 0.71 at 5,000 LLMs, flat in β) while the declaration reader, the warm-start bandit, MIDIAN-V
-and peer halving lose 0.15–0.32; in the honest regime at 5,000 LLMs adaptive halving (0.88 ≈ oracle) and the honest
+flat probe argmax exactly and their MLP router is +0.03–0.06 over it but below MIDIAN at every β and n. On
+RouterEval's real pools with liars, MIDIAN is the only arm besides MIDIAN w/o verification that holds its accuracy under low-skill
+collusion (0.61 at 1,000, 0.71 at 5,000 LLMs, flat in β) while the declaration reader, the warm-start bandit, MIDIAN w/o
+audits and peer halving lose 0.15–0.32; in the honest regime at 5,000 LLMs adaptive halving (0.88 ≈ oracle) and the honest
 declaration (0.86) beat it by 0.15, which is the trade MIDIAN makes.
 
 ## 8. Design principles and how to extend
@@ -305,7 +313,7 @@ FINAL (every grid complete as of 2026-09-04; the energy/latency figures are esti
 | `SPEC.md` | the study specification: world, MIDIAN, rivals, frameworks (§6A), figures, compute plan |
 | `TARGETS_rte.md` | the six phase-1 pre-registered expectations, committed before any run |
 | `TARGETS_rte_v2.md` | the eleven v2 expectations, committed before any v2 launch |
-| `TARGETS_rte_v3.md` | the twenty-four v3 expectations (external comparisons, scale, MIDIAN-VA), committed before any v3 run |
+| `TARGETS_rte_v3.md` | the twenty-four v3 expectations (external comparisons, scale, the full MIDIAN), committed before any v3 run |
 | `RESULTS.md` | the consolidated dossier: every result, ordered, each tagged with its status |
 | `RESULTS_rte_v2.md` / `RESULTS_rte_v3.md` | the per-grid write-ups for our benchmark and the external comparisons |
 | `CHANGES_AND_ERRATA.md` | what the earlier drafts had wrong or incomplete, and every number that moved |
@@ -327,9 +335,10 @@ RTE_DATA=<data dir> PYTHONPATH=. python -m rte.analyze --grid fw_live_n1000
 ```
 
 The table is `$RTE_DATA/results/fw_live_n1000/summary.md`, section "HEADLINE: frameworks vs MIDIAN, by method class"
-(one row per arm, with the seed-bootstrap interval, the unit count and the paired delta against MIDIAN). Substitute
+(one row per arm, with the seed-bootstrap interval, the unit count and the paired delta against the reference, MIDIAN w/o
+defenses). Substitute
 `fw_live_n100`, `fw_live_n1000_verified`, `fw_live_n1000_verified_va` or `fw_live_n1000_lowskill` for the n = 100,
-verified-shortlist, VA-shortlist and cartel tables; each grid keeps its own summary, and pooling them with `--grids`
+shortlist-of-MIDIAN-w/o-audits, shortlist-of-MIDIAN and cartel tables; each grid keeps its own summary, and pooling them with `--grids`
 would average over different n.
 **Operating a run.** `scripts/await_fleet.sh` blocks until every model in `configs/models.yaml` answers `/health`
 (never trust `endpoints.d`: two fleets share bare keys, so cancelling one deregisters the other's models);
@@ -362,7 +371,7 @@ plotted value beside each one.
   clones (same memoized description, same memoized answers). Every method routes over the same clones; the text
   retriever's top-10 is the only place it mattered (erratum 25). The two β = 0 cells (random and low-skill liar sets)
   are the same world and differ only by the frameworks' run-to-run noise (≤ 0.01, Magentic-One ≤ 0.03).
-- Plain MIDIAN charges one report per probe per peer as the spec reads; MIDIAN-V and peer-reported halving charge one
+- MIDIAN w/o defenses charges one report per probe per peer as the spec reads; MIDIAN w/o audits and peer-reported halving charge one
   per peer (its mean), so their report counts are ~3× lower for the same information.
 - Wall-clock columns mix cache hits and misses; use the counters for cost claims.
 - The benchmark supplies what probing needs and most deployments lack: a cheap probe whose outcome is checkable on the

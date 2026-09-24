@@ -1,5 +1,7 @@
 # Per-channel tables (v2 work order 0.1) — generated 2026-09-03 by `rte.analyze` (new "per declaration channel" section)
 
+> Names: this document predates the 2026-09-24 rename — MIDIAN-VA is now MIDIAN; MIDIAN is now MIDIAN w/o defenses; MIDIAN-V is MIDIAN w/o audits; MIDIAN-A is MIDIAN w/o verification; MIDIAN-SH/SHA are withdrawn (CHANGES_AND_ERRATA §8g).
+
 Programmatic = **upper bound (S + N(0,0.05))**: an honest declaration no live agent produces. Self-described = the live channel
 (agents' own self-descriptions). Frameworks read self-descriptions only and appear in the fw_* grids. Labels: `flat_probe_argmax_frozen`,
 `flat_probe_argmax_online`, `midian_v`, `midian_v_r5`, `sequential_halving_peer` (one name per arm everywhere; 0.5).

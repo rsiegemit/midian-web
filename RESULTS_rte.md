@@ -1,5 +1,7 @@
 # RESULTS_rte.md — RTE: plain MIDIAN vs self-contained rivals and ten real agent frameworks
 
+> Names: this document predates the 2026-09-24 rename — MIDIAN-VA is now MIDIAN; MIDIAN is now MIDIAN w/o defenses; MIDIAN-V is MIDIAN w/o audits; MIDIAN-A is MIDIAN w/o verification; MIDIAN-SH/SHA are withdrawn (CHANGES_AND_ERRATA §8g).
+
 Written 2026-09-02 (final numbers 23:30) from the completed live programme (see STATUS.md for the run log, DEVIATIONS.md for every
 departure from SPEC.md, TARGETS_rte.md for the pre-registered expectations). Per-grid machine summaries with
 bootstrap CIs, per-cell paired deltas and figures F1–F6 are under `$RTE_DATA/results/<grid>/summary.md`

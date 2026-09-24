@@ -15,20 +15,23 @@ never drawn (`extra_figs.excluded`); *never reported* = withdrawn from every tab
 | `random` | SPEC §6 | nothing | uniform pick; the floor | reported |
 | oracle | runner (SPEC §7) | true S | always the agent with the highest true skill for the task's family; re-picks after churn; the dotted line in every figure | reported (ceiling) |
 
-## 2. MIDIAN family (SPEC §5; plain MIDIAN pre-registered and byte-identical since the first run)
+## 2. MIDIAN family (SPEC §5; MIDIAN w/o defenses is the pre-registered plain tree, reproduced bit for bit since the first run)
+
+One class, `midian`, with two defenses as parameters, both on by default: `audit` (report audits with reporter
+exclusion) and `verify` (verified promotion; `cached` defaults to `verify`). MIDIAN is the default; the ablations switch
+a defense off. Renamed 2026-09-24 (CHANGES_AND_ERRATA §8g; `rte/methods/keys.py` maps the stored keys).
 
 | method | origin | reads | what it does | status |
 |---|---|---|---|---|
-| `midian` (plain) | SPEC §5 | probe, reports | Agents in random cohorts of r = 10. Level 0: each member is probed b times per family; the r−1 cohort peers report what they saw; the cohort's estimate of a member is a trimmed mean over reporters (drop ⌊δ(r−1)⌋ from each end, δ = 1/3), so up to that many liars per cohort are absorbed. Each node keeps, per family, the best estimate in its subtree and which child holds it; nodes are regrouped at random up a tree of depth ⌈log_r n⌉. A route descends from the root: r comparisons and 2 messages per level. After each outcome the routed agent's estimate and its path are updated (`online=True`). Build O(n) probes, reports and messages; route O(log n). Parameters never changed. | reported |
-| `midian` r ≠ 10 (`r=5`, `r=20`) | v2 1.4 | as plain | the same tree with cohorts of 5 or 20; r-sweep control | **do-not-add** |
-| `midian` δ sweep (`delta=0`, r = 10) | v2 2.5 (`internals_v2`) | as plain | trimming off; internals ablation (Fig. A_internals) | appendix only |
-| `midian_v` = `midian(verify=True, cached=True)` | post-hoc 2026-09-02, replicated as v2 V2-8 | probe, reports | verification at promotion: level 0 spends b0 = b−1 probes per cell; the saved n·K·(b−b0) probes re-probe, budget-exactly, every candidate a child forwards to its parent, by reporters drawn from sibling subtrees, and the verified value is written back. The root's per-family pick is cached: a route costs 1 comparison and 2 messages. Zero probes to verify at b = 1 (erratum 22). | reported (MIDIAN-V) |
-| `midian_a` | v2 1.1 | probe, reports | plain MIDIAN plus report audits: 5% of level-0 probe instances are re-run by the auditor (same index-seeded instance), each peer's report about it is compared with the truth, and a reporter with two mismatches is excluded from every later aggregation; online, 5% of routed outcomes are audited the same way. Cost 1.05× build probes, nothing per task. | reported (MIDIAN-A) |
-| `midian_va` | v2 V2-11 | probe, reports | MIDIAN-A's audited level 0 + MIDIAN-V's verified promotion and cached root pick; excluded reporters are also dropped from verification. The robust arm: flat in β at 10^3–10^7. | reported (MIDIAN-VA) |
-| `midian_sh` | v2 negative control | probe, reports | level-0 estimation by successive halving inside each cohort (probe all, keep the top half by trimmed peer estimate, repeat), spending exactly plain MIDIAN's s·b probes; unfundable at b = 1 (erratum 23) | **do-not-add** |
-| `midian_sha` | v2 negative control | probe, reports | `midian_sh` + MIDIAN-A's audits | **do-not-add** |
-| `midian(stratify=True)` / `cohort=block` / `specialty` / `declared` | v4 (T4-1…T4-6) | probe, reports (+declared for `declared`) | how level-0 cohorts are formed, budget-neutral: `stratify` one member per ability stratum (diverse cohorts); `block` contiguous ability blocks; `specialty` grouped by argmax family of the measured profile; `declared` grouped by the declared profile. Applied to plain, A and VA. Results: RESULTS_rte_v4.md. | reported in the v4 tables only |
-| `midian_llm_descent` | SPEC §9 | probe, reports, LLM | plain MIDIAN where an LLM (not the arithmetic argmax) chooses among a node's r children at each level; unparseable answers fall back to the argmax and are counted | reported (appendix) |
+| `midian{"audit": false, "verify": false}` (MIDIAN w/o defenses) | SPEC §5 | probe, reports | Agents in random cohorts of r = 10. Level 0: each member is probed b times per family; the r−1 cohort peers report what they saw; the cohort's estimate of a member is a trimmed mean over reporters (drop ⌊δ(r−1)⌋ from each end, δ = 1/3), so up to that many liars per cohort are absorbed. Each node keeps, per family, the best estimate in its subtree and which child holds it; nodes are regrouped at random up a tree of depth ⌈log_r n⌉. A route descends from the root: r comparisons and 2 messages per level. After each outcome the routed agent's estimate and its path are updated (`online=True`). Build O(n) probes, reports and messages; route O(log n). Parameters never changed. Reference arm of every paired analysis (`analyze.REF`). | reported (MIDIAN w/o defenses) |
+| `midian` r ≠ 10 (`r=5`, `r=20`) | v2 1.4 | as above | the same tree with cohorts of 5 or 20; r-sweep control | **do-not-add** |
+| `midian` δ sweep (`delta=0`, r = 10) | v2 2.5 (`internals_v2`) | as above | trimming off; internals ablation (Fig. A_internals) | appendix only |
+| `midian{"audit": false}` (MIDIAN w/o audits) | post-hoc 2026-09-02, replicated as v2 V2-8 | probe, reports | verification at promotion: level 0 spends b0 = b−1 probes per cell; the saved n·K·(b−b0) probes re-probe, budget-exactly, every candidate a child forwards to its parent, by reporters drawn from sibling subtrees, and the verified value is written back. The root's per-family pick is cached: a route costs 1 comparison and 2 messages. Level 0 trims by reporter. Zero probes to verify at b = 1 (erratum 22). | reported (MIDIAN w/o audits) |
+| `midian{"verify": false}` (MIDIAN w/o verification) | v2 1.1 | probe, reports | MIDIAN w/o defenses plus report audits: 5% of level-0 probe instances are re-run by the auditor (same index-seeded instance), each peer's report about it is compared with the truth, and a reporter with two mismatches is excluded from every later aggregation; online, 5% of routed outcomes are audited the same way. Cost 1.05× build probes, nothing per task. | reported (MIDIAN w/o verification) |
+| `midian` (MIDIAN, both defenses; the default) | v2 V2-11 | probe, reports | the audited level 0 + verified promotion and cached root pick; excluded reporters are also dropped from verification. The robust arm: flat in β at 10^3–10^7. | reported (MIDIAN) |
+| successive halving inside cohorts, with and without audits | v2 negative controls | probe, reports | level-0 estimation by successive halving inside each cohort; unfundable at b = 1 (erratum 23) | **withdrawn** 2026-09-24: code deleted, stored rows moved to `_premigration_v2` backups (CHANGES_AND_ERRATA §8g) |
+| `midian(stratify=True)` / `cohort=block` / `specialty` / `declared` | v4 (T4-1…T4-6) | probe, reports (+declared for `declared`) | how level-0 cohorts are formed, budget-neutral: `stratify` one member per ability stratum (diverse cohorts); `block` contiguous ability blocks; `specialty` grouped by argmax family of the measured profile; `declared` grouped by the declared profile. Applied to MIDIAN w/o defenses, MIDIAN w/o verification and MIDIAN. Results: RESULTS_rte_v4.md. | reported in the v4 tables only |
+| `midian_llm_descent` | SPEC §9 | probe, reports, LLM | MIDIAN w/o defenses where an LLM (not the arithmetic argmax) chooses among a node's r children at each level; unparseable answers fall back to the argmax and are counted | reported (appendix) |
 
 ## 3. Self-contained rivals (SPEC §6), by what they read
 
@@ -111,15 +114,15 @@ so a top-10 is put in front of them). Five, never pooled, each its own grid (RES
 | default (hashed TF-IDF) | SPEC §6A, pre-registered | top-10 by hashed-TF-IDF cosine between the agents' self-descriptions and the family description; stable sort → at scale ten clones of one agent (erratum 25) | reported (headline) |
 | `dedup=True` | post-hoc 2026-09-14 | the same ranking over DISTINCT description texts, one agent per text | reported beside |
 | `retrieval="embed"` (+dedup) | post-hoc 2026-09-15 | all-MiniLM-L6-v2 cosine over the deduped descriptions: the dense retriever a deployed stack would use | reported beside |
-| `retrieval="midian"` (r = 10) | v2 (T3-19 lineage; H7) | MIDIAN-V's probed leaf cohort, V's pick first | reported beside |
-| `retrieval="midian_va"` (r = 10) | v3 T3-19 at 10^3; post-hoc at 10^2, 10^4, 10^5 and the cartel cells (2026-09-16) | MIDIAN-VA's audited leaf cohort, VA's pick first | reported beside |
+| `retrieval="midian_wo_audit"` (r = 10) | v2 (T3-19 lineage; H7) | the probed leaf cohort of MIDIAN w/o audits, its pick first | reported beside |
+| `retrieval="midian"` (r = 10) | v3 T3-19 at 10^3; post-hoc at 10^2, 10^4, 10^5 and the cartel cells (2026-09-16) | MIDIAN's audited leaf cohort ("MIDIAN cohort"), MIDIAN's pick first | reported beside |
 | `retrieval="bm25"` | post-hoc 2026-09-17 | Okapi BM25 (k1 = 1.5, b = 0.75) over an inverted index; the lexical half of a production stack | reported beside |
 | `retrieval="hybrid"` | post-hoc 2026-09-17 | reciprocal-rank fusion (k = 60) of BM25 with the dense scores | reported beside |
 | `retrieval="sota"` (+ `rerank_pool` = 50) | post-hoc 2026-09-17 | hybrid, then the top 50 reranked by a cross-encoder (`Qwen/Qwen3-Reranker-4B`), top k kept. Table is per-population and cached | reported beside |
 | `embed_model` (`Qwen/Qwen3-Embedding-8B`) | post-hoc 2026-09-17 | the strong dense half; defaults to MiniLM so `retrieval="embed"` is bit-identical to what was already reported | reported beside |
 | `embed_instruct` | post-hoc 2026-09-18 | the QUERY-side task instruction an instruction-tuned embedder expects; only the K family texts depend on it, so the n document embeddings are reused | reported beside |
 | `retrieval="declared"` | post-hoc 2026-09-18 | top-k by the declared claim: no text retrieval at all, the cheap baseline every text arm should be measured against | grid written, NOT yet run |
-| `shuffle=True` | post-hoc 2026-09-18 | position CONTROL: permutes a midian cohort deterministically so the pick is not first. Same members, ordering only | **control -- never a rival, never pooled with the VA-cohort rows** |
+| `shuffle=True` | post-hoc 2026-09-18 | position CONTROL: permutes a midian cohort deterministically so the pick is not first. Same members, ordering only | **control -- never a rival, never pooled with the MIDIAN-cohort rows** |
 
 ### 5b. What the shortlist diagnostics measure (`jobs/shortlist_skill.py`, `cohort_skill.py`, `position1_skill.py`)
 
@@ -137,6 +140,7 @@ random-within-list than to competent, which is why mean and position-1 both matt
 
 ## 6. The do-not-add list (`scripts/extra_figs.py`, `excluded()`), applied to every figure
 
-`midian` with r ≠ 10 (`midian[r=5]`, `midian_v_r5`, `midian[r=20,…]`, …), `midian_sh`, `midian_sha`,
+`midian` with r ≠ 10 (`midian[r=5]`, `midian_wo_audit_r5`, `midian[r=20,…]`, …), `midian_llm_descent`, the online-off
+ablation `midian[audit=False,online=False,verify=False]`,
 `route_to_k_majority` (three executions per task), and the trusted-observer `sequential_halving` (never reported anywhere,
 erratum 26). They stay in the grids and in `paper/NUMBERS.json` (except the trusted arm) for the record.

@@ -1,5 +1,7 @@
 # TARGETS_rte_v2.md — pre-registered expectations for the v2 work order (v1 in TARGETS_rte.md stays frozen)
 
+> Names: this document predates the 2026-09-24 rename — MIDIAN-VA is now MIDIAN; MIDIAN is now MIDIAN w/o defenses; MIDIAN-V is MIDIAN w/o audits; MIDIAN-A is MIDIAN w/o verification; MIDIAN-SH/SHA are withdrawn (CHANGES_AND_ERRATA §8g).
+
 Committed 2026-09-03 before any v2 grid was launched. Every new mechanism is a labeled variant; plain MIDIAN's
 parameters do not change. Verdicts are HIT / MISS / WITHIN_FLOOR (delta inside MIDIAN's own seed envelope), reported
 as measured.

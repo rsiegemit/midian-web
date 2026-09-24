@@ -15,7 +15,7 @@ rows and, for bernoulli / replay b = 1, their scale matrices. b is NEVER pooled:
 "Best learned router" / "best bandit" are CROSS-FITTED (scripts/seed_tables.py): for each seed the arm is chosen on the
 OTHER seeds and scored on this one, so no bar is the maximum of noisy means over the seeds it reports (no winner's curse).
 The pool is the same at every b in a cell (POOL minus the arms that cannot run there, NOT_RUNNABLE); a bar whose pool is
-still missing a candidate (or a seed of one) at that b puts the one * in the figure title. The csv lists how often each arm was chosen. Frameworks are not drawn (figures/shortlist). The do-not-add list applies, and with it the
+still missing a candidate (or a seed of one) at that b is reported as INCOMPLETE (scripts/ops/figure_status.py; figures carry no marks). The csv lists how often each arm was chosen. Frameworks are not drawn (figures/shortlist). The do-not-add list applies, and with it the
 TEMPORARY extra_figs.HIDE_HALVING switch."""
 from __future__ import annotations
 import os, re, sys
@@ -156,7 +156,7 @@ def add_best_framework(C):
 def add_budgets(C):
     """b = 1 / 5 for every arm: live / RouterEval / LLMRouterBench / bernoulli 10^7 / replay 10^6 from the va_b_* (MIDIAN)
     and rivals_b_* (budget-matched rivals) rows (per-seed means, whiskers set by narrow()); bernoulli / replay b = 1 from their
-    scale matrices. A cell the runs have not reached simply has no bar (a * marks it)."""
+    scale matrices. A cell the runs have not reached simply has no bar (figure_status.py lists it)."""
     sys.path.insert(0, ROOT)
     from fw_variant_numbers import load as rows, regime
     R = os.environ.get("RTE_DATA", "/scratch/rte") + "/results"

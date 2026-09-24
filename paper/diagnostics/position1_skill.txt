@@ -18,4 +18,4 @@ dense Q3-8B (I-competent)            0.428        0.485
 random                               0.434        0.428
 declared argmax                      0.627        0.615
 -- best agent in population --       0.845             
-MIDIAN-VA (its verified pick)        0.832        0.447   [measured in jobs/cohort_skill.py]
+MIDIAN (its verified pick)           0.832        0.447   [measured in jobs/cohort_skill.py]

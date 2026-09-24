@@ -1,5 +1,7 @@
 # RTE / MIDIAN — Consolidated Results Dossier
 
+> Names: this document predates the 2026-09-24 rename — MIDIAN-VA is now MIDIAN; MIDIAN is now MIDIAN w/o defenses; MIDIAN-V is MIDIAN w/o audits; MIDIAN-A is MIDIAN w/o verification; MIDIAN-SH/SHA are withdrawn (CHANGES_AND_ERRATA §8g).
+
 **Snapshot:** 2026-09-17 18:30 (v7: the coverage-fill campaign is folded on both synthetic backends and on every live rung; still running and marked * -- the live 10^5 halving β = 0.5 cells, the live 10^4 heavy_tail/bimodal campaign, and the RouterEval small-pool framework variants) · **Purpose:** the single ordered source for the
 manuscript. Detailed protocols, per-grid tables and figure captions are in the linked documents; this file carries every
 number a paper needs, each tagged with its status.

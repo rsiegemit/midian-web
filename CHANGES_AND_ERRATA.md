@@ -1,5 +1,7 @@
 # CHANGES_AND_ERRATA.md — what the earlier results had wrong or incomplete, and what is final (2026-09-04)
 
+Method names in the sections below are those of their date; §8g gives the 2026-09-24 rename (MIDIAN-VA → MIDIAN, …).
+
 Three earlier states are compared with the final one:
 
 | label | document | state |
@@ -489,6 +491,62 @@ and of no other arm.
   (the cached array is read-only); `RTE_OUTCOME_CACHE=1` scores each (population, agent, family, instance) probe once per process and forks the scoring over `RTE_TEXT_PROCS` workers (outcomes identical; only the `llm_executions` diagnostic counts fewer calls); `RTE_RG_CACHE=1` caches reasoning-gym's word-corpus read and regex scan that letter_counting / word_sequence_reversal redo in every problem's constructor (identical problems and scores, ~27x). Used for `rivals_b_n10k` (cartel kNN), `rivals_b_n100k` (kNN) and the cartel
   `routereval5k_norep_cal` kNN units. Batched vs per-prompt embeddings differ by <= 2.4e-7 and gave identical top-10
   neighbour sets on 300 queries; defaults are unchanged.
+
+## 8g. The MIDIAN rename (2026-09-24)
+
+The full method is now called MIDIAN; the variants are its ablations. Nothing measured changed: every stored number is
+reproduced, and the figure CSVs regenerated on the renamed rows match tag `submission-2026-09-24` value for value (737
+rows matched, 0 differing).
+
+| before | method key before | now | method key now | analysis label |
+|---|---|---|---|---|
+| MIDIAN-VA | `midian_va` | **MIDIAN** | `midian` (params `{}`) | `midian` |
+| MIDIAN-A | `midian_a` | MIDIAN w/o verification | `midian{"verify": false}` | `midian_wo_verify` |
+| MIDIAN-V | `midian_v`, `midian{"verify": true, "cached": true}` | MIDIAN w/o audits | `midian{"audit": false}` | `midian_wo_audit` |
+| MIDIAN (plain, pre-registered) | `midian` | MIDIAN w/o defenses | `midian{"audit": false, "verify": false}` | `midian_wo_defenses` |
+| MIDIAN-SH / MIDIAN-SHA | `midian_sh` / `midian_sha` | withdrawn | — | — |
+| framework shortlist "VA cohort" | `retrieval: midian_va` | MIDIAN cohort | `retrieval: midian` | source key `va_cohort` (unchanged) |
+| framework shortlist "V cohort" | `retrieval: midian` | cohort of MIDIAN w/o audits | `retrieval: midian_wo_audit` | not drawn |
+
+Display strings follow `docs/FIGURE_SPEC.md` §2 (e.g. "MIDIAN-VA (whole population)" → "MIDIAN, no framework", "best
+learned router" → "best learned/declared router", "flat probe argmax (online)" → "flat probe argmax"). Grid and
+directory names (`va_b_*`, `*_verified_va*`, `midian_v_replication`, `paired_vs_midian.csv`, …) are identifiers and keep
+their spelling.
+
+- **One class, two flags** (`rte/methods/midian.py`, commit fc816f3). `Midian(audit=True, verify=True)` is MIDIAN;
+  `audit` (report audits with reporter exclusion, rate 0.05, two strikes) and `verify` (verified promotion with
+  b0 = b − 1; `cached` defaults to `verify`) switch the defenses off one at a time. `midian_a.py`, `midian_v.py`,
+  `midian_va.py`, `midian_sh.py` and `midian_sha.py` are deleted. Level 0 keeps, per flag, the engine each variant had
+  (with audits: the per-peer audited engine formerly in `MidianSH`; without audits: `peer_reported_estimates`, trimmed by
+  reporter with verification and by report without), so every stored number is reproduced: the parity check reran 216
+  stored rows under the new keys and all 216 are bit-identical.
+- **`rte/methods/keys.py`**, the one place that knows the old keys. `to_new(method, params)` translates a stored or
+  configured key (None for a withdrawn variant); `legacy(method, params)` is its inverse on the new keys; `normalize(df,
+  dir)` translates the rows of an unmigrated directory on read and, for a migrated one, only checks that no old key is
+  left (`assert_v2`). Every loader (`rte.analyze`, `seed_tables`, `fw_variant_numbers`, `efficiency_figs`, …) reads
+  through it. The runner seeds the world with the **legacy** key (`rte/run.py`, `run_method`), so a rerun of any cell
+  reproduces the rows stored under the old key.
+- **One-time data migration** (`scripts/ops/migrate_method_keys.py`, dry run by default, `--apply` to write). Per results
+  directory: every row of `rows.csv` and `rows.d/*.json` whose key changes under `to_new` gets the new key and a new rid
+  (`rte.run.rid_of_row` on the rewritten row; rows.d files are renamed to it); withdrawn MIDIAN-SH / SHA rows are removed;
+  every changed or removed original is first copied to `<dir>/_premigration_v2/` (`rows_changed.csv.gz` and the original
+  rows.d files), so the step is reversible; unchanged values are written back byte-identical; the directory then gets the
+  sentinel `.method_keys_v2` and is never migrated again (a second pass would turn the new full-method `midian` rows
+  into the old undefended ones). It refuses, changing nothing, if a stored rid does not match the rid recomputed from its
+  old key or two rows would share a new rid. The dry run over 199 directories found no rid mismatch and no collision;
+  applied 2026-09-24 11:26–11:30, it re-keyed 1,049,487 CSV rows and 35,407 rows.d files and removed 179,040 SH / SHA CSV
+  rows and 1,944 rows.d files (the sentinel files' counts).
+- **`midian_v` and `midian{verify, cached}` are one arm now.** They were already pooled under one analysis label
+  (`midian_v`) and both map to `midian{"audit": false}`. `legacy` returns `midian_v` for it, so a rerun is seeded with
+  that key and reproduces the rows first written as `midian_v`.
+- **The reference of every paired analysis is MIDIAN w/o defenses** (`rte.analyze.REF = "midian_wo_defenses"`), i.e.
+  the same comparisons as before, when the plain `midian` was the reference; `paired_vs_midian.csv` keeps its name.
+- **MIDIAN-SH and MIDIAN-SHA are withdrawn**: their code is deleted and their rows are only in the `_premigration_v2`
+  backups. They were v2 negative controls on the do-not-add list and in no reported figure.
+- **Grids and scripts** (commit 4f1f56b): `configs/grid.yaml`, the runner, the analysis, the framework adapter and every
+  script use the new keys; the 193 grids plan the same arms as before. The figures follow `docs/FIGURE_SPEC.md` through
+  `scripts/figspec.py` (commit 9fb00e5). Historical documents (RESULTS*.md, TARGETS_rte_v2–v4.md) keep the names of their
+  date, with a note under the title.
 
 ## 9. Still open (not results)
 

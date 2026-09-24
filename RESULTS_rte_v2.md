@@ -1,5 +1,7 @@
 # RESULTS_rte_v2.md — RTE after the v2 work order (FINAL, 2026-09-04)
 
+> Names: this document predates the 2026-09-24 rename — MIDIAN-VA is now MIDIAN; MIDIAN is now MIDIAN w/o defenses; MIDIAN-V is MIDIAN w/o audits; MIDIAN-A is MIDIAN w/o verification; MIDIAN-SH/SHA are withdrawn (CHANGES_AND_ERRATA §8g).
+
 Status (FINAL, 2026-09-04 15:30): every grid in this document is complete — the MIDIAN-side grids (variants_f1 incl.
 MIDIAN-VA, internals_v2, midian_r20, stratify, budget_b10_shapes, live_f1_core_s6_10, midian_v_replication, live_n10k_v2,
 churn_n1000), fw_live_n100 / fw_live_n1000 (10 seeds, Q = 1000, fixed adapters; 2,640 rows each), fw_live_n{100,1000}_verified

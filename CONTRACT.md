@@ -85,9 +85,9 @@ A backend may change n (e.g. rounding); World re-reads backend.n/K.
 `view.ledger.message(k)` (the `bus` need is now only sugar over the same counter; methods may call `ledger.message`
 directly without declaring `bus`). Rules, applied identically to all methods:
 - A query to one agent and its answer = 2 messages. Reading a centrally held table = 0.
-- Reports (v2 work order 0.3, 2026-09-03): ONE report per (reporter, member, family, probe) in every arm — plain MIDIAN,
-  MIDIAN-V (level 0 and verification), peer-reported halving, referral, gossip — so `reports` = probes × reporters-per-probe
-  (MIDIAN and MIDIAN-V at observers = r−1: exactly probes × (r−1)). `rte/methods/_est.py::peer_estimate` is the one place that
+- Reports (v2 work order 0.3, 2026-09-03): ONE report per (reporter, member, family, probe) in every arm — MIDIAN and its
+  ablations (level 0, audits and verification), peer-reported halving, referral, gossip — so `reports` = probes ×
+  reporters-per-probe (MIDIAN w/o defenses and MIDIAN w/o audits at observers = r−1: exactly probes × (r−1)). `rte/methods/_est.py::peer_estimate` is the one place that
   probes-then-reports for a batch of (agent, family) cells; `trimmed_by_reporter(rep, delta, s, exclude)` is the one aggregator.
 - EXCLUDED (counted by their own counters): probes (`probes`), peer reports (`reports`), and the final dispatch of the task
   to the chosen agent (`tasks`; identical for every method). Analysis reports both `messages` alone and
@@ -95,12 +95,13 @@ directly without declaring `bus`). Rules, applied identically to all methods:
 - Build: collecting declarations from n agents into a registry = n messages (every `needs ⊇ {"declared"}` method charges this
   once in build). Structure construction charges what it sends: MIDIAN = (r−1) member→leader messages per cohort at level 0
   plus 1 leader→parent message per node at each upper level (O(n) total); graphs = edges × messages exchanged.
-- Fetch: MIDIAN = 2 per level (request down + answer up) = 2·⌈log_r n⌉; centralized table lookups (flat argmax, bandits,
+- Fetch: MIDIAN without the cached root pick (`cached=False`, the default when `verify=False`: MIDIAN w/o defenses, MIDIAN w/o
+  verification) = 2 per level (request down + answer up) = 2·⌈log_r n⌉; with it (MIDIAN, MIDIAN w/o audits) = 1 comparison + 2; centralized table lookups (flat argmax, bandits,
   sequential halving, verify_on_claim's ranking) = 0 (+ probes if they probe at fetch); CNP = 2n; cascade = hops×2 (forward + the
   taker's accept... use 1 per forward if that is how the primitive works — state it); cluster_head = 2 (ask head) + 2 (ask member);
   referral/gossip = 2 per neighbor consulted per hop; frameworks = k (descriptions read by the supervisor) + 2 (supervisor call).
 - `tests/test_each_method.py` asserts per-fetch `messages` equals the method's documented formula for at least one method per
-  class (midian: exactly 2·depth per fetch; cnp: 2n), and that build messages are recorded in the CSV (`build_messages`).
+  class (midian w/o the cached pick: exactly 2·depth per fetch; cnp: 2n), and that build messages are recorded in the CSV (`build_messages`).
 
 ## Correctness checks (lead directive, 2026-09-02)
 Before any commit the lead runs, and every author runs on their own files: (1) the full test suite; (2) for each method a

@@ -3,12 +3,25 @@
 A reference for anyone who has to write about figures A, B, C, D, E, F, G and H in `figures/condensed_sample/`. For every bar, line
 and marker it says what the number is, which grids and cells and seeds it comes from, how it is averaged, and how each
 method and backend behind it is implemented. It was written from the code, not from the project's markdown docs. Where the
-two disagree, the code is taken as correct and the disagreement is listed. Citations are `path:line` in `~/rte`, checked
-against the code on 2026-09-24. Every value table is read from the figure CSVs as they are on disk
-(`figures/condensed_sample/{A,B}_*.csv` written 2026-09-24 09:46, `C`–`H` and `figures/shortlist/*.csv` 09:47); seed counts
-and grid provenance come from running `seed_tables.switched()` / `tables()` and `shortlist_figs.h30()` read-only on the
-same rows. One thing is still landing: the kNN members (`knn_router`, `knn_router_online`) of the live 10^5 "best learned
-router" pool (§4.3). Those bars may change slightly at the next figure run; the numbers below are the ones in the CSVs now.
+two disagree, the code is taken as correct and the disagreement is listed. Citations are `path:line` in `~/rte`. Every
+value table is read from the figure CSVs as they are on disk (`figures/condensed_sample/{A,B}_*.csv` written 2026-09-24
+11:35, `C`–`D` 11:36, `E`–`H` 11:41, `figures/shortlist/*.csv` with them); seed counts and grid provenance come from
+running `seed_tables.switched()` / `tables()` and `shortlist_figs.h30()` read-only on the same rows. Every slot of A–H is
+filled and no pool is incomplete (`scripts/ops/figure_status.py`; no `INCOMPLETE` in any CSV).
+
+**Names and the figure refactor (2026-09-24).** Method names follow the MIDIAN rename (CHANGES_AND_ERRATA §8g): **MIDIAN**
+is the full method with both defenses (formerly MIDIAN-VA, key `midian_va`); **MIDIAN w/o defenses** is the plain,
+pre-registered tree (formerly MIDIAN); **MIDIAN w/o audits** and **MIDIAN w/o verification** are the single-defense
+ablations (formerly MIDIAN-V and MIDIAN-A). All four are one class, `rte/methods/midian.py`. Grid and directory names
+(`va_b_*`, `*_verified_va*`, the `va_cohort` shortlist key, …) are identifiers and keep their old spelling. The figures
+follow `docs/FIGURE_SPEC.md` through `scripts/figspec.py`: serif fonts, fixed legend order, the spec's names, no titles
+and no incompleteness marks (incompleteness is reported by `scripts/ops/figure_status.py`). The rename and the refactor
+changed no value: the regenerated figure CSVs match tag `submission-2026-09-24` (737 rows matched, 0 differing).
+Citations into `rte/methods/midian.py`, `rte/methods/keys.py`, `scripts/figspec.py`, `condensed_figs.py`,
+`efficiency_figs.py`, `shortlist_condensed.py`, `shortlist_figs.py` and `scripts/ops/figure_status.py` are to the code after
+the rename; other `path:line` citations were checked on 2026-09-24 before it and can be a few lines off in files the
+rename touched (`rte/run.py`, `rte/analyze.py`, `rte/methods/frameworks/_common.py`, `configs/grid.yaml`,
+`scripts/seed_tables.py`, `scripts/fw_variant_numbers.py`, `scripts/extra_figs.py`).
 
 **How it was built.** Six independent passes, one per part, each re-reading the code and re-deriving plotted numbers from
 the raw rows (`$RTE_DATA/results/<grid>/rows.csv` + `rows.d/`). Each pass ends with its own list of discrepancies. Part 0
@@ -16,40 +29,53 @@ the raw rows (`$RTE_DATA/results/<grid>/rows.csv` + `rows.d/`). Each pass ends w
 
 | Part | Covers |
 |---|---|
-| 1 Foundations | world, true skill S vs declared D, tasks, probes, the ledger, skill distributions, liars / β / cartel / lie modes, the four backends (live, bernoulli, replay, RouterEval + LLMRouterBench), the probe budget b, grid mechanics, seeds, pairing, aggregation and CIs, errata and asterisks, glossary |
-| 2 Methods | every non-framework arm in A/B: MIDIAN, MIDIAN-V, MIDIAN-VA (deepest), oracle, flat probe argmax, declared argmax, random, the bandit pool, the learned-router pool, how "best learned" / "best bandit" is picked |
-| 3 Frameworks and shortlists | the framework adapters, supervisor LLM, fallback, prefetch, every shortlist variant (TF-IDF, BM25, MiniLM, Qwen3 dense ± instructions, fusion + reranker, declared top-k, VA cohort), caches, which combinations exist |
-| 4 Figures A and B | every bar, shade, title star, error bar in A (live, n = 10^2…10^5) and B (all families, / oracle), the erratum-30 rows B's four non-live families read (and the leaky rows they replaced), with value tables |
-| 5 Figures E, F, G, H | the two-stage shortlist pipeline, each figure's bars, dots, lines, title star, the full-seed and MIN_FW rules, the G lift, H on RouterEval's erratum-30 (calibrated, no-repeat, shuffled) reruns, with value tables |
-| 6 Figures C and D | C (routing work per query vs n for A and B's arms, pools as bands) and D (estimated energy per query vs queries served): the ledger cache, pool members' work, MIDIAN-VA's build probes, the energy model of `scripts/energy.py`, the framework band, slopes and break-even tables |
+| 1 Foundations | world, true skill S vs declared D, tasks, probes, the ledger, skill distributions, liars / β / cartel / lie modes, the four backends (live, bernoulli, replay, RouterEval + LLMRouterBench), the probe budget b, grid mechanics, seeds, pairing, aggregation and CIs, errata and incompleteness reporting, glossary |
+| 2 Methods | every non-framework arm in A/B: MIDIAN w/o defenses, MIDIAN and its ablations (deepest), oracle, flat probe argmax, declared argmax, random, the bandit pool, the learned-router pool, how "best learned/declared router" / "best bandit" is picked |
+| 3 Frameworks and shortlists | the framework adapters, supervisor LLM, fallback, prefetch, every shortlist variant (TF-IDF, BM25, MiniLM, Qwen3 dense ± instructions, fusion + reranker, declared top-k, MIDIAN cohort), caches, which combinations exist |
+| 4 Figures A and B | every bar, shade, error bar in A (live, n = 10^2…10^5) and B (all families, / oracle), A's "best framework, best text shortlist" arm, the erratum-30 rows B's four non-live families read (and the leaky rows they replaced), with value tables |
+| 5 Figures E, F, G, H | the two-stage shortlist pipeline, each figure's bars, dots and lines, the full-seed and MIN_FW rules, the body figures' best-instruction variants, the G lift, H on RouterEval's erratum-30 (calibrated, no-repeat, shuffled) reruns, with value tables |
+| 6 Figures C and D | C (routing work per query vs n: MIDIAN, MIDIAN w/o defenses, any flat scan, the learned routers as a band) and D (estimated energy per query vs queries served): the ledger cache, pool members' work, MIDIAN's build probes, the energy model of `scripts/energy.py`, the framework band, slopes and break-even tables |
 | Appendix | per-row A/B table with seed counts and source grid |
 
 ---
 
 ## 0.1 The figures in one paragraph each
 
-- **A — live RTE, specialist population, n = 10², 10³, 10⁴, 10⁵.** Mean task success per arm, honest (β = 0) and
-  β = 0.5 low-skill cartel side by side. There are two versions. In `_allb` each budget b = 1 / 3 / 5 gets its own bar,
-  shaded light, mid and dark. In `_stacked` the bars for the three budgets of one arm are overlapped: full-height bars
-  drawn tallest first, not added segments. The arms are MIDIAN-VA, MIDIAN, flat probe argmax (online), best learned
-  router, best bandit, declared argmax and random; the oracle is a dotted line. Every whisker is **±1 standard error
-  over seeds** (sd / √seeds of the per-seed values; `extra_figs.se`, applied by `condensed_figs.narrow`), a ~68 %
-  interval, **not** a 95 % CI; over 10 seeds at n = 10² / 10³ and **3 seeds** at 10⁴ / 10⁵. There are none on the stacked
-  version. For the five single
-  arms, b = 3 values come from the per-cell bar CSVs and b = 1 / 5 values from the `va_b_*` (MIDIAN-VA) and `rivals_b_*`
-  grids; every one of the 136 slots has a bar. "Best learned router" and "best bandit" are cross-fitted from per-seed
-  tables at every b: each seed's arm is chosen on the other seeds (§2.1.3). **No marker is drawn on any bar.** The title
-  ends in one ` *` when anything in the figure is incomplete: a missing bar, or a pool that lacks a member or has a
-  member missing some seeds. Both A files carry it now for one reason only: at live 10⁵ the kNN routers are still landing
-  for a few cartel seeds, so the cartel b = 1 and b = 5 "best learned router" bars are flagged `INCOMPLETE POOL` in the
-  CSV. See §4.1.
+- **A — live RTE, specialist population, n = 10², 10³, 10⁴, 10⁵.** Mean task success per arm, honest (β = 0, solid) and
+  β = 0.5 low-skill cartel (hatched `////`) side by side. The arms, in the fixed legend order (`figspec.ORDER`): MIDIAN,
+  MIDIAN w/o defenses, flat probe argmax, best learned/declared router, best bandit, declared argmax, random, and "best
+  framework, best text shortlist"; the oracle is a grey dotted line over each group. There are two versions.
+  - `A_live_allb` (appendix, 5.5 × 2.4 in): one bar per (arm, regime, b), b = 1 / 3 / 5 shaded light, as is and dark
+    (`figspec.shade`), with a three-swatch budget legend. 144 bars: five budgeted arms × 3 b × 2 regimes × 4 n, plus one
+    bar per regime and n for declared argmax, random and the framework arm (b does not apply to the first two; the
+    framework arm is b = 3 only).
+  - `A_live_stacked` (Figure 1, 5.5 × 1.9 in): **every arm at b = 3**, one bar per (arm, regime); **MIDIAN alone carries
+    the budget overlay**, its b = 5, 3 and 1 bars drawn at their true heights tallest first, so b = 1 (light) is in front
+    and b = 5 (dark) behind. No whiskers. 80 CSV rows (MIDIAN 3 per slot).
+  - Every whisker (on `_allb`) is **±1 standard error over seeds** (sd / √seeds of the per-seed values; `extra_figs.se`,
+    applied by `condensed_figs.narrow`), a ~68 % interval, **not** a 95 % CI; over 10 seeds at n = 10² / 10³ and **3
+    seeds** at 10⁴ / 10⁵.
+  - For the five single arms, b = 3 values come from the per-cell bar CSVs and b = 1 / 5 values from the `va_b_*`
+    (MIDIAN) and `rivals_b_*` grids. "Best learned/declared router" and "best bandit" are cross-fitted from per-seed
+    tables at every b: each seed's arm is chosen on the other seeds (§2.1.3).
+  - **"Best framework, best text shortlist"** (`add_best_framework`, `condensed_figs.py:144-153`): per n and regime, the
+    seed × (framework | text shortlist) table of every pair with the full seed count (framework rows at b = 3 from
+    `shortlist_figs.collect`, specialist; the nine text shortlists, not declared top-k or the MIDIAN cohort), cross-fitted
+    per seed over the pairs like the pooled arms. Its CSV `chosen` column names the pair picked, e.g.
+    `fw_magentic_one | embed x10`. Drawn in A only. See §4.1.
+  - **No titles and no markers.** Incompleteness (a missing bar, or a pool that lacks a member or has a member missing
+    some seeds) is printed by the script (`[A_live_allb] INCOMPLETE …`) and listed by `scripts/ops/figure_status.py`;
+    today there is none.
 - **Arms that do not change with b.** Four arms never probe, so b cannot change them: **declared argmax, random,
-  `cluster_head_router` and `disrouter_cascade`** (`B_INVARIANT`, `condensed_figs.py:42`). Declared argmax and random are
-  drawn once per regime; the other two are "best learned router" candidates, and a pooled bar whose every seed picked one
-  of them is the same number at b = 1, 3 and 5. The CSV column `b_invariant` flags these rows (§4.0.5).
-- **B — every family at its largest pool, success / oracle.** The same arms and b layout, for live 10⁵,
-  bernoulli 10⁷, replay 10⁶ (RouterBench models replayed on RouterBench categories), RouterEval (the 5,000-LLM leaderboard pool) and the
-  LLMRouterBench pool. Every bar and its interval is divided by one number, the honest b = 3 oracle of that group. See §4.2.
+  `cluster_head_router` and `disrouter_cascade`** (`B_INVARIANT`, `condensed_figs.py:41`). Declared argmax and random are
+  drawn once per regime; the other two are "best learned/declared router" candidates, and a pooled bar whose every seed
+  picked one of them is the same number at b = 1, 3 and 5. The CSV column `b_invariant` flags these rows (§4.0.5).
+- **B — every family at its largest pool, success / oracle.** The same arms (without the framework arm), order and b
+  layout (`B_families_allb` 170 bars, `B_families_stacked` Figure 2), for live 10⁵, bernoulli 10⁷, replay 10⁶
+  (RouterBench models replayed on RouterBench categories), RouterEval (the 5,000-LLM leaderboard pool) and the
+  LLMRouterBench pool; x ticks are the backend (`live`, `Bernoulli`, `RouterBench replay`, `RouterEval`,
+  `LLMRouterBench`) over $n = 10^k$. Every bar and its interval is divided by one number, the honest b = 3 oracle of that
+  group; the oracle line sits at 1. See §4.2.
   **Which data B reads (erratum 30).** Each non-live family switches by itself to its erratum-30 rerun once that grid has
   every planned row (`seed_tables.complete` / `switched`). **All four have switched** (`switched()` returns bernoulli,
   replay, RouterEval and LLMRouterBench). So B draws: bernoulli 10⁷ with the claim-reading arms on calibrated claims
@@ -60,53 +86,62 @@ the raw rows (`$RTE_DATA/results/<grid>/rows.csv` + `rows.d/`). Each pass ends w
   that inflated declared argmax, the declared-only "learned" routers and the warm-start bandits), replay probes and routed
   tasks drawn from the same prompts with S the in-sample accuracy, and RouterEval / LLMRouterBench test prompts repeating
   in the stream (§4.0.7).
-- **C — routing work per query vs n, for exactly A and B's arms.** Messages plus comparisons that the ledger charges per
-  routed query, for n = 10² … 10⁷ on calibrated bernoulli (`bernoulli_scale_v5`, b = 3, honest), log-log. A and B's labels
-  and colours are used.
-  - MIDIAN-VA, MIDIAN, flat probe argmax and declared argmax are one line each.
-  - "Best learned router" and "best bandit" are bands from the cheapest to the costliest pool member that can run at that n.
+- **C — routing work per query vs n (appendix).** Messages plus comparisons that the ledger charges per routed query, for
+  n = 10² … 10⁷ on calibrated bernoulli (`bernoulli_scale_v5`, b = 3, honest), log-log, 5.5 × 2.4 in
+  (`scripts/efficiency_figs.py`).
+  - Three lines: MIDIAN, MIDIAN w/o defenses and **"any flat scan"**, one line for flat probe argmax, declared argmax and
+    every bandit (`FLAT_SCAN`), which all scan the n agents; their counts coincide (the script prints the largest
+    relative spread and draws flat probe argmax's values). The bandits therefore no longer get a band of their own.
+  - "Best learned/declared router" is a band from the cheapest to the costliest pool member that can run at that n.
     A member whose own work is constant in n is left out of the band; only the flat-NSW router is. Learned runs from
-    cluster head (24.6 at 10², about n/10 at 10⁷) to DisRouter (about 0.37·n at 10⁷), legend "∝ n^0.97–0.99". Bandit is
-    exactly n. Flat-NSW is still a candidate in A and B's cross-fit, and it is the majority pick in 21 of the 54
-    "best learned router" bars of the current A and B CSVs (every bernoulli 10⁷ b = 3 / 5 bar among them), so the learned
-    band is not the whole pool (§6.2).
-  - Random is a legend entry only (no routing work).
-  - The legend classifies each fitted log-log slope over n ≥ 10³ as "constant", "∝ log n" or "∝ n^s".
-  - MIDIAN-VA goes 25 → 80 and MIDIAN 46 → 161, a fixed step per tree level: linear in depth, ∝ log n. Flat probe argmax,
-    declared argmax and the bandit band coincide at exactly n.
-  
+    cluster head (24.6 at 10², about n/10 at 10⁷) to DisRouter (about 0.37·n at 10⁷), legend "∝ n^0.97 to n^0.99".
+    Flat-NSW is still a candidate in A and B's cross-fit, and it is the majority pick in 21 of the 54 "best
+    learned/declared router" bars of the A and B `_allb` CSVs (every bernoulli 10⁷ b = 3 / 5 bar among them), so the
+    learned band is not the whole pool (§6.2).
+  - Random does no routing work and is not drawn.
+  - Each legend entry carries its fitted log-log slope over n ≥ 10³, classified as "constant", "∝ log n" or "∝ n^s"
+    (`growth`).
+  - MIDIAN goes 25 → 80 and MIDIAN w/o defenses 46 → 161, a fixed step per tree level: linear in depth, ∝ log n. Any
+    flat scan is exactly n.
+
   It is a count (medians over seeds), not an estimate, with no error bars. A band is not the cost of the member B's
   cross-fit picks. See §6.2.
-- **D — estimated energy per query vs queries served T.** MIDIAN-VA's probing build divided by T plus its
-  per-query messages and comparisons, at n = 10³ / 10⁵ / 10⁷ (lighter to darker) and b = 1 / 3 / 5 (dotted, solid,
-  dashed), against a grey band: the per-query supervisor energy of the ten agent frameworks measured live at n = 1,000
-  (21–220 J, i.e. 1 to 10.7 supervisor-call equivalents, a latency ratio to AutoGen). Each × is a break-even point. Energies come from `scripts/energy.py` (a probe 4.04 J, a 7B supervisor call
-  20.6 J, a message 1e-3 J, a comparison 1e-8 J, 700 W). C and D carry no title asterisk. See §6.3.
-- **E — frameworks by shortlist across n (live, specialist).** For each n, one bar per shortlist: the unweighted mean
-  over frameworks of each framework's seed mean. A framework counts only if it has the full seed count **of that (n,
-  shortlist)** (the most seeds any framework has there, in either regime: 10 for the pre-registered-era shortlists at
-  10² / 10³, 3 for the backfill shortlists there and for everything at 10⁴ / 10⁵), and a bar is drawn only if at least
-  **6** such frameworks exist (`MIN_FW`); otherwise the slot stays empty. Solid is honest, hatched is cartel. The oracle
-  is a dotted line and MIDIAN-VA on the whole population a solid line; both use honest values only. **No marker is drawn
-  on any bar**: the title ends in one ` *` while any slot is empty or any drawn bar averages a framework whose erratum-28
-  rerun has not landed. Today all **72** slots (9 shortlists × 4 n × 2 regimes) are drawn and none is flagged, so E has
-  no title ` *`; its CSV has 74 rows (plus BM25 and plain dense at 10³ honest, not drawn). Declared top-k here ranks by
-  real claims: every live framework grid has `declared_source = self_described`, the agent model's own 0–1
-  self-rating (§1.3.3, §3.4.9). See §5.2.
-- **F — n = 10⁵, every shortlist, best to worst.** Same bars and rules; a black dot marks the best single framework. All
-  18 bars are drawn, no title ` *`. See §5.3.
-- **G — gain over the pre-registered TF-IDF shortlist at n = 10⁵.** Per framework, shortlist minus TF-IDF, averaged over
-  the full-seed frameworks both have (at least 6, else the bar is left out and the title gets ` *`). The whisker is ±1
-  standard error across the paired frameworks, sd/√k (a ~68 % interval, not a 95 % CI). All 16 bars are drawn (9–10
-  paired frameworks each), no title ` *`. At 10⁵ TF-IDF is a floor: 0.378889 for every framework, seed and regime
-  (erratum 25). See §5.4.
-- **H — RouterEval shortlists.** E's layout, shortlist slots and rules on RouterEval, pool m = 10 / 100 / 1,000
-  (strong-to-weak) plus the 5,000-LLM leaderboard. **H reads the erratum-30 reruns** (`shortlist_figs.h30()` is True):
-  the `*_norep_cal` framework mirrors, with calibrated (live-like) claims, from which both the declared top-k ranking and
-  the framework description text are rendered, no repeated test prompts, Q = 300 and a per-seed agent order; the
-  reference lines come from `routereval_mmlu_norep_cal` (m ≤ 1,000) and `routereval5k_norep_cal` (5,000). The old rows
-  (programmatic claims, repeated prompts, weak-to-strong agent order) are not drawn; the switch is all-or-nothing, never
-  a mix. All 72 slots are drawn (9 frameworks each), no title ` *`. See §5.5.
+- **D — estimated energy per query vs queries served T (Figure 5, 5.5 × 1.8 in).** MIDIAN's probing build divided by T
+  plus its per-query messages and comparisons, at n = 10³ / 10⁵ / 10⁷ (MIDIAN's green, light to dark) and b = 1 / 3 / 5
+  (dotted, solid, dashed), against a light-grey band: the per-query supervisor energy of the ten agent frameworks measured
+  live at n = 1,000 (21–220 J, i.e. 1 to 10.7 supervisor-call equivalents, a latency ratio to AutoGen). Both band edges
+  are drawn and named at the right margin ("AutoGen, 20.6 J", "Magentic-One, 220 J"). Each black × is a break-even point.
+  The legend (inside, bottom left, two columns) has three colour entries ($n = 10^3$ / $10^5$ / $10^7$) and three line
+  styles (b = 1 / 3 / 5). Energies come from `scripts/energy.py` (a probe 4.04 J, a 7B supervisor call 20.6 J, a message
+  1e-3 J, a comparison 1e-8 J, 700 W). See §6.3.
+- **E — frameworks by shortlist across n (appendix; live, specialist).** For each n, one bar per shortlist: the
+  unweighted mean over frameworks of each framework's seed mean. A framework counts only if it has the full seed count
+  **of that (n, shortlist)** (the most seeds any framework has there, in either regime: 10 for the pre-registered-era
+  shortlists at 10² / 10³, 3 for the backfill shortlists there and for everything at 10⁴ / 10⁵), and a bar is drawn only
+  if at least **6** such frameworks exist (`MIN_FW`); otherwise the slot stays empty. Solid is honest, hatched is cartel.
+  Three reference lines over each group, honest values only: the oracle and random (grey dotted) and MIDIAN on the whole
+  population ("MIDIAN, no framework", green solid). Nine shortlists with the appendix names (both instruction variants of
+  dense and fusion + reranker apart; BM25 and plain dense ran at 10³ only and are not in E's slots). All **72** slots
+  (9 shortlists × 4 n × 2 regimes) are drawn and none has a rerun outstanding; the CSV has 74 rows (plus BM25 and plain
+  dense at 10³ honest, not drawn). Declared top-k here ranks by real claims: every live framework grid has
+  `declared_source = self_described`, the agent model's own 0–1 self-rating (§1.3.3, §3.4.9). See §5.2.
+- **F — n = 10⁵, the shortlists best to worst (Figure 3).** Same bars and rules; a black dot marks the best single
+  framework; the three reference lines as in E. The body figure `F_shortlists_1e5` draws six shortlists with the body
+  names: dense (Qwen3-8B) and fusion + reranker are each their **best instruction variant** at 10⁵ by honest mean
+  (`body`, `shortlist_condensed.py:57-67`; today the competence instruction for both, the CSV's `variant` column names
+  it); BM25 has no rows at 10⁵. `F_shortlists_1e5_appendix` draws all nine variants (18 bars). See §5.3.
+- **G — gain over the pre-registered TF-IDF shortlist at n = 10⁵ (appendix).** Per framework, shortlist minus TF-IDF,
+  averaged over the full-seed frameworks both have (at least 6, else the bar is left out). The whisker is ±1 standard
+  error across the paired frameworks, sd/√k (a ~68 % interval, not a 95 % CI). All 16 bars are drawn (9–10 paired
+  frameworks each). At 10⁵ TF-IDF is a floor: 0.378889 for every framework, seed and regime (erratum 25). See §5.4.
+- **H — RouterEval shortlists (Figure 4).** E's layout and rules with the body shortlists (hashed TF-IDF, MiniLM, dense
+  and fusion + reranker at their best instruction variant per m, declared top-k, MIDIAN cohort), on RouterEval, pool
+  m = 10 / 100 / 1,000 (strong-to-weak) plus the 5,000-LLM leaderboard. **H reads the erratum-30 reruns**
+  (`shortlist_figs.h30()` is True): the `*_norep_cal` framework mirrors, with calibrated (live-like) claims, from which
+  both the declared top-k ranking and the framework description text are rendered, no repeated test prompts, Q = 300 and
+  a per-seed agent order; the reference lines (oracle, random, MIDIAN) come from `routereval_mmlu_norep_cal` (m ≤ 1,000)
+  and `routereval5k_norep_cal` (5,000). The old rows (programmatic claims, repeated prompts, weak-to-strong agent order)
+  are not drawn; the switch is all-or-nothing, never a mix. All 48 slots are drawn (9 frameworks each). See §5.5.
 
 ## 0.2 Definitions a caption needs (details in §1)
 
@@ -120,7 +155,7 @@ the raw rows (`$RTE_DATA/results/<grid>/rows.csv` + `rows.d/`). Each pass ends w
   reports: they report 1 for fellow liars and 0 for the top 20 % of honest agents they observe. See §1.3.
 - **Probe budget b.** A method may spend at most n·K·b probes when it is built. A probe runs one agent on one instance of one
   family and returns 0/1 (a training-split prompt on RouterEval / LLMRouterBench; a fresh generated or synthetic instance on
-  live / bernoulli / replay). Exceeding the budget only logs a warning (§1.5). MIDIAN-VA can spend a few % over;
+  live / bernoulli / replay). Exceeding the budget only logs a warning (§1.5). MIDIAN can spend a few % over;
   see 0.3.
 - **Seed.** A new population, liar set and task stream, all drawn together. Every method in a (cell, seed) unit sees the
   same world, the same tasks and the same probe instances. That makes comparisons paired within a unit (§1.1, §1.6), with
@@ -138,27 +173,27 @@ Severity: **H** = can change a conclusion, **M** = comparability or labelling ca
 
 | # | Issue | Figures | Sev. | Where |
 |---|---|---|---|---|
-| 1 | **Peer-reported halving is hidden, and only two regimes are shown.** `HIDE_HALVING` removes every halving arm (trusted-observer halving is withdrawn by erratum 26 and never reported). Peer-reported halving, a pre-registered rival on the same report channel and budget, beats MIDIAN-VA paired on every seed in every honest b = 3 cell of A, and loses under the cartel. A and B show only honest and the β = 0.5 low-skill cartel, the one liar regime (5 of 24 live regimes) in which MIDIAN-VA beats it. Captions must say both. | A, B | H | §1.8.2, §4.5 #14, #17 |
+| 1 | **Peer-reported halving is hidden, and only two regimes are shown.** `HIDE_HALVING` removes every halving arm (trusted-observer halving is withdrawn by erratum 26 and never reported). Peer-reported halving, a pre-registered rival on the same report channel and budget, beats MIDIAN paired on every seed in every honest b = 3 cell of A, and loses under the cartel. A and B show only honest and the β = 0.5 low-skill cartel, the one liar regime (5 of 24 live regimes) in which MIDIAN beats it. Captions must say both. | A, B | H | §1.8.2, §4.5 #14, #17 |
 | 2 | **B's non-live groups are erratum-30 reruns, with their own caveats.** All four families read them now (the leaky rows, with claims = true skill + N(0, 0.05), replay probing and routing on the same prompts, and repeated RouterEval / LLMRouterBench test prompts, are not drawn). What a caption still needs: calibrated claims are a post-hoc model of live self-ratings (i.i.d. per agent and family, fitted on live specialist populations and applied to every shape and backend, so less informative than live on the heavy_tail / bimodal shapes that replay pools); replay has 30 seeds, not 100; LLMRouterBench now runs Q = 300, not 1,000; the split-replay and RouterEval oracles are not exact ceilings. | B | M | §4.0.7 |
 | 3 | **H's agent descriptions are rendered claim vectors.** On RouterEval every framework reads "Self-rated competence: <top-5 families by declared, two decimals>" and the supervisor sees only "A task of family X", never the prompt. H now uses calibrated claims (live-like, corr ≈ 0.36), so declared top-k is no longer an oracle ranking: the pre-registered TF-IDF is the best honest H bar at m = 100 / 1,000 / 5,000. Only live (E–G) has real self-descriptions and real prompts. | H | M | §5.5 |
-| 4 | **The "best learned router" label covers a constant-cost ANN index and two declared-only arms.** `flat_nsw_router` (an hnswlib index over flat probe means, not a published learned router) is the majority pick in 21 of the 54 bars (live 10⁴ b = 1 / 3, live 10⁵ cartel b = 5 in A and B, bernoulli 10⁷ b = 3 / 5, all six replay 10⁶ bars, RouterEval 5,000 except cartel b = 1) and 614 of the 1,002 seed-level picks. The declared-only `cluster_head_router` / `disrouter_cascade` (no probes) are the majority pick in 5, all at b = 1 (bernoulli 10⁷ both regimes, RouterEval 5,000 cartel, live 10⁵ cartel in A and B); such bars do not change with b. | A, B | H | §2.1.3, §4.5 #2 |
+| 4 | **The "best learned/declared router" label covers a constant-cost ANN index and two declared-only arms.** `flat_nsw_router` (an hnswlib index over flat probe means, not a published learned router) is the majority pick in 19 of the 54 bars (live 10⁴ b = 1 / 3, bernoulli 10⁷ b = 3 / 5, all six replay 10⁶ bars, RouterEval 5,000 except cartel b = 1) and 610 of the 1,002 seed-level picks. The declared-only `cluster_head_router` / `disrouter_cascade` (no probes) are the majority pick in 3, all at b = 1 (bernoulli 10⁷ both regimes, RouterEval 5,000 cartel); such bars do not change with b. | A, B | H | §2.1.3, §4.5 #2 |
 | 5 | **Four arms never change with b**: declared argmax, random, `cluster_head_router`, `disrouter_cascade` (`B_INVARIANT`; CSV column `b_invariant`). | A, B | M | §4.0.5 |
-| 6 | **Post-hoc choices, none marked on the figures**: MIDIAN-VA as the headline (its pre-registered target V2-11 was a miss), the tuned warm-start bandit (n0 = 0.5, seeds 11-15), the pool edits (fixed-bonus LinUCB replaces the pre-registered one; TrueSkill only from post-probe-fix rows), the erratum-30 reruns themselves (calibrated-claim model, replay split, no-repeat, agent shuffle), hidden halving, and the regime choice. The pre-registered warm-start bandit (n0 = 5) is in every drawn pool (live and all four switched families). | A, B, E–H | H | §4.5 #17 |
-| 7 | **One pool member still landing.** Every bandit pool is complete (`linucb_honest[bonus=own]` and post-fix TrueSkill landed). Only kNN (`knn_router`, `knn_router_online`) still lacks some live 10⁵ cartel seeds, so the cartel b = 1 and b = 5 "best learned router" bars there (A and B) are `INCOMPLETE POOL` and both A and B carry the title ` *`. No bar is marked. | A, B | M | §4.0.4, §4.3 |
+| 6 | **Post-hoc choices, none marked on the figures**: MIDIAN as the headline (its pre-registered target V2-11 was a miss), the tuned warm-start bandit (n0 = 0.5, seeds 11-15), the pool edits (fixed-bonus LinUCB replaces the pre-registered one; TrueSkill only from post-probe-fix rows), the erratum-30 reruns themselves (calibrated-claim model, replay split, no-repeat, agent shuffle), hidden halving, and the regime choice. The pre-registered warm-start bandit (n0 = 5) is in every drawn pool (live and all four switched families). | A, B, E–H | H | §4.5 #17 |
+| 7 | **Every pool is complete.** Every bandit pool (`linucb_honest[bonus=own]` and post-fix TrueSkill landed) and every learned pool (the last live 10⁵ kNN seeds landed 2026-09-24 11:20) has every allowed member on every scored seed. Figures carry no incompleteness marks at all; `scripts/ops/figure_status.py` reports missing slots and incomplete pools, and reports none. | A, B | M | §4.0.4, §4.3 |
 | 8 | **E's bars at one n can rest on different seed counts and slightly different framework sets.** A framework counts only with the full seed count of that (n, shortlist); at 10² / 10³ the five backfill shortlists have 3 seeds per framework and the others 10. Four E bars drop one framework for partial seeds (10³ rerank honest: Magentic-One; 10⁵ MiniLM honest: CrewAI; 10⁵ dense I-comp and declared honest: ADK); H drops none. | E–H | M | §5.1.3, §5.6 D1–D2 |
-| 9 | **MIDIAN-VA overspends the build budget**: 1.03–1.07 × n·K·b (audit re-probes; max 1.070 on LLMRouterBench b = 1) while every rival spends ≤ 1.00 ×. "Same budget" is not literally true; the VA-cohort shortlist and the E–H reference line spend it too, the frameworks none. | A, B, E–H | M | §1.5, §2.3.4 |
-| 10 | **At b = 1 MIDIAN-VA verifies nothing** (no probes are left), so its b = 1 bar is MIDIAN-A with a cached root; honest, it equals plain MIDIAN at b = 1 in every cell of A and B. | A, B | M | §2.3, §4.0.6 |
+| 9 | **MIDIAN overspends the build budget**: 1.03–1.07 × n·K·b (audit re-probes; max 1.070 on LLMRouterBench b = 1) while every rival spends ≤ 1.00 ×. "Same budget" is not literally true; the MIDIAN-cohort shortlist and the E–H reference line spend it too, the frameworks none. | A, B, E–H | M | §1.5, §2.3.4 |
+| 10 | **At b = 1 MIDIAN verifies nothing** (no probes are left), so its b = 1 bar is MIDIAN w/o verification with a cached root; honest, it equals MIDIAN w/o defenses at b = 1 in every cell of A and B. | A, B | M | §2.3, §4.0.6 |
 | 11 | **Whiskers are ±1 standard error** (~68 %), never 95 % CIs: over seeds in A / B (3 seeds at live 10⁴ / 10⁵ and RouterEval, 5 LLMRouterBench, 30 replay, 100 bernoulli), over frameworks in G. | A, B, G | M | §1.7, §4.0.5, §5.4 |
-| 12 | **Live b = 3 bars average rows from several grids per seed, and those rows disagree** by up to 0.076 at n = 100 (mostly old per-method probe instances in `live_core_n100` / early `live_f1_n1000`, averaged into plain MIDIAN). | A | M | §4.5 #5, §1.10 #2 |
+| 12 | **Live b = 3 bars average rows from several grids per seed, and those rows disagree** by up to 0.076 at n = 100 (mostly old per-method probe instances in `live_core_n100` / early `live_f1_n1000`, averaged into MIDIAN w/o defenses). | A | M | §4.5 #5, §1.10 #2 |
 | 13 | **Only TF-IDF is not deduplicated.** Every other shortlist carries `dedup: true`. At 10⁵ TF-IDF is ten clones of one agent, so G's "gain over TF-IDF" includes the dedup gain. | E–G | M | §3.4.1, §5.6 D9–D10 |
 | 14 | **Dedup is not a no-op on RouterEval.** Calibrated claims take 11 values, so rendered descriptions coincide: at seed 1, 931 / 1,000 and 4,134 / 5,000 are distinct honest, 681 / 1,000, 88 / 100 and 2,551 / 5,000 under the β = 0.5 cartel. Every dedup shortlist in H (all but TF-IDF) drops 7–49 % of the pool. | H | M | §3.9 #1 |
 | 15 | **RouterEval TF-IDF is not "degenerate".** It shortlists agents whose rendered top-5 claims name the family, and under the cartel liars fill it (7 of 10 on family 0 at m = 1,000, seed 1). It is the best honest H bar at m ≥ 100. | H | M | §3.9 #2–3 |
-| 16 | **The reference lines in E–H are honest-only.** Hatched cartel bars are drawn against the honest MIDIAN-VA line (10⁵: 0.8356 honest vs 0.8278 cartel). | E–H | M | §5.6 D7 |
+| 16 | **The reference lines in E–H are honest-only.** Hatched cartel bars are drawn against the honest MIDIAN line (10⁵: 0.8356 honest vs 0.8278 cartel). | E–H | M | §5.6 D7 |
 | 17 | **"Cartel" in the figures means `liar_select = low_skill_first`.** `collude = true` is on in every grid, including the random-liar ones. | all | M | §1.10 #13 |
 | 18 | **Live declarations are the model's own self-rating** (mean 0.686 vs true 0.419, correlation 0.36). On live, the description text includes an honest "Declared areas" clause that lying does not change (erratum 27), which helps every text shortlist. | E, F | M | §1.3, §3.9 #15 |
 | 19 | **Supervisor picks are not bit-reproducible on the real fleet:** random replica per call, no seed sent, batched vLLM. | E–H | M | §3.9 #8 |
 | 20 | **The split-replay and RouterEval oracles are not exact ceilings.** They pick by probe-row / train-prompt S and execute on task / test rows, so an arm can in principle beat them; B's replay and RouterEval bars are ratios to such an oracle. | B, H | M | §1.4.3, §1.4.4 |
-| 21 | **C's learned band leaves out the constant-cost flat-NSW router**, which is still a candidate in A and B's cross-fit and the majority pick in 21 of their 54 "best learned router" bars (including bernoulli 10⁷ at b = 3, C's budget); for those the reported arm does 50 comparisons per query, below MIDIAN at every n and below MIDIAN-VA from 10⁵ up. D's advantage is over the frameworks, not over flat probing. | C, D | H | §6.2, §6.4 #3–4 |
+| 21 | **C's learned band leaves out the constant-cost flat-NSW router**, which is still a candidate in A and B's cross-fit and the majority pick in 19 of their 54 "best learned/declared router" bars (including bernoulli 10⁷ at b = 3, C's budget); for those the reported arm does 50 comparisons per query, below MIDIAN w/o defenses at every n and below MIDIAN from 10⁵ up. D's advantage is over the frameworks, not over flat probing. | C, D | H | §6.2, §6.4 #3–4 |
 | 22 | **D's framework band is a live n = 1,000 measurement applied at every n**, pooled over all β and all three population shapes; its upper edge is a latency ratio, not a count of calls. | D | M | §6.4 #5–7 |
 | 23 | **D mixes sources.** Build probes at n = 10⁷ are bernoulli ledger counts priced at the live specialist probe energy (4.04 J). | D | M | §6.4 #1–2 |
 | 24 | **Bars start at y = 0.2** in A, B, E, F and H, which exaggerates ratios between tall and short bars. | A, B, E, F, H | M | §4.0.5, §5.6 D13 |
@@ -528,15 +563,15 @@ per-family max mean 0.725.
 - **How it is checked**: only in `run_method`, after `build`: if `build_probes > n·K·b` a `[WARNING]` is **logged**;
   nothing is enforced and the row is written (`rte/run.py:135-136`). Run-time probes (during `fetch/observe`) are not
   checked at all; they appear in `probes_per_task`. From data (build_probes / nKb): flat probe argmax, KNN/MLP routers,
-  LinUCB, warm-start bandit, plain MIDIAN and MIDIAN-V spend exactly 1.000; peer/trusted sequential halving 0.833 on
-  LLMRouterBench; **MIDIAN-A / MIDIAN-SHA ≈ 1.04–1.06; MIDIAN-VA 1.03–1.07: per-cell means 1.048–1.050 / 1.029–1.033 / 1.038–1.041 at b = 1 / 3 / 5 on live, RouterEval 5k and LLMRouterBench, maximum 1.070 (LLMRouterBench, b = 1; protocol audit F3), but a mean of 0.92–0.96 at b = 3 on the scale sweeps and RouterEval-mmlu (max ≈ 1.04)**. On the erratum-30 rows B and H draw: `replay_1e6_split_cal` 1.050 / 1.033 / 1.040, `routereval5k_norep_cal` 1.049 / 1.033 / 1.039, `llmrouterbench_norep_cal` 1.050 / 1.033 / 1.041 (max 1.070 at b = 1), and `routereval_mmlu_norep_cal` (H's m ≤ 1,000 line, b = 3) a mean of 0.92 (0.69–1.03, small pools) (the 5 % audit re-probes, documented in
-  `rte/methods/midian_a.py:8` as "≤ 1.05×"; observed up to 1.0625 on `routereval_mmlu`); `verify_on_claim` spends 0 at
+  LinUCB, warm-start bandit, MIDIAN w/o defenses and MIDIAN w/o audits spend exactly 1.000; peer/trusted sequential halving 0.833 on
+  LLMRouterBench; **MIDIAN w/o verification (and the since-withdrawn audited successive-halving variant) ≈ 1.04–1.06; MIDIAN 1.03–1.07: per-cell means 1.048–1.050 / 1.029–1.033 / 1.038–1.041 at b = 1 / 3 / 5 on live, RouterEval 5k and LLMRouterBench, maximum 1.070 (LLMRouterBench, b = 1; protocol audit F3), but a mean of 0.92–0.96 at b = 3 on the scale sweeps and RouterEval-mmlu (max ≈ 1.04)**. On the erratum-30 rows B and H draw: `replay_1e6_split_cal` 1.050 / 1.033 / 1.040, `routereval5k_norep_cal` 1.049 / 1.033 / 1.039, `llmrouterbench_norep_cal` 1.050 / 1.033 / 1.041 (max 1.070 at b = 1), and `routereval_mmlu_norep_cal` (H's m ≤ 1,000 line, b = 3) a mean of 0.92 (0.69–1.03, small pools) (the 5 % audit re-probes, documented in
+  the old `rte/methods/midian_a.py:8` as "≤ 1.05×"; observed up to 1.0625 on `routereval_mmlu`); `verify_on_claim` spends 0 at
   build and ≈ 2.4 probes per task at run time on live 10^5 (range 1.4–4.1 across cells); declared argmax and random spend 0.
 - **What changing b does**: more probes per cell → sharper estimates for probe users; declaration-only arms are
   unaffected (the condensed figures draw declared argmax / random once, at b = 3, `BUDGETLESS`, `scripts/condensed_figs.py:45`; the four never-probing arms are `B_INVARIANT`, `:42`).
-  For the verified MIDIAN variants the build splits b into `b0 = b − 1` level-0 probes and verification probes
+  For the verified MIDIAN variants (MIDIAN and MIDIAN w/o audits) the build splits b into `b0 = b − 1` level-0 probes and verification probes
   `e = (b − b0)·n / C` (`rte/methods/midian.py:104-112`); at **b = 1, b0 = 1 and e = 0, so verification is unfunded:
-  MIDIAN-V ≡ plain MIDIAN and MIDIAN-VA ≡ MIDIAN-A** (also stated at `configs/grid.yaml:232-233`). The condensed A/B
+  MIDIAN w/o audits ≡ MIDIAN w/o defenses and MIDIAN ≡ MIDIAN w/o verification** (also stated at `configs/grid.yaml:232-233`). The condensed A/B
   b = 1 bars inherit this.
 - Budget-less arms still carry a `b` value in their row and a distinct row id per b.
 
@@ -611,7 +646,7 @@ All rows: `K = 16` unless noted, `collude = true`, `lie_mode = inflate`, `demand
 | `replay_1e6_split_cal` (1170) | replay, `split: true` | 10^6 | spec, heavy, bimodal | 0, .5 | lsf | **calibrated** | 1, 3, 5 | 1000 | 1–30 |
 | `routereval5k_norep_cal` (1181) | routereval, `leaderboard_mmlu`, `no_repeat`, `shuffle` | 5000 | all | 0, .5 | lsf | **calibrated** | 1, 3, 5 | 300 | 1–3 |
 | `llmrouterbench_norep_cal` (1190) | routereval, `llmrouterbench`, `no_repeat`, `shuffle` | 20 | all | 0, .5 | lsf | **calibrated** | 1, 3, 5 | 300 | 1–5 (K = 15) |
-| `routereval_mmlu_norep_cal` (1199) | routereval, `mmlu`, `no_repeat`, `shuffle` | 10, 100, 1000 | s2w | 0, .5 | lsf | **calibrated** | 3 | 300 | 1–5 (MIDIAN-VA + oracle, H's line) |
+| `routereval_mmlu_norep_cal` (1199) | routereval, `mmlu`, `no_repeat`, `shuffle` | 10, 100, 1000 | s2w | 0, .5 | lsf | **calibrated** | 3 | 300 | 1–5 (MIDIAN, random + oracle: H's reference lines; random added 2026-09-24) |
 | `fw_routereval_{small,1k,5k}{,_em,_va}_norep_cal`, `re_sl_{declared,embed}_{small,1k,5k}_norep_cal` (1203-1217) | routereval, `mmlu` / `leaderboard_mmlu`, `no_repeat`, `shuffle` | 10, 100 / 1000 / 5000 | s2w / s2w / all | 0, .5 | lsf | **calibrated** | 3 | 300 | 1–5 / 1–5 / 1–3 (H's framework bars) |
 
 (lsf = low_skill_first; spec = specialist; prog = programmatic; self = self_described.) The live framework-shortlist
@@ -623,7 +658,7 @@ RouterEval / LLMRouterBench grids. `routereval5k_cal` and `llmrouterbench_cal` (
 are superseded by the `_norep_cal` grids and read by no figure. The `routereval5k_norep_cal` rows B reads are the shuffled
 ones (the unshuffled first attempt is quarantined, §1.4.4).
 
-The `pool_fill_*` grids hold only the candidates of "best learned router" / "best bandit" that no other grid ran in
+The `pool_fill_*` grids hold only the candidates of "best learned/declared router" / "best bandit" that no other grid ran in
 that cell at that b, so that every b of a cell has the same pool (comment at `configs/grid.yaml:1099-1104`). Their
 method lists differ per grid and per b block (`:1105-1122`). `pool_seeds_n1000` gives the seven live 10^3 b = 3
 candidates that `live_f1_n1000` ran on seeds 1–5 their seeds 6–10 (`:1123-1125`). `tuned_wsb_*` runs
@@ -635,9 +670,9 @@ Rows on disk: every grid in the table has rows. `linucb_fix_*` and `trueskill_fi
 seed in every A / B pool table); the five erratum-30 grids B and H use are complete by `seed_tables.complete`, and so
 are the 15 H framework mirrors (`shortlist_figs.h30()` is True). `rivals_b_n100k` has both regimes at b = 1 and 5 for
 every rival; its kNN units, the cartel kNN units of `rivals_b_n10k` and the cartel kNN units of `routereval5k_norep_cal`
-were run with the speed-only opt-ins of §2.8.1. A few live 10^5 cartel kNN seeds are still landing; the 10^4 and
-RouterEval kNN rows are complete in the pool tables. In the condensed A / B figures an absent bar is an empty slot and puts the single
-title ` *` on (§1.8.4); no A / B slot is empty today.
+were run with the speed-only opt-ins of §2.8.1. The live 10^5 cartel kNN seeds landed on 2026-09-24 11:20; every kNN row is complete in the pool tables. In the
+condensed A / B figures an absent bar is an empty slot, reported by the script and `scripts/ops/figure_status.py`
+(§1.8.4); no A / B slot is empty today.
 
 #### 1.6.4 What a seed is
 
@@ -676,9 +711,12 @@ The oracle row has zero build/run communication except `tasks_per_task = 1`.
 
 - **Labels** (`rte/analyze.py:20-24, 60-86`): `label = method` if params are `{}`, else `method[k=v,…]` (sorted, floats
   `%.3g`), then `ALIAS`: `flat_probe_argmax → flat_probe_argmax_frozen`, `flat_probe_argmax[online=True] →
-  flat_probe_argmax_online`, `knn_router[online=True] → knn_router_online`, `midian[cached=True,verify=True] →
-  midian_v`, `midian[cached=True,r=5,verify=True] → midian_v_r5`, `sequential_halving[peer_reported=True] →
-  sequential_halving_peer`, `midian[stratify=True] → midian_stratified`, and the two churn-mode halving labels.
+  flat_probe_argmax_online`, `knn_router[online=True] → knn_router_online`, `midian[verify=False] →
+  midian_wo_verify`, `midian[audit=False] → midian_wo_audit`, `midian[audit=False,verify=False] → midian_wo_defenses`,
+  `midian[audit=False,r=5] → midian_wo_audit_r5`, `sequential_halving[peer_reported=True] → sequential_halving_peer`,
+  `midian[audit=False,stratify=True,verify=False] → midian_stratified`, and the two churn-mode halving labels (the full
+  method, `midian` with params `{}`, is labelled `midian`). Rows stored under the old keys are translated on read
+  (`keys.normalize`).
   `scripts/seed_tables.py:26-29` builds the same label for the b = 1/5 rows and the per-seed tables.
 - **Unit of replication = the seed.** The figure CSVs (`scripts/bar_figs.py:78-87`, `condensed_figs.py:175-185`, `seed_tables.py:48-62`,
   `scale_matrix.py:41-52`) first average each label's rows **per seed** (over shapes where a family pools them, and
@@ -698,18 +736,18 @@ The oracle row has zero build/run communication except `tasks_per_task = 1`.
   row set is filtered to `liar_select = random` when present (`bar_figs.py:80-81`), because the two liar selections are
   the same world at β = 0.
 - **Paired comparisons**: `rte.analyze.paired` (`rte/analyze.py:108-129`) — per cell, pivot seed × label, delta
-  `ref − rival` per seed, bootstrap CI + sign test, `WITHIN_FLOOR` if |mean delta| ≤ MIDIAN's seed envelope.
-  `scripts/paired_gaps.py:27-70` (b = 3 only, not a condensed figure): per condition, `midian_va − rival` per unit (unit =
+  `ref − rival` per seed, bootstrap CI + sign test, `WITHIN_FLOOR` if |mean delta| ≤ the reference's seed envelope (the reference `REF` is MIDIAN w/o defenses, `rte/analyze.py:19`).
+  `scripts/paired_gaps.py:27-70` (b = 3 only, not a condensed figure): per condition, `midian − rival` (MIDIAN minus the rival) per unit (unit =
   seed, or seed|shape where shapes are not pooled), 95 % bootstrap CI of that difference, "win/loss/tie" by CI sign;
   requires ≥ 2 shared units.
 - **Figure filters**: `extra_figs.excluded` (`scripts/extra_figs.py:121-145`) drops MIDIAN variants with r ≠ 10 or
-  δ ≠ 1/3, MIDIAN-SH / -SHA, trusted-observer `sequential_halving`, `route_to_k_majority`, the LLM-descent ablation,
+  δ ≠ 1/3, trusted-observer `sequential_halving`, `route_to_k_majority`, the LLM-descent ablation,
   online-off and cohort/churn variants, and — while `HIDE_HALVING = True` (line 130, "TEMPORARY 2026-09-22") — every
   label containing "halving", including peer-reported halving.
 
 ---
 
-### 1.8 Errata and asterisks (`CHANGES_AND_ERRATA.md`)
+### 1.8 Errata and incompleteness reporting (`CHANGES_AND_ERRATA.md`)
 
 #### 1.8.1 Erratum 25 — clone-filled framework shortlist (`CHANGES_AND_ERRATA.md:241-258`)
 
@@ -727,7 +765,7 @@ with the code path (`descriptions()` is per agent but identical prompts produce 
 `sequential_halving[peer_reported=True]` is a legitimate rival. Rows remain in the grids; `scale_matrix.py:42` and the
 `DO_NOT_ADD` set drop the label, so trusted-observer halving is never reported. Peer-reported halving is hidden too, by
 the separate `HIDE_HALVING = True` switch (`extra_figs.py:130`, "TEMPORARY (2026-09-22, user request)"); no condensed
-figure draws either (protocol audit F1: peer halving beats MIDIAN-VA in every honest b = 3 cell of A).
+figure draws either (protocol audit F1: peer halving beats MIDIAN in every honest b = 3 cell of A).
 
 #### 1.8.3 Erratum 27 — the lie does not touch description text (`CHANGES_AND_ERRATA.md:352-365`)
 
@@ -738,30 +776,32 @@ its only β-dependence is the declared-argmax fallback when a framework fails to
 arms is an artefact of the threat model; only declared-channel arms are attacked by the lie. `lie_text` (§1.3.6) is
 the partial remedy.
 
-#### 1.8.4 Erratum 28 — framework rows that measured declared argmax, and the asterisks (`CHANGES_AND_ERRATA.md:368-386`)
+#### 1.8.4 Erratum 28 — framework rows that measured declared argmax, and how incompleteness is reported (`CHANGES_AND_ERRATA.md:368-386`)
 
 Broken library symlinks in 7 framework conda envs made workers crash on some nodes; the adapter then fell back to
 declared argmax (`_common.py:389, 398`) and wrote normal-looking rows. CrewAI and ADK were hit hardest (~2/3 of units)
 and were biased *upward* (declared argmax scores 0.619 honest). Fix: envs restored, 4,269 rows moved to
 `results/<grid>/quarantine/`, their units rerun, and `fetch` now fails the unit past 2 % infra errors.
 
-**The title asterisk.** No condensed figure draws a marker on a bar. Each of A, B, E, F, G and H ends its title in one
-` *` while anything in it is incomplete (C and D have none):
-1. *A / B* (`budget_bars`, `scripts/condensed_figs.py:113-116, 127`): any (arm, regime, b) slot without a bar, or any
-   pooled bar whose pool lacks an allowed member or has a member missing some scored seeds (`INCOMPLETE POOL, missing or
-   partial …` in the CSV `chosen` column). A missing-data flag, unrelated to erratum 28.
-2. *E–H* (`shortlist_condensed.pair` / `finish` / `fig_G`, `:62-76`, `:106`, `:120-129`): any empty slot (a bar needs at
-   least `MIN_FW = 6` frameworks with the full seed count; G needs 6 paired frameworks) or any drawn bar that averages a
-   framework × shortlist series with `rerun_outstanding`. That flag comes from `pending_reruns()`
-   (`fw_variant_numbers.py:35-43`): every (grid, framework, dist, regime) listed in
-   `$RTE_DATA/results/quarantine_units.tsv` whose rerun has **not landed** — `landed()` (`:46-60`) checks that every
-   param variant of that method in that grid has a row for that (dist, β, liar_select, seed) — unless
+**Incompleteness reporting.** No condensed figure carries a title, a marker on a bar or any other incompleteness
+mark (`docs/FIGURE_SPEC.md` §1). Instead each script prints `[<name>] INCOMPLETE: …` and
+`scripts/ops/figure_status.py` reads the figures' own CSVs and lists what is missing (C and D have no such check):
+1. *A / B* (`budget_bars`, `scripts/condensed_figs.py:104-107, 119`; `figure_status.ab` on the `_allb` CSVs): any
+   (arm, regime, b) slot without a bar (declared argmax, random and A's framework arm: one `b = "-"` slot per regime), or
+   any pooled bar whose pool lacks an allowed member or has a member missing some scored seeds (`INCOMPLETE POOL, missing
+   or partial …` in the CSV `chosen` column). A missing-data flag, unrelated to erratum 28.
+2. *E–H* (`shortlist_condensed.pair` / `finish` / `fig_G`, `:79-86`, `:89-94`, `:126`, `:135-136`;
+   `figure_status.shortlist`): any empty slot (a bar needs at least `MIN_FW = 6` frameworks with the full seed count; G
+   needs 6 paired frameworks) or any drawn bar that averages a framework × shortlist series with `rerun_outstanding` (the
+   CSV's `star` column). That flag comes from `pending_reruns()` (`fw_variant_numbers.py`): every (grid, framework, dist,
+   regime) listed in `$RTE_DATA/results/quarantine_units.tsv` whose rerun has **not landed** — `landed()` checks that
+   every param variant of that method in that grid has a row for that (dist, β, liar_select, seed) — unless
    `$RTE_DATA/logs/DONE_stage2` exists (then none; with only `DONE_stage1`, just the `fw_live_n{100,1000}[_lowskill]_sota`
    grids). Today `logs/DONE_stage1` exists and `DONE_stage2` does not, so only those four `*_sota` grids are checked; the
    tsv has 3,572 unit rows, and 51 (grid, framework, dist, regime) keys are still outstanding, all in
    `fw_live_n{100,1000}[_lowskill]_sota`. None touches a drawn E–H bar: the three `rerun_outstanding` rows of
-   `figures/shortlist/live.csv` are heavy_tail / bimodal cartel cells. E, F, G and H therefore carry no title ` *`;
-   A and B do, for the live 10^5 kNN seeds (§4.3).
+   `figures/shortlist/live.csv` are heavy_tail / bimodal cartel cells.
+Today nothing in A–H is incomplete: no missing slot, no incomplete pool, no drawn bar with a rerun outstanding.
 
 #### 1.8.5 Rival note 8d (`CHANGES_AND_ERRATA.md:411-423`)
 
@@ -828,7 +868,7 @@ change outcomes (§2.8.1).
 | **row / rid** | one (cell, method, params, seed) result; rid = blake2b of those |
 | **regime** | beta0, beta{β}_random, beta{β}_cartel, cartel (= β .5 lsf) |
 | **b = 1 / 3 / 5 bars** | same arm at different probe budgets; never pooled |
-| **` *`** | one asterisk at the end of a figure title (A, B, E–H): something in the figure is incomplete (§1.8.4). No bar carries a marker |
+| **incomplete** | a figure slot without a bar or a pooled bar with an incomplete pool; never marked in the figure (no titles, no markers), reported by the scripts and `scripts/ops/figure_status.py` (§1.8.4) |
 
 ---
 
@@ -855,9 +895,9 @@ change outcomes (§2.8.1).
    to 0.075 over all shared methods). n = 100, 10^4, 10^5 and the va_b grids show no oracle drift. Cause not determined
    (candidates: memo entries regenerated non-deterministically, code changes between runs); figure CSVs average such
    duplicates per seed.
-3. **Build-budget contract vs code.** `CONTRACT.md` says probing methods spend "AT MOST" n·K·b in build; MIDIAN-A /
-   -SHA spend up to 1.0625× and MIDIAN-VA up to ≈ 1.04× per cell (audit re-probes; mean 1.033× at b = 3 on LLMRouterBench), and `run.py:135-136` only logs a warning. The
-   `midian_a.py:8` docstring's "≤ 1.05×" is also exceeded on small pools (1.0625 on `routereval_mmlu`).
+3. **Build-budget contract vs code.** `CONTRACT.md` says probing methods spend "AT MOST" n·K·b in build; MIDIAN w/o verification /
+   -SHA spend up to 1.0625× and MIDIAN up to ≈ 1.04× per cell (audit re-probes; mean 1.033× at b = 3 on LLMRouterBench), and `run.py:135-136` only logs a warning. The
+   old `midian_a.py:8` docstring's "≤ 1.05×" was also exceeded on small pools (1.0625 on `routereval_mmlu`).
 4. **README / docstrings say three backends** (`README.md:62`, `rte/world.py:3`); there are four (`routereval`).
 5. **README: "bernoulli: synthetic S with five population shapes, calibrated to the measured live S"** — with
    `calibrate_from` the shape is ignored; every figure grid resamples rows of one live specialist population.
@@ -868,12 +908,12 @@ change outcomes (§2.8.1).
 8. **`_common.py:142` comment** says honest agents' declared "is true skill plus 0.05 noise"; on the live
    `self_described` channel (where `lie_text` is used) honest D is the model's coarse self-rating (mean 0.686 vs S
    0.419), not S + noise.
-9. **Stale docstrings about markers and intervals**: `budget_bars`'s docstring (`condensed_figs.py:96-97`) still says
-   "A budget not in yet: * in its place" (the module docstring, `:10-11, 15-16`, is correct: one title `*`, no bar
-   markers). `shortlist_figs.py`'s docstring (`:9-11`) and the `INDEX.md` text it writes (`:184-185`) say an asterisk marks
-   a bar with an outstanding rerun and that bars and lines carry a "95% seed-bootstrap" band;
-   `shortlist_condensed.py:3` says the shortlist CSV holds a "95% CI". The code draws no bar markers, only the title
-   ` *`, and every interval there is ±1 s.e. (`extra_figs.se`, imported as `_ci`, `shortlist_figs.py:20`).
+9. **Stale docstrings about markers and intervals**: `condensed_figs.py`'s module docstring (`:17-18`) still says an
+   incomplete pool "puts the one * in the figure title", and `add_budgets`'s docstring (`:159`) says a missing cell is
+   marked by "a *"; the code draws no title and no marker (§1.8.4). `shortlist_figs.py`'s docstring (`:9-11`) and the
+   `INDEX.md` text it writes (`:184-186`) say an asterisk marks a bar with an outstanding rerun and that the lines carry a
+   "95% seed-bootstrap" band; `draw` collects the starred positions (`stars`, `:146-157`) but never plots them, and every
+   interval there is ±1 s.e. (`extra_figs.se`, imported as `_ci`, `shortlist_figs.py:20`).
 10. **Erratum 28 counts vs the quarantine file**: the erratum says 2,904 units were rerun; `quarantine_units.tsv` has
     3,572 unit rows (it also lists `*_sota`, `*_em`, `*_verified*` and RouterEval-framework grids). Whether the tsv
     grew after the erratum was written is not determined. `pending_reruns()` drops every listed unit whose rerun rows are
@@ -889,7 +929,7 @@ change outcomes (§2.8.1).
 
 ---
 
-## 2. The non-framework methods in figures A and B, plus the oracle and MIDIAN-VA reference lines in E, F and H
+## 2. The non-framework methods in figures A and B, plus the oracle and MIDIAN reference lines in E, F and H
 
 All paths are relative to `/n/home02/rsiegelmann/rte`. Every claim below was checked against the code on 2026-09-24. Where
 METHODS.md, DEVIATIONS.md or CHANGES_AND_ERRATA.md disagree with the code, the code is described here and the disagreement
@@ -899,49 +939,52 @@ is listed in §2.12.
 
 ## 2.1 Which methods appear in A and B, and how they get there
 
-### 2.1.1 The seven arms that are drawn
+### 2.1.1 The arms that are drawn
 
-`scripts/condensed_figs.py` draws exactly the arms in `ARMS` (`scripts/condensed_figs.py:32-34`):
+`scripts/condensed_figs.py` draws the arms in `ARMS` (`scripts/condensed_figs.py:32`: `figspec.ORDER` without the oracle
+and the framework arm), in that legend order, plus A's framework arm. Names and colours come from `scripts/figspec.py`
+(`NAME`, `COLOR`, `ORDER`, `:25-38`):
 
 | key in code | legend label | colour | what the key resolves to |
 |---|---|---|---|
-| `midian_va` | MIDIAN-VA | green | method `midian_va`, params `{}` (§2.3) |
-| `midian` | MIDIAN | red | method `midian`, params `{}` (plain MIDIAN, §2.2) |
-| `flat_probe_argmax_online` | flat probe argmax (online) | blue | method `flat_probe_argmax`, params `{online: true}`. The alias comes from `rte/analyze.py:19-20` (`FLAT_ON`, `ALIAS`) |
-| `best_learned` | best learned router | orange | the cross-fitted best of the learned-router pool in this cell, regime and b (§2.1.3) |
-| `best_bandit` | best bandit | purple | the cross-fitted best of the bandit pool in this cell, regime and b (§2.1.3) |
-| `declared_argmax` | declared argmax | grey | method `declared_argmax`, params `{}` (not cached) |
-| `random` | random | light grey | method `random` |
+| `midian` | MIDIAN | green `#2ecc71` | method `midian`, params `{}` (both defenses; formerly `midian_va`; §2.3) |
+| `midian_wo_defenses` | MIDIAN w/o defenses | red `#c0392b` | method `midian`, params `{"audit": false, "verify": false}` (formerly the plain `midian`; §2.2). The label comes from `rte/analyze.py:23` (`ALIAS`) |
+| `flat_probe_argmax_online` | flat probe argmax | blue `#3498db` | method `flat_probe_argmax`, params `{online: true}`. The alias comes from `rte/analyze.py:20-21` (`FLAT_ON`, `ALIAS`) |
+| `best_learned` | best learned/declared router | orange `#ff7f0e` | the cross-fitted best of the learned-router pool in this cell, regime and b (§2.1.3); "declared" because two of its members read only declarations |
+| `best_bandit` | best bandit | purple `#9467bd` | the cross-fitted best of the bandit pool in this cell, regime and b (§2.1.3) |
+| `declared_argmax` | declared argmax | slate `#5d6d7e` | method `declared_argmax`, params `{}` (not cached) |
+| `random` | random | light grey `#bbbbbb` | method `random` |
+| `best_framework` (A only) | best framework, best text shortlist | brown `#8e6c3a` | the cross-fitted best (framework, text shortlist) pair at b = 3 (`add_best_framework`, §4.1) |
 
-The **oracle** is not an arm. It is the dotted horizontal line (`scripts/condensed_figs.py:124`). In B every bar is divided by
-the oracle's mean (`norm=True`).
+The **oracle** is not an arm. It is the grey dotted horizontal line over each group (`figspec.oracle`,
+`scripts/condensed_figs.py:113`). In B every bar is divided by the oracle's mean (`norm=True`).
 
 **Arms that do not change with b.** `B_INVARIANT = {declared_argmax, random, cluster_head_router, disrouter_cascade}`
-(`condensed_figs.py:42`): these never probe, so b cannot change them. Declared argmax and random are drawn once per regime;
+(`condensed_figs.py:41`): these never probe, so b cannot change them. Declared argmax and random are drawn once per regime;
 a pooled bar whose picks are all `cluster_head_router` / `disrouter_cascade` is identical at b = 1, 3 and 5. The CSV
 column `b_invariant` marks both cases (§4.0.5).
 
-Rows whose label starts with `fw_` (frameworks) are removed at load time (`scripts/condensed_figs.py:54`; `seed_tables.py:39` for the pooled arms). Every label also
-goes through the do-not-add filter `extra_figs.excluded` (`scripts/condensed_figs.py:64,177,204`). Because `ARMS` and the two
+Rows whose label starts with `fw_` (frameworks) are removed at load time (`scripts/condensed_figs.py:53`; `seed_tables.py:39` for the pooled arms). Every label also
+goes through the do-not-add filter `extra_figs.excluded` (`scripts/condensed_figs.py:63,174,189,201`). Because `ARMS` and the two
 pools list every drawable label, anything outside them is never drawn in A or B, whether or not it is excluded. That covers
-MIDIAN-V, MIDIAN-A, verify_on_claim, cnp_self_bid, declared_softmax, gossip, referral, sequential halving and the rest.
+MIDIAN w/o audits, MIDIAN w/o verification, verify_on_claim, cnp_self_bid, declared_softmax, gossip, referral, sequential halving and the rest.
 No condensed figure draws them; they are in the per-family bar figures (`figures/bars/`, `scripts/bar_figs.py`), where
 `HIDE_HALVING` (`extra_figs.py:130`) also removes every halving arm (§1.7).
 
 ### 2.1.2 Where each budget's numbers come from
 
-- **Live, the five single arms at b = 3** (MIDIAN-VA, MIDIAN, flat probe argmax, declared argmax, random). From
-  `figures/bars/live.csv` (`scripts/condensed_figs.py:52-65`), which `scripts/bar_figs.py` writes from the grids in
+- **Live, the five single arms at b = 3** (MIDIAN, MIDIAN w/o defenses, flat probe argmax, declared argmax, random). From
+  `figures/bars/live.csv` (`scripts/condensed_figs.py:51-64`), which `scripts/bar_figs.py` writes from the grids in
   `LIVE_GRIDS` (`scripts/bar_figs.py:29-31`).
-- **Live, the same arms at b = 1 and b = 5.** From the `va_b_n*` grids (MIDIAN-VA only) and the `rivals_b_n*` grids (the
-  budget-matched rivals) (`add_budgets`, `scripts/condensed_figs.py:159-185`; grids at `configs/grid.yaml:1047-1050` and
+- **Live, the same arms at b = 1 and b = 5.** From the `va_b_n*` grids (MIDIAN only) and the `rivals_b_n*` grids (the
+  budget-matched rivals) (`add_budgets`, `scripts/condensed_figs.py:156-190`; grids at `configs/grid.yaml:1047-1050` and
   `1068-1071`).
 - **bernoulli 10^7, replay 10^6, RouterEval 5,000 and LLMRouterBench: every arm at every b, and the oracle.** All four
-  have switched to their erratum-30 grids (§4.0.7), so `add_budgets` skips them (`:170`, `:188`) and `from_tables`
-  (`condensed_figs.py:196-204`) fills each cell from its per-seed tables: mean and ±1 s.e. over seeds. The bar CSVs and
+  have switched to their erratum-30 grids (§4.0.7), so `add_budgets` skips them (`:167`, `:185`) and `from_tables`
+  (`condensed_figs.py:193-201`) fills each cell from its per-seed tables: mean and ±1 s.e. over seeds. The bar CSVs and
   the scale matrices (`bernoulli_scale_v5` / `replay_scale_v5` `matrix_success.csv`) are not used for these groups.
-- **"Best learned router" and "best bandit" at every b.** From per-seed tables built straight from the raw rows by
-  `seed_tables.tables()` (`scripts/seed_tables.py:100-122`, attached to each cell at `condensed_figs.py:224-225`). Per cell
+- **"Best learned/declared router" and "best bandit" at every b.** From per-seed tables built straight from the raw rows by
+  `seed_tables.tables()` (`scripts/seed_tables.py:100-122`, attached to each cell at `condensed_figs.py:221-222`). Per cell
   it reads: live, `LIVE_GRIDS[n]` + `va_b_*` + `rivals_b_*` + `pool_fill_*` + `linucb_fix_*` + `trueskill_fix_*` +
   `tuned_wsb_*` + `pool_seeds_*`; RouterEval 5,000, `routereval5k_norep_cal` only; LLMRouterBench,
   `llmrouterbench_norep_cal` only; replay 10^6, `replay_1e6_split_cal` only; bernoulli 10^7, `bernoulli_scale_v5` + its
@@ -950,23 +993,23 @@ No condensed figure draws them; they are in the per-family bar figures (`figures
   the claim-reading arms restricted to the calibrated rows (`:105-116`). TrueSkill rows count only from `trueskill_fix_*`
   or erratum-30 grids (`:112-113`).
 - **Budgetless arms.** `declared_argmax` and `random` are drawn only from the b = 3 data, as one bar each (`BUDGETLESS`,
-  `scripts/condensed_figs.py:45,82`).
+  `scripts/condensed_figs.py:44,86`).
 
-### 2.1.3 How "best learned router" and "best bandit" are chosen (`arms_at`, `crossfit`)
+### 2.1.3 How "best learned/declared router" and "best bandit" are chosen (`arms_at`, `crossfit`)
 
 Both are **cross-fitted**: no bar is the maximum of noisy means over the seeds it reports.
 
-- **Pools** (`POOLS`, `scripts/condensed_figs.py:35-36`):
-  - best learned router = `LEARNED = [knn_router, knn_router_online, mlp_router, flat_nsw_router, cluster_head_router,
+- **Pools** (`POOLS`, `scripts/condensed_figs.py:34-35`):
+  - best learned/declared router = `LEARNED = [knn_router, knn_router_online, mlp_router, flat_nsw_router, cluster_head_router,
     disrouter_cascade]` (`:30`);
   - best bandit = `ucb_per_family, thompson_per_family, warm_start_bandit` (n0 = 5), `trueskill_per_family`,
     **`linucb_honest[bonus=own]`** (the fixed-bonus LinUCB, which replaces the pre-registered `linucb_honest`; §2.7.4) and
-    `warm_start_bandit[n0=0.5]` (the tuned warm-start bandit) (`:31`, `:35-36`).
-- **Who may compete in a cell** (`want`, `arms_at`, `:74`): the pool minus
-  - `NOT_RUNNABLE(family, n)` (`:43-44`): `trueskill_per_family` at n ≥ 10^5 (it raises), `mlp_router` at n ≥ 5,000, and
+    `warm_start_bandit[n0=0.5]` (the tuned warm-start bandit) (`:31`, `:34-35`).
+- **Who may compete in a cell** (`want`, `arms_at`, `:73`): the pool minus
+  - `NOT_RUNNABLE(family, n)` (`:42-43`): `trueskill_per_family` at n ≥ 10^5 (it raises), `mlp_router` at n ≥ 5,000, and
     `knn_router`, `knn_router_online`, `mlp_router` on bernoulli and replay (no prompt text);
   - the pre-registered `warm_start_bandit` (n0 = 5) on a non-live family that has **not** switched to its
-    calibrated-claims erratum-30 rows (`CLAIM_KEY - SW`, `:40-41`, `:74`), because on the old rows its prior is built on
+    calibrated-claims erratum-30 rows (`CLAIM_KEY - SW`, `:39-40`, `:73`), because on the old rows its prior is built on
     claims equal to true skill + 5 % noise. All four non-live families have switched, so this set is empty today: the
     n0 = 5 arm competes in every A and B cell, live and non-live.
 
@@ -980,25 +1023,25 @@ Both are **cross-fitted**: no bar is the maximum of noisy means over the seeds i
 - **Cross-fitting** (`crossfit`, `seed_tables.py:125-135`). For each seed s, among the arms that ran on s, the arm with
   the highest mean over the **other** seeds is picked, and its success **on s** is s's score. The bar is the mean of
   those per-seed scores. The whisker is ±1 standard error over the same per-seed scores (`extra_figs.se`,
-  `condensed_figs.py:77`). A cell with fewer than 2 scored seeds gets no bar (`:76`).
+  `condensed_figs.py:76`). A cell with fewer than 2 scored seeds gets no bar (`:75`).
 - **The CSV `chosen` column holds the pick counts**, most-picked first, e.g. `warm_start_bandit x7; warm_start_bandit[n0=0.5] x3`
-  (`:78`). The picked arm can differ between seeds, regimes and b values.
-- **Incomplete pools** (`:77-78`). If an allowed member has no column in the table at that b, **or has no value on some
-  scored seed**, `chosen` ends with `| INCOMPLETE POOL, missing or partial <arms>` and the figure title gets its single
-  ` *` (no marker on the bar). A member that ran on some seeds still competes only on those seeds.
+  (`:77`). The picked arm can differ between seeds, regimes and b values.
+- **Incomplete pools** (`:76-77`). If an allowed member has no column in the table at that b, **or has no value on some
+  scored seed**, `chosen` ends with `| INCOMPLETE POOL, missing or partial <arms>`; the script prints `INCOMPLETE` for the figure and
+  `scripts/ops/figure_status.py` lists the bar (nothing is drawn on the figure). None is incomplete today. A member that ran on some seeds still competes only on those seeds.
 - **The "learned router" pool includes two declaration-only methods and a constant-cost index.** `cluster_head_router`
   and `disrouter_cascade` (§2.8) spend no probes and read only the declared channel; `flat_nsw_router` is an ANN index
   over flat probe means. With the answer-key claims gone (every drawn non-live claim is calibrated), the declaration-only
-  arms are the majority pick in only 5 of the 54 "best learned router" bars, all at b = 1 (bernoulli 10^7 both regimes,
-  RouterEval 5,000 cartel, live 10^5 cartel in A and B); `flat_nsw_router` is the majority pick in 21 (§6.2).
+  arms are the majority pick in only 3 of the 54 "best learned/declared router" bars, all at b = 1 (bernoulli 10^7 both regimes,
+  RouterEval 5,000 cartel); `flat_nsw_router` is the majority pick in 19 (§6.2).
 
-What is picked in the current A / B CSVs (`*` = incomplete pool; full tables in §4.1, §4.2):
+What is picked in the current A / B CSVs (full tables in §4.1, §4.2):
 
-| figure / cell | best learned router | best bandit |
+| figure / cell | best learned/declared router | best bandit |
 |---|---|---|
 | A, live n = 10^2 / 10^3 | b = 1 `mlp_router` ×8–9 (+ `knn_router_online`); b = 3, 5 `knn_router_online` ×10 | 10^2: b = 1 honest `warm_start_bandit[n0=0.5]` ×10, every other bar `linucb_honest[bonus=own]` ×10; 10^3: honest `warm_start_bandit[n0=0.5]` ×10; cartel b = 1 `warm_start_bandit` ×8 + `trueskill_per_family` ×2, b = 3 `warm_start_bandit` ×7 + n0 = 0.5 ×3, b = 5 n0 = 0.5 ×10 |
 | A, live n = 10^4 | `flat_nsw_router` ×2–3 at b = 1, 3; `knn_router_online` ×2 + `flat_nsw_router` ×1 at b = 5 | b = 1 `trueskill_per_family` ×3 (honest) / ×2 + `warm_start_bandit` ×1 (cartel); b = 3 honest `trueskill_per_family` ×2 + n0 = 0.5 ×1, cartel `warm_start_bandit` ×3; b = 5 n0 = 0.5 ×3 (honest), `warm_start_bandit` ×2 + n0 = 0.5 ×1 (cartel) |
-| A / B, live n = 10^5 | honest `knn_router_online` majority at every b (b = 1 + `cluster_head_router` ×1, b = 5 + `flat_nsw_router` ×1); cartel b = 1 `disrouter_cascade` ×2 + `knn_router_online` ×1 *, b = 3 `knn_router_online` ×3, b = 5 `flat_nsw_router` ×3 * | honest `warm_start_bandit[n0=0.5]` (b = 1 ×2 + n0 = 5 ×1; b = 3, 5 ×3); cartel `warm_start_bandit` ×3 at b = 1, 3, ×2 + n0 = 0.5 ×1 at b = 5 |
+| A / B, live n = 10^5 | `knn_router_online` majority at every b in both regimes (×3 at b = 3 and cartel b = 1; honest b = 1 + `cluster_head_router` ×1; b = 5 + `flat_nsw_router` ×1) | honest `warm_start_bandit[n0=0.5]` (b = 1 ×2 + n0 = 5 ×1; b = 3, 5 ×3); cartel `warm_start_bandit` ×3 at b = 1, 3, ×2 + n0 = 0.5 ×1 at b = 5 |
 | B, bernoulli 10^7 | b = 1 `cluster_head_router` ×100 (honest) / `disrouter_cascade` ×100 (cartel); b = 3, 5 `flat_nsw_router` ×100 | `warm_start_bandit` (n0 = 5) ×100, every b and regime |
 | B, replay 10^6 | `flat_nsw_router` ×30, every b and regime | honest b = 1 `warm_start_bandit` ×30; every other bar `linucb_honest[bonus=own]` ×30 |
 | B, RouterEval 5,000 | `flat_nsw_router` (honest b = 1 ×2 + `cluster_head_router` ×1; b = 3, 5 ×3); cartel b = 1 `disrouter_cascade` ×3 | `linucb_honest[bonus=own]` ×3, every b and regime |
@@ -1017,10 +1060,11 @@ What is picked in the current A / B CSVs (`*` = incomplete pool; full tables in 
   **not** enforce it. It only logs a warning when build probes exceed it (`rte/run.py:135-136`).
 - **Probes are index-seeded** (`rte/world.py:332-347`). The k-th probe of (agent, family) is the same instance for every
   method. `World.reset` zeroes the probe index before each method (`rte/world.py:418-422`), so two methods probing the
-  same cell see identical outcomes.
+  same cell see identical outcomes. The runner resets the world with the method's **pre-rename** key
+  (`keys.legacy`, `rte/run.py:139-140`), so a MIDIAN arm reruns bit-identically to the rows stored under its old key.
 - **Method randomness** comes from `view.rng = default_rng(stable_seed_32(seed, "view", sorted(needs)))`
   (`rte/world.py:185`). It depends only on the world seed and the method's `needs`. Methods with the same `needs`
-  therefore start from the same RNG stream. Checked: MIDIAN, MIDIAN-V and MIDIAN-VA build **identical leaf cohorts** at
+  therefore start from the same RNG stream. Checked: MIDIAN w/o defenses, MIDIAN w/o audits and MIDIAN build **identical leaf cohorts** at
   a given seed (n = 100 and 1,000, b = 1, 3, 5).
 - **Declared-channel helpers** (`rte/methods/_decl.py`):
   - `declared(view)` charges n messages once, for collecting the registry.
@@ -1036,13 +1080,15 @@ What is picked in the current A / B CSVs (`*` = incomplete pool; full tables in 
 
 ---
 
-## 2.2 Plain MIDIAN (`midian`, label "MIDIAN")
+## 2.2 MIDIAN w/o defenses (`midian{"audit": false, "verify": false}`, label "MIDIAN w/o defenses")
 
-**File:** `rte/methods/midian.py`, class `Midian`. **Needs:** `{probe, reports}` (`:17`). **Params used in A/B:** defaults,
-`r=10, delta=1/3, online=True, verify=False, cached=False, top=1, cohort="random"` (`:19-36`). The grid lists it as a plain
-string or `{}`. METHODS.md calls it pre-registered (SPEC §5) and never changed since the first run. The parameters r = 10
-and δ = 1/3 are defaults, not tuned. `extra_figs.excluded` drops any MIDIAN with r ≠ 10 or δ ≠ 1/3
-(`scripts/extra_figs.py:133-145`).
+**File:** `rte/methods/midian.py`, class `Midian` (one class for MIDIAN and every ablation; renamed 2026-09-24,
+CHANGES_AND_ERRATA §8g). **Needs:** `{probe, reports}` (`:32`). **Params used in A/B:** `audit=False, verify=False`, and
+the defaults `r=10, delta=1/3, online=True, top=1, cohort="random"`; `cached` defaults to `verify`, so it is off
+(`:34-37`). Before the rename this was the plain `midian` with params `{}` (the pre-registered tree, SPEC §5); stored rows
+were rewritten to the new key and reproduce bit for bit (the world is seeded with the legacy key, `rte/run.py:139-140`,
+`rte/methods/keys.py`). The parameters r = 10 and δ = 1/3 are defaults, not tuned. `extra_figs.excluded` drops any
+MIDIAN with r ≠ 10 or δ ≠ 1/3 (`scripts/extra_figs.py:133-145`).
 
 ### 2.2.1 The idea
 
@@ -1051,12 +1097,12 @@ observer, report what they saw. A trimmed mean over those reports absorbs a few 
 into an r-ary tree. Each tree node remembers, per task family, the best estimate anywhere below it and which child holds
 it. Routing a task walks down the tree from the root, about log_r n steps, instead of scanning all n agents.
 
-### 2.2.2 Tree construction (`_cohorts`, `_structure`, `:48-77`)
+### 2.2.2 Tree construction (`_cohorts`, `_structure`, `:67-96`)
 
 - **Leaf cohorts.** `c = rng.permutation(n)`, padded with −1 to a multiple of r and reshaped to `(ceil(n/r), r)`
-  (`:51-54`). A "leaf cohort" is one row of `self.leaves`: r agent ids (only the last row can be short). `self.leaf_of[a]`
-  maps each agent to its row (`:109-110`).
-- **Upper levels.** At each level the m nodes are randomly permuted and grouped r at a time into parents (`:72-76`),
+  (`:70-72`). A "leaf cohort" is one row of `self.leaves`: r agent ids (only the last row can be short). `self.leaf_of[a]`
+  maps each agent to its row (`:189-190`).
+- **Upper levels.** At each level the m nodes are randomly permuted and grouped r at a time into parents (`:91-95`),
   until one node is left. `self.children[l]` holds, for each node at level l, its r children (agent ids at level 0, node
   ids above). `self.parent[l]` maps a node to its parent.
 - **Depth.** `depth = len(children)`. Checked: depth = 2 at n = 100 (10 leaf cohorts, 1 root) and 3 at n = 1,000.
@@ -1067,19 +1113,20 @@ it. Routing a task walks down the tree from the root, about log_r n steps, inste
 - **Reports.** Every probe outcome is reported by **every other member of the agent's cohort** (s − 1 reporters). That is
   Σ_c s_c(s_c − 1)·K·b reports. At r = 10 this is 9 × the probes. Checked: 43,200 reports for 4,800 probes at n = 100,
   b = 3.
-- **Aggregation for plain MIDIAN** (`by_reporter=False`, because `verify=False`; `midian.py:101`):
+- **Aggregation without defenses** (`by_reporter=self.verify`, i.e. False; `_level0`, `midian.py:118-122`):
   - The (s − 1)·b individual reports about (member, family) are pooled, and a trimmed mean drops
     `trim_k(delta, s, b) = max(0, min(floor(delta·(s−1)), ((s−1)·b − 1)//2))` **single reports** from each end
     (`_est.py:43-45,121`).
   - At r = 10, δ = 1/3 that is **3 reports per side** at b = 1, 3 and 5, out of 9, 27 and 45 reports.
   - A colluding peer contributes all b of its reports. So at b = 3 the trim removes about one liar peer's worth of
     reports per side, and at b = 5 about 0.6. The code's own comment on `trimmed_by_reporter` (`_est.py:55-56`) says
-    per-report trimming "under-trims" for this reason. The by-peer trim is what MIDIAN-V and MIDIAN-VA use.
+    per-report trimming "under-trims" for this reason. The by-peer trim is what every variant with a defense uses
+    (MIDIAN w/o audits through `by_reporter=True`; MIDIAN and MIDIAN w/o verification through the audited level 0, §2.3.3).
 - **Singleton cohort.** A cohort of size 1 has no reporters, so its estimate is its own probe mean (`_est.py:105-107`).
-- **Build messages** (`midian.py:137`): (n − #leaves) member-to-leader messages plus (#nodes − 1) node-to-parent messages.
+- **Build messages** (`midian.py:217`): (n − #leaves) member-to-leader messages plus (#nodes − 1) node-to-parent messages.
   Checked: 100 at n = 100 and 1,010 at n = 1,000. No comparisons are charged at build.
 
-### 2.2.4 Summaries (`build`, `:115-136`)
+### 2.2.4 Summaries (`build`, `:195-216`)
 
 - At every node and for every family, the children's candidate values are sorted with a stable sort.
 - `best[l][node, f]` is the child slot holding the maximum.
@@ -1089,26 +1136,26 @@ it. Routing a task walks down the tree from the root, about log_r n steps, inste
 - **Ties** go to the lowest slot index. Slots are randomly permuted, so this amounts to a random tie-break fixed at
   build time.
 
-### 2.2.5 Routing (`fetch`, `:149-156`)
+### 2.2.5 Routing (`fetch`, `:229-236`)
 
 - Start at the root and descend `depth` levels. At each level take `child = best[l][node, f]`, and return the level-0
   member reached.
 - **Cost per task:** 1 hop, r comparisons and 2 messages per level, so depth hops, r·depth comparisons and 2·depth
   messages.
 
-### 2.2.6 Online update (`observe`, `:168-172`, with `online=True`)
+### 2.2.6 Online update (`observe`, `:248-253`, with `online=True`)
 
 - The routed agent's estimate gets a running-mean update: `est += (outcome − est)/k`. The count k starts at
-  `w0 = max(1, (r−1)·b − 2·trim_k)` (`:114`): 3 at b = 1, 21 at b = 3, 39 at b = 5. So the build estimate carries
+  `w0 = max(1, (r−1)·b − 2·trim_k)` (`:194`): 3 at b = 1, 21 at b = 3, 39 at b = 5. So the build estimate carries
   the weight of that many observations, even though only b independent probe outcomes lie behind it.
-- The family's summaries are then recomputed up the agent's path (`_recompute`, `:158-166`). This charges r comparisons
-  and 1 message per level (`:160-161`).
+- The family's summaries are then recomputed up the agent's path (`_recompute`, `:238-246`). This charges r comparisons
+  and 1 message per level (`:240-241`).
 - **Only the routed agent is ever updated.** The update is greedy exploitation: a routed agent that keeps failing sinks
   until another subtree's summary is higher.
 
 ### 2.2.7 Churn and budget
 
-- **Churn** (`:174-184`) re-probes arrivals b times per family through their cohort peers. It is not relevant to A/B,
+- **Churn** (`:266-276`) re-probes arrivals b times per family through their cohort peers. It is not relevant to A/B,
   whose cells have no churn.
 - **Probe spend** is exactly n·K·b, and nothing at run time.
 - **Declarations are never read** (with `cohort=random`).
@@ -1121,81 +1168,88 @@ it. Routing a task walks down the tree from the root, about log_r n steps, inste
 
 ---
 
-## 2.3 MIDIAN-V and MIDIAN-VA ("MIDIAN-VA" is drawn in A and B; it is the reference line in E, F and H)
+## 2.3 MIDIAN and its single-defense ablations (MIDIAN is drawn in A and B; it is the reference line "MIDIAN, no framework" in E, F and H)
 
-### 2.3.1 Class chain
+### 2.3.1 One class, two defenses
 
-- `MidianVA(MidianA)` sets `verify=True, cached=True` (`rte/methods/midian_va.py:10-14`).
-- `MidianA(MidianSH)` sets `halving=False, audit=0.05` (`rte/methods/midian_a.py:16-21`).
-- `MidianSH(Midian)` supplies the level-0 engine (`rte/methods/midian_sh.py:29-86`).
-- So MIDIAN-VA = plain MIDIAN's tree + MIDIAN-SH's per-peer level-0 engine with halving **off** + MIDIAN-A's audits and
-  reporter exclusion + MIDIAN-V's verification at promotion + a cached root pick.
-- The "VA" name stands for **V**erified promotion + **A**udited reports (`midian_va.py:1-6`).
-- It is pre-registered as V2-11 in TARGETS_rte_v2.md (`midian_va.py:6`) and is a labelled variant added 2026-09-03.
-- **Needs:** `{probe, reports}`, inherited. It **never reads declarations** in A/B (`cohort="random"`).
+- `Midian(audit=True, verify=True)` is the default (`midian.py:34`): **MIDIAN** is `midian` with params `{}`. Each
+  defense is a flag (module docstring, `:5-18`):
+  - `audit` (True = rate 0.05, `AUDIT_RATE`, `:27`): report audits with reporter exclusion (§2.3.3 steps 4–5, §2.3.6).
+  - `verify`: verification at promotion with b0 = b − 1 level-0 probes (§2.3.3 steps 1, 3, 6); `cached` defaults to
+    `verify`, so the root caches its pick (§2.3.5).
+- The ablations switch a flag off: `midian{"verify": false}` = **MIDIAN w/o verification** (label `midian_wo_verify`),
+  `midian{"audit": false}` = **MIDIAN w/o audits** (`midian_wo_audit`), both off = **MIDIAN w/o defenses** (§2.2).
+  Labels come from `rte.analyze.ALIAS` (`rte/analyze.py:21-24`).
+- **Level 0 keeps the engine each variant had before the rename** (`_level0`, `:118-122`): with audits,
+  `_level0_audited` (`:124-157`, per-peer means, trimmed over peers, audits); without audits,
+  `_est.peer_reported_estimates` with `by_reporter=verify` (per-peer trim for MIDIAN w/o audits, per-report trim for MIDIAN
+  w/o defenses). So every stored row is reproduced (216/216 parity rows bit-identical, CHANGES_AND_ERRATA §8g).
+- Former names: MIDIAN was MIDIAN-VA (`midian_va`, class chain `MidianVA(MidianA(MidianSH(Midian)))` with the halving
+  engine off), MIDIAN w/o verification was MIDIAN-A, MIDIAN w/o audits was MIDIAN-V. MIDIAN was pre-registered as V2-11 in
+  TARGETS_rte_v2.md and is a labelled variant added 2026-09-03.
+- **Needs:** `{probe, reports}`. It **never reads declarations** in A/B (`cohort="random"`).
 
-### 2.3.2 MIDIAN-V for reference (`rte/methods/midian_v.py:21-26`)
+### 2.3.2 MIDIAN w/o audits for reference
 
-- It is `Midian(verify=True, cached=True)`. The ALIAS `midian[cached=True,verify=True]` maps to `midian_v`
-  (`rte/analyze.py:21`).
+- It is `Midian(audit=False)`: verification and the cached root pick, no audits. The ALIAS `midian[audit=False]` maps to
+  `midian_wo_audit` (`rte/analyze.py:22`).
 - It is not drawn in A or B (it is not in `ARMS`); it is in the per-family bar figures (`figures/bars/`).
-- It differs from VA only in level 0: plain MIDIAN's `peer_reported_estimates` with `by_reporter=True` (per-peer trim),
-  and no audits.
+- It differs from MIDIAN only in level 0: `peer_reported_estimates` with `by_reporter=True` (per-peer trim), and no
+  audits.
 
-### 2.3.3 Build, step by step (`Midian.build`, `midian.py:103-137`, with VA's overrides)
+### 2.3.3 Build, step by step (`Midian.build`, `midian.py:183-217`, both defenses on)
 
-1. **Split the budget.** `b0 = max(1, min(b, self.b0 or b − 1))` (`:105`). With `b0=None` this gives b0 = b − 1 for
-   b ≥ 2 and **b0 = 1 at b = 1**. Level 0 spends b0 probes per (agent, family). The rest, n·K·(b − b0), is kept for
-   verification.
-2. **Tree.** Identical to plain MIDIAN (`_structure`). It uses the same `view.rng`, so at the same seed it builds the
-   same leaf cohorts as plain MIDIAN (§2.1.4).
-3. **Verification probes per candidate** (`:111-112`).
+1. **Split the budget.** `b0 = max(1, min(b, self.b0 or b − 1))` when `verify` (`:185`; without verification b0 = b).
+   With `b0=None` this gives b0 = b − 1 for b ≥ 2 and **b0 = 1 at b = 1**. Level 0 spends b0 probes per (agent, family).
+   The rest, n·K·(b − b0), is kept for verification.
+2. **Tree.** Identical to MIDIAN w/o defenses (`_structure`). It uses the same `view.rng`, so at the same seed it builds
+   the same leaf cohorts (§2.1.4).
+3. **Verification probes per candidate** (`:191-192`).
    - `C = top · Σ_{l≥1} (#valid child slots at level l)` is the number of forwarded candidates across all upper levels.
    - `e = floor((b − b0)·n / C)` fresh probes are spent per (candidate, family).
    - For r = 10, C ≈ n/9, so **e ≈ 9·(b − b0) = 9 at both b = 3 and b = 5**. Checked: e = 10 at n = 100 and e = 9 at
      n = 1,000.
-   - **At b = 1, b − b0 = 0, so e = 0 and there is no verification at all.** VA at b = 1 is MIDIAN-A with a cached
-     root (DEVIATIONS "Erratum 22", `DEVIATIONS.md:838-839`).
-4. **Level 0, audited** (`MidianSH._level0`, `midian_sh.py:40-78`, with `halving=False`, so `_schedule` returns a single
-   round `[(s, b0)]`, `:14-26`).
+   - **At b = 1, b − b0 = 0, so e = 0 and there is no verification at all.** MIDIAN at b = 1 is MIDIAN w/o verification
+     with a cached root (DEVIATIONS "Erratum 22").
+4. **Level 0, audited** (`_level0_audited`, `midian.py:124-157`): one round of b0 probes per (member, family).
    - Each member is probed b0 times per family. Each of the s − 1 cohort peers reports every outcome
      (`_est.peer_estimate`, `_est.py:69-75`).
-   - Per-peer report sums and counts are stored in `rsum` / `rcnt` (`midian_sh.py:45`, accumulated at `:72`), and each member's reporter ids in `peer_of`
-     (`:59`).
-   - The estimate is `_estimates` (`:80-86`):
+   - Per-peer report sums and counts are stored in `rsum` / `rcnt` (`:130`, accumulated at `:155`), and each member's
+     reporter ids in `peer_of` (`:144`).
+   - The estimate is `_estimates` (`:159-165`):
      - First average each peer's reports about the member (the per-peer mean).
      - Mask the excluded peers (and peers with no reports), unless every peer is excluded.
      - Then apply a **trimmed mean over peers**, dropping `t = min(floor(δ·(s−1)), (v−2)//2)` peers from each end,
        where v is the number of peers left (`_est.py:54-66`). With 9 peers and none excluded, t = 3: the middle 3 of
        9 per-peer means are averaged.
-5. **Audit during the build** (`MidianA._audit`, `midian_a.py:32-37`).
+5. **Audit during the build** (`_audit`, `midian.py:176-181`, called at `:153`).
    - For every level-0 probe instance, the auditor draws uniformly with rate 0.05.
-   - Each drawn instance is **re-run on the same index-seeded instance** with `view.probe_at` (`rte/world.py:412-416`,
+   - Each drawn instance is **re-run on the same index-seeded instance** with `view.probe_at` (`rte/world.py:417`,
      charged as a probe, probe index untouched). The true outcome is compared with **every** peer's report about that
      instance.
-   - Each mismatch is a strike (`_strike`, `:23-30`). A reporter with `STRIKES = 2` mismatches (`:13`) is excluded from
+   - Each mismatch is a strike (`_strike`, `:167-174`). A reporter with `STRIKES = 2` mismatches (`:26`) is excluded from
      every later aggregation. Its later reports are still charged but never used.
    - An honest reporter reports the observed outcome verbatim, so it can only be struck if re-running the same instance
      gives a different outcome. That depends on backend determinism (see Part 1). A liar is struck only when its lie
      actually flips an outcome.
-6. **Verification at promotion** (`Midian._verify`, `midian.py:79-97`, called at every level l ≥ 1, `:123-126`).
+6. **Verification at promotion** (`_verify`, `midian.py:98-116`, called at every level l ≥ 1, `:203-206`).
    - Every candidate forwarded by a child (its per-family best) is re-probed `e` times per family.
    - **Who reports.** The reporters are `self.rep[l−1]` of the **other** r − 1 children of the same parent node. `rep` is
-     **one uniformly random member of each child's subtree** (`:135-136`; comment `:123`: "reporters: RANDOM members of
+     **one uniformly random member of each child's subtree** (`:215-216`; comment `:203`: "reporters: RANDOM members of
      the sibling"). The docstring's "representatives lead[M, r]" is a parameter name. The `self.lead` array computed at
-     `:134` is not used for reporting.
-   - With the default `observers = r − 1` all 9 report. Each report is trimmed by reporter exactly as at level 0. For VA,
-     excluded reporters are masked (`:93-95`).
+     `:214` is not used for reporting.
+   - With the default `observers = r − 1` all 9 report. Each report is trimmed by reporter exactly as at level 0. With
+     audits on, excluded reporters are masked (`:112-114`).
    - The new mean is folded into the candidate's running estimate, weighted by probe count:
-     `est = (est·k + m_new·e)/(k + e)`, where k starts at b0 (`:97`, `:114`). At b = 3, e = 9 outweighs the b0 = 2
+     `est = (est·k + m_new·e)/(k + e)`, where k starts at b0 (`:116`, `:194`). At b = 3, e = 9 outweighs the b0 = 2
      level-0 probes. A candidate forwarded again at the next level is verified again.
-   - The child's summary value is rewritten with the verified estimate (`:125-126`) before the parent compares its
-     children (`:127-136`).
-7. **Build messages** are the same as plain MIDIAN (`:137`).
+   - The child's summary value is rewritten with the verified estimate (`:205-206`) before the parent compares its
+     children (`:207-216`).
+7. **Build messages** are the same as MIDIAN w/o defenses (`:217`).
 
-### 2.3.4 Probe spend (checked by instantiating the classes on a bernoulli world, K = 16, β = 0.5 cartel, seed 1)
+### 2.3.4 Probe spend (checked by instantiating the classes on a bernoulli world, K = 16, β = 0.5 cartel, seed 1; measured before the rename, reproduced by the parity check)
 
-| n | b | MIDIAN probes / n·K·b | MIDIAN-V | MIDIAN-VA |
+| n | b | MIDIAN w/o defenses probes / n·K·b | MIDIAN w/o audits | MIDIAN |
 |---|---|---|---|---|
 | 100 | 1 | 1.000 | 1.000 | **1.045** |
 | 100 | 3 | 1.000 | 1.000 | **1.031** |
@@ -1204,30 +1258,30 @@ it. Routing a task walks down the tree from the root, about log_r n steps, inste
 | 1,000 | 3 | 1.000 | 0.997 | **1.029** (49,383 vs 48,000) |
 | 1,000 | 5 | 1.000 | 0.998 | **1.037** |
 
-- MIDIAN-VA overspends by the audit re-runs: about 0.05·b0/b of the budget, which is ≈5% at b = 1, 3.3% at b = 3 and
+- MIDIAN overspends by the audit re-runs: about 0.05·b0/b of the budget, which is ≈5% at b = 1, 3.3% at b = 3 and
   4% at b = 5.
 - The floor in `e` makes the verification slightly under-spend.
-- This matches DEVIATIONS: "Audited builds exceed the n*K*b cap by the audit rate by design" (`DEVIATIONS.md:690-693`),
-  and the "build spent 49380 probes > budget 48000" warning (`DEVIATIONS.md:904-905`, recorded, not corrected).
-- The runner only warns (`rte/run.py:135-136`), so these rows are kept.
+- This matches DEVIATIONS: "Audited builds exceed the n*K*b cap by the audit rate by design" (2026-09-03, variants fork),
+  and the "build spent 49380 probes > budget 48000" warning (2026-09-16 entry, recorded, not corrected).
+- The runner only warns (`rte/run.py`, `run_method`), so these rows are kept.
 
-### 2.3.5 Routing (`fetch` with `cached=True`, `midian.py:150-151`)
+### 2.3.5 Routing (`fetch` with `cached=True`, `midian.py:230-231`)
 
 - The route returns `cand[-1][0, f]`, the agent the root holds for family f.
 - It is charged 1 comparison, 2 messages and 0 hops.
 - The choice is the same agent a full descent would reach. Only the charged cost differs.
 
-### 2.3.6 Online updates (`MidianA.observe`, `midian_a.py:39-51`)
+### 2.3.6 Online updates (`Midian.observe`, `midian.py:248-264`)
 
-- It first runs plain MIDIAN's `observe`: running mean with pseudo-count `w0` computed from the full b (`midian.py:114`),
-  then a path recompute. With `cached=True` this also refreshes the cached root pick (`midian.py:164-165`).
-- Then, with probability 0.05, it runs an **online audit**:
+- It first runs the running-mean update with pseudo-count `w0` computed from the full b (`:194`, `:252-253`), then a path
+  recompute. With `cached=True` this also refreshes the cached root pick (`:244-245`).
+- Then, with audits on and probability 0.05, it runs an **online audit** (`:254-264`):
   - The routed outcome is put to the routed agent's cohort peers through the report channel, charged s − 1 reports.
   - Each peer's claim is compared with the true outcome, adding strikes.
   - If a reporter is newly excluded, every member of that reporter's cohort is re-aggregated from the stored level-0
     per-peer means, and the cohort's path is recomputed for all K families.
 - That re-aggregation **overwrites** those members' online running-mean updates and their promotion-verification folds.
-  DEVIATIONS notes the first effect ("rare event; noted, not fixed", `DEVIATIONS.md:694-695`). The loss of the
+  DEVIATIONS notes the first effect ("rare event; noted, not fixed", 2026-09-03 variants-fork entry). The loss of the
   verification fold is not mentioned there.
 - **Per-task run cost:**
   - 1 comparison and 2 messages to route.
@@ -1237,7 +1291,7 @@ it. Routing a task walks down the tree from the root, about log_r n steps, inste
 
 ### 2.3.7 Behaviour with liars
 
-- VA never reads declarations, so declared lies have no effect on it.
+- MIDIAN never reads declarations, so declared lies have no effect on it.
 - Report lies are fought three ways:
   1. **By-peer trimming** removes 3 of 9 peers per side, which is robust to a colluding peer's b correlated reports.
   2. **Audits** exclude a reporter caught twice.
@@ -1247,32 +1301,38 @@ it. Routing a task walks down the tree from the root, about log_r n steps, inste
 
 ### 2.3.8 Hyperparameters
 
-- r = 10 and δ = 1/3 are plain MIDIAN's defaults.
-- The audit rate 0.05 is the default in `MidianA.__init__` (`:19`), and `STRIKES = 2` is marked "work order 1.2" (`:13`).
+- r = 10 and δ = 1/3 are the tree's defaults.
+- The audit rate 0.05 is `AUDIT_RATE` (`midian.py:27`, used when `audit=True`), and `STRIKES = 2` is marked "work order
+  1.2" (`:26`).
 - `b0 = b − 1` and `observers = r − 1` are defaults.
 - None of these was tuned on reported seeds, as far as the code and grid comments show.
 
-### 2.3.9 The "leaf cohort" and the VA-cohort shortlist (used by the frameworks' `va_cohort` source)
+### 2.3.9 The "leaf cohort" and the MIDIAN-cohort shortlist (used by the frameworks' `va_cohort` source)
 
-- With `retrieval="midian_va"`, `FrameworkMethod.build` builds its own `MidianVA(r=self.r)` inside the framework unit
-  (`rte/methods/frameworks/_common.py:290-292`). That instance spends its own probes, including the audit overspend.
-- `retrieve` then returns VA's pick first, followed by the other members of **that pick's leaf cohort**,
+- With `retrieval="midian"` (before the rename `"midian_va"`), `FrameworkMethod.build` builds its own `Midian(r=self.r)`
+  inside the framework unit (`rte/methods/frameworks/_common.py:290-292`). That instance spends its own probes, including
+  the audit overspend. (`retrieval="midian_wo_audit"`, formerly `"midian"`, builds `Midian(audit=False)` instead; that
+  cohort is not drawn.)
+- `retrieve` then returns MIDIAN's pick first, followed by the other members of **that pick's leaf cohort**,
   `leaves[leaf_of[a]]` (`_common.py:313-317`). That is at most r = 10 agents, all probed and peer-reported together at
   level 0.
-- The framework's `observe` forwards the outcome to the embedded VA (`_common.py:337-338`).
-- The framework's `needs` gain probe and reports (`_common.py:161`) on top of declared. The embedded VA's `view.rng` is
-  therefore seeded with a **different `needs` set** than a standalone `midian_va`, so its cohorts need not match the
-  standalone arm's cohorts at the same seed.
+- The framework's `observe` forwards the outcome to the embedded MIDIAN (`_common.py:337-338`).
+- The framework's `needs` gain probe and reports (`_common.py:160-161`) on top of declared. The embedded MIDIAN's
+  `view.rng` is therefore seeded with a **different `needs` set** than a standalone `midian`, so its cohorts need not
+  match the standalone arm's cohorts at the same seed.
+- The source key stays `va_cohort` in code and CSVs (`shortlist_figs.source`, `figspec.SHORTLIST_*`); its display name is
+  "MIDIAN cohort".
 
-### 2.3.10 MIDIAN-VA as the reference line in E, F and H
+### 2.3.10 MIDIAN as the reference line in E, F and H ("MIDIAN, no framework")
 
-- `shortlist_figs.collect` takes rows with `method == "midian_va"` at b = 3 (`rows`, `shortlist_figs.py:82-88`) from
-  `REF_GRIDS` (`:72-76`), matched on (n, dist, regime). The grid with the most seeds wins.
+- `shortlist_figs.collect` takes rows with `method == "midian"` and params `{}` (the full method, `shortlist_figs.py:120`)
+  at b = 3 (`rows`, `:81-87`) from `REF_GRIDS` (`:71-75`), matched on (n, dist, regime). The grid with the most seeds wins.
+  Its label in `figures/shortlist/*.csv` is `figspec.NAME["midian_ref"]` = "MIDIAN, no framework" (`:138`).
 - The condensed E, F and H figures draw the **honest (β = 0)** line only, across both the honest and the cartel bars
-  (`lines`, `scripts/shortlist_condensed.py:54-58`: `ref.loc[(n, "beta0")]`).
+  (`lines`, `scripts/shortlist_condensed.py:70-76`: `ref.loc[(n, "beta0")]`), green solid (`figspec.ref`).
 - In H the line comes from `routereval_mmlu_norep_cal` (m = 10, 100, 1,000) and `routereval5k_norep_cal` (5,000)
-  (`H30_REF`, `shortlist_figs.py:43`), because every H erratum-30 grid is complete (`h30()`, §5.5): calibrated claims,
-  no repeated test prompts (so MIDIAN-VA can no longer memorise answers, the +0.02 of leakage audit L10 on the old
+  (`H30_REF`, `shortlist_figs.py:42`), because every H erratum-30 grid is complete (`h30()`, §5.5): calibrated claims,
+  no repeated test prompts (so MIDIAN can no longer memorise answers, the +0.02 of leakage audit L10 on the old
   `routereval_mmlu` line), shuffled agent order, Q = 300. Honest values 0.7080 / 0.6653 / 0.6860 / 0.7389 at m = 10 /
   100 / 1,000 / 5,000. It is drawn over every H shortlist.
 
@@ -1300,7 +1360,7 @@ it. Routing a task walks down the tree from the root, about log_r n steps, inste
 
 ---
 
-## 2.5 Flat probe argmax, online (label "flat probe argmax (online)")
+## 2.5 Flat probe argmax, online (label "flat probe argmax")
 
 **File:** `rte/methods/flat_probe_argmax.py`. **Needs:** `{probe}`. **Params:** `online=True`, `cached=False`
 (ALIAS `rte/analyze.py:20`). METHODS.md (SPEC §6) calls it "the key control": MIDIAN's probes without the tree or the
@@ -1448,7 +1508,7 @@ and charge n comparisons per fetch.
 
 ---
 
-## 2.8 The "learned router" pool (candidates for "best learned router")
+## 2.8 The "learned router" pool (candidates for "best learned/declared router")
 
 ### 2.8.1 `knn_router` and `knn_router_online` (`rte/methods/knn_router.py`)
 
@@ -1529,11 +1589,11 @@ and charge n comparisons per fetch.
 
 | label | file | why it is not in A/B | one-line mechanism |
 |---|---|---|---|
-| `midian_v` | `midian_v.py` | not in `ARMS`; appears in D | §2.3.2 |
-| `midian_a` | `midian_a.py` | not in `ARMS`; appears in D | VA without promotion verification and without the cached pick. At b = 1, VA ≡ A in its picks |
-| `midian_sh`, `midian_sha` | `midian_sh.py`, `midian_sha.py` | `DO_NOT_ADD` (`scripts/extra_figs.py:121`) | successive halving inside each cohort, spending exactly s·b probes. `_schedule` raises when b is too small (`midian_sh.py:23-25`) |
-| `midian[r=5]`, `midian_v_r5`, r = 20 | `midian.py` | `excluded`: r ≠ 10 | same tree, different r |
-| `midian[online=False]` | `midian.py` | `DO_NOT_ADD` | frozen internals ablation |
+| `midian_wo_audit` (MIDIAN w/o audits, formerly `midian_v`) | `midian.py` | not in `ARMS`; in `figures/bars/` | §2.3.2 |
+| `midian_wo_verify` (MIDIAN w/o verification, formerly `midian_a`) | `midian.py` | not in `ARMS`; in `figures/bars/` | MIDIAN without promotion verification and without the cached pick. At b = 1, MIDIAN ≡ MIDIAN w/o verification in its picks |
+| successive-halving MIDIAN variants (formerly `midian_sh`, `midian_sha`) | deleted 2026-09-24 | withdrawn; rows moved to `_premigration_v2` backups (CHANGES_AND_ERRATA §8g) | successive halving inside each cohort, spending exactly s·b probes |
+| `midian[r=5]`, `midian_wo_audit_r5`, r = 20 | `midian.py` | `excluded`: r ≠ 10 | same tree, different r |
+| `midian[audit=False,online=False,verify=False]` | `midian.py` | `DO_NOT_ADD` | frozen internals ablation |
 | `midian[cohort=...]`, `stratify=True` | `midian.py:23-66` | `_VARIANT` regex | budget-neutral cohort modes (`block`, `specialty`, `declared`; `declared` adds needs `declared`) |
 | `midian_llm_descent` | `midian_llm_descent.py` | `DO_NOT_ADD` | an LLM chooses among children at each level; argmax fallback |
 | `sequential_halving`, `sequential_halving_peer` | `sequential_halving.py` | `HIDE_HALVING = True` (TEMPORARY, 2026-09-22, `scripts/extra_figs.py:130,138`); the plain trusted-observer arm is also in `DO_NOT_ADD` | per-family fixed-budget best-arm identification, n·b probes per family. `peer_reported` scores through r − 1 random peer reports, per-reporter trimmed |
@@ -1554,10 +1614,10 @@ and charge n comparisons per fetch.
 
 | label in A/B | code name + params | reads (`needs`) | build probes | run-time probes | trusts declarations? | tuned? |
 |---|---|---|---|---|---|---|
-| MIDIAN-VA | `midian_va` {} (r = 10, δ = 1/3, b0 = b − 1, audit 0.05, 2 strikes, cached) | probe, reports | n·K·b·(1 + 0.05·b0/b): **+5% / +3.3% / +4%** at b = 1 / 3 / 5 (the floor in e trims slightly) | 0 (≈0.45 audit **reports** per task) | no | no (pre-registered V2-11; defaults) |
-| MIDIAN | `midian` {} (r = 10, δ = 1/3, online) | probe, reports | exactly n·K·b | 0 | no | no (SPEC §5) |
-| flat probe argmax (online) | `flat_probe_argmax` {online: true} | probe | exactly n·K·b | 0 | no | no |
-| best learned router ∋ | `knn_router` / `knn_router[online=True]` (k = b) | probe | n·K·b | 0 | no | no |
+| MIDIAN | `midian` {} (audit and verify on; r = 10, δ = 1/3, b0 = b − 1, audit 0.05, 2 strikes, cached) | probe, reports | n·K·b·(1 + 0.05·b0/b): **+5% / +3.3% / +4%** at b = 1 / 3 / 5 (the floor in e trims slightly) | 0 (≈0.45 audit **reports** per task) | no | no (pre-registered V2-11; defaults) |
+| MIDIAN w/o defenses | `midian` {audit: false, verify: false} (r = 10, δ = 1/3, online) | probe, reports | exactly n·K·b | 0 | no | no (SPEC §5) |
+| flat probe argmax | `flat_probe_argmax` {online: true} | probe | exactly n·K·b | 0 | no | no |
+| best learned/declared router ∋ | `knn_router` / `knn_router[online=True]` (k = b) | probe | n·K·b | 0 | no | no |
 | | `mlp_router` (128 hidden, 30 iter, random_state 0) | probe | n·K·b | 0 | no | no |
 | | `flat_nsw_router` (M 16, ef 50, efc 200) | probe | n·K·b | 0 | no | no |
 | | `cluster_head_router` (r 10, 5 iter, bucket 20k) | declared | **0** | 0 | **yes** | no |
@@ -1578,9 +1638,9 @@ and charge n comparisons per fetch.
 
 | arm | comparisons | hops | messages | reports |
 |---|---|---|---|---|
-| MIDIAN | r·depth (fetch) + r·depth (observe) | depth | 2·depth + depth | 0 |
-| MIDIAN-VA | 1 + r·depth | 0 | 2 + depth | ≈0.05·(r − 1) |
-| flat probe argmax (online), bandits, knn, mlp | n | 0 | 0 | 0 |
+| MIDIAN w/o defenses | r·depth (fetch) + r·depth (observe) | depth | 2·depth + depth | 0 |
+| MIDIAN | 1 + r·depth | 0 | 2 + depth | ≈0.05·(r − 1) |
+| flat probe argmax, bandits, knn, mlp | n | 0 | 0 | 0 |
 | flat_nsw_router | ef = 50 | ⌈log2 n⌉ | 0 | 0 |
 | cluster_head_router | #heads + cluster size | 2 | 4 | 0 |
 | disrouter_cascade | 0 | pos | pos | 0 |
@@ -1591,65 +1651,67 @@ and charge n comparisons per fetch.
 
 ## 2.12 Discrepancies and open questions
 
-1. **Plain MIDIAN trims reports, not reporters.** METHODS.md §2 says plain MIDIAN takes "a trimmed mean over reporters
+1. **MIDIAN w/o defenses trims reports, not reporters.** METHODS.md §2 says plain MIDIAN (now MIDIAN w/o defenses) takes "a trimmed mean over reporters
    (drop ⌊δ(r−1)⌋ from each end) ... so up to that many liars per cohort are absorbed". The code trims `trim_k` = 3
    **single reports** per side out of (r − 1)·b (`_est.py:43-45,117-121`). DEVIATIONS `:688` states this correctly.
-   METHODS.md overstates plain MIDIAN's robustness at b ≥ 2.
-2. **MIDIAN-A / VA per-task cost.** METHODS.md §2 says MIDIAN-A costs "1.05× build probes, nothing per task". The code's
-   online audit charges s − 1 reports on 5% of routed outcomes (`midian_a.py:39-46`), and the observe path recompute is
+   METHODS.md overstates MIDIAN w/o defenses' robustness at b ≥ 2.
+2. **MIDIAN w/o verification / MIDIAN per-task cost.** METHODS.md §2 says MIDIAN w/o verification costs "1.05× build probes, nothing per task". The code's
+   online audit charges s − 1 reports on 5% of routed outcomes (`midian.py:254-259`), and the observe path recompute is
    charged too.
-3. **MIDIAN-VA overspend** is 5% of the level-0 probes, i.e. 5% / 3.3% / 4% of the budget at b = 1 / 3 / 5. It is not a
+3. **MIDIAN overspend** is 5% of the level-0 probes, i.e. 5% / 3.3% / 4% of the budget at b = 1 / 3 / 5. It is not a
    flat "+5%" and not "≤ 5% of build" in the usual sense. The runner only warns (`rte/run.py:135-136`). A/B bars compare
-   VA at up to 1.05 n·K·b against rivals at ≤ n·K·b.
-4. **At b = 1, MIDIAN-VA has no promotion verification** (e = 0), so its b = 1 bar is "MIDIAN-A + cached root". This
-   matches DEVIATIONS Erratum 22 (`:838-839`). Paper text should not describe VA's b = 1 bars as "verified".
+   MIDIAN at up to 1.05 n·K·b against rivals at ≤ n·K·b.
+4. **At b = 1, MIDIAN has no promotion verification** (e = 0), so its b = 1 bar is "MIDIAN w/o verification + cached root". This
+   matches DEVIATIONS Erratum 22 (`:838-839`). Paper text should not describe MIDIAN's b = 1 bars as "verified".
 5. **The bandit pool was edited post hoc.** `warm_start_bandit[n0=0.5]` (tuned on seeds 11-15) is in the pool at every b;
    `linucb_honest` was replaced by `linucb_honest[bonus=own]`, which is now the most frequent best-bandit pick (22 of 54
    bars); TrueSkill counts only from post-probe-fix rows. The pre-registered n0 = 5 arm would be withheld on unswitched
-   non-live rows (`condensed_figs.py:35-41, 74`); no family is unswitched, so it competes everywhere. None of this is
+   non-live rows (`condensed_figs.py:34-40, 73`); no family is unswitched, so it competes everywhere. None of this is
    marked on the figures (protocol audit F7).
 6. **CHANGES §8d does not record the tuning.** §8d (`CHANGES_AND_ERRATA.md:388-398`) says "Reported numbers are
    unchanged (the rival is as pre-registered)" and does not mention the n0 = 0.5 tuning or its 0.762 result. The only
    record is the grid comment (`configs/grid.yaml:1029-1030,1058-1059`). I found no results file confirming 0.762.
-7. **The "best learned router" pool contains declaration-only and non-learned methods.** It includes
+7. **The "best learned/declared router" pool contains declaration-only and non-learned methods.** It includes
    `cluster_head_router` and `disrouter_cascade` (no probes, declared-only) and `flat_nsw_router` (an ANN over probe
-   means). `flat_nsw_router` is the majority pick in 21 of the 54 A / B bars (every replay 10^6 bar, bernoulli 10^7 at
-   b = 3 / 5, most RouterEval 5,000 bars, live 10^4 b = 1 / 3); the declared-only pair in 5, all at b = 1. The legend
-   label "best learned router" is misleading for those bars; the CSV's `chosen` column says which arm was picked.
+   means). `flat_nsw_router` is the majority pick in 19 of the 54 A / B bars (every replay 10^6 bar, bernoulli 10^7 at
+   b = 3 / 5, most RouterEval 5,000 bars, live 10^4 b = 1 / 3); the declared-only pair in 3, all at b = 1. The legend
+   label "best learned/declared router" names the declared-only pair but not the ANN index; the CSV's `chosen` column says which arm was picked.
 8. **Candidates that ran on only some seeds.** `crossfit` lets a candidate compete only on the seeds it has
    (`seed_tables.py:131-132`). `arms_at` flags this: a member missing on any scored seed is listed as "missing or
-   partial" in `chosen` and turns the title ` *` on (`condensed_figs.py:77-78`).
+   partial" in `chosen`, and the script and `scripts/ops/figure_status.py` report it (`condensed_figs.py:76-77`, §1.8.4).
 9. **The whiskers of the pooled bars are ±1 s.e. of the cross-fitted per-seed scores.** They include the variation of
    the pick across seeds, but with 3 seeds (live 10^4 / 10^5, RouterEval) each seed's pick rests on 2 others (4 on
    LLMRouterBench, 29 on replay, 99 on bernoulli).
 10. **TrueSkill docstring vs code.** The docstring says pairs are probed "on the same instance". The code probes each
     agent at its own index-seeded instance (`trueskill_per_family.py:47-48`, `world.py:346`).
 11. **`_verify` docstring vs code.** The docstring says reporters are the "representatives lead[M, r]". The call passes
-    `self.rep` (a random subtree member, `midian.py:123-124,135-136`). `self.lead` is computed (`:134`) but never used
+    `self.rep` (a random subtree member, `midian.py:203-204, 215-216`). `self.lead` is computed (`:214`) but never used
     for reporting.
-12. **Padded upper-level nodes.** In `_verify` (`midian.py:86-87`), empty slots are filled with slot 0's representative.
+12. **Padded upper-level nodes.** In `_verify` (`midian.py:105-106`), empty slots are filled with slot 0's representative.
     If the candidate's own child is slot 0, a reporter from the candidate's own subtree (possibly the candidate itself)
     can be used. Could not determine how often this occurs; it only affects short nodes.
 13. **A new exclusion discards the verification fold.** When an online audit excludes a reporter, the cohort's estimates
-    are rebuilt from level-0 reports only (`midian_a.py:47-51`), discarding promotion-verification folds as well as
+    are rebuilt from level-0 reports only (`midian.py:260-264`), discarding promotion-verification folds as well as
     online updates. DEVIATIONS mentions only the online updates.
-14. **Embedded VA vs standalone VA.** The framework adapter's embedded `MidianVA` uses a `view.rng` seeded with the
-    framework's `needs` ({declared, probe, reports}), so its cohorts differ from the standalone `midian_va` at the same
-    seed. The E/F/H "MIDIAN-VA (whole population)" line and the `va_cohort` shortlist therefore do **not** share a tree.
-15. **Reference-line filter.** `shortlist_figs.collect` filters reference rows by `method == "midian_va"` without
-    checking params (`shortlist_figs.collect`). If a REF_GRID held `midian_va` with non-default params (for
-    example `cohort=block`, `r=20`), those rows would be pooled into the line. I did not check the row files.
-16. **Honest-only reference lines.** The E/F/H lines use the honest regime's MIDIAN-VA and oracle for the cartel bars
-    too (`shortlist_condensed.py:54-58`). B also normalises cartel bars by the honest oracle. The oracle is identical
-    across regimes by construction, but MIDIAN-VA is not.
+14. **Embedded MIDIAN vs standalone MIDIAN.** The framework adapter's embedded `Midian(r)` uses a `view.rng` seeded with
+    the framework's `needs` ({declared, probe, reports}), so its cohorts differ from the standalone `midian` at the same
+    seed. The E/F/H "MIDIAN, no framework" line and the MIDIAN-cohort (`va_cohort`) shortlist therefore do **not** share a
+    tree.
+15. **Reference-line filter (resolved by the rename).** Before the rename `shortlist_figs.collect` filtered reference rows by
+    `method == "midian_va"` without checking params, so a REF_GRID row with non-default params (for example
+    `cohort=block`, `r=20`) would have been pooled into the line. Since `midian` also names the ablations, the filter now
+    requires params `{}` (`shortlist_figs.py:120`), which excludes every variant.
+16. **Honest-only reference lines.** The E/F/H lines use the honest regime's MIDIAN and oracle for the cartel bars
+    too (`shortlist_condensed.py:70-76`). B also normalises cartel bars by the honest oracle. The oracle is identical
+    across regimes by construction, but MIDIAN is not.
 17. **METHODS.md minor points.**
     - `llm_supervisor` is listed with k = 10; the code default is k = 20 (`llm_supervisor.py:22`). The grids may
       override it; not checked.
     - `mlp_router` "does not fit above 10^4": it is in fact excluded **at** 10^4 by the grids (`DEVIATIONS.md:727`),
       and the code has no guard.
-18. **MIDIAN's online pseudo-count overstates information.** MIDIAN's online `w0` counts reports (21 at b = 3),
-    not independent probes (3), so a build estimate carries 21 pseudo-observations. For VA, `w0` uses the full b while
-    level 0 used b0 (`midian.py:114`). This is a design choice, not documented anywhere I found.
+18. **MIDIAN's online pseudo-count overstates information (every variant).** MIDIAN's online `w0` counts reports (21 at b = 3),
+    not independent probes (3), so a build estimate carries 21 pseudo-observations. For the variants with verification (MIDIAN, MIDIAN w/o
+    audits), `w0` uses the full b while level 0 used b0 (`midian.py:185, 194`). This is a design choice, not documented anywhere I found.
 
 ---
 
@@ -1708,7 +1770,7 @@ framework names no valid candidate, the adapter falls back to declared argmax wi
    and picks one URL uniformly at random with an unseeded `np.random.default_rng()` (`_common.py:97-106`). The pick is
    repeated on every call (`:367`), so replicas that join mid-run get traffic.
 4. `view.ledger.message(view.n)`: every agent sends its description to the registry once (`:289`).
-5. MIDIAN modes only: it builds `Midian(verify=True, cached=True, r)` (MIDIAN-V) or `MidianVA(r)` on the same view and budget (`:290-292`). **This spends the probe budget** (3.4.10).
+5. MIDIAN modes only: it builds `Midian(r)` (retrieval `midian`, both defenses) or `Midian(audit=False, r)` (retrieval `midian_wo_audit`, MIDIAN w/o audits) on the same view and budget (`:290-292`). **This spends the probe budget** (3.4.10).
 
 ### 3.2.3 `_index(view)` (`_common.py:294-310`)
 `scripts/embed_routereval.py` calls exactly this function, on a GPU, to pre-warm caches.
@@ -1869,7 +1931,7 @@ Notes that apply to all of them:
 - **Magentic-One exclusions.** It is left out of every RouterEval framework grid and of `fw_live_n10k_cartel` and its `_dd`, `_em`, `_sota`, `_shapes` and `_verified_va` mirrors, "for time (18 s/task)" (`grid.yaml:515-526`, `528-540`; `DEVIATIONS.md` §"Frameworks on RouterEval's 5,000-LLM pool"). It **is** included in:
   - `fw_live_n10k_cartel_backfill` (it inherits `*fw10_backfill`, all ten frameworks);
   - `fw_live_n10k_cartel_magentic` (`grid.yaml:1129-1132`): Magentic-One alone at the 10^4 cartel, under TF-IDF, MiniLM,
-    fusion + reranker and the VA cohort, with the honest grids' params;
+    fusion + reranker and the MIDIAN cohort, with the honest grids' params;
   - `lie_max_fw_n10k` (`*fw10_declared`);
   - every other live grid.
 - The CAMEL rows of `fw_routereval_1k` are partial: 8/30 units, excluded from the published ranges according to DEVIATIONS.
@@ -1878,10 +1940,10 @@ Notes that apply to all of them:
 
 ## 3.4 Every shortlist variant
 
-The figure label comes from `source(params)` in `scripts/shortlist_figs.py:59-70`. It works as follows:
+The source key comes from `source(params)` in `scripts/shortlist_figs.py:58-69`; its display name from `figspec.SHORTLIST_BODY` / `SHORTLIST_APPENDIX` (condensed figures) or `shortlist_figs._LONG` (per-condition figures). It works as follows:
 - Rows with `supervisor` or `lie_text` in their params → not drawn.
 - `retrieval` absent: `dedup` → not drawn; otherwise `tfidf`.
-- `midian_va` with `r == 10` and no `shuffle` → `va_cohort`.
+- `midian` (the full method's cohort; `midian_va` before the rename) with `r == 10` and no `shuffle` → `va_cohort`; `midian_wo_audit` (formerly `midian`) → not drawn.
 - `embed` → `dense[_icomp|_idemo]` if the `embed_model` contains "Qwen", else `embed` (MiniLM).
 - `sota` → `sota[_icomp|_idemo]`. The tag comes from the substring "competent" or "demonstrated" in `embed_instruct`.
 - `bm25` and `declared` keep their names.
@@ -1891,7 +1953,7 @@ Display names come from `SOURCES` (`shortlist_figs.py:30-36`); short legend name
 - Fig E draws `MAIN`, which is every source except `bm25` and `dense` (`:29`).
 - Fig H draws `MAIN` too (`:143-144`), on the RouterEval rows. Every RouterEval grid named in 3.4.1–3.4.10 (`fw_routereval_*`, `re_sl_*`) reaches H only through its `_norep_cal` mirror (calibrated claims, no repeated prompts, shuffled agents; §5.5); the rows of the grids themselves are no longer drawn.
 
-### 3.4.1 `tfidf`: pre-registered hashed TF-IDF (label "hashed TF-IDF (pre-registered)" / "TF-IDF (pre-reg.)")
+### 3.4.1 `tfidf`: pre-registered hashed TF-IDF (condensed label "hashed TF-IDF"; "hashed TF-IDF (pre-registered)" in `figures/shortlist/`)
 - **Params:** none, i.e. the defaults `retrieval="tfidf"`, `dedup=False`, `k=10`.
 - **Grids:**
   - `fw_live_n1000` and `fw_live_n100` (+ `_lowskill`)
@@ -1940,7 +2002,7 @@ Display names come from `SOURCES` (`shortlist_figs.py:30-36`); short legend name
   - RouterEval: no cache, unless `RTE_EMBED_CACHE_DIR` is set. It is recomputed on CPU per unit, which is cheap.
 - **Liars:** live text only. RouterEval rendered numbers, so manipulable as in 3.4.1.
 
-### 3.4.5 `dense`: Qwen3-Embedding-8B with its stock instruction (label "Qwen3-8B dense" / "dense")
+### 3.4.5 `dense`: Qwen3-Embedding-8B with its stock instruction (condensed label "dense (Qwen3-8B)", appendix "dense (Qwen3-8B), no instr."; "Qwen3-8B dense" in `figures/shortlist/`)
 - **Params:** `{retrieval: embed, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B}` (`&fw10_dense`, `grid.yaml:702-711`).
 - **Grids:** `fw_live_n1000_sota` only (the 10^3 ablation). Not in Fig E's `MAIN`.
 - **Query side:**
@@ -1948,7 +2010,7 @@ Display names come from `SOURCES` (`shortlist_figs.py:30-36`); short legend name
   - Documents get no prompt (`_common.py:253-254,270`).
 - **Hardware:** bf16 on GPU (`_learned.py:29-31`). A routing unit with no cached block and no GPU raises instead of computing (`_common.py:259-263`).
 
-### 3.4.6 `dense_icomp` / `dense_idemo`: Qwen3 dense with a task instruction (labels "Qwen3-8B dense, I-competent" / "I-demonstrated"; "dense, I-comp" / "dense, I-demo")
+### 3.4.6 `dense_icomp` / `dense_idemo`: Qwen3 dense with a task instruction (appendix labels "dense, competence instr." / "dense, demonstration instr."; in the body figures the better of the variants is drawn as "dense (Qwen3-8B)"; "Qwen3-8B dense, I-competent" / "I-demonstrated" in `figures/shortlist/`)
 - **Exact instruction strings** (`grid.yaml`; each appears on 30 / 20 lines, plus 18× on each of the three flow-style `re_sl_embed_*` lines):
   - **I-comp:** `"Given a task family, retrieve agents that are competent at solving tasks of that family"` (cache tag `_i0258be9d`)
   - **I-demo:** `"Given a task family, retrieve agents whose demonstrated skill at that family is highest"` (cache tag `_i06c7d226`)
@@ -1966,7 +2028,7 @@ Display names come from `SOURCES` (`shortlist_figs.py:30-36`); short legend name
 - **Grids:** every `*_sota` grid and `fw_live_n100k_sota_instruct`.
 - **Figures:** excluded by `source()` ("fusion without the reranker").
 
-### 3.4.8 `sota`, `sota_icomp`, `sota_idemo`: fusion + cross-encoder (labels "fusion + reranker[, I-competent / I-demonstrated]"; "rerank[, I-comp / I-demo]")
+### 3.4.8 `sota`, `sota_icomp`, `sota_idemo`: fusion + cross-encoder (body label "fusion + reranker" for the best variant; appendix "fusion + reranker, no instr." / ", competence instr." / ", demonstration instr."; "fusion + reranker[, I-competent / I-demonstrated]" in `figures/shortlist/`)
 - **Algorithm** (`sota_shortlist`, `_common.py:76-86`), per family f:
   1. `fused = RRF(BM25[f][pool], (Xa @ Xf[f])[pool])`.
   2. Take the top `rerank_pool = 50` of the pool by `fused`.
@@ -1981,7 +2043,7 @@ Display names come from `SOURCES` (`shortlist_figs.py:30-36`); short legend name
   - I-comp and I-demo: `fw_live_n100k_sota_instruct` (sota I-comp, sota I-demo, hybrid I-comp), the backfill grids, and `re_sl_embed_*`.
 - **Liars:** live text only. On RouterEval, rendered numbers (manipulable).
 
-### 3.4.9 `declared`: declared top-k (label "declared-claim top-k" / "declared top-k")
+### 3.4.9 `declared`: declared top-k (condensed label "declared top-k"; "declared-claim top-k" in `figures/shortlist/`)
 - **Params:** `{retrieval: declared, dedup: true}` (`&fw10_declared`, `grid.yaml:832-843`).
 - **Grids:**
   - `fw_live_n100k_declared`
@@ -2000,25 +2062,25 @@ Display names come from `SOURCES` (`shortlist_figs.py:30-36`); short legend name
   - Honest agents' declared values: on live, `D_self_described` is the model's own self-rating (`llm.py:212-230`), so the live declared top-k (E–G) ranks by real, weakly informative claims. H reads the `re_sl_declared_*_norep_cal` reruns, whose claims are `calibrated` (drawn from the live self-rating's distribution given S, 11 values; §1.3.3), so the honest declared top-k is no longer close to an oracle ranking (it was on the old `programmatic` rows, S + N(0, 0.05)), and the rendered description text the frameworks read comes from the same calibrated claims. With 11 values many agents tie; `shuffle: true` makes the lowest-index tie-break random instead of weakest-first.
 - **Hardware:** needs no GPU or cache.
 
-### 3.4.10 `va_cohort` (retrieval `midian_va`) and `midian` (MIDIAN-V cohort, not drawn)
-- **Params:**
-  - `{retrieval: midian_va, r: 10}`. Grids: `fw_live_n1000_verified_va`, `fw_live_n1000_verified_va_lowskill`, `fw_live_n100_verified_va[_lowskill]`, `fw_live_n10k_verified_va`, `fw_live_n10k_cartel_verified_va` (9 frameworks), `fw_live_n100k_verified_va`, and `fw_routereval_{small,1k,5k}_va` (9).
-  - `midian`: `{retrieval: midian, r: 10 | 5}` in `fw_live_n1000_verified` and `fw_live_n100_verified`. The label is None (the MIDIAN-V cohort is not drawn).
+### 3.4.10 `va_cohort` (retrieval `midian`, the MIDIAN cohort) and `midian_wo_audit` (MIDIAN w/o audits cohort, not drawn)
+- **Params** (stored rows were migrated to the new values; grid names keep `va`):
+  - `{retrieval: midian, r: 10}` (before the rename `midian_va`). Grids: `fw_live_n1000_verified_va`, `fw_live_n1000_verified_va_lowskill`, `fw_live_n100_verified_va[_lowskill]`, `fw_live_n10k_verified_va`, `fw_live_n10k_cartel_verified_va` (9 frameworks), `fw_live_n100k_verified_va`, and `fw_routereval_{small,1k,5k}_va` (9).
+  - `{retrieval: midian_wo_audit, r: 10 | 5}` (before the rename `midian`) in `fw_live_n1000_verified` and `fw_live_n100_verified`. `source()` returns None (the MIDIAN w/o audits cohort is not drawn).
 - **Mechanism:**
-  - `build` constructs `MidianVA(r=10)`, i.e. `MidianA(verify=True, cached=True)` (`rte/methods/midian_va.py:10-14`), and calls its full `build(view, budget)` (`_common.py:290-292`).
-  - `retrieve` returns `[VA's cached root pick for the family] + the other members of that pick's leaf cohort`, up to 10 agents, pick first (`_common.py:313-319`). The cohort is random (plain `cohort="random"`).
-  - `fetch` also calls `self.mid.fetch`, which charges 1 comparison and 2 messages (`midian.py:149-151`), and then charges the framework ledger on top.
-  - `observe` forwards the **framework's chosen agent's** outcome to MIDIAN-VA (`_common.py:337-338`). MIDIAN-VA keeps learning online, including its 5 % report audits, from the framework's routing. That is why prefetch is disabled (`:346`).
-- **Yes, it spends probes: the same budget as a MIDIAN-VA arm.**
-  - At the grid's `b = 3`, the level-0 estimate uses `b0 = b − 1 = 2` probes per (agent, family). The remaining `(b − b0)·n` per family is spent on verification re-probes at promotion (`midian.py:105,111-113`).
+  - `build` constructs `Midian(r=10)` (both defenses; `Midian(audit=False, r=10)` for `midian_wo_audit`) and calls its full `build(view, budget)` (`_common.py:290-292`).
+  - `retrieve` returns `[MIDIAN's cached root pick for the family] + the other members of that pick's leaf cohort`, up to 10 agents, pick first (`_common.py:313-319`). The cohort is random (plain `cohort="random"`).
+  - `fetch` also calls `self.mid.fetch`, which charges 1 comparison and 2 messages (`midian.py:230-231`), and then charges the framework ledger on top.
+  - `observe` forwards the **framework's chosen agent's** outcome to MIDIAN (`_common.py:337-338`). MIDIAN keeps learning online, including its 5 % report audits, from the framework's routing. That is why prefetch is disabled (`:346`).
+- **Yes, it spends probes: the same budget as a MIDIAN arm.**
+  - At the grid's `b = 3`, the level-0 estimate uses `b0 = b − 1 = 2` probes per (agent, family). The remaining `(b − b0)·n` per family is spent on verification re-probes at promotion (`midian.py:185, 191-192`).
   - The total is n·K·b = 48n probes at K = 16: 48,000 at n = 10^3 and 4.8 M at 10^5.
-  - MIDIAN-A's build audits add up to 5 % (`midian_a.py:1-8`).
+  - MIDIAN's build audits add up to 5 % (`AUDIT_RATE`, `midian.py:27`; §2.3.4).
   - Probes and peer reports are charged to the row's `build_*` ledger columns.
   - The fallback, still declared argmax within the cohort, needs `declared`, which is kept in `needs`.
 - **Liars:** they can distort the cohort only through the peer reports, which the audits and exclusion check, and through the fallback. Descriptions play no part in which agents are shortlisted.
 
 ### 3.4.11 `shuffle`: position control, not a shortlist source
-- **Params:** `{retrieval: midian_va, r: 10, shuffle: true}`. Grid: `fw_live_n100k_verified_va_shuffled` (`grid.yaml:852-871`).
+- **Params:** `{retrieval: midian, r: 10, shuffle: true}` (`midian_va` before the rename). Grid: `fw_live_n100k_verified_va_shuffled` (`grid.yaml:852-871`).
 - **Mechanism:** the same members in a deterministic permutation seeded by (pick, "fw_shuffle", family) (`_common.py:317-318`). It separates "better material" from "the pick is first".
 - **Figures:** excluded by `source()`.
 
@@ -2049,9 +2111,9 @@ Display names come from `SOURCES` (`shortlist_figs.py:30-36`); short legend name
 | `sota`, "fusion + reranker" | `retrieval: sota, dedup: true, embed_model: Qwen3-8B, rerank_model: Qwen/Qwen3-Reranker-4B` | RRF(BM25, dense) → top 50 → cross-encoder → top 10 | as `tfidf` | GPU pre-warm; `shortlist_sota_..._k10p50_dd.npy` |
 | `sota_icomp` / `sota_idemo` | the above + `embed_instruct` | same; the instruction changes the dense query side only | as `tfidf` | GPU pre-warm; `..._k10p50_dd_i<hash>.npy` |
 | `declared`, "declared-claim top-k" | `retrieval: declared, dedup: true` | self-declared D[:, f], top 10 | **yes, directly** (inflate, max) | no |
-| `va_cohort`, "MIDIAN-VA leaf cohort" | `retrieval: midian_va, r: 10` | MIDIAN-VA's probed and audited pick + its random leaf cohort | only via peer reports (audited) and the fallback | no GPU; **spends 48n probes (+≤5 % audits)** + reports |
-| (not drawn) MIDIAN-V cohort | `retrieval: midian, r: 10/5` | MIDIAN-V pick + cohort | reports + fallback | spends probes |
-| (not drawn) shuffle | `retrieval: midian_va, r: 10, shuffle: true` | VA cohort, permuted | as `va_cohort` | as `va_cohort` |
+| `va_cohort`, "MIDIAN cohort" ("MIDIAN leaf cohort" in `figures/shortlist/`) | `retrieval: midian, r: 10` | MIDIAN's probed and audited pick + its random leaf cohort | only via peer reports (audited) and the fallback | no GPU; **spends 48n probes (+≤5 % audits)** + reports |
+| (not drawn) MIDIAN w/o audits cohort | `retrieval: midian_wo_audit, r: 10/5` | MIDIAN w/o audits pick + cohort | reports + fallback | spends probes |
+| (not drawn) shuffle | `retrieval: midian, r: 10, shuffle: true` | MIDIAN cohort, permuted | as `va_cohort` | as `va_cohort` |
 | (not drawn) lie_text | `lie_text: true` [+ `claim_threshold: 0.7`], tfidf/bm25 | text with the Declared-areas clause taken from D | **yes (partially)**, by construction | no |
 
 ---
@@ -2072,7 +2134,7 @@ I resolved these with `rte.run.blocks` (mirror chains followed) on `configs/grid
 | `fw_live_n1000_lowskill`, `fw_live_n100_lowskill` | llm 10^3 / 10^2 | 3 | .5 × low_skill_first | 1-10, 1000 | 10 × tfidf, + M1-14B | tfidf |
 | `live_n10k_v2` (fw arms) | llm 10^4 | specialist | {0, .25} × random | 1-3, 300 | 10 × tfidf | tfidf |
 | `fw_live_n10k_cartel` | llm 10^4 | specialist | cartel | 1-3, 300 | 9 × tfidf | tfidf |
-| `fw_live_n10k_cartel_magentic` | llm 10^4 | specialist | cartel | 1-3, 300 | Magentic-One × {tfidf, MiniLM, sota, VA cohort} | tfidf, embed, sota, va_cohort |
+| `fw_live_n10k_cartel_magentic` | llm 10^4 | specialist | cartel | 1-3, 300 | Magentic-One × {tfidf, MiniLM, sota, MIDIAN cohort} | tfidf, embed, sota, va_cohort |
 | `fw_live_n10k_beta01` / `fw_live_n10k_shapes` / `fw_live_n10k_cartel_shapes` | llm 10^4 | spec / {ht, bim} / {ht, bim} | .1 random / {0, .25} random / cartel | 1-3, 300 | 10 / 10 / 9 × tfidf | tfidf |
 | `live_n100k` (fw arms), `live_n100k_beta01` | llm 10^5 | specialist | {0, .25, .5} × {random, low_skill_first}; {.1} | 1-3, 300 | 10 × tfidf | tfidf |
 | `*_dd` (11 grids) | as their sources | | | | 10 (9 cartel-10^4) × tfidf + dedup | not drawn |
@@ -2086,16 +2148,16 @@ I resolved these with `rte.run.blocks` (mirror chains followed) on `configs/grid
 | `fw_live_n{100,1000}_backfill` | llm 10^2 / 10^3 | spec | 0 | 1-3, 1000 | 10 × {dense-Ic, dense-Id, sota-Ic, sota-Id, declared} | same labels |
 | `fw_live_n{100,1000}_lowskill_backfill` | llm 10^2 / 10^3 | spec | cartel | 1-3, 1000 | same 10 × 5 | same |
 | `fw_live_n10k_backfill` / `fw_live_n10k_cartel_backfill` | llm 10^4 | spec | 0 random / cartel | 1-3, 300 | **10** × 5 (includes Magentic-One even in the cartel grid) | same |
-| `fw_live_n1000_verified_va` / `fw_live_n100_verified_va` | llm 10^3 / 10^2 | 3 | {0, .1, .25, .5} × random | 1-10, 1000 | 10 × VA cohort | va_cohort |
-| `fw_live_n{1000,100}_verified_va_lowskill` | llm | 3 | cartel | 1-10, 1000 | 10 × VA | va_cohort |
-| `fw_live_n10k_verified_va` / `fw_live_n10k_cartel_verified_va` / `fw_live_n100k_verified_va` | llm 10^4 / 10^4 / 10^5 | spec | {0, .25} random / cartel / 6 regimes | 1-3, 300 | 10 / 9 / 10 × VA | va_cohort |
-| `fw_live_n100k_verified_va_shuffled` | llm 10^5 | spec | 6 | 1-3, 300 | 10 × VA shuffled | not drawn |
-| `fw_live_n{1000,100}_verified` | llm | 3 | 4 × random | 1-10, 1000 | 10 × MIDIAN-V cohort, r ∈ {10, 5} | not drawn |
+| `fw_live_n1000_verified_va` / `fw_live_n100_verified_va` | llm 10^3 / 10^2 | 3 | {0, .1, .25, .5} × random | 1-10, 1000 | 10 × MIDIAN cohort | va_cohort |
+| `fw_live_n{1000,100}_verified_va_lowskill` | llm | 3 | cartel | 1-10, 1000 | 10 × MIDIAN cohort | va_cohort |
+| `fw_live_n10k_verified_va` / `fw_live_n10k_cartel_verified_va` / `fw_live_n100k_verified_va` | llm 10^4 / 10^4 / 10^5 | spec | {0, .25} random / cartel / 6 regimes | 1-3, 300 | 10 / 9 / 10 × MIDIAN cohort | va_cohort |
+| `fw_live_n100k_verified_va_shuffled` | llm 10^5 | spec | 6 | 1-3, 300 | 10 × MIDIAN cohort shuffled | not drawn |
+| `fw_live_n{1000,100}_verified` | llm | 3 | 4 × random | 1-10, 1000 | 10 × MIDIAN w/o audits cohort, r ∈ {10, 5} | not drawn |
 | `fw_live_n100k_lietext` / `_lietext_th` | llm 10^5 | spec | 6 | 1-3, 300 | 10 × {tfidf, tfidf-lie, bm25, bm25-lie} / {tfidf-lie-th, bm25-lie-th} | not drawn |
 | `lie_max_fw_n1000` / `_n10k` / `_n100k` | llm 10^3 / 10^4 / 10^5, `lie_mode: max` | spec | cartel | 1-3; Q 1000 / 300 / 300 | 10 × declared | not drawn (grid-name filter; see 3.9) |
 | `fw_routereval_small` (n ∈ {10, 100}) / `_1k` | routereval mmlu | 3 pools | {0, .5} × {random, low_skill_first} | 1-5, 1000 | 9 × tfidf | tfidf (Fig H) |
 | `fw_routereval_5k` | routereval leaderboard_mmlu 5,000 | all | same | 1-3, 300 | 9 × tfidf | tfidf (H) |
-| `fw_routereval_{small,1k,5k}_em` / `_va` | as above | | | | 9 × MiniLM / VA cohort | embed / va_cohort (H) |
+| `fw_routereval_{small,1k,5k}_em` / `_va` | as above | | | | 9 × MiniLM / MIDIAN cohort | embed / va_cohort (H) |
 | `re_sl_declared_{small,1k}` / `_5k` | routereval | strong_to_weak / all | {0, .5} × low_skill_first | 1-5, 1000 / 1-3, 300 | 9 × declared | declared (H) |
 | `re_sl_embed_{small,1k}` / `_5k` | same | same | same | same | 9 × {dense-Ic, dense-Id, sota, sota-Ic, sota-Id} | dense_icomp, dense_idemo, sota, sota_icomp, sota_idemo (H) |
 | every RouterEval row above, as `<grid>_norep_cal` (`grid.yaml:1203-1217`) | routereval mmlu (`no_repeat`, `shuffle`) / leaderboard_mmlu 5,000 | strong_to_weak / all | {0, .5} × low_skill_first | 1-5, 300 / 1-3, 300 | same frameworks × shortlists, calibrated claims | **these are H's bars** (the rows above are no longer drawn) |
@@ -2153,7 +2215,7 @@ I resolved these with `rte.run.blocks` (mirror chains followed) on `configs/grid
    - The exception is `lie_text`, which is not drawn.
 2. **On RouterEval the text arms read the lied declared vector** (calibrated claims in every drawn H row), and the supervisor sees only the subject name, never the question.
 3. **The pre-registered TF-IDF bar is non-dedup**, so it is clone-filled at scale. Every other drawn text bar is dedup. Fig G's lift therefore mixes the retriever gain and the dedup gain.
-4. **Declared top-k and the VA cohort are the only drawn shortlists that are not text retrieval.** VA spends a full MIDIAN-VA probe budget. Declared spends none and is directly attackable.
+4. **Declared top-k and the MIDIAN cohort are the only drawn shortlists that are not text retrieval.** The MIDIAN cohort spends a full MIDIAN probe budget. Declared spends none and is directly attackable.
 5. **Every shortlist is ordered best-first.** The shuffle control exists because frameworks largely consume position 1 (`METHODS.md` §5b).
 6. **AutoGen's own selector falls back to the first participant** after 3 failed attempts, and the adapter cannot distinguish that from a real pick.
 
@@ -2171,7 +2233,7 @@ I resolved these with `rte.run.blocks` (mirror chains followed) on `configs/grid
      | n = 100 | 100/100 | 88/100 | 96/100 | 78/100 |
      | n = 5,000 | 4,134/5,000 | 2,551/5,000 | 4,052/5,000 | 3,310/5,000 |
 
-   - So every `dedup: true` arm in H (MiniLM, dense, rerank, declared top-k; not the VA cohort, which ignores dedup, and not TF-IDF) retrieves from a pool 7–17 % smaller than m honest and 12–49 % smaller under the cartel. The pre-registered TF-IDF rows (no dedup) are unaffected.
+   - So every `dedup: true` arm in H (MiniLM, dense, rerank, declared top-k; not the MIDIAN cohort, which ignores dedup, and not TF-IDF) retrieves from a pool 7–17 % smaller than m honest and 12–49 % smaller under the cartel. The pre-registered TF-IDF rows (no dedup) are unaffected.
 2. **"TF-IDF is degenerate on rendered numbers" (`grid.yaml` fw_routereval_5k comment; `DEVIATIONS.md` §Frameworks on RouterEval (a)) is imprecise.**
    - The query `"Tasks of family X"` matches the family-name tokens in each agent's declared top 5.
    - The retriever therefore shortlists agents that *claim* X among their top 5, and liars flood it: 100 % liars for one family in my 1k check.
@@ -2187,7 +2249,7 @@ I resolved these with `rte.run.blocks` (mirror chains followed) on `configs/grid
 5. **Magentic-One coverage differs across 10^4 cartel grids.** It is excluded "for time" from `fw_live_n10k_cartel`
    and its `_dd`, `_em`, `_sota`, `_shapes` and `_verified_va` mirrors (9 frameworks), but included in
    `fw_live_n10k_cartel_backfill` and `lie_max_fw_n10k` (10), and in every live 10^5 grid. `fw_live_n10k_cartel_magentic`
-   adds it for four shortlists at the 10^4 cartel (TF-IDF, MiniLM, rerank, VA cohort). Where its cartel rows have fewer
+   adds it for four shortlists at the 10^4 cartel (TF-IDF, MiniLM, rerank, MIDIAN cohort). Where its cartel rows have fewer
    than 3 seeds, E's full-seed rule drops it; today it has all 3 in every 10^4 cartel slot, so every 10^4 E bar averages
    all ten frameworks (§5.2).
 6. **`METHODS.md` §5 (line ~119) says `retrieval="declared"` is "grid written, NOT yet run".** `results/fw_live_n100k_declared` has 162 csv rows. The doc is stale.
@@ -2204,7 +2266,7 @@ I resolved these with `rte.run.blocks` (mirror chains followed) on `configs/grid
 10. **`success_strict` after an error is scored as a non-pick.** Both error paths set `_picked = False` before routing by declared argmax (`_common.py:376, 388`), so `observe` scores such a task 0 under the strict metric.
 11. **Erratum 28 wording and counts differ.** CHANGES_AND_ERRATA says "7 framework **conda** envs ... 240 dangling library symlinks each". `OPS_RULES.md` D2 says "98 dangling library symlinks each". The code-side comment (`_common.py:382`) says ~4,500 rows; the erratum says 4,269 rows were quarantined. The envs are venvs (`_bridge.py:22-26`).
 12. **Stale grid comment:** `fw_live_n1000`'s inline comment says "v2 0.4: 5 seeds, Q=1000", but the grid runs `seeds: 1-10` (`grid.yaml:110-111`).
-13. **The unused TF-IDF matrix** is built for `declared` and `bm25` (`_common.py:303-305`), which is harmless. Unknown `retrieval` strings silently run hashed TF-IDF (`:328-329`). No current grid uses a misspelled value: every value I resolved is one of tfidf, bm25, embed, hybrid, sota, declared, midian or midian_va.
+13. **The unused TF-IDF matrix** is built for `declared` and `bm25` (`_common.py:303-305`), which is harmless. Unknown `retrieval` strings silently run hashed TF-IDF (`:328-329`). No current grid uses a misspelled value: every value I resolved is one of tfidf, bm25, embed, hybrid, sota, declared, midian or midian_wo_audit (the MIDIAN keys after the 2026-09-24 rename).
 14. **MiniLM family vectors are not on disk at 10^5.** `specialist_n100000_K16_seed1/` has `descriptions_minilm.npy` but no `families_minilm.npy`, even though `_embeddings` would write it (`:270`). The `_em` rows there were probably produced before the family block was cached, or with a different family-cache name. It is harmless, since 16 MiniLM vectors cost nothing, but it is unexplained.
 15. **Open: the "Declared areas" clause on live gives the true specialty list.** It is structured metadata that no real agent card would guarantee honest. Every live text arm (and the supervisor) benefits from it; `lie_text` is the only condition that corrupts it.
 
@@ -2213,31 +2275,33 @@ I resolved these with `rte.run.blocks` (mirror chains followed) on `configs/grid
 ## 4. Figures A and B: where every bar, line, colour and number comes from
 
 Scope: `figures/condensed_sample/A_live_allb.{png,pdf,csv}`, `A_live_stacked.*`, `B_families_allb.*` and `B_families_stacked.*`, written by `python scripts/condensed_figs.py`. Figures C and D (efficiency) are written by `scripts/efficiency_figs.py` and covered in Part 6.
-Code, repo-relative to `~/rte`: `scripts/condensed_figs.py` (226 lines) and `scripts/seed_tables.py` (135 lines). They import `scripts/extra_figs.py` (legend wrapper, `excluded`, `ci`), `scripts/fw_variant_numbers.py` (`load`, `regime`) and `rte/analyze.py` (`ALIAS`). `condensed_figs.py` also reads the CSVs that `scripts/bar_figs.py` wrote.
+Code, repo-relative to `~/rte`: `scripts/condensed_figs.py` (224 lines), `scripts/figspec.py` (161 lines: canvas, fonts, colours, names, legend order, drawing helpers) and `scripts/seed_tables.py`. They import `scripts/extra_figs.py` (`excluded`, `se`), `scripts/fw_variant_numbers.py` (`load`, `regime`) and `rte/analyze.py` (`ALIAS`). `condensed_figs.py` also reads the CSVs that `scripts/bar_figs.py` wrote.
 Data root: `RTE_DATA=/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte`, with results under `$RTE_DATA/results/<grid>/`.
 
-**How this section was checked (read-only).** Every value, whisker, `chosen` string and `b_invariant` flag in the tables below is read from `A_live_allb.csv` / `B_families_allb.csv` as written at 2026-09-24 09:46 (the `_stacked` CSVs hold the same 136 / 170 rows in tallest-first order). Seed counts and source grids come from running `seed_tables.switched()` and `seed_tables.tables()` read-only on the same rows (`switched()` returns all four non-live families). The live b = 3 values of the single arms are the `figures/bars/live.csv` numbers (`LIVE_GRIDS`, self_described, specialist, per-seed means): `midian` n = 100 / 1,000 / 10^4 / 10^5: 0.7747 / 0.7890 / 0.7850 / 0.7522 honest and 0.7359 / 0.7379 / 0.7522 / 0.7056 cartel; `oracle` 0.8449 / 0.8612 / 0.8589 / 0.8622. The per-seed tables give the same oracle means, and `narrow()` asserts that every drawn single-arm mean agrees with its table within 0.01.
+**How this section was checked (read-only).** Every value, whisker, `chosen` string and `b_invariant` flag in the tables below is read from `A_live_allb.csv` / `B_families_allb.csv` as written at 2026-09-24 11:35 (144 / 170 rows; the `_stacked` CSVs hold 80 / 90: every arm's b = 3 bar plus MIDIAN's b = 1 and 5). Seed counts and source grids come from running `seed_tables.switched()` and `seed_tables.tables()` read-only on the same rows (`switched()` returns all four non-live families). The live b = 3 values of the single arms are the `figures/bars/live.csv` numbers (`LIVE_GRIDS`, self_described, specialist, per-seed means): MIDIAN w/o defenses (`midian_wo_defenses`) n = 100 / 1,000 / 10^4 / 10^5: 0.7747 / 0.7890 / 0.7850 / 0.7522 honest and 0.7359 / 0.7379 / 0.7522 / 0.7056 cartel; `oracle` 0.8449 / 0.8612 / 0.8589 / 0.8622. The per-seed tables give the same oracle means, and `narrow()` asserts that every drawn single-arm mean agrees with its table within 0.01.
 
 ---
 
 ### 4.0 Machinery shared by A and B (read this first)
 
-#### 4.0.1 The pipeline (`condensed_figs.py:221-225`)
+#### 4.0.1 The pipeline (`condensed_figs.py:219-224`)
 ```
 d = load(); C = cells(d); SW |= switched(); T = tables(); add_budgets(C); from_tables(C, T); narrow(C, T)
 for key, bb in T.items():                        # per-seed tables for the cross-fitted pooled arms
     if key in C: C[key]["seeds"] = bb
+add_best_framework(C)
 fig_A(C); fig_B(C)                    # C / D: scripts/efficiency_figs.py
 ```
 A per-seed table whose cell has no b = 3 bar row is dropped (`if key in C`). This script draws only A and B.
-1. **`load()`** (`:52-54`) concatenates the five per-family bar CSVs `figures/bars/{live,bernoulli,replay,routereval,llmrouterbench}.csv` and **drops every label starting with `fw_`**, so framework arms are never drawn. These CSVs are *not* regenerated by condensed_figs; `scripts/bar_figs.py` writes them, and they hold **b = 3 only** (4.0.2).
-2. **`cells(d)`** (`:57-65`) groups the rows by `(family, group, n, regime)`. A cell is kept only if it has an `oracle` row. Each cell stores `oracle = (mean, ci_lo, ci_hi)` and `raw[3] = {label: (mean, lo, hi)}` for every non-oracle label that is not on the do-not-add list (`excluded(l)`). **So every b = 3 number of the five single arms in A/B is a bar_figs number, unchanged**, except in a family that has switched to its erratum-30 rows (step 5).
-3. **`switched()`** (`seed_tables.py:95-97`) returns the non-live families whose erratum-30 grid is complete; `condensed_figs.SW` holds them (`:41`). See 4.0.7.
+1. **`load()`** (`:51-53`) concatenates the five per-family bar CSVs `figures/bars/{live,bernoulli,replay,routereval,llmrouterbench}.csv` and **drops every label starting with `fw_`**, so framework arms are never drawn. These CSVs are *not* regenerated by condensed_figs; `scripts/bar_figs.py` writes them, and they hold **b = 3 only** (4.0.2).
+2. **`cells(d)`** (`:56-64`) groups the rows by `(family, group, n, regime)`. A cell is kept only if it has an `oracle` row. Each cell stores `oracle = (mean, ci_lo, ci_hi)` and `raw[3] = {label: (mean, lo, hi)}` for every non-oracle label that is not on the do-not-add list (`excluded(l)`). **So every b = 3 number of the five single arms in A/B is a bar_figs number, unchanged**, except in a family that has switched to its erratum-30 rows (step 5).
+3. **`switched()`** (`seed_tables.py:95-97`) returns the non-live families whose erratum-30 grid is complete; `condensed_figs.SW` holds them (`:40`). See 4.0.7.
 4. **`seed_tables.tables()`** (`seed_tables.py:100-122`) builds seed × arm tables per (cell, regime, b) from the raw rows. They feed the two pooled arms and, for a switched family, every bar (4.0.4, 4.0.7).
-5. **`add_budgets(C)`** (`:159-193`) adds `raw[1]` and `raw[5]` for the families not in `SW` (only live today; 4.0.3); **`from_tables(C, T)`** (`:196-204`) replaces the whole cell of a switched family (every arm, every b and the oracle) with the per-seed-table values.
-6. **`narrow(C, T)`** (`:207-218`) replaces every single-arm and oracle whisker with ±1 s.e. over seeds from the per-seed tables (4.0.5).
-7. **`arms_at(cell)`** (`:68-83`) turns `raw[b]` and the tables into the seven plotted "arms" (4.0.4).
-8. **`budget_bars(...)`** (`:95-129`) draws the figure and writes the CSV (4.0.5).
+5. **`add_budgets(C)`** (`:156-190`) adds `raw[1]` and `raw[5]` for the families not in `SW` (only live today; 4.0.3); **`from_tables(C, T)`** (`:193-201`) replaces the whole cell of a switched family (every arm, every b and the oracle) with the per-seed-table values.
+6. **`narrow(C, T)`** (`:204-216`) replaces every single-arm and oracle whisker with ±1 s.e. over seeds from the per-seed tables (4.0.5).
+7. **`add_best_framework(C)`** (`:144-153`) attaches, per live n and regime, the seed × (framework | text shortlist) table that A's framework arm is cross-fitted from (4.0.4, 4.1).
+8. **`arms_at(cell)`** (`:67-87`) turns `raw[b]` and the tables into the plotted arms (4.0.4).
+9. **`budget_bars(...)`** (`:90-120`) draws the figure and writes the CSV (4.0.5).
 
 #### 4.0.2 Where the b = 3 numbers come from (`scripts/bar_figs.py`)
 Today only live's b = 3 single-arm bars come from here. `load()` still reads all five bar CSVs, and `cells()` needs each family's b = 3 oracle row to create the cell, but `from_tables` then replaces every bar and the oracle of the four switched families (4.0.7). The non-live bullets below describe what those CSVs hold, not what B draws.
@@ -2265,8 +2329,8 @@ Today only live's b = 3 single-arm bars come from here. `load()` still reads all
 - **llmrouterbench** (`bar_figs.py:180-187`): grid `llmrouterbench_pool`, n=20, K=15, Q=1000, b=3, programmatic, 5 seeds.
 
 
-#### 4.0.3 Where the b = 1 and b = 5 numbers of the single arms come from (`add_budgets`, `condensed_figs.py:159-193`)
-- **Grid list** (`:166-168`, `:171`): for each tag, both `va_b_<tag>` (MIDIAN-VA only) and `rivals_b_<tag>` (budget-matched rivals) are read. A family in `SW` is skipped here (`:170`, `:188`): all its bars come from its erratum-30 tables. Every non-live family is in `SW` today, so only the four live tags are used. The tags are:
+#### 4.0.3 Where the b = 1 and b = 5 numbers of the single arms come from (`add_budgets`, `condensed_figs.py:156-190`)
+- **Grid list** (`:163-165`, `:168`): for each tag, both `va_b_<tag>` (MIDIAN only) and `rivals_b_<tag>` (budget-matched rivals) are read. A family in `SW` is skipped here (`:167`, `:185`): all its bars come from its erratum-30 tables. Every non-live family is in `SW` today, so only the four live tags are used. The tags are:
   - `n100, n1000, n10k, n100k` → key `("live","specialist",n)`
   - `routereval5k` → `("routereval","strong_to_weak",5000)`
   - `llmrouterbench` → `("llmrouterbench","20 models",20)`
@@ -2274,70 +2338,108 @@ Today only live's b = 3 single-arm bars come from here. `load()` still reads all
   - `replay_1e6` → `("replay","all shapes pooled",1e6)`
 - **Row loading.** Rows come from `fw_variant_numbers.load` (`fw_variant_numbers.py:24-32`): it reads `rows.d/*.json` plus `rows.csv` directly, with **no consolidate** and no write. Each `rows.d` row gets `rid` = its file name, so unmerged rows keep distinct ids; then `drop_duplicates("rid")`, then `drop_duplicates` on `(n, b, dist, beta, liar_select, seed, method, params)`.
 - **Labels.** `label(method, params)` (`seed_tables.py:26-29`, imported at `condensed_figs.py:24`) rebuilds the same label string as `rte.analyze.prepare` (`analyze.py:71`), then applies `ALIAS` (`analyze.py:20-24`). For example, `flat_probe_argmax{"online":true}` becomes `flat_probe_argmax_online`, and `linucb_honest{"bonus":"own"}` becomes `linucb_honest[bonus=own]`.
-- **Grouping** (`:175-176`): `groupby(["n","b","beta","liar_select","label"])`, mapped to a regime by `fw_variant_numbers.regime(beta, ls)` (`fw_variant_numbers.py:73-77`): β = 0 → `beta0`, whatever `liar_select` is; β = 0.5 with `low_skill_first` → `cartel`.
-- **Rows kept** (`:177`): only if the key already exists in `C` (so the b = 3 bar CSV must have that cell), b ∈ {1, 5}, the label is not `oracle`, and `excluded(l)` is false.
+- **Grouping** (`:172-173`): `groupby(["n","b","beta","liar_select","label"])`, mapped to a regime by `fw_variant_numbers.regime(beta, ls)` (`fw_variant_numbers.py:73-77`): β = 0 → `beta0`, whatever `liar_select` is; β = 0.5 with `low_skill_first` → `cartel`.
+- **Rows kept** (`:174`): only if the key already exists in `C` (so the b = 3 bar CSV must have that cell), b ∈ {1, 5}, the label is not `oracle`, and `excluded(l)` is false.
 - **Aggregation**:
-  - **Non-replay** (`:183-184`): `per = q.groupby("seed").success.mean()`; value = `per.mean()`; interval = `extra_figs.se(per.values)` (mean ∓ 1 s.e.; `narrow` later recomputes it from the per-seed tables).
-  - **Replay, "all shapes pooled"** (`:178-182`): `by = groupby(["seed","dist"]).success.mean().unstack()`; if all 3 shapes exist, keep only **seeds that have every shape**; per-seed value = mean over the 3 shapes; value = mean over those seeds; interval ±1 s.e. over those seeds. Their b = 1 / 3 numbers come from the matrix, which is balanced (100 × 3), so the two rules agree there.
-- **Matrices for b = 1** (`:186-193`): for an unswitched bernoulli or replay family, b = 1 would come from `bernoulli_scale_v5` / `replay_scale_v5` `matrix_success.csv` (100 seeds), filtered to `b == 1`, the `success` metric, and regimes `"beta=0 (no liars)"` / `"beta=0.5 CARTEL (low-skill-first)"`. Both families are switched, so this step is skipped today (`:188`); their b = 1 bars come from the per-seed tables (4.0.7).
+  - **Non-replay** (`:180-182`): `per = q.groupby("seed").success.mean()`; value = `per.mean()`; interval = `extra_figs.se(per.values)` (mean ∓ 1 s.e.; `narrow` later recomputes it from the per-seed tables).
+  - **Replay, "all shapes pooled"** (`:175-179`): `by = groupby(["seed","dist"]).success.mean().unstack()`; if all 3 shapes exist, keep only **seeds that have every shape**; per-seed value = mean over the 3 shapes; value = mean over those seeds; interval ±1 s.e. over those seeds. Their b = 1 / 3 numbers come from the matrix, which is balanced (100 × 3), so the two rules agree there.
+- **Matrices for b = 1** (`:183-190`): for an unswitched bernoulli or replay family, b = 1 would come from `bernoulli_scale_v5` / `replay_scale_v5` `matrix_success.csv` (100 seeds), filtered to `b == 1`, the `success` metric, and regimes `"beta=0 (no liars)"` / `"beta=0.5 CARTEL (low-skill-first)"`. Both families are switched, so this step is skipped today (`:185`); their b = 1 bars come from the per-seed tables (4.0.7).
 - **Nothing is ever pooled across b.** Each bar is one budget.
 
-#### 4.0.4 The seven arms and how "best learned" / "best bandit" are chosen (`arms_at`, `:68-83`)
-`ARMS` (`:32-34`), in plotting order, with key, legend label and colour:
+#### 4.0.4 The arms and how "best learned/declared router" / "best bandit" are chosen (`arms_at`, `:67-87`)
+`ARMS` (`:32`) is `figspec.ORDER` without the oracle and the framework arm, so the plotting and legend order is fixed
+(`figspec.py:37-38`), with key, legend label (`figspec.NAME`) and colour (`figspec.COLOR`):
 
 | order | key | legend label | colour |
 |---|---|---|---|
-| 1 | `midian_va` | MIDIAN-VA | `#2ecc71` |
-| 2 | `midian` | MIDIAN | `#c0392b` |
-| 3 | `flat_probe_argmax_online` | flat probe argmax (online) | `#3498db` |
-| 4 | `best_learned` | best learned router | `#ff7f0e` |
+| 1 | `midian` | MIDIAN | `#2ecc71` |
+| 2 | `midian_wo_defenses` | MIDIAN w/o defenses | `#c0392b` |
+| 3 | `flat_probe_argmax_online` | flat probe argmax | `#3498db` |
+| 4 | `best_learned` | best learned/declared router | `#ff7f0e` |
 | 5 | `best_bandit` | best bandit | `#9467bd` |
 | 6 | `declared_argmax` | declared argmax | `#5d6d7e` |
 | 7 | `random` | random | `#bbbbbb` |
+| 8 | `best_framework` (A only) | best framework, best text shortlist | `#8e6c3a` |
 
-- **Single arms** (1–3, 6, 7): `arms_at` copies `raw[b][key]` for every b that has it (`:80-82`).
-- **Pooled arms** (4, 5): for each b with a per-seed table in the cell (`:72-79`):
-  - `want` (`:74`) = the pool (`POOLS`, `:35-36`) minus `NOT_RUNNABLE(family, n)` (`:43-44`), and minus the pre-registered `warm_start_bandit` (n0 = 5) on bernoulli / replay / RouterEval / LLMRouterBench unless that family is in `SW` (`CLAIM_KEY - SW`, `:40-41`). It is the same at every b of a cell. The rules are in §2.1.3.
-  - `crossfit(T, want)` (`seed_tables.py:125-135`) scores each seed with the arm that has the best mean on the other seeds, among arms that ran on that seed. The bar is the mean of the per-seed scores, and the whisker ±1 s.e. of those scores (`:77`).
-  - Fewer than 2 scored seeds: no bar (`:76`).
-  - `chosen` (`:78`) = the pick counts, most-picked first, plus `| INCOMPLETE POOL, missing or partial …` when a `want` arm has no column at that b **or lacks a value on any scored seed** (`miss`, `:77`).
+- **Single arms** (1–3, 6, 7): `arms_at` copies `raw[b][key]` for every b that has it; the budget-less arms only at b = 3
+  (`:84-86`).
+- **Pooled arms** (4, 5): for each b with a per-seed table in the cell (`:71-78`):
+  - `want` (`:73`) = the pool (`POOLS`, `:34-35`) minus `NOT_RUNNABLE(family, n)` (`:42-43`), and minus the pre-registered `warm_start_bandit` (n0 = 5) on bernoulli / replay / RouterEval / LLMRouterBench unless that family is in `SW` (`CLAIM_KEY - SW`, `:39-40`). It is the same at every b of a cell. The rules are in §2.1.3.
+  - `crossfit(T, want)` (`seed_tables.crossfit`) scores each seed with the arm that has the best mean on the other seeds, among arms that ran on that seed. The bar is the mean of the per-seed scores, and the whisker ±1 s.e. of those scores (`:76`).
+  - Fewer than 2 scored seeds: no bar (`:75`).
+  - `chosen` (`:77`) = the pick counts, most-picked first, plus `| INCOMPLETE POOL, missing or partial …` when a `want` arm has no column at that b **or lacks a value on any scored seed** (`miss`, `:76`).
+- **The framework arm** (8, A only; `:79-83`): when `add_best_framework` (`:144-153`) attached a seed × pair table to
+  the cell (`fw_seeds`), the same `crossfit` runs over every (framework | text shortlist) pair with the full seed count at
+  that (n, regime); the bar is stored at b = 3 only and `chosen` holds the pair counts (e.g. `fw_magentic_one | embed x10`).
+  The pairs come from `shortlist_figs.collect("live")` (b = 3 rows, specialist; §5.1.2), restricted to `TEXT` (`:33`: the
+  nine text shortlists; declared top-k and the MIDIAN cohort are not text retrieval). B skips this arm
+  (`skip=("best_framework",)`, `:140-141`).
 - **What the pools really contain**, per METHODS.md:
-  - `cluster_head_router` and `disrouter_cascade` are **"Declared channel only"** arms (METHODS.md:35-44). They read declared skill D and never probe. They are also in `bar_figs.DECL` (`bar_figs.py:90`).
-  - `flat_nsw_router` is a "verified outcomes, centralized" arm (METHODS.md:60).
-  - Only `knn_router(_online)` and `mlp_router` are the published RouterBench routers (METHODS.md:73-74).
-  - On the old non-live rows, whose claims were nearly the answer key, the "best learned router" was a declared-only arm almost everywhere. On the calibrated rows B draws now, the declared-only arms win only at b = 1 (bernoulli 10^7: `cluster_head_router` ×100 honest, `disrouter_cascade` ×100 cartel; RouterEval 5,000 cartel: `disrouter_cascade` ×3; live 10^5 cartel: `disrouter_cascade` ×2), and `flat_nsw_router` takes most non-live bars (§2.1.3).
-  - `warm_start_bandit` (both n0) reads declared skill plus probes (METHODS.md:54).
-- **Which pool members are missing or partial** (the `chosen` column): only four bars, all "best learned router" at live 10^5 cartel, b = 1 and b = 5, each in A and in B: `knn_router` and `knn_router_online` lack some seeds there (a few kNN units are still landing). Every other A / B pool bar, and every bandit bar, has every allowed member on every scored seed.
+  - `cluster_head_router` and `disrouter_cascade` are **"Declared channel only"** arms (METHODS.md §3). They read declared skill D and never probe. They are also in `bar_figs.DECL` (`bar_figs.py:90`). Hence the legend name "best learned/declared router".
+  - `flat_nsw_router` is a "verified outcomes, centralized" arm (METHODS.md §4).
+  - Only `knn_router(_online)` and `mlp_router` are the published RouterBench routers (METHODS.md §4).
+  - On the old non-live rows, whose claims were nearly the answer key, the "best learned/declared router" was a declared-only arm almost everywhere. On the calibrated rows B draws now, the declared-only arms win only at b = 1 (bernoulli 10^7: `cluster_head_router` ×100 honest, `disrouter_cascade` ×100 cartel; RouterEval 5,000 cartel: `disrouter_cascade` ×3), and `flat_nsw_router` takes most non-live bars (§2.1.3).
+  - `warm_start_bandit` (both n0) reads declared skill plus probes (METHODS.md §4).
+- **Which pool members are missing or partial** (the `chosen` column): none. Every A / B pool bar, learned and bandit, has
+  every allowed member on every scored seed (no `INCOMPLETE` in either CSV; the last live 10^5 kNN seeds landed
+  2026-09-24 11:20).
 
   `linucb_honest[bonus=own]` comes from the `linucb_fix_*` grids (live, RouterEval-5k, LLMRouterBench cells and bernoulli 10^7) and from the erratum-30 grids (replay 10^6 only from `replay_1e6_split_cal`); all have landed. Post-fix TrueSkill comes from `trueskill_fix_n{100,1000,10k}` and the erratum-30 grids (landed); it cannot run at n ≥ 10^5, so it is not in the live 10^5, bernoulli 10^7 or replay 10^6 pools.
-- **Budget-less arms** (`BUDGETLESS = {declared_argmax, random}`, `:45`, `:82`): only their b = 3 entry is used, drawn as **one bar per regime in its base colour** (no shading), and written to the CSV with `b = "-"`.
-- **Every other arm** has a bar for each b ∈ {1, 3, 5} for which data exists.
+- **Budget-less arms** (`BUDGETLESS = {declared_argmax, random}`, `:44`, `:86`) and the framework arm: only their b = 3
+  entry is used, drawn as **one bar per regime in its base colour** (no shading, `one(k)`, `:95`), and written to the CSV
+  with `b = "-"`.
+- **Every other arm** has a bar for each b ∈ {1, 3, 5} for which data exists (in `_allb`).
 
-#### 4.0.5 Drawing (`budget_bars`, `:95-129`)
-- **Groups**: one group per x tick (A: n; B: family). **Regimes**: `REG = {"beta0": "honest", "cartel": "β=0.5 cartel"}` (`:49`).
-- **Slots within a group** (`:99-102`):
-  - `arms` = the ARMS present in any cell.
-  - **_allb** has one slot per (arm, regime, b), ordered arm → regime (honest, then cartel) → b (1, 3, 5). Budget-less arms get one slot per regime: 5·2·3 + 2·2 = **34 slots**, bar width `w = 0.86/34`.
-  - **_stacked** has one slot per (arm, regime): **14 slots**, `w = 0.86/14`.
+#### 4.0.5 Drawing (`budget_bars`, `:90-120`; style from `scripts/figspec.py`)
+- **Canvas and fonts** (`figspec.figure`, `apply`): `_allb` on the appendix canvas 5.5 × 2.4 in, `_stacked` on the body
+  canvas 5.5 × 1.9 in; serif (Times New Roman / Times, else STIX), tick labels and legend 8 pt, axis labels 9 pt,
+  `pdf.fonttype 42`; horizontal major grid only (lw 0.3, alpha 0.4); no top or right spine; saved as vector PDF plus a
+  300 dpi PNG (`figspec.save`).
+- **Groups**: one group per x tick. A: `$n = 10^2$`, `$10^3$`, … (`figspec.pow10_ticks`, the first carries "n ="); B:
+  the backend name (`figspec.BACKEND`) over `$n = 10^k$` on a second line (`fig_B`, `:139`). **Regimes**:
+  `REG = {"beta0": "honest", "cartel": "β=0.5 cartel"}` (`:48`).
+- **Slots within a group** (`:94-96`):
+  - `arms` = the `figspec.ORDER` keys present in any cell of the figure (minus `skip`).
+  - **_allb** has one slot per (arm, regime, b), ordered arm → regime (honest, then cartel) → b (1, 3, 5). Budget-less
+    arms and the framework arm get one slot per regime: A 5·2·3 + 3·2 = **36 slots**, B 5·2·3 + 2·2 = **34**, bar width
+    `w = 0.86/slots`.
+  - **_stacked** has one slot per (arm, regime): A **16 slots**, B **14**, `w = 0.86/slots`. Every arm is drawn at
+    b = 3 only, except **MIDIAN, whose slot holds its b = 5, 3 and 1 bars** (`:102`), each at its true height, sorted
+    tallest first; each later (shorter) bar gets a higher z-order, so the shortest (normally b = 1, light) is in front
+    and the tallest (normally b = 5, dark) behind.
   - Slot positions are fixed, so a missing bar leaves an empty gap.
-- **Colour and shade** (`shade`, `:90-92`): b = 1 = the base colour mixed 50 % toward white (light); b = 3 = the base colour; b = 5 = base × 0.6 (dark).
-- **Hatch**: the cartel regime has `hatch="////"` and `alpha=0.8`; honest bars are solid (`:118-119`). Every bar has a black edge, lw 0.3.
-- **No markers on bars. One title asterisk** (`:113-116`, `:127`): `incomplete` becomes true when any (arm, regime, b) slot has no bar (`if b not in got`) or any drawn pooled bar's `chosen` contains `INCOMPLETE`; the title then ends in `" *"`. Nothing marks which bar is incomplete; the CSV's `chosen` column does.
-- **Oracle line** (`:124`): a dotted grey (`#7f8c8d`, lw 1.2) horizontal line across each group (±0.46). A: y = the honest b = 3 oracle mean of the cell; B: y = 1.0. The oracle does not depend on liars (verified: live 0.8449 / 0.8612 / 0.8589 / 0.8622 in both regimes).
-- **Y axis** (`:126`): A shows `success` on ylim (0.2, 0.95); B shows `success / oracle` on ylim (0.2, 1.05). Bars start at 0, so anything below 0.2 is hidden and bar lengths exaggerate ratios (figures audit F8). The lowest bars are B's replay random (0.243 of oracle) and replay cartel declared argmax (0.303); A's lowest is live 10^4 random (0.417).
-- **Normalisation (B only)** (`:105`, `:115`): `z` = the **β = 0, b = 3 oracle mean** of the group's cell (from the bar CSV for live, 0.8622; from the erratum-30 table for the four switched families: bernoulli 0.8462, replay 0.7919, RouterEval 0.9200, LLMRouterBench 0.7500). Mean and both whisker ends of **every** bar in the group (both regimes, all b) are divided by that one scalar: a ratio of means, not a per-seed ratio, and the whisker ignores the oracle's own uncertainty. The b = 1 / 5 rows mirror the b = 3 cells' task streams, so their own oracles equal the b = 3 one (checked in every A / B per-seed table).
-- **Error bars** (`:120-121`): drawn **on every bar in _allb** as `yerr = [m − lo, hi − m]` (dark grey, lw 0.4, cap 0.6).
-  Every whisker is **±1 standard error over seeds**, a ~68 % interval, never a 95 % CI. `narrow(C, T)` (`:207-218`, called
-  after `from_tables`, `:222`) replaces the interval of every single-arm bar and of the oracle with `extra_figs.se` of that
+- **Colour and shade** (`figspec.bar`, `shade`, `B_SHADE`, `figspec.py:29, 85-100`): b = 1 = the arm colour mixed 50 %
+  toward white (light); b = 3 = the arm colour; b = 5 = the colour × 0.6 (dark). Budget-less arms and the framework arm
+  are unshaded.
+- **Hatch**: the cartel regime has `hatch="////"`; honest bars are solid (`figspec.HATCH`). Every bar has a black edge,
+  lw 0.3.
+- **No titles and no markers.** `figspec.finish` clears the title. When any (arm, regime, b) slot has no bar or any drawn
+  pooled bar's `chosen` contains `INCOMPLETE`, the script prints `[<name>] INCOMPLETE: a bar is missing or its pool is
+  incomplete (see the csv)` (`:119`); `scripts/ops/figure_status.py` lists the missing (group, arm, regime, b) slots and
+  the incomplete-pool bars from the `_allb` CSVs. Today it reports none.
+- **Oracle line** (`figspec.oracle`, `:113`): a dotted grey (`#7f8c8d`, lw 1.0) horizontal line across each group (±0.46).
+  A: y = the honest b = 3 oracle mean of the cell; B: y = 1.0. The oracle does not depend on liars (verified: live 0.8449 / 0.8612 / 0.8589 / 0.8622 in both regimes).
+- **Y axis** (`figspec.finish`, `:115`): A "task success" on ylim (0.2, 0.95); B "success relative to oracle" on ylim
+  (0.2, 1.05); two-decimal ticks. Bars start at 0, so anything below 0.2 is hidden and bar lengths exaggerate ratios
+  (figures audit F8). The lowest bars are B's replay random (0.243 of oracle) and replay cartel declared argmax (0.303);
+  A's lowest is live 10^4 random (0.417).
+- **Normalisation (B only)** (`:99`, `:106`): `z` = the **β = 0, b = 3 oracle mean** of the group's cell (from the bar CSV for live, 0.8622; from the erratum-30 table for the four switched families: bernoulli 0.8462, replay 0.7919, RouterEval 0.9200, LLMRouterBench 0.7500). Mean and both whisker ends of **every** bar in the group (both regimes, all b) are divided by that one scalar: a ratio of means, not a per-seed ratio, and the whisker ignores the oracle's own uncertainty. The b = 1 / 5 rows mirror the b = 3 cells' task streams, so their own oracles equal the b = 3 one (checked in every A / B per-seed table).
+- **Error bars** (`figspec.whisker`, `:109`): drawn **on every bar in _allb**, black, lw 0.6, cap 1.5 pt.
+  Every whisker is **±1 standard error over seeds**, a ~68 % interval, never a 95 % CI. `narrow(C, T)` (`:204-216`, called
+  after `from_tables`, `:220`) replaces the interval of every single-arm bar and of the oracle with `extra_figs.se` of that
   arm's per-seed values from the per-seed tables (for replay, per-seed means of the 3 shape means), asserting that the
   table mean agrees with the plotted mean within 0.01; a bar whose per-seed values are not in the tables keeps its mean and
-  gets no whisker. The pooled arms get `se` of their cross-fitted per-seed scores (`:77`). The bar CSVs' and matrices' own
+  gets no whisker. The pooled arms and the framework arm get `se` of their cross-fitted per-seed scores (`:76`, `:82`). The bar CSVs' and matrices' own
   bootstrap intervals are therefore not used; in the four switched families `from_tables` sets the same ±1 s.e. directly. With **3 seeds** (live 10^4 / 10^5, RouterEval 5,000) the s.e. rests on 3
   values; LLMRouterBench has 5, replay 30, bernoulli 100. Intervals are marginal, not paired, so overlap is not a test.
-- **_stacked has no error bars.** The condition `if not nested or (b == 3 and not stacked)` is false whenever `stacked=True` (`nested` is forced true at `:101`). The comment gives the reason: "an interval inside the stack misreads; see _allb" (`:120`).
-- **Legend** (`:117`, `:128`): each arm gets its handle from **group 0, honest, b = 3**; the oracle from group 0. `ax.legend(ncol=4, loc="lower center", bbox_to_anchor=(0.5, 1.07))` goes through `extra_figs._ranked` (`extra_figs.py:38-51`), which sorts entries by the mean y of what each handle plots (`_plotted`, `:16-29`), descending, then lays them out row-major (`_rowmajor`, `:32-35`): best top-left.
-- **CSV** (`:122-123`, `:129`): one row per drawn bar with columns `group, regime, arm, b ('-' for budget-less), chosen, value, ci_lo, ci_hi, b_invariant`. The values are **absolute bar heights**; in B they are already divided by the oracle. **_stacked CSVs contain the same rows as _allb.** Missing bars have no row.
-- **`b_invariant`** (`:123`) is true for `declared_argmax` and `random`, and for a pooled bar whose every pick is in `B_INVARIANT = {declared_argmax, random, cluster_head_router, disrouter_cascade}` (`:42`), the arms that never probe. **These are the arms that do not change with b**: a pooled bar that picked `cluster_head_router` or `disrouter_cascade` on every seed would have the same value at b = 1, 3 and 5. In the current CSVs the flag is true for the declared argmax and random bars and for three pooled bars, all in B at b = 1: bernoulli 10^7 best learned router (0.6662 honest, `cluster_head_router` ×100; 0.6451 cartel, `disrouter_cascade` ×100) and RouterEval 5,000 cartel (0.6969, `disrouter_cascade` ×3). At b = 3 / 5 the same cells pick a probing arm, so those bars differ.
+- **_stacked has no error bars** (`if not stacked`, `:109`); the intervals are in `_allb`.
+- **Legend** (`figspec.legend`, `:116-118`): one frameless legend above the axes, entries in the fixed order
+  `["oracle"] + arms` (never ranked by value: `figspec.legend` builds matplotlib's `Legend` directly, so the value-ranking
+  wrapper `extra_figs` installs on `Axes.legend` does not apply). `_stacked`: 3 columns when the framework arm is drawn (A),
+  else 4 (B). `_allb`: three rows, with the three grey budget swatches "b = 1 / b = 3 / b = 5" (`figspec.budget_handles`)
+  in a column of their own at the right.
+- **CSV** (`:110-112`, `:120`): one row per drawn bar with columns `group, regime, arm (the legend name), key, b ('-' for budget-less arms and the framework arm), chosen, value, ci_lo, ci_hi, b_invariant`. The values are **absolute bar heights**; in B they are already divided by the oracle. **_allb CSVs** have one row per bar (A 144, B 170); **_stacked CSVs** have one row per bar drawn (A 80, B 90: MIDIAN's three budgets plus one b = 3 row for every other arm). Missing bars have no row.
+- **`b_invariant`** (`:112`) is true for `declared_argmax` and `random`, and for a pooled bar whose every pick is in `B_INVARIANT = {declared_argmax, random, cluster_head_router, disrouter_cascade}` (`:41`), the arms that never probe. **These are the arms that do not change with b**: a pooled bar that picked `cluster_head_router` or `disrouter_cascade` on every seed would have the same value at b = 1, 3 and 5. In the current CSVs the flag is true for the declared argmax and random bars and for three pooled bars, all in B at b = 1: bernoulli 10^7 best learned/declared router (0.6662 honest, `cluster_head_router` ×100; 0.6451 cartel, `disrouter_cascade` ×100) and RouterEval 5,000 cartel (0.6969, `disrouter_cascade` ×3). At b = 3 / 5 the same cells pick a probing arm, so those bars differ. (The framework arm's flag is false.)
 
 #### 4.0.6 What "honest" and "β=0.5 cartel" mean here
 - **honest** = β = 0, no liars.
@@ -2347,21 +2449,21 @@ Today only live's b = 3 single-arm bars come from here. `load()` still reads all
   - live: `declared_source = self_described`.
   - bernoulli/replay/RouterEval/LLMRouterBench: `calibrated` claims in every drawn row that reads claims (the erratum-30 rows, 4.0.7). Bernoulli's non-claim-reading arms keep their `programmatic`-cell rows, which are bit-identical because nothing they use depends on `declared_source`.
 - **What changes with b** (the probe budget: probes per agent per family, per METHODS.md:46-52):
-  - Every probe-using arm changes with b: MIDIAN-VA, MIDIAN, flat probe argmax, the bandits' warm-up, and the learned routers' training probes (knn: k = b).
+  - Every probe-using arm changes with b: MIDIAN, MIDIAN w/o defenses, flat probe argmax, the bandits' warm-up, and the learned routers' training probes (knn: k = b).
   - The four `B_INVARIANT` arms (`declared_argmax`, `random`, `cluster_head_router`, `disrouter_cascade`) do not (4.0.5).
-- **Structural identity at b = 1.** In the **honest** regime MIDIAN-VA and plain MIDIAN are equal at b = 1 in every cell of A and B: live 0.7105 / 0.6913 / 0.6678 / 0.6400 at n = 10^2 … 10^5, bernoulli 0.8015, replay 0.8289, RouterEval 0.7017 and LLMRouterBench 0.8444 (B values ÷ oracle). Under the cartel they differ (e.g. live 10^2: 0.6972 vs 0.6625; replay 0.8279 vs 0.5138).
+- **Structural identity at b = 1.** In the **honest** regime MIDIAN and MIDIAN w/o defenses are equal at b = 1 in every cell of A and B: live 0.7105 / 0.6913 / 0.6678 / 0.6400 at n = 10^2 … 10^5, bernoulli 0.8015, replay 0.8289, RouterEval 0.7017 and LLMRouterBench 0.8444 (B values ÷ oracle). Under the cartel they differ (e.g. live 10^2: 0.6972 vs 0.6625; replay 0.8279 vs 0.5138).
   
   This is consistent with README.md:344-345: "never run b = 1 beside b = 3 in one table (verification is unfunded at b = 1)". The condensed figures put b = 1 beside b = 3 deliberately (see 4.5).
-- **Identical honest and cartel b=5 at live n=100.** MIDIAN-VA b=5 is 0.8121 in both regimes. I checked per seed:
+- **Identical honest and cartel b=5 at live n=100.** MIDIAN b=5 is 0.8121 in both regimes. I checked per seed:
   - all 10 seeds have identical success at β=0 and β=0.5 (for example seed 1: 0.801 / 0.801);
   - `n_liars` is 0 against 50, and `misroute_to_liar` is > 0 in the cartel rows (seed 2: 0.091).
   
-  So the routing is identical, and "misroutes" land on liar-flagged agents whose executions are real. At b=5 VA's selection does not depend on declarations. This is a genuine result, not duplicated rows.
+  So the routing is identical, and "misroutes" land on liar-flagged agents whose executions are real. At b=5 MIDIAN's selection does not depend on declarations. This is a genuine result, not duplicated rows.
 
 
 #### 4.0.7 Erratum 30: the rows B's non-live families read, and the leaks of the rows they replaced
 The old non-live rows had three leaks (CHANGES §8f; `paper/audit/leakage.md`), and **none of those rows is drawn any more**:
-- **Claims were an answer key.** bernoulli, replay, RouterEval and LLMRouterBench declared D = clip(S + N(0, 0.05)), corr(S, D) ≈ 0.99, while live self-ratings correlate 0.36 with S. Every claim-reading arm was inflated: declared argmax (0.994 of oracle honest on bernoulli, against 0.72 on live 10^5), `cluster_head_router` / `disrouter_cascade` (then the "best learned router" almost everywhere) and both warm-start bandits. That is why the pre-registered `warm_start_bandit` (n0 = 5) was left out of those families' bandit pool until they switched (`CLAIM_KEY`, `condensed_figs.py:37-41`).
+- **Claims were an answer key.** bernoulli, replay, RouterEval and LLMRouterBench declared D = clip(S + N(0, 0.05)), corr(S, D) ≈ 0.99, while live self-ratings correlate 0.36 with S. Every claim-reading arm was inflated: declared argmax (0.994 of oracle honest on bernoulli, against 0.72 on live 10^5), `cluster_head_router` / `disrouter_cascade` (then the "best learned/declared router" almost everywhere) and both warm-start bandits. That is why the pre-registered `warm_start_bandit` (n0 = 5) was left out of those families' bandit pool until they switched (`CLAIM_KEY`, `condensed_figs.py:37-41`).
 - **Replay probed and routed on the same prompts**, and S (oracle, liar selection, claims) was the in-sample accuracy over all of them.
 - **RouterEval / LLMRouterBench streams repeated test prompts** (repeat share 0.48 on mmlu, 0.20 on LLMRouterBench), which online learners that see the prompt could memorise (leakage audit L5 / L10). The RouterEval pools are also stored weak → strong, so on 11-valued calibrated claims every lowest-index tie-break picked the weakest tied agent; `shuffle: true` fixes that, and the unshuffled first attempt is quarantined (§1.4.4).
 
@@ -2385,13 +2487,15 @@ The fixes are new cell values, so old rows are untouched on disk: `declared_sour
 
 ### 4.1 Figure A: live RTE, specialist population, n = 10^2 … 10^5
 
-**Question answered.** On the live LLM backend with the specialist population, how does MIDIAN-VA compare with plain MIDIAN, the flat probe-argmax control, the best learned router, the best bandit, declared argmax and random, at every scale n, honest versus a β = 0.5 low-skill colluding cartel, and at each probe budget b = 1, 3, 5?
+**Question answered.** On the live LLM backend with the specialist population, how does MIDIAN compare with MIDIAN w/o defenses, the flat probe-argmax control, the best learned/declared router, the best bandit, declared argmax and random, at every scale n, honest versus a β = 0.5 low-skill colluding cartel, and at each probe budget b = 1, 3, 5?
 
-**Groups** (`fig_A`, `:137-141`): n = the n values with a `("live","specialist",n,"beta0")` cell in `C`: 100, 1000, 10000 and 100000.
+**Groups** (`fig_A`, `:123-126`): n = the n values with a `("live","specialist",n,"beta0")` cell in `C`: 100, 1000, 10000 and 100000.
 
-**_allb** (`A_live_allb`): in each group, for each arm left to right: solid bars for honest b = 1, 3, 5 (light, mid, dark), then hatched cartel b = 1, 3, 5; one solid and one hatched bar for declared argmax and random; the dotted oracle at the honest b = 3 oracle (0.8449, 0.8612, 0.8589, 0.8622); y = success.
+**_allb** (`A_live_allb`, appendix): in each group, for each arm left to right in the legend order: solid bars for honest b = 1, 3, 5 (light, as is, dark), then hatched cartel b = 1, 3, 5; one solid and one hatched bar for declared argmax, random and the framework arm; the dotted oracle at the honest b = 3 oracle (0.8449, 0.8612, 0.8589, 0.8622); y = "task success", 0.2–0.95. 144 bars.
 
-**_stacked** (`A_live_stacked`, `stacked=True`): one full-width slot per (arm, regime). The b values present are sorted **tallest first** (`:110`) and each is drawn **from 0 to its own full height** (z-order 2, 3, 4: tallest behind). A non-monotone arm shows shades out of order, and a b = 5 value at or below b = 1 is hidden behind it (figures audit F7). No error bars; the CSV holds absolute values, not gains.
+**_stacked** (`A_live_stacked`, Figure 1, `stacked=True`): one slot per (arm, regime), **every arm at b = 3**. Only MIDIAN's slot carries the budget overlay: its b values are sorted **tallest first** (`:102`) and each is drawn **from 0 to its own full height** (z-order 2, 3, 4: tallest behind), so b = 1 (light) is in front and b = 5 (dark) behind; MIDIAN is monotone in b in every A cell. The other arms are single b = 3 bars in their base colour, so the shade legend and the empty slots of the old all-arm overlay are gone. No error bars; the CSV holds absolute values, not gains (80 rows).
+
+**The framework arm, "best framework, best text shortlist"** (`add_best_framework`, `:144-153`; `arms_at`, `:79-83`). Per n and regime, the seed × (framework | text shortlist) success table from `shortlist_figs.collect("live")` (b = 3, specialist; every pair with the full seed count of that cell), cross-fitted per seed like the pooled arms: for each seed the pair with the best mean on the other seeds is picked and scored on this seed. One bar per regime (b = "-"), brown `#8e6c3a`, with a ±1 s.e. whisker in `_allb`. Current values (honest / cartel): 10² 0.6111 / 0.5661, 10³ 0.6315 / 0.5598, 10⁴ 0.6200 / 0.6233, 10⁵ 0.6167 / 0.6089; every pick is Magentic-One, with MiniLM (`embed`) at 10² honest and 10³, fusion + reranker (`sota`) at 10² cartel, and a Qwen3 dense instruction variant at 10⁴ / 10⁵ (the CSV's `chosen` column).
 
 **Provenance.**
 
@@ -2408,56 +2512,56 @@ The pooled arms read `LIVE_GRIDS[n]` + `va_b_` / `rivals_b_` / `pool_fill_` / `l
 
 | group | regime | arm | b=1 | b=3 | b=5 |
 |---|---|---|---|---|---|
-| n = 100 | honest | MIDIAN-VA | 0.7105 10s (va_b_n100) | 0.7816 10s (bars) | 0.8121 10s (va_b_n100) |
-| n = 100 | cartel | MIDIAN-VA | 0.6972 10s (va_b_n100) | 0.7680 10s (bars) | 0.8121 10s (va_b_n100) |
-| n = 100 | honest | MIDIAN | 0.7105 10s (rivals_b_n100) | 0.7747 10s (bars) | 0.8002 10s (rivals_b_n100) |
-| n = 100 | cartel | MIDIAN | 0.6625 10s (rivals_b_n100) | 0.7359 10s (bars) | 0.7552 10s (rivals_b_n100) |
-| n = 100 | honest | flat probe argmax (online) | 0.7023 10s (rivals_b_n100) | 0.7805 10s (bars) | 0.8006 10s (rivals_b_n100) |
-| n = 100 | cartel | flat probe argmax (online) | 0.7023 10s (rivals_b_n100) | 0.7805 10s (bars) | 0.8006 10s (rivals_b_n100) |
-| n = 100 | honest | best learned router | 0.6151 10s, `mlp_router` ×8; `knn_router_online` ×2 | 0.7376 10s, `knn_router_online` ×10 | 0.7788 10s, `knn_router_online` ×10 |
-| n = 100 | cartel | best learned router | 0.6151 10s, `mlp_router` ×8; `knn_router_online` ×2 | 0.7376 10s, `knn_router_online` ×10 | 0.7788 10s, `knn_router_online` ×10 |
+| n = 100 | honest | MIDIAN | 0.7105 10s (va_b_n100) | 0.7816 10s (bars) | 0.8121 10s (va_b_n100) |
+| n = 100 | cartel | MIDIAN | 0.6972 10s (va_b_n100) | 0.7680 10s (bars) | 0.8121 10s (va_b_n100) |
+| n = 100 | honest | MIDIAN w/o defenses | 0.7105 10s (rivals_b_n100) | 0.7747 10s (bars) | 0.8002 10s (rivals_b_n100) |
+| n = 100 | cartel | MIDIAN w/o defenses | 0.6625 10s (rivals_b_n100) | 0.7359 10s (bars) | 0.7552 10s (rivals_b_n100) |
+| n = 100 | honest | flat probe argmax | 0.7023 10s (rivals_b_n100) | 0.7805 10s (bars) | 0.8006 10s (rivals_b_n100) |
+| n = 100 | cartel | flat probe argmax | 0.7023 10s (rivals_b_n100) | 0.7805 10s (bars) | 0.8006 10s (rivals_b_n100) |
+| n = 100 | honest | best learned/declared router | 0.6151 10s, `mlp_router` ×8; `knn_router_online` ×2 | 0.7376 10s, `knn_router_online` ×10 | 0.7788 10s, `knn_router_online` ×10 |
+| n = 100 | cartel | best learned/declared router | 0.6151 10s, `mlp_router` ×8; `knn_router_online` ×2 | 0.7376 10s, `knn_router_online` ×10 | 0.7788 10s, `knn_router_online` ×10 |
 | n = 100 | honest | best bandit | 0.6881 10s, `warm_start_bandit[n0=0.5]` ×10 | 0.7524 10s, `linucb_honest[bonus=own]` ×10 | 0.7729 10s, `linucb_honest[bonus=own]` ×10 |
 | n = 100 | cartel | best bandit | 0.6798 10s, `linucb_honest[bonus=own]` ×10 | 0.7524 10s, `linucb_honest[bonus=own]` ×10 | 0.7729 10s, `linucb_honest[bonus=own]` ×10 |
 | n = 100 | honest | declared argmax | n/a | 0.5992 10s (bars) | n/a |
 | n = 100 | cartel | declared argmax | n/a | 0.5181 10s (bars) | n/a |
 | n = 100 | honest | random | n/a | 0.4258 10s (bars) | n/a |
 | n = 100 | cartel | random | n/a | 0.4258 10s (bars) | n/a |
-| n = 1,000 | honest | MIDIAN-VA | 0.6913 10s (va_b_n1000) | 0.8134 10s (bars) | 0.8377 10s (va_b_n1000) |
-| n = 1,000 | cartel | MIDIAN-VA | 0.6914 10s (va_b_n1000) | 0.8074 10s (bars) | 0.8375 10s (va_b_n1000) |
-| n = 1,000 | honest | MIDIAN | 0.6913 10s (rivals_b_n1000) | 0.7890 10s (bars) | 0.8079 10s (rivals_b_n1000) |
-| n = 1,000 | cartel | MIDIAN | 0.6505 10s (rivals_b_n1000) | 0.7379 10s (bars) | 0.7658 10s (rivals_b_n1000) |
-| n = 1,000 | honest | flat probe argmax (online) | 0.6860 10s (rivals_b_n1000) | 0.7871 10s (bars) | 0.8108 10s (rivals_b_n1000) |
-| n = 1,000 | cartel | flat probe argmax (online) | 0.6860 10s (rivals_b_n1000) | 0.7869 10s (bars) | 0.8108 10s (rivals_b_n1000) |
-| n = 1,000 | honest | best learned router | 0.6364 10s, `mlp_router` ×9; `knn_router_online` ×1 | 0.7656 10s, `knn_router_online` ×10 | 0.7976 10s, `knn_router_online` ×10 |
-| n = 1,000 | cartel | best learned router | 0.6364 10s, `mlp_router` ×9; `knn_router_online` ×1 | 0.7656 10s, `knn_router_online` ×10 | 0.7976 10s, `knn_router_online` ×10 |
+| n = 1,000 | honest | MIDIAN | 0.6913 10s (va_b_n1000) | 0.8134 10s (bars) | 0.8377 10s (va_b_n1000) |
+| n = 1,000 | cartel | MIDIAN | 0.6914 10s (va_b_n1000) | 0.8074 10s (bars) | 0.8375 10s (va_b_n1000) |
+| n = 1,000 | honest | MIDIAN w/o defenses | 0.6913 10s (rivals_b_n1000) | 0.7890 10s (bars) | 0.8079 10s (rivals_b_n1000) |
+| n = 1,000 | cartel | MIDIAN w/o defenses | 0.6505 10s (rivals_b_n1000) | 0.7379 10s (bars) | 0.7658 10s (rivals_b_n1000) |
+| n = 1,000 | honest | flat probe argmax | 0.6860 10s (rivals_b_n1000) | 0.7871 10s (bars) | 0.8108 10s (rivals_b_n1000) |
+| n = 1,000 | cartel | flat probe argmax | 0.6860 10s (rivals_b_n1000) | 0.7869 10s (bars) | 0.8108 10s (rivals_b_n1000) |
+| n = 1,000 | honest | best learned/declared router | 0.6364 10s, `mlp_router` ×9; `knn_router_online` ×1 | 0.7656 10s, `knn_router_online` ×10 | 0.7976 10s, `knn_router_online` ×10 |
+| n = 1,000 | cartel | best learned/declared router | 0.6364 10s, `mlp_router` ×9; `knn_router_online` ×1 | 0.7656 10s, `knn_router_online` ×10 | 0.7976 10s, `knn_router_online` ×10 |
 | n = 1,000 | honest | best bandit | 0.7038 10s, `warm_start_bandit[n0=0.5]` ×10 | 0.7737 10s, `warm_start_bandit[n0=0.5]` ×10 | 0.8020 10s, `warm_start_bandit[n0=0.5]` ×10 |
 | n = 1,000 | cartel | best bandit | 0.6669 10s, `warm_start_bandit` ×8; `trueskill_per_family` ×2 | 0.7636 10s, `warm_start_bandit` ×7; `warm_start_bandit[n0=0.5]` ×3 | 0.8040 10s, `warm_start_bandit[n0=0.5]` ×10 |
 | n = 1,000 | honest | declared argmax | n/a | 0.6154 10s (bars) | n/a |
 | n = 1,000 | cartel | declared argmax | n/a | 0.5202 10s (bars) | n/a |
 | n = 1,000 | honest | random | n/a | 0.4321 10s (bars) | n/a |
 | n = 1,000 | cartel | random | n/a | 0.4321 10s (bars) | n/a |
-| n = 10,000 | honest | MIDIAN-VA | 0.6678 3s (va_b_n10k) | 0.8111 3s (bars) | 0.8356 3s (va_b_n10k) |
-| n = 10,000 | cartel | MIDIAN-VA | 0.6700 3s (va_b_n10k) | 0.8100 3s (bars) | 0.8311 3s (va_b_n10k) |
-| n = 10,000 | honest | MIDIAN | 0.6678 3s (rivals_b_n10k) | 0.7850 3s (bars) | 0.8089 3s (rivals_b_n10k) |
-| n = 10,000 | cartel | MIDIAN | 0.6389 3s (rivals_b_n10k) | 0.7522 3s (bars) | 0.7933 3s (rivals_b_n10k) |
-| n = 10,000 | honest | flat probe argmax (online) | 0.6522 3s (rivals_b_n10k) | 0.7744 3s (bars) | 0.8022 3s (rivals_b_n10k) |
-| n = 10,000 | cartel | flat probe argmax (online) | 0.6522 3s (rivals_b_n10k) | 0.7744 3s (bars) | 0.8022 3s (rivals_b_n10k) |
-| n = 10,000 | honest | best learned router | 0.5156 3s, `flat_nsw_router` ×2; `knn_router_online` ×1 | 0.7456 3s, `flat_nsw_router` ×3 | 0.7611 3s, `knn_router_online` ×2; `flat_nsw_router` ×1 |
-| n = 10,000 | cartel | best learned router | 0.5156 3s, `flat_nsw_router` ×2; `knn_router_online` ×1 | 0.7456 3s, `flat_nsw_router` ×3 | 0.7622 3s, `knn_router_online` ×2; `flat_nsw_router` ×1 |
+| n = 10,000 | honest | MIDIAN | 0.6678 3s (va_b_n10k) | 0.8111 3s (bars) | 0.8356 3s (va_b_n10k) |
+| n = 10,000 | cartel | MIDIAN | 0.6700 3s (va_b_n10k) | 0.8100 3s (bars) | 0.8311 3s (va_b_n10k) |
+| n = 10,000 | honest | MIDIAN w/o defenses | 0.6678 3s (rivals_b_n10k) | 0.7850 3s (bars) | 0.8089 3s (rivals_b_n10k) |
+| n = 10,000 | cartel | MIDIAN w/o defenses | 0.6389 3s (rivals_b_n10k) | 0.7522 3s (bars) | 0.7933 3s (rivals_b_n10k) |
+| n = 10,000 | honest | flat probe argmax | 0.6522 3s (rivals_b_n10k) | 0.7744 3s (bars) | 0.8022 3s (rivals_b_n10k) |
+| n = 10,000 | cartel | flat probe argmax | 0.6522 3s (rivals_b_n10k) | 0.7744 3s (bars) | 0.8022 3s (rivals_b_n10k) |
+| n = 10,000 | honest | best learned/declared router | 0.5156 3s, `flat_nsw_router` ×2; `knn_router_online` ×1 | 0.7456 3s, `flat_nsw_router` ×3 | 0.7611 3s, `knn_router_online` ×2; `flat_nsw_router` ×1 |
+| n = 10,000 | cartel | best learned/declared router | 0.5156 3s, `flat_nsw_router` ×2; `knn_router_online` ×1 | 0.7456 3s, `flat_nsw_router` ×3 | 0.7622 3s, `knn_router_online` ×2; `flat_nsw_router` ×1 |
 | n = 10,000 | honest | best bandit | 0.7200 3s, `trueskill_per_family` ×3 | 0.7622 3s, `trueskill_per_family` ×2; `warm_start_bandit[n0=0.5]` ×1 | 0.8100 3s, `warm_start_bandit[n0=0.5]` ×3 |
 | n = 10,000 | cartel | best bandit | 0.7033 3s, `trueskill_per_family` ×2; `warm_start_bandit` ×1 | 0.7833 3s, `warm_start_bandit` ×3 | 0.8178 3s, `warm_start_bandit` ×2; `warm_start_bandit[n0=0.5]` ×1 |
 | n = 10,000 | honest | declared argmax | n/a | 0.6578 3s (bars) | n/a |
 | n = 10,000 | cartel | declared argmax | n/a | 0.5322 3s (bars) | n/a |
 | n = 10,000 | honest | random | n/a | 0.4167 3s (bars) | n/a |
 | n = 10,000 | cartel | random | n/a | 0.4167 3s (bars) | n/a |
-| n = 100,000 | honest | MIDIAN-VA | 0.6400 3s (va_b_n100k) | 0.8356 3s (bars) | 0.8533 3s (va_b_n100k) |
-| n = 100,000 | cartel | MIDIAN-VA | 0.6178 3s (va_b_n100k) | 0.8278 3s (bars) | 0.8522 3s (va_b_n100k) |
-| n = 100,000 | honest | MIDIAN | 0.6400 3s (rivals_b_n100k) | 0.7522 3s (bars) | 0.7922 3s (rivals_b_n100k) |
-| n = 100,000 | cartel | MIDIAN | 0.5600 3s (rivals_b_n100k) | 0.7056 3s (bars) | 0.7567 3s (rivals_b_n100k) |
-| n = 100,000 | honest | flat probe argmax (online) | 0.6622 3s (rivals_b_n100k) | 0.7489 3s (bars) | 0.7856 3s (rivals_b_n100k) |
-| n = 100,000 | cartel | flat probe argmax (online) | 0.6622 3s (rivals_b_n100k) | 0.7489 3s (bars) | 0.7856 3s (rivals_b_n100k) |
-| n = 100,000 | honest | best learned router | 0.6044 3s, `knn_router_online` ×2; `cluster_head_router` ×1 | 0.7411 3s, `knn_router_online` ×3 | 0.7511 3s, `knn_router_online` ×2; `flat_nsw_router` ×1 |
-| n = 100,000 | cartel | best learned router | 0.5933 3s, `disrouter_cascade` ×2; `knn_router_online` ×1 * | 0.7411 3s, `knn_router_online` ×3 | 0.7756 3s, `flat_nsw_router` ×3 * |
+| n = 100,000 | honest | MIDIAN | 0.6400 3s (va_b_n100k) | 0.8356 3s (bars) | 0.8533 3s (va_b_n100k) |
+| n = 100,000 | cartel | MIDIAN | 0.6178 3s (va_b_n100k) | 0.8278 3s (bars) | 0.8522 3s (va_b_n100k) |
+| n = 100,000 | honest | MIDIAN w/o defenses | 0.6400 3s (rivals_b_n100k) | 0.7522 3s (bars) | 0.7922 3s (rivals_b_n100k) |
+| n = 100,000 | cartel | MIDIAN w/o defenses | 0.5600 3s (rivals_b_n100k) | 0.7056 3s (bars) | 0.7567 3s (rivals_b_n100k) |
+| n = 100,000 | honest | flat probe argmax | 0.6622 3s (rivals_b_n100k) | 0.7489 3s (bars) | 0.7856 3s (rivals_b_n100k) |
+| n = 100,000 | cartel | flat probe argmax | 0.6622 3s (rivals_b_n100k) | 0.7489 3s (bars) | 0.7856 3s (rivals_b_n100k) |
+| n = 100,000 | honest | best learned/declared router | 0.6044 3s, `knn_router_online` ×2; `cluster_head_router` ×1 | 0.7411 3s, `knn_router_online` ×3 | 0.7511 3s, `knn_router_online` ×2; `flat_nsw_router` ×1 |
+| n = 100,000 | cartel | best learned/declared router | 0.6478 3s, `knn_router_online` ×3 | 0.7411 3s, `knn_router_online` ×3 | 0.7556 3s, `knn_router_online` ×2; `flat_nsw_router` ×1 |
 | n = 100,000 | honest | best bandit | 0.6656 3s, `warm_start_bandit[n0=0.5]` ×2; `warm_start_bandit` ×1 | 0.7544 3s, `warm_start_bandit[n0=0.5]` ×3 | 0.8056 3s, `warm_start_bandit[n0=0.5]` ×3 |
 | n = 100,000 | cartel | best bandit | 0.7078 3s, `warm_start_bandit` ×3 | 0.7778 3s, `warm_start_bandit` ×3 | 0.8022 3s, `warm_start_bandit` ×2; `warm_start_bandit[n0=0.5]` ×1 |
 | n = 100,000 | honest | declared argmax | n/a | 0.6222 3s (bars) | n/a |
@@ -2465,7 +2569,7 @@ The pooled arms read `LIVE_GRIDS[n]` + `va_b_` / `rivals_b_` / `pool_fill_` / `l
 | n = 100,000 | honest | random | n/a | 0.4422 3s (bars) | n/a |
 | n = 100,000 | cartel | random | n/a | 0.4422 3s (bars) | n/a |
 
-Method and params behind each label: `midian_va` = `midian_va {}`; `midian` = `midian {}`; `flat_probe_argmax_online` = `flat_probe_argmax {"online": true}`; `knn_router_online` = `knn_router {"online": true}`; `warm_start_bandit` = `warm_start_bandit {}` (n0 = 5); `warm_start_bandit[n0=0.5]` = `warm_start_bandit {"n0": 0.5}`; `linucb_honest[bonus=own]` = `linucb_honest {"bonus": "own"}`; `declared_argmax {}`, `random {}`.
+Method and params behind each label: `midian` = `midian {}` (formerly `midian_va {}`); `midian_wo_defenses` = `midian {"audit": false, "verify": false}` (formerly `midian {}`); `flat_probe_argmax_online` = `flat_probe_argmax {"online": true}`; `knn_router_online` = `knn_router {"online": true}`; `warm_start_bandit` = `warm_start_bandit {}` (n0 = 5); `warm_start_bandit[n0=0.5]` = `warm_start_bandit {"n0": 0.5}`; `linucb_honest[bonus=own]` = `linucb_honest {"bonus": "own"}`; `declared_argmax {}`, `random {}`.
 
 ---
 
@@ -2473,11 +2577,11 @@ Method and params behind each label: `midian_va` = `midian_va {}`; `midian` = `m
 
 **Question answered.** Does the ordering in A hold across every experiment family (live LLM, calibrated Bernoulli, RouterBench replay, RouterEval real-LLM pool, LLMRouterBench) at each family's largest population, on a common oracle-normalised scale, honest versus cartel, at b = 1, 3, 5?
 
-**Group selection** (`fig_B`, `:147-156`). For each family in `FAMILY` order: n = the **largest** n whose primary group has **both** a cartel and a β = 0 cell in `C`; primary group = `specialist` for live, `strong_to_weak` for routereval, otherwise whatever group exists (`primary`, `:144`; `PRIMARY`, `:47`). Result: live n = 100,000; bernoulli n = 10,000,000; RouterBench replay n = 1,000,000; RouterEval n = 5,000 (key `strong_to_weak`, but the data is the 5,000-LLM leaderboard pool, `dist = all`, 4.0.2); LLMRouterBench n = 20.
+**Group selection** (`fig_B`, `:132-141`). For each family in `FAMILY` order: n = the **largest** n whose primary group has **both** a cartel and a β = 0 cell in `C`; primary group = `specialist` for live, `strong_to_weak` for routereval, otherwise whatever group exists (`primary`, `:129`; `PRIMARY`, `:46`). Result: live n = 100,000; bernoulli n = 10,000,000; RouterBench replay n = 1,000,000; RouterEval n = 5,000 (key `strong_to_weak`, but the data is the 5,000-LLM leaderboard pool, `dist = all`, 4.0.2); LLMRouterBench n = 20.
 
-**Y axis**: `success / oracle`, every bar ÷ that group's honest b = 3 oracle: live 0.8622, bernoulli 0.8462, replay 0.7919, RouterEval 0.9200, LLMRouterBench 0.7500 (the four non-live ones from their erratum-30 tables, 4.0.7). The dotted line is at 1.0. No bar exceeds 1; whiskers can (live 10^5 MIDIAN-VA b = 5 reaches 1.010).
+**Y axis**: "success relative to oracle" (0.2–1.05), every bar ÷ that group's honest b = 3 oracle: live 0.8622, bernoulli 0.8462, replay 0.7919, RouterEval 0.9200, LLMRouterBench 0.7500 (the four non-live ones from their erratum-30 tables, 4.0.7). The dotted line is at 1.0. No bar exceeds 1; whiskers can (live 10^5 MIDIAN b = 5 reaches 1.010).
 
-**Bars, shades, hatches, title star, legend and stacking** work as in A (4.0.5, 4.1). B_stacked shows non-monotone stacks where an arm is non-monotone in b, e.g. LLMRouterBench best learned router (b = 1 0.8684, b = 3 0.9262, b = 5 0.8996), LLMRouterBench cartel MIDIAN (0.8240 / 0.8107 / 0.8204) and RouterEval cartel MIDIAN (0.6920 / 0.6643 / 0.6667).
+**Bars, shades, hatches, legend and stacking** work as in A (4.0.5, 4.1), without the framework arm. B_stacked overlays budgets on MIDIAN only; MIDIAN is non-monotone in one B cell, LLMRouterBench cartel (b = 1 0.8364, b = 3 0.8347, b = 5 0.8720), where the b = 1 bar shows only as a 0.002 sliver above b = 3. Other arms that are non-monotone in b, e.g. LLMRouterBench best learned/declared router (b = 1 0.8684, b = 3 0.9262, b = 5 0.8996), LLMRouterBench cartel MIDIAN w/o defenses (0.8240 / 0.8107 / 0.8204) and RouterEval cartel MIDIAN w/o defenses (0.6920 / 0.6643 / 0.6667), are visible only in `_allb`.
 
 **Provenance per family** (every arm; the per-seed tables behind each switched family are listed in 4.0.7).
 
@@ -2493,70 +2597,70 @@ Method and params behind each label: `midian_va` = `midian_va {}`; `midian` = `m
 
 | group | regime | arm | b=1 | b=3 | b=5 |
 |---|---|---|---|---|---|
-| live n = 100,000 | honest | MIDIAN-VA | 0.7423 3s (va_b_n100k) | 0.9691 3s (bars) | 0.9897 3s (va_b_n100k) |
-| live n = 100,000 | cartel | MIDIAN-VA | 0.7165 3s (va_b_n100k) | 0.9601 3s (bars) | 0.9884 3s (va_b_n100k) |
-| live n = 100,000 | honest | MIDIAN | 0.7423 3s (rivals_b_n100k) | 0.8724 3s (bars) | 0.9188 3s (rivals_b_n100k) |
-| live n = 100,000 | cartel | MIDIAN | 0.6495 3s (rivals_b_n100k) | 0.8183 3s (bars) | 0.8776 3s (rivals_b_n100k) |
-| live n = 100,000 | honest | flat probe argmax (online) | 0.7680 3s (rivals_b_n100k) | 0.8686 3s (bars) | 0.9111 3s (rivals_b_n100k) |
-| live n = 100,000 | cartel | flat probe argmax (online) | 0.7680 3s (rivals_b_n100k) | 0.8686 3s (bars) | 0.9111 3s (rivals_b_n100k) |
-| live n = 100,000 | honest | best learned router | 0.7010 3s, `knn_router_online` ×2; `cluster_head_router` ×1 | 0.8595 3s, `knn_router_online` ×3 | 0.8711 3s, `knn_router_online` ×2; `flat_nsw_router` ×1 |
-| live n = 100,000 | cartel | best learned router | 0.6881 3s, `disrouter_cascade` ×2; `knn_router_online` ×1 * | 0.8595 3s, `knn_router_online` ×3 | 0.8995 3s, `flat_nsw_router` ×3 * |
+| live n = 100,000 | honest | MIDIAN | 0.7423 3s (va_b_n100k) | 0.9691 3s (bars) | 0.9897 3s (va_b_n100k) |
+| live n = 100,000 | cartel | MIDIAN | 0.7165 3s (va_b_n100k) | 0.9601 3s (bars) | 0.9884 3s (va_b_n100k) |
+| live n = 100,000 | honest | MIDIAN w/o defenses | 0.7423 3s (rivals_b_n100k) | 0.8724 3s (bars) | 0.9188 3s (rivals_b_n100k) |
+| live n = 100,000 | cartel | MIDIAN w/o defenses | 0.6495 3s (rivals_b_n100k) | 0.8183 3s (bars) | 0.8776 3s (rivals_b_n100k) |
+| live n = 100,000 | honest | flat probe argmax | 0.7680 3s (rivals_b_n100k) | 0.8686 3s (bars) | 0.9111 3s (rivals_b_n100k) |
+| live n = 100,000 | cartel | flat probe argmax | 0.7680 3s (rivals_b_n100k) | 0.8686 3s (bars) | 0.9111 3s (rivals_b_n100k) |
+| live n = 100,000 | honest | best learned/declared router | 0.7010 3s, `knn_router_online` ×2; `cluster_head_router` ×1 | 0.8595 3s, `knn_router_online` ×3 | 0.8711 3s, `knn_router_online` ×2; `flat_nsw_router` ×1 |
+| live n = 100,000 | cartel | best learned/declared router | 0.7513 3s, `knn_router_online` ×3 | 0.8595 3s, `knn_router_online` ×3 | 0.8763 3s, `knn_router_online` ×2; `flat_nsw_router` ×1 |
 | live n = 100,000 | honest | best bandit | 0.7719 3s, `warm_start_bandit[n0=0.5]` ×2; `warm_start_bandit` ×1 | 0.8750 3s, `warm_start_bandit[n0=0.5]` ×3 | 0.9343 3s, `warm_start_bandit[n0=0.5]` ×3 |
 | live n = 100,000 | cartel | best bandit | 0.8209 3s, `warm_start_bandit` ×3 | 0.9021 3s, `warm_start_bandit` ×3 | 0.9304 3s, `warm_start_bandit` ×2; `warm_start_bandit[n0=0.5]` ×1 |
 | live n = 100,000 | honest | declared argmax | n/a | 0.7216 3s (bars) | n/a |
 | live n = 100,000 | cartel | declared argmax | n/a | 0.6701 3s (bars) | n/a |
 | live n = 100,000 | honest | random | n/a | 0.5129 3s (bars) | n/a |
 | live n = 100,000 | cartel | random | n/a | 0.5129 3s (bars) | n/a |
-| bernoulli n = 10,000,000 | honest | MIDIAN-VA | 0.8015 100s (bernoulli_scale_v5) | 0.9469 100s (bernoulli_scale_v5) | 0.9764 100s (va_b_bernoulli_1e7) |
-| bernoulli n = 10,000,000 | cartel | MIDIAN-VA | 0.7977 100s (bernoulli_scale_v5) | 0.9386 100s (bernoulli_scale_v5) | 0.9738 100s (va_b_bernoulli_1e7) |
-| bernoulli n = 10,000,000 | honest | MIDIAN | 0.8015 100s (bernoulli_scale_v5) | 0.9110 100s (bernoulli_scale_v5) | 0.9400 100s (rivals_b_bernoulli_1e7) |
-| bernoulli n = 10,000,000 | cartel | MIDIAN | 0.7450 100s (bernoulli_scale_v5) | 0.8463 100s (bernoulli_scale_v5) | 0.8988 100s (rivals_b_bernoulli_1e7) |
-| bernoulli n = 10,000,000 | honest | flat probe argmax (online) | 0.8005 100s (bernoulli_scale_v5) | 0.9088 100s (bernoulli_scale_v5) | 0.9409 100s (rivals_b_bernoulli_1e7) |
-| bernoulli n = 10,000,000 | cartel | flat probe argmax (online) | 0.8005 100s (bernoulli_scale_v5) | 0.9088 100s (bernoulli_scale_v5) | 0.9409 100s (rivals_b_bernoulli_1e7) |
-| bernoulli n = 10,000,000 | honest | best learned router | 0.6662 100s, `cluster_head_router` ×100 (b-inv.) | 0.7832 100s, `flat_nsw_router` ×100 | 0.8489 100s, `flat_nsw_router` ×100 |
-| bernoulli n = 10,000,000 | cartel | best learned router | 0.6451 100s, `disrouter_cascade` ×100 (b-inv.) | 0.7832 100s, `flat_nsw_router` ×100 | 0.8489 100s, `flat_nsw_router` ×100 |
-| bernoulli n = 10,000,000 | honest | best bandit | 0.8907 100s, `warm_start_bandit` ×100 | 0.9380 100s, `warm_start_bandit` ×100 | 0.9513 100s, `warm_start_bandit` ×100 |
-| bernoulli n = 10,000,000 | cartel | best bandit | 0.8353 100s, `warm_start_bandit` ×100 | 0.9254 100s, `warm_start_bandit` ×100 | 0.9470 100s, `warm_start_bandit` ×100 |
-| bernoulli n = 10,000,000 | honest | declared argmax | n/a | 0.6625 100s (bernoulli_1e7_cal) | n/a |
-| bernoulli n = 10,000,000 | cartel | declared argmax | n/a | 0.4980 100s (bernoulli_1e7_cal) | n/a |
-| bernoulli n = 10,000,000 | honest | random | n/a | 0.4936 100s (bernoulli_scale_v5) | n/a |
-| bernoulli n = 10,000,000 | cartel | random | n/a | 0.4936 100s (bernoulli_scale_v5) | n/a |
-| RouterBench replay n = 1,000,000 | honest | MIDIAN-VA | 0.8289 30s (replay_1e6_split_cal) | 0.9658 30s (replay_1e6_split_cal) | 0.9833 30s (replay_1e6_split_cal) |
-| RouterBench replay n = 1,000,000 | cartel | MIDIAN-VA | 0.8279 30s (replay_1e6_split_cal) | 0.9622 30s (replay_1e6_split_cal) | 0.9824 30s (replay_1e6_split_cal) |
-| RouterBench replay n = 1,000,000 | honest | MIDIAN | 0.8289 30s (replay_1e6_split_cal) | 0.8939 30s (replay_1e6_split_cal) | 0.9231 30s (replay_1e6_split_cal) |
-| RouterBench replay n = 1,000,000 | cartel | MIDIAN | 0.5138 30s (replay_1e6_split_cal) | 0.7197 30s (replay_1e6_split_cal) | 0.8211 30s (replay_1e6_split_cal) |
-| RouterBench replay n = 1,000,000 | honest | flat probe argmax (online) | 0.8302 30s (replay_1e6_split_cal) | 0.8976 30s (replay_1e6_split_cal) | 0.9223 30s (replay_1e6_split_cal) |
-| RouterBench replay n = 1,000,000 | cartel | flat probe argmax (online) | 0.8302 30s (replay_1e6_split_cal) | 0.8976 30s (replay_1e6_split_cal) | 0.9223 30s (replay_1e6_split_cal) |
-| RouterBench replay n = 1,000,000 | honest | best learned router | 0.7604 30s, `flat_nsw_router` ×30 | 0.9029 30s, `flat_nsw_router` ×30 | 0.9324 30s, `flat_nsw_router` ×30 |
-| RouterBench replay n = 1,000,000 | cartel | best learned router | 0.7604 30s, `flat_nsw_router` ×30 | 0.9029 30s, `flat_nsw_router` ×30 | 0.9324 30s, `flat_nsw_router` ×30 |
+| Bernoulli n = 10,000,000 | honest | MIDIAN | 0.8015 100s (bernoulli_scale_v5) | 0.9469 100s (bernoulli_scale_v5) | 0.9764 100s (va_b_bernoulli_1e7) |
+| Bernoulli n = 10,000,000 | cartel | MIDIAN | 0.7977 100s (bernoulli_scale_v5) | 0.9386 100s (bernoulli_scale_v5) | 0.9738 100s (va_b_bernoulli_1e7) |
+| Bernoulli n = 10,000,000 | honest | MIDIAN w/o defenses | 0.8015 100s (bernoulli_scale_v5) | 0.9110 100s (bernoulli_scale_v5) | 0.9400 100s (rivals_b_bernoulli_1e7) |
+| Bernoulli n = 10,000,000 | cartel | MIDIAN w/o defenses | 0.7450 100s (bernoulli_scale_v5) | 0.8463 100s (bernoulli_scale_v5) | 0.8988 100s (rivals_b_bernoulli_1e7) |
+| Bernoulli n = 10,000,000 | honest | flat probe argmax | 0.8005 100s (bernoulli_scale_v5) | 0.9088 100s (bernoulli_scale_v5) | 0.9409 100s (rivals_b_bernoulli_1e7) |
+| Bernoulli n = 10,000,000 | cartel | flat probe argmax | 0.8005 100s (bernoulli_scale_v5) | 0.9088 100s (bernoulli_scale_v5) | 0.9409 100s (rivals_b_bernoulli_1e7) |
+| Bernoulli n = 10,000,000 | honest | best learned/declared router | 0.6662 100s, `cluster_head_router` ×100 (b-inv.) | 0.7832 100s, `flat_nsw_router` ×100 | 0.8489 100s, `flat_nsw_router` ×100 |
+| Bernoulli n = 10,000,000 | cartel | best learned/declared router | 0.6451 100s, `disrouter_cascade` ×100 (b-inv.) | 0.7832 100s, `flat_nsw_router` ×100 | 0.8489 100s, `flat_nsw_router` ×100 |
+| Bernoulli n = 10,000,000 | honest | best bandit | 0.8907 100s, `warm_start_bandit` ×100 | 0.9380 100s, `warm_start_bandit` ×100 | 0.9513 100s, `warm_start_bandit` ×100 |
+| Bernoulli n = 10,000,000 | cartel | best bandit | 0.8353 100s, `warm_start_bandit` ×100 | 0.9254 100s, `warm_start_bandit` ×100 | 0.9470 100s, `warm_start_bandit` ×100 |
+| Bernoulli n = 10,000,000 | honest | declared argmax | n/a | 0.6625 100s (bernoulli_1e7_cal) | n/a |
+| Bernoulli n = 10,000,000 | cartel | declared argmax | n/a | 0.4980 100s (bernoulli_1e7_cal) | n/a |
+| Bernoulli n = 10,000,000 | honest | random | n/a | 0.4936 100s (bernoulli_scale_v5) | n/a |
+| Bernoulli n = 10,000,000 | cartel | random | n/a | 0.4936 100s (bernoulli_scale_v5) | n/a |
+| RouterBench replay n = 1,000,000 | honest | MIDIAN | 0.8289 30s (replay_1e6_split_cal) | 0.9658 30s (replay_1e6_split_cal) | 0.9833 30s (replay_1e6_split_cal) |
+| RouterBench replay n = 1,000,000 | cartel | MIDIAN | 0.8279 30s (replay_1e6_split_cal) | 0.9622 30s (replay_1e6_split_cal) | 0.9824 30s (replay_1e6_split_cal) |
+| RouterBench replay n = 1,000,000 | honest | MIDIAN w/o defenses | 0.8289 30s (replay_1e6_split_cal) | 0.8939 30s (replay_1e6_split_cal) | 0.9231 30s (replay_1e6_split_cal) |
+| RouterBench replay n = 1,000,000 | cartel | MIDIAN w/o defenses | 0.5138 30s (replay_1e6_split_cal) | 0.7197 30s (replay_1e6_split_cal) | 0.8211 30s (replay_1e6_split_cal) |
+| RouterBench replay n = 1,000,000 | honest | flat probe argmax | 0.8302 30s (replay_1e6_split_cal) | 0.8976 30s (replay_1e6_split_cal) | 0.9223 30s (replay_1e6_split_cal) |
+| RouterBench replay n = 1,000,000 | cartel | flat probe argmax | 0.8302 30s (replay_1e6_split_cal) | 0.8976 30s (replay_1e6_split_cal) | 0.9223 30s (replay_1e6_split_cal) |
+| RouterBench replay n = 1,000,000 | honest | best learned/declared router | 0.7604 30s, `flat_nsw_router` ×30 | 0.9029 30s, `flat_nsw_router` ×30 | 0.9324 30s, `flat_nsw_router` ×30 |
+| RouterBench replay n = 1,000,000 | cartel | best learned/declared router | 0.7604 30s, `flat_nsw_router` ×30 | 0.9029 30s, `flat_nsw_router` ×30 | 0.9324 30s, `flat_nsw_router` ×30 |
 | RouterBench replay n = 1,000,000 | honest | best bandit | 0.8801 30s, `warm_start_bandit` ×30 | 0.9392 30s, `linucb_honest[bonus=own]` ×30 | 0.9582 30s, `linucb_honest[bonus=own]` ×30 |
 | RouterBench replay n = 1,000,000 | cartel | best bandit | 0.8734 30s, `linucb_honest[bonus=own]` ×30 | 0.9392 30s, `linucb_honest[bonus=own]` ×30 | 0.9582 30s, `linucb_honest[bonus=own]` ×30 |
 | RouterBench replay n = 1,000,000 | honest | declared argmax | n/a | 0.3822 30s (replay_1e6_split_cal) | n/a |
 | RouterBench replay n = 1,000,000 | cartel | declared argmax | n/a | 0.3029 30s (replay_1e6_split_cal) | n/a |
 | RouterBench replay n = 1,000,000 | honest | random | n/a | 0.2433 30s (replay_1e6_split_cal) | n/a |
 | RouterBench replay n = 1,000,000 | cartel | random | n/a | 0.2433 30s (replay_1e6_split_cal) | n/a |
-| RouterEval n = 5,000 | honest | MIDIAN-VA | 0.7017 3s (routereval5k_norep_cal) | 0.8031 3s (routereval5k_norep_cal) | 0.8671 3s (routereval5k_norep_cal) |
-| RouterEval n = 5,000 | cartel | MIDIAN-VA | 0.6969 3s (routereval5k_norep_cal) | 0.7971 3s (routereval5k_norep_cal) | 0.8671 3s (routereval5k_norep_cal) |
-| RouterEval n = 5,000 | honest | MIDIAN | 0.7017 3s (routereval5k_norep_cal) | 0.7210 3s (routereval5k_norep_cal) | 0.7379 3s (routereval5k_norep_cal) |
-| RouterEval n = 5,000 | cartel | MIDIAN | 0.6920 3s (routereval5k_norep_cal) | 0.6643 3s (routereval5k_norep_cal) | 0.6667 3s (routereval5k_norep_cal) |
-| RouterEval n = 5,000 | honest | flat probe argmax (online) | 0.6304 3s (routereval5k_norep_cal) | 0.6896 3s (routereval5k_norep_cal) | 0.7379 3s (routereval5k_norep_cal) |
-| RouterEval n = 5,000 | cartel | flat probe argmax (online) | 0.6304 3s (routereval5k_norep_cal) | 0.6896 3s (routereval5k_norep_cal) | 0.7379 3s (routereval5k_norep_cal) |
-| RouterEval n = 5,000 | honest | best learned router | 0.6123 3s, `flat_nsw_router` ×2; `cluster_head_router` ×1 | 0.7729 3s, `flat_nsw_router` ×3 | 0.8188 3s, `flat_nsw_router` ×3 |
-| RouterEval n = 5,000 | cartel | best learned router | 0.6969 3s, `disrouter_cascade` ×3 (b-inv.) | 0.7729 3s, `flat_nsw_router` ×3 | 0.8188 3s, `flat_nsw_router` ×3 |
+| RouterEval n = 5,000 | honest | MIDIAN | 0.7017 3s (routereval5k_norep_cal) | 0.8031 3s (routereval5k_norep_cal) | 0.8671 3s (routereval5k_norep_cal) |
+| RouterEval n = 5,000 | cartel | MIDIAN | 0.6969 3s (routereval5k_norep_cal) | 0.7971 3s (routereval5k_norep_cal) | 0.8671 3s (routereval5k_norep_cal) |
+| RouterEval n = 5,000 | honest | MIDIAN w/o defenses | 0.7017 3s (routereval5k_norep_cal) | 0.7210 3s (routereval5k_norep_cal) | 0.7379 3s (routereval5k_norep_cal) |
+| RouterEval n = 5,000 | cartel | MIDIAN w/o defenses | 0.6920 3s (routereval5k_norep_cal) | 0.6643 3s (routereval5k_norep_cal) | 0.6667 3s (routereval5k_norep_cal) |
+| RouterEval n = 5,000 | honest | flat probe argmax | 0.6304 3s (routereval5k_norep_cal) | 0.6896 3s (routereval5k_norep_cal) | 0.7379 3s (routereval5k_norep_cal) |
+| RouterEval n = 5,000 | cartel | flat probe argmax | 0.6304 3s (routereval5k_norep_cal) | 0.6896 3s (routereval5k_norep_cal) | 0.7379 3s (routereval5k_norep_cal) |
+| RouterEval n = 5,000 | honest | best learned/declared router | 0.6123 3s, `flat_nsw_router` ×2; `cluster_head_router` ×1 | 0.7729 3s, `flat_nsw_router` ×3 | 0.8188 3s, `flat_nsw_router` ×3 |
+| RouterEval n = 5,000 | cartel | best learned/declared router | 0.6969 3s, `disrouter_cascade` ×3 (b-inv.) | 0.7729 3s, `flat_nsw_router` ×3 | 0.8188 3s, `flat_nsw_router` ×3 |
 | RouterEval n = 5,000 | honest | best bandit | 0.7802 3s, `linucb_honest[bonus=own]` ×3 | 0.8949 3s, `linucb_honest[bonus=own]` ×3 | 0.9046 3s, `linucb_honest[bonus=own]` ×3 |
 | RouterEval n = 5,000 | cartel | best bandit | 0.7802 3s, `linucb_honest[bonus=own]` ×3 | 0.8949 3s, `linucb_honest[bonus=own]` ×3 | 0.9046 3s, `linucb_honest[bonus=own]` ×3 |
 | RouterEval n = 5,000 | honest | declared argmax | n/a | 0.6739 3s (routereval5k_norep_cal) | n/a |
 | RouterEval n = 5,000 | cartel | declared argmax | n/a | 0.5568 3s (routereval5k_norep_cal) | n/a |
 | RouterEval n = 5,000 | honest | random | n/a | 0.5725 3s (routereval5k_norep_cal) | n/a |
 | RouterEval n = 5,000 | cartel | random | n/a | 0.5725 3s (routereval5k_norep_cal) | n/a |
-| LLMRouterBench n = 20 | honest | MIDIAN-VA | 0.8444 5s (llmrouterbench_norep_cal) | 0.8844 5s (llmrouterbench_norep_cal) | 0.9120 5s (llmrouterbench_norep_cal) |
-| LLMRouterBench n = 20 | cartel | MIDIAN-VA | 0.8364 5s (llmrouterbench_norep_cal) | 0.8347 5s (llmrouterbench_norep_cal) | 0.8720 5s (llmrouterbench_norep_cal) |
-| LLMRouterBench n = 20 | honest | MIDIAN | 0.8444 5s (llmrouterbench_norep_cal) | 0.8862 5s (llmrouterbench_norep_cal) | 0.8951 5s (llmrouterbench_norep_cal) |
-| LLMRouterBench n = 20 | cartel | MIDIAN | 0.8240 5s (llmrouterbench_norep_cal) | 0.8107 5s (llmrouterbench_norep_cal) | 0.8204 5s (llmrouterbench_norep_cal) |
-| LLMRouterBench n = 20 | honest | flat probe argmax (online) | 0.8124 5s (llmrouterbench_norep_cal) | 0.8800 5s (llmrouterbench_norep_cal) | 0.8996 5s (llmrouterbench_norep_cal) |
-| LLMRouterBench n = 20 | cartel | flat probe argmax (online) | 0.8124 5s (llmrouterbench_norep_cal) | 0.8800 5s (llmrouterbench_norep_cal) | 0.8996 5s (llmrouterbench_norep_cal) |
-| LLMRouterBench n = 20 | honest | best learned router | 0.8684 5s, `mlp_router` ×5 | 0.9262 5s, `mlp_router` ×5 | 0.8996 5s, `mlp_router` ×5 |
-| LLMRouterBench n = 20 | cartel | best learned router | 0.8684 5s, `mlp_router` ×5 | 0.9262 5s, `mlp_router` ×5 | 0.8996 5s, `mlp_router` ×5 |
+| LLMRouterBench n = 20 | honest | MIDIAN | 0.8444 5s (llmrouterbench_norep_cal) | 0.8844 5s (llmrouterbench_norep_cal) | 0.9120 5s (llmrouterbench_norep_cal) |
+| LLMRouterBench n = 20 | cartel | MIDIAN | 0.8364 5s (llmrouterbench_norep_cal) | 0.8347 5s (llmrouterbench_norep_cal) | 0.8720 5s (llmrouterbench_norep_cal) |
+| LLMRouterBench n = 20 | honest | MIDIAN w/o defenses | 0.8444 5s (llmrouterbench_norep_cal) | 0.8862 5s (llmrouterbench_norep_cal) | 0.8951 5s (llmrouterbench_norep_cal) |
+| LLMRouterBench n = 20 | cartel | MIDIAN w/o defenses | 0.8240 5s (llmrouterbench_norep_cal) | 0.8107 5s (llmrouterbench_norep_cal) | 0.8204 5s (llmrouterbench_norep_cal) |
+| LLMRouterBench n = 20 | honest | flat probe argmax | 0.8124 5s (llmrouterbench_norep_cal) | 0.8800 5s (llmrouterbench_norep_cal) | 0.8996 5s (llmrouterbench_norep_cal) |
+| LLMRouterBench n = 20 | cartel | flat probe argmax | 0.8124 5s (llmrouterbench_norep_cal) | 0.8800 5s (llmrouterbench_norep_cal) | 0.8996 5s (llmrouterbench_norep_cal) |
+| LLMRouterBench n = 20 | honest | best learned/declared router | 0.8684 5s, `mlp_router` ×5 | 0.9262 5s, `mlp_router` ×5 | 0.8996 5s, `mlp_router` ×5 |
+| LLMRouterBench n = 20 | cartel | best learned/declared router | 0.8684 5s, `mlp_router` ×5 | 0.9262 5s, `mlp_router` ×5 | 0.8996 5s, `mlp_router` ×5 |
 | LLMRouterBench n = 20 | honest | best bandit | 0.8311 5s, `linucb_honest[bonus=own]` ×4; `warm_start_bandit` ×1 | 0.8596 5s, `linucb_honest[bonus=own]` ×4; `warm_start_bandit[n0=0.5]` ×1 | 0.8844 5s, `linucb_honest[bonus=own]` ×4; `warm_start_bandit[n0=0.5]` ×1 |
 | LLMRouterBench n = 20 | cartel | best bandit | 0.8489 5s, `linucb_honest[bonus=own]` ×5 | 0.8693 5s, `linucb_honest[bonus=own]` ×5 | 0.8996 5s, `linucb_honest[bonus=own]` ×5 |
 | LLMRouterBench n = 20 | honest | declared argmax | n/a | 0.7440 5s (llmrouterbench_norep_cal) | n/a |
@@ -2564,20 +2668,25 @@ Method and params behind each label: `midian_va` = `midian_va {}`; `midian` = `m
 | LLMRouterBench n = 20 | honest | random | n/a | 0.6898 5s (llmrouterbench_norep_cal) | n/a |
 | LLMRouterBench n = 20 | cartel | random | n/a | 0.6898 5s (llmrouterbench_norep_cal) | n/a |
 
-Reading notes. In the switched families several pooled bars are identical across regimes (replay best learned router at every b and best bandit at b = 3 / 5, RouterEval best bandit at every b and best learned router at b = 3 / 5, LLMRouterBench best learned router at every b): the picked arm (`flat_nsw_router`, `linucb_honest[bonus=own]`, `mlp_router`) reads neither claims nor reports, and β does not change the world, stream or probes. Flat probe argmax and random are regime-invariant for the same reason.
+Reading notes. In the switched families several pooled bars are identical across regimes (replay best learned/declared router at every b and best bandit at b = 3 / 5, RouterEval best bandit at every b and best learned/declared router at b = 3 / 5, LLMRouterBench best learned/declared router at every b): the picked arm (`flat_nsw_router`, `linucb_honest[bonus=own]`, `mlp_router`) reads neither claims nor reports, and β does not change the world, stream or probes. Flat probe argmax and random are regime-invariant for the same reason.
 
 ---
 
-### 4.3 Completeness, and how the figure shows it
+### 4.3 Completeness, and how it is reported
 
 **What is missing, and why:**
-- **No slot is empty.** Every (arm, regime, b) slot of A (136) and B (170) has a bar; `rivals_b_n100k` now holds every rival at live 10^5 in both regimes at b = 1 and 5.
-- **One pool member is partial**: at live 10^5 the kNN routers (`knn_router`, `knn_router_online`) are still landing for a few cartel seeds, so the cartel b = 1 and b = 5 best-learned-router bars (in A and in B) carry `INCOMPLETE POOL, missing or partial knn_router, knn_router_online` in `chosen`. Those bars, and possibly the other live 10^5 best-learned-router bars, may change slightly at the next figure run.
-- **Every other pool is complete**: `linucb_honest[bonus=own]` and post-fix TrueSkill have landed wherever they can run.
+- **No slot is empty.** Every (arm, regime, b) slot of A (144 bars, including the framework arm's 8) and B (170) has a
+  bar; `rivals_b_n100k` holds every rival at live 10^5 in both regimes at b = 1 and 5.
+- **Every pool is complete**: the last live 10^5 kNN seeds (`knn_router`, `knn_router_online`) landed 2026-09-24 11:20,
+  and `linucb_honest[bonus=own]` and post-fix TrueSkill have landed wherever they can run. No `chosen` entry says
+  `INCOMPLETE POOL`.
 - **Erratum 30**: all four non-live families have switched (4.0.7).
 
-**How missing data is marked:**
-- No marker on any bar. The title of each A / B file ends in one ` *` while any slot of the figure has no bar or any pooled bar's pool is missing a member or has a member missing seeds (`budget_bars`, `:113-116`, `:127`). All four A / B files carry it today, for the live 10^5 kNN seeds only.
+**How missing data is reported:**
+- Never in the figure: no title, no marker (`docs/FIGURE_SPEC.md` §1). `budget_bars` prints `[<name>] INCOMPLETE: …` when
+  any slot has no bar or any pooled bar's pool is missing a member or has a member missing seeds (`:104-107`, `:119`), and
+  `scripts/ops/figure_status.py` lists every missing (group, arm, regime, b) slot and every incomplete-pool bar from the
+  `_allb` CSVs (§1.8.4). Both report nothing today.
 - A missing bar is an empty slot; the CSV omits it. An incomplete pool is flagged in `chosen` ("missing or partial").
 - Seed counts are not marked on the figure (3 at live 10^4 / 10^5 and RouterEval, 5 LLMRouterBench, 10 live 10^2 / 10^3, 30 replay, 100 bernoulli; the same at every b of a cell); the Appendix lists them.
 
@@ -2588,26 +2697,26 @@ They are not drawn by `condensed_figs.py`. See Part 6.
 
 ### 4.5 Discrepancies, open questions and possible issues
 
-1. **A pooled bar is not one arm's success.** "Best learned router" / "best bandit" are cross-fitted (§2.1.3): each seed is scored with the arm that is best on the other seeds, so the bar can mix arms (e.g. live 10^3 cartel best bandit b = 3: `warm_start_bandit` ×7, `warm_start_bandit[n0=0.5]` ×3). It is an honest estimate of "pick the best arm from past seeds, then deploy it", and at most the best single arm's mean. With 3 seeds (live 10^4 / 10^5, RouterEval) each pick rests on 2 seeds.
-2. **The pools mix channels.** `LEARNED` includes `cluster_head_router` and `disrouter_cascade`, *declared-channel-only* arms (METHODS.md:35-44) that never probe, and `flat_nsw_router`, a verified-centralised arm (an ANN index over flat probe means), not a published learned router. On the calibrated rows B now draws, the declared-only pair is the majority pick in 5 of the 54 best-learned-router bars, all at b = 1 (bernoulli 10^7 both regimes, RouterEval 5,000 cartel, live 10^5 cartel in A and B), and flat-NSW in 21 (every replay bar, bernoulli b = 3 / 5, most RouterEval bars, live 10^4 b = 1 / 3, live 10^5 cartel b = 5). Only 28 of the 54 bars are majority-picked by a published RouterBench router (kNN 18, MLP 10). The legend label "best learned router" overstates what the other bars are (rivals audit F5). On the old answer-key rows the declared-only pair won almost every non-live bar; those rows are no longer drawn.
-3. **One pool member still landing.** kNN at live 10^5 (cartel b = 1 / 5 flagged incomplete); every other pool, including every bandit pool, is complete. Only the title ` *` and the CSV say so.
-4. **b = 1 / 5 and b = 3 come from different runs.** b = 3 of the single arms is the bars CSV, pooled from several grids per seed; b = 1 / 5 come from one grid each. The task streams match (identical oracles), but, e.g., MIDIAN-VA n = 100 b = 3 averages rows from 3 grids per seed while its b = 1 / 5 twin comes from 1.
-5. **Cross-grid averaging within a seed at b = 3 (live).** `stats_from_rows` averages every row of a (label, seed) across `LIVE_GRIDS`, with no dedup, and the duplicate rows are **not identical**: `midian` n = 100 β = 0 seed 1: 0.816 (`fw_live_n100`), 0.816 (`learned_n100`), 0.783 (`live_core_n100`). The maximum cross-grid spread is 0.076 at n = 100, 0.020 at n = 1,000 and 0.017 at 10^4. The protocol audit (F5) traces most of it to the old per-method probe instances of `live_core_n100` and early `live_f1_n1000`, averaged into plain MIDIAN, not into MIDIAN-VA.
+1. **A pooled bar is not one arm's success.** "Best learned/declared router" / "best bandit" are cross-fitted (§2.1.3): each seed is scored with the arm that is best on the other seeds, so the bar can mix arms (e.g. live 10^3 cartel best bandit b = 3: `warm_start_bandit` ×7, `warm_start_bandit[n0=0.5]` ×3). It is an honest estimate of "pick the best arm from past seeds, then deploy it", and at most the best single arm's mean. With 3 seeds (live 10^4 / 10^5, RouterEval) each pick rests on 2 seeds.
+2. **The pools mix channels.** `LEARNED` includes `cluster_head_router` and `disrouter_cascade`, *declared-channel-only* arms (METHODS.md §3) that never probe, and `flat_nsw_router`, a verified-centralised arm (an ANN index over flat probe means), not a published learned router. On the calibrated rows B now draws, the declared-only pair is the majority pick in 3 of the 54 best-learned-router bars, all at b = 1 (bernoulli 10^7 both regimes, RouterEval 5,000 cartel), and flat-NSW in 19 (every replay bar, bernoulli b = 3 / 5, most RouterEval bars, live 10^4 b = 1 / 3). 32 of the 54 bars are majority-picked by a published RouterBench router (kNN 22, MLP 10). The legend label "best learned/declared router" names the declared-only pair but not the ANN index (rivals audit F5). On the old answer-key rows the declared-only pair won almost every non-live bar; those rows are no longer drawn.
+3. **Every pool is complete** (the live 10^5 kNN seeds have landed); nothing is flagged in the CSVs.
+4. **b = 1 / 5 and b = 3 come from different runs.** b = 3 of the single arms is the bars CSV, pooled from several grids per seed; b = 1 / 5 come from one grid each. The task streams match (identical oracles), but, e.g., MIDIAN n = 100 b = 3 averages rows from 3 grids per seed while its b = 1 / 5 twin comes from 1.
+5. **Cross-grid averaging within a seed at b = 3 (live).** `stats_from_rows` averages every row of a (label, seed) across `LIVE_GRIDS`, with no dedup, and the duplicate rows are **not identical**: MIDIAN w/o defenses (then `midian`) n = 100 β = 0 seed 1: 0.816 (`fw_live_n100`), 0.816 (`learned_n100`), 0.783 (`live_core_n100`). The maximum cross-grid spread is 0.076 at n = 100, 0.020 at n = 1,000 and 0.017 at 10^4. The protocol audit (F5) traces most of it to the old per-method probe instances of `live_core_n100` and early `live_f1_n1000`, averaged into MIDIAN w/o defenses, not into MIDIAN.
 6. **Unequal seed counts.** Live 10^4 / 10^5 and RouterEval have 3 seeds per bar, LLMRouterBench 5, live 10^2 / 10^3 10, replay 30, bernoulli 100; their whiskers are not comparable in coverage (4.0.5).
 7. **Honest `liar_select` differs by source.** At b = 3 honest uses `liar_select = random` rows (`bar_figs.py:81`); at b = 1 / 5 the `va_b` / `rivals_b` β = 0 rows are tagged `low_skill_first`. The pooled arms take β = 0 rows under either tag (`seed_tables.py:44-45`). Inert at β = 0 (`n_liars = 0`), but a different cell tag.
 8. **Normalisation in B uses one scalar**, the β = 0, b = 3 oracle; the ratio CIs ignore oracle uncertainty and are not per-seed ratios.
-9. **Replay pooling.** In the switched replay cell every bar comes from `replay_1e6_split_cal` through `_table(pooled_shapes=True)` (`seed_tables.py:55-57`): a seed counts only if the arm ran on all three shapes, and its value is the mean of the three shape means. All 30 seeds have all three shapes for every arm. (The unswitched path would take b = 1 / 3 from the scale matrix, which averages all (shape, seed) units, and b = 5 from `add_budgets`, which keeps complete-shape seeds, `:178-182`; it is not used today.)
-10. **Documentation tension about b = 1.** README.md:344-345 says "never run b = 1 beside b = 3 in one table (verification is unfunded at b = 1)". A and B put them side by side, and honest MIDIAN-VA b = 1 equals plain MIDIAN b = 1 in every cell (4.0.6).
-11. **Stacked presentation.** Stacked bars are overlapping full-height bars, not additive segments; negative b-gains appear as out-of-order shades and a b = 5 at or below b = 1 is hidden; the stacked CSV holds absolute values; no CIs, by design.
-12. **Stale docstring.** `budget_bars`'s docstring (`condensed_figs.py:96-97`) still says "A budget not in yet: * in its place"; the code draws no bar markers, only the title ` *` (`:127`), as the module docstring (`:10-11, 15-16`) now says. The `nested` rendering path (`:100-102`, `:112`, `KEY_NEST` `:133`) is never called.
+9. **Replay pooling.** In the switched replay cell every bar comes from `replay_1e6_split_cal` through `_table(pooled_shapes=True)` (`seed_tables.py:55-57`): a seed counts only if the arm ran on all three shapes, and its value is the mean of the three shape means. All 30 seeds have all three shapes for every arm. (The unswitched path would take b = 1 / 3 from the scale matrix, which averages all (shape, seed) units, and b = 5 from `add_budgets`, which keeps complete-shape seeds, `:175-179`; it is not used today.)
+10. **Documentation tension about b = 1.** README.md:344-345 says "never run b = 1 beside b = 3 in one table (verification is unfunded at b = 1)". A and B put them side by side, and honest MIDIAN b = 1 equals MIDIAN w/o defenses at b = 1 in every cell (4.0.6).
+11. **Stacked presentation.** In `_stacked` only MIDIAN overlays its budgets, as overlapping full-height bars, not additive segments; a negative b-gain appears as an out-of-order shade (one B cell, 4.2); the other arms are b = 3 only; the stacked CSV holds absolute values; no CIs, by design.
+12. **Stale docstrings.** The module docstring (`condensed_figs.py:17-18`) still says an incomplete pool "puts the one * in the figure title", and `add_budgets`'s (`:159`) that a missing cell is marked by "a *"; the code draws no title and no marker (`figspec.finish` clears the title).
 13. **Latent loader hazard (no effect today).** `fw_variant_numbers.load` deduplicates on `(n, b, dist, beta, liar_select, seed, method, params)` (`:32`), which omits `declared_source`, `K`, `Q`, `collude`, `lie_mode` and `backend_kwargs`. `add_budgets` uses it only for the live `va_b_*` / `rivals_b_*` grids, which have one value of each, so A and B are unaffected. The per-seed tables use `seed_tables.rows`, which dedups on `rid` only, and bernoulli's claim readers are separated by `declared_source` explicitly (`seed_tables.py:114-116`).
-14. **Hidden arms.** `extra_figs.HIDE_HALVING = True` (`extra_figs.py:130`, "TEMPORARY (2026-09-22, user request)") and the do-not-add list remove every halving arm; no ARMS entry or pool member is a halving arm in any case. Peer-reported halving, a pre-registered rival that reads the same report channel, beats MIDIAN-VA paired on every seed in every honest b = 3 cell of A and, on the pre-erratum-30 rows the audit read, in 3 of the 4 other B families, and loses under the cartel (protocol audit F1, F6; the B-family part was not re-checked on the reruns B now draws). Trusted-observer halving is withdrawn and never reported (erratum 26).
+14. **Hidden arms.** `extra_figs.HIDE_HALVING = True` (`extra_figs.py:130`, "TEMPORARY (2026-09-22, user request)") and the do-not-add list remove every halving arm; no ARMS entry or pool member is a halving arm in any case. Peer-reported halving, a pre-registered rival that reads the same report channel, beats MIDIAN paired on every seed in every honest b = 3 cell of A and, on the pre-erratum-30 rows the audit read, in 3 of the 4 other B families, and loses under the cartel (protocol audit F1, F6; the B-family part was not re-checked on the reruns B now draws). Trusted-observer halving is withdrawn and never reported (erratum 26).
 15. **The "RouterEval strong_to_weak" key is a misnomer at n = 5,000.** The cell key comes from `bar_figs.py`, which does not filter the 5,000-LLM pool by `dist` (`:172`); `seed_tables` keeps the same key for `routereval5k_norep_cal`, whose pool is the 5,000-LLM leaderboard (`dist = all`).
-16. **Live n = 100 cartel MIDIAN-VA b = 5 equals honest (0.8121) seed for seed.** Genuine (4.0.6), but worth a caption sentence because it looks like a copy error.
+16. **Live n = 100 cartel MIDIAN b = 5 equals honest (0.8121) seed for seed.** Genuine (4.0.6), but worth a caption sentence because it looks like a copy error.
 17. **Caption disclosures the protocol audit requires** (`paper/audit/protocol.md` F3, F6, F7):
-    - A and B show only two regimes, honest and the β = 0.5 low-skill-first cartel. That cartel is the one liar regime in which MIDIAN-VA beats peer-reported halving (5 of 24 live regimes); showing it alone is a post-hoc presentation choice, although the regime is pre-registered.
-    - Post-hoc choices, none marked on the figures: MIDIAN-VA as the headline arm (its own pre-registered target V2-11 was scored a miss); the tuned warm-start bandit (n0 = 0.5, tuned on unreported seeds 11-15); the pool edits (LinUCB replaced by its fixed-bonus variant, TrueSkill from post-fix rows only); the erratum-30 reruns B's non-live groups now draw (calibrated-claim model, replay split with 30 seeds, no-repeat Q = 300, agent shuffle); hidden halving.
-    - MIDIAN-VA overspends its budget: 1.03–1.07 × n·K·b (audit re-probes) while every rival spends ≤ 1.00 ×, so "same budget" is not literally true.
+    - A and B show only two regimes, honest and the β = 0.5 low-skill-first cartel. That cartel is the one liar regime in which MIDIAN beats peer-reported halving (5 of 24 live regimes); showing it alone is a post-hoc presentation choice, although the regime is pre-registered.
+    - Post-hoc choices, none marked on the figures: MIDIAN as the headline arm (its own pre-registered target V2-11 was scored a miss); the tuned warm-start bandit (n0 = 0.5, tuned on unreported seeds 11-15); the pool edits (LinUCB replaced by its fixed-bonus variant, TrueSkill from post-fix rows only); the erratum-30 reruns B's non-live groups now draw (calibrated-claim model, replay split with 30 seeds, no-repeat Q = 300, agent shuffle); hidden halving.
+    - MIDIAN overspends its budget: 1.03–1.07 × n·K·b (audit re-probes) while every rival spends ≤ 1.00 ×, so "same budget" is not literally true.
 
 
 ---
@@ -2617,7 +2726,7 @@ They are not drawn by `condensed_figs.py`. See Part 6.
 Scope: `figures/condensed_sample/{E_shortlists_by_n, F_shortlists_1e5, G_shortlist_lift_1e5, H_routereval_shortlists}.{png,pdf,csv}`.
 All claims below are traced to code (repo root `/n/home02/rsiegelmann/rte`). The value tables are read from
 `E_shortlists_by_n.csv`, `F_shortlists_1e5.csv`, `G_shortlist_lift_1e5.csv` and `H_routereval_shortlists.csv` (written
-2026-09-24 09:47); the per-bar framework lists and seed counts from `figures/shortlist/{live,routereval}.csv` (09:47),
+2026-09-24 11:41); the per-bar framework lists and seed counts from `figures/shortlist/{live,routereval}.csv` (written with them),
 the input those CSVs were summarised from. `shortlist_figs.h30()` and `pending_reruns()` were run read-only on the rows
 (`RTE_DATA=/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte`).
 
@@ -2629,46 +2738,46 @@ the input those CSVs were summarised from. `shortlist_figs.h30()` and `pending_r
 $RTE_DATA/results/<grid>/rows.csv + rows.d/*.json
         │  scripts/shortlist_figs.py  (collect → draw → main)
         ▼
-figures/shortlist/{live,routereval}.csv   (one row per framework × shortlist × (n, dist, regime), plus oracle / MIDIAN-VA rows)
-        │  scripts/shortlist_condensed.py (load → summarise → fig_E / fig_F / fig_G)
+figures/shortlist/{live,routereval}.csv   (one row per framework × shortlist × (n, dist, regime), plus oracle / MIDIAN rows)
+        │  scripts/shortlist_condensed.py (load → summarise → body → by_n / fig_F / fig_G)
         ▼
 figures/condensed_sample/{E,F,G,H}_*.{png,pdf,csv}
 ```
 
-- The condensed script never reads raw rows. It reads only `figures/shortlist/{family}.csv` (`shortlist_condensed.py:33`),
+- The condensed script never reads raw rows. It reads only `figures/shortlist/{family}.csv` (`shortlist_condensed.py:35`),
   written by `shortlist_figs.main`. **The condensed figures are only as fresh as the last `shortlist_figs.py` run.**
-- Both scripts must run with `RTE_DATA` set. Otherwise `R` falls back to `/scratch/rte/results` (`shortlist_figs.py:24`,
+- Both scripts must run with `RTE_DATA` set. Otherwise `R` falls back to `/scratch/rte/results` (`shortlist_figs.py:25`,
   `fw_variant_numbers.py:11`), which holds no grids, and the run writes empty CSVs.
 
 ### 5.1.2 Stage 1: `shortlist_figs.collect` (raw rows → per-framework seed means)
 
-1. **Grids read** (`GRIDS`, `shortlist_figs.py:55-56`):
+1. **Grids read** (`GRIDS`, `shortlist_figs.py:54-55`):
    - live: every directory whose name starts with `fw_live_n` and does not contain `lietext`, plus `live_n10k_v2` and
      `live_n100k` (Python precedence makes this `(A and B) or C`, the intended reading).
    - routereval: every directory starting with `fw_routereval_` or `re_sl_` **whose name ends in `_norep_cal` exactly
-     when `h30()` is true**. `h30()` (`:47-52`) is true only once every grid in `H30_FW` (the 15 `*_norep_cal` framework
+     when `h30()` is true**. `h30()` (`:46-51`) is true only once every grid in `H30_FW` (the 15 `*_norep_cal` framework
      mirrors) and `H30_REF` (`routereval_mmlu_norep_cal`, `routereval5k_norep_cal`) is complete by
      `seed_tables.complete`. So H reads either all old grids or all erratum-30 grids, never a mix (§5.5). **Today
      `h30()` is True: only the 15 `*_norep_cal` framework grids are read.**
    Grids are visited in sorted name order.
-2. **Row loading** (`rows`, `:82-88`): `fw_variant_numbers.load` (`fw_variant_numbers.py:24-32`) concatenates `rows.d/*.json`
+2. **Row loading** (`rows`, `:81-87`): `fw_variant_numbers.load` concatenates `rows.d/*.json`
    (rid = file name) and `rows.csv`, drops duplicate `rid`, then duplicates on (n, b, dist, beta, liar_select, seed, method,
-   params). Only **b = 3** is kept.
+   params); rows stored under the old MIDIAN keys are translated on read (`keys.normalize`). Only **b = 3** is kept.
 3. **Framework rows**: `method` starts with `fw_`. Each row gets a shortlist key from its params JSON via `source()`
-   (`:59-70`); rows that map to `None` are dropped:
+   (`:58-69`); rows that map to `None` are dropped:
 
-   | params | source key | display (SOURCES `:30-36`) |
+   | params | source key | display: `figures/shortlist/` (`_LONG`, `:31-34`) / condensed (`figspec.SHORTLIST_BODY` / `_APPENDIX`) |
    |---|---|---|
    | contains `supervisor` (14B Magentic arm) or `lie_text` | dropped | — |
-   | no `retrieval`, no `dedup` | `tfidf` | hashed TF-IDF (pre-registered) |
+   | no `retrieval`, no `dedup` | `tfidf` | hashed TF-IDF (pre-registered) / hashed TF-IDF |
    | no `retrieval`, `dedup: true` | dropped (dedup TF-IDF not drawn) | — |
-   | `retrieval: midian_va`, `r: 10`, not `shuffle` | `va_cohort` | MIDIAN-VA leaf cohort |
-   | `retrieval: midian_va` with shuffle or r ≠ 10 | dropped | — |
-   | `retrieval: embed`, model contains "Qwen" | `dense` / `dense_icomp` / `dense_idemo` (instruction contains "competent" / "demonstrated") | Qwen3-8B dense [, I-competent / I-demonstrated] |
-   | `retrieval: embed`, no Qwen model (MiniLM default) | `embed` | MiniLM |
-   | `retrieval: sota` | `sota` / `sota_icomp` / `sota_idemo` | fusion + reranker [, I-…] |
-   | `retrieval: bm25` / `declared` | `bm25` / `declared` | BM25 / declared-claim top-k |
-   | `retrieval: hybrid` (fusion without reranker), `retrieval: midian` (V cohort) | dropped | — |
+   | `retrieval: midian` (formerly `midian_va`), `r: 10`, not `shuffle` | `va_cohort` | MIDIAN leaf cohort / MIDIAN cohort |
+   | `retrieval: midian` with shuffle or r ≠ 10 | dropped | — |
+   | `retrieval: embed`, model contains "Qwen" | `dense` / `dense_icomp` / `dense_idemo` (instruction contains "competent" / "demonstrated") | Qwen3-8B dense [, I-competent / I-demonstrated] / dense (Qwen3-8B)[, no instr.] or dense, competence / demonstration instr. |
+   | `retrieval: embed`, no Qwen model (MiniLM default) | `embed` | MiniLM / MiniLM |
+   | `retrieval: sota` | `sota` / `sota_icomp` / `sota_idemo` | fusion + reranker [, I-…] / fusion + reranker[, no / competence / demonstration instr.] |
+   | `retrieval: bm25` / `declared` | `bm25` / `declared` | BM25 / declared-claim top-k; condensed BM25 / declared top-k |
+   | `retrieval: hybrid` (fusion without reranker), `retrieval: midian_wo_audit` (formerly `midian`, the cohort of MIDIAN w/o audits) | dropped | — |
 
    `dedup` is ignored for every retrieval shortlist, and every `embed`, `sota`, `declared`, `bm25` and `dense` row carries
    `"dedup": true`. So only the `tfidf` bar is un-deduplicated: at 10^5 it is the clone-filled pre-registered adapter
@@ -2679,55 +2788,63 @@ figures/condensed_sample/{E,F,G,H}_*.{png,pdf,csv}
 5. **Per-framework seed series**: `q.groupby(["method","seed"]).success.mean().unstack(0)`; one value per seed.
 6. **One grid per (framework, shortlist, cell), with no pooling across grids**: the grid with the most seeds wins; on a
    tie the alphabetically first grid wins.
-7. **Erratum-28 status** (`pending_reruns`, `fw_variant_numbers.py:35-43`): every (grid, framework, dist, regime) of
-   `results/quarantine_units.tsv` whose rerun has **not landed** — `landed()` (`:46-60`) checks that every param variant of
+7. **Erratum-28 status** (`pending_reruns`, `fw_variant_numbers.py`): every (grid, framework, dist, regime) of
+   `results/quarantine_units.tsv` whose rerun has **not landed** — `landed()` checks that every param variant of
    the method in that grid has a row for that (dist, β, liar_select, seed) — unless `logs/DONE_stage2` exists (then none;
    with only `DONE_stage1`, just the `fw_live_n(100|1000)(_lowskill)?_sota` grids). A framework × shortlist series touched
    by such a unit is written with `rerun_outstanding = True`. Today `DONE_stage1` exists (not `DONE_stage2`), and 51
    keys are outstanding, all in `fw_live_n{100,1000}[_lowskill]_sota`; they flag three rows of `live.csv` (heavy_tail /
    bimodal cartel cells), none of them in E.
-8. **Reference lines**: for each (n, dist, regime) cell, rows with `method ∈ {oracle, midian_va}` from `REF_GRIDS[family][n]`
-   (`:72-76`; `H30_REF` instead once `h30()` is true, as it is today), same n, dist and regime, turned into per-seed means; the grid with
+8. **Reference lines**: for each (n, dist, regime) cell, rows with `method ∈ {oracle, random}` or MIDIAN (`method == "midian"`
+   with params `{}`, `:120`) from `REF_GRIDS[family][n]` (`:71-75`; `H30_REF` instead once `h30()` is true, as it is today), same n, dist and regime, turned into per-seed means; the grid with
    the most seeds wins, the first listed on a tie. No pooling and no seed matching to the framework bars, despite the
-   comment above `REF_GRIDS` ("pooled and matched on (dist, regime, seed)"). Written as `"MIDIAN-VA (whole population)"`
-   and `oracle` with `shortlist = "-"`.
+   comment above `REF_GRIDS` ("pooled and matched on (dist, regime, seed)"). Written as `"MIDIAN, no framework"` (`figspec.NAME["midian_ref"]`),
+   `oracle` and `random` with `shortlist = "-"` (`:138-141`); the per-condition figures draw the first two (random is in
+   the CSV for the condensed figures). Since 2026-09-24 `routereval_mmlu_norep_cal` also runs `random`, so H has a random
+   value at every m.
 9. **CSV row** (`draw`, `main`): `family, regime, dist, n, arm (ABBR name), shortlist, mean, ci_lo, ci_hi, seeds,
    rerun_outstanding`; `mean` = mean over seeds, `ci_lo` / `ci_hi` = mean ∓ 1 standard error over seeds (`extra_figs.se`,
    imported as `_ci`, `shortlist_figs.py:20`), which is also the per-condition figures' whisker. A cell with
    fewer than two shortlists gets no framework rows. The per-condition PNGs draw **no markers**: `draw` collects star
-   positions but never plots them, although the module docstring and the `INDEX.md` text (`:184-185`) still say "* marks a bar".
+   positions but never plots them, although the module docstring and the `INDEX.md` text (`:184-186`) still say "* marks a bar".
 
 ### 5.1.3 Stage 2: `shortlist_condensed` (per-framework means → bars)
 
-- `load(family)` (`shortlist_condensed.py:32-35`): live keeps `dist == "specialist"`; routereval keeps
-  `dist == "strong_to_weak"` **or** `n == 5000`. Both keep only `regime ∈ {beta0, cartel}` (`REG`, `:23`).
-- `summarise(d)` (`:41-52`), over framework rows (`shortlist != "-"`):
-  1. **Full seeds only** (`:47`): a framework row counts only if its seed count equals the **maximum seed count of that
+Style, names, colours and saving come from `scripts/figspec.py` (docs/FIGURE_SPEC.md).
+- `load(family)` (`shortlist_condensed.py:34-37`): live keeps `dist == "specialist"`; routereval keeps
+  `dist == "strong_to_weak"` **or** `n == 5000`. Both keep only `regime ∈ {beta0, cartel}` (`REG`, `:26`).
+- `summarise(d)` (`:43-54`), over framework rows (`shortlist != "-"`):
+  1. **Full seeds only** (`:49`): a framework row counts only if its seed count equals the **maximum seed count of that
      (n, shortlist)**, taken over every framework and both regimes. Live: 10 at n = 10^2 / 10^3 for TF-IDF, MiniLM,
-     rerank, VA cohort, BM25 and plain dense, 3 for the five backfill shortlists there (dense I-comp / I-demo, rerank
+     rerank, MIDIAN cohort, BM25 and plain dense, 3 for the five backfill shortlists there (dense I-comp / I-demo, rerank
      I-comp / I-demo, declared top-k), and 3 for everything at 10^4 / 10^5; RouterEval: 5 at m ≤ 1,000, 3 at 5,000.
-  2. **`MIN_FW = 6`** (`:38`, `:48`): an (n, regime, shortlist) with fewer than 6 such frameworks is dropped, which leaves
+  2. **`MIN_FW = 6`** (`:40`, `:50`): an (n, regime, shortlist) with fewer than 6 such frameworks is dropped, which leaves
      an empty slot instead of averaging a thinner, different framework set.
   3. `mean` = **unweighted mean over frameworks** of each framework's seed mean; `best` = max over frameworks; `k` =
-     number of frameworks; `star` = any framework's `rerun_outstanding`.
-  4. `ref` = a pivot of the `-` rows to (n, regime) × {oracle, MIDIAN-VA (whole population)}.
+     number of frameworks; `star` = any framework's `rerun_outstanding`; `name` = the appendix display name.
+  4. `ref` = a pivot of the `-` rows to (n, regime) × {oracle, random, MIDIAN, no framework} (`:53`).
+- `body(s)` (`:57-67`), for the body figures F and H: per n, dense and fusion + reranker are each replaced by **their best
+  instruction variant by honest mean over frameworks** (`VARIANTS`, `:29`: `dense` / `dense_icomp` / `dense_idemo` and
+  `sota` / `sota_icomp` / `sota_idemo`), kept under the family key (`dense`, `sota`) with a `variant` column naming the
+  variant drawn; the other body shortlists are kept as they are; names are the body names (`figspec.SHORTLIST_BODY`).
 - **Consequence of rule 1 at n = 10^2 / 10^3**: the backfill shortlists (`fw_live_n{100,1000}[_lowskill]_backfill`, seeds
   1–3) are drawn, with every framework at 3 seeds, next to 10-seed bars in the same group. Bars in one group can therefore
   rest on different seed counts; nothing on the figure says so.
-- `lines(ax, ref, n, x0, x1, first)` (`:55-59`): draws **only the (n, "beta0") reference values**: the oracle as a grey dotted
-  `hlines` (#7f8c8d, lw 1.2) and MIDIAN-VA as a solid green `hlines` (#2ecc71, lw 1.4). Hatched bars are therefore read
-  against the honest MIDIAN-VA line (0.7816 vs its own cartel 0.7680 at live 10^2, 0.8356 vs 0.8278 at 10^5, 0.6860 vs
+- `lines(ax, ref, n, x0, x1)` (`:70-76`): draws **only the (n, "beta0") reference values**: the oracle as a grey dotted
+  line (`figspec.oracle`, `#7f8c8d`, lw 1.0), random as a light-grey dotted line when the cell has one (`figspec.ref(…,
+  "random")`, `#bbbbbb`) and MIDIAN as a solid green line (`figspec.ref`, `#2ecc71`, lw 1.0). Hatched bars are therefore
+  read against the honest MIDIAN line (0.7816 vs its own cartel 0.7680 at live 10^2, 0.8356 vs 0.8278 at 10^5, 0.6860 vs
   0.6953 at RouterEval 1,000). The oracle is regime-invariant.
-- `pair(ax, x, w, q, src, label, dots)` (`:62-76`), for h ∈ {0: beta0, 1: cartel}, at `x + (h − 0.5)·w`:
+- `pair(ax, x, w, q, key, dots)` (`:79-86`), for h ∈ {0: beta0, 1: cartel}, at `x + (h − 0.5)·w`:
   - regime missing for this (n, shortlist) → no bar, nothing drawn, and `INCOMPLETE` is set;
-  - otherwise a bar of height `mean` in the SOURCES colour (cartel: `hatch="////"`, alpha 0.75), a black dot at `best` if
-    `dots`, and `INCOMPLETE |= star`. **No marker on any bar.**
-- `finish` (`:104-110`): `ylim(0.2, 0.95)`, y label "success", y grid; the title gets one `" *"` if `INCOMPLETE`
-  (`:106`); legend above the axes (E/H, `ncol=6`) or inside at upper right (F, `ncol=3`); png at dpi 250 plus pdf; the
-  summarised frame to `<name>.csv`.
-- **Legend order**: importing `extra_figs` installs the ranked-legend wrapper (`extra_figs.py:38-51`): entries sorted
-  descending by the mean y of what each handle plots, empty handles last, then row-major. In E and H a shortlist's handle is
-  its **first drawn honest bar** (labels spent once), so it is ranked by its value at the smallest n where it is drawn.
+  - otherwise a bar of height `mean` in the shortlist's colour (`figspec.SHORTLIST_COLOR`; cartel: `hatch="////"`), a
+    black dot (ms 3) at `best` if `dots`, and `INCOMPLETE |= star`. **No marker on any bar.**
+- `finish` (`:89-94`): y label "task success", `ylim(0.2, 0.95)`, two-decimal ticks, no title (`figspec.finish`); the
+  legend via `figspec.legend` (one frameless legend in fixed order, never ranked by value); if `INCOMPLETE` the script
+  prints `[<name>] INCOMPLETE: …` (the figure carries nothing); saves PDF + 300 dpi PNG and the frame to `<name>.csv`.
+- **Legend order**: the shortlists in `figspec.SHORTLIST_ORDER` order as drawn (E, H) followed by the reference lines
+  oracle, random, MIDIAN, no framework (`LINES`, `:30`); F lists the reference lines and "best framework" (the dot) only,
+  since its tick labels name the shortlists.
 
 ### 5.1.4 Who contributes: frameworks, seeds, cell parameters
 
@@ -2743,9 +2860,9 @@ figures/condensed_sample/{E,F,G,H}_*.{png,pdf,csv}
   tables in 5.2 and 5.5 list, per bar, the frameworks that count and those dropped for partial seeds; today four E bars
   drop one framework each and no H bar drops any.
 - **Probes.** A framework reads only the declared/self-described channel (`FrameworkMethod.needs = {"declared"}`,
-  `_common.py:111`). **The one exception is the VA-cohort shortlist**, which adds `{"probe", "reports"}` (`:160-161`) and
-  builds an internal `MidianVA(r=10)` with the cell's budget (`:290-292`). So the VA-cohort bars spend the same b = 3 probe
-  budget as MIDIAN-VA (1.03 × n·K·b); all other bars spend none, and E–H are not a budget-matched comparison.
+  `_common.py:111`). **The one exception is the MIDIAN-cohort shortlist**, which adds `{"probe", "reports"}` (`:160-161`) and
+  builds an internal `Midian(r=10)` with the cell's budget (`:290-292`). So the MIDIAN-cohort bars spend the same b = 3 probe
+  budget as MIDIAN (1.03 × n·K·b); all other bars spend none, and E–H are not a budget-matched comparison.
 - **Cell parameters** (`configs/grid.yaml`; mirrors match their base grid cell for cell):
 
   | family / n | base grid (line) | backend | dist | K | b | Q | seeds | declared channel |
@@ -2763,41 +2880,41 @@ figures/condensed_sample/{E,F,G,H}_*.{png,pdf,csv}
 
 ### 5.1.5 Reference-line provenance
 
-| family, n | oracle (grid, seeds, β = 0 value) | MIDIAN-VA whole population (grid, seeds, β = 0 value) |
-|---|---|---|
-| live 10^2 | `fw_live_n100`, 1–10, 0.8449 | `fw_live_n100`, 1–10, 0.7816 |
-| live 10^3 | `fw_live_n1000`, 1–10, 0.8612 | `fw_live_n1000`, 1–10, 0.8134 |
-| live 10^4 | `learned_n10k`, 1–3, 0.8589 | `learned_n10k`, 1–3, 0.8111 |
-| live 10^5 | `live_n100k`, 1–3, 0.8622 | `live_n100k`, 1–3, 0.8356 |
-| RouterEval 10 / 100 / 1000 | `routereval_mmlu_norep_cal`, 1–5: 0.8747 / 0.7873 / 0.8760 | `routereval_mmlu_norep_cal`, 1–5: 0.7080 / 0.6653 / 0.6860 |
-| RouterEval 5000 | `routereval5k_norep_cal`, 1–3, 0.9200 | `routereval5k_norep_cal`, 1–3, 0.7389 |
+| family, n | oracle (grid, seeds, β = 0 value) | MIDIAN, no framework (grid, seeds, β = 0 value) | random (β = 0 value) |
+|---|---|---|---|
+| live 10^2 | `fw_live_n100`, 1–10, 0.8449 | `fw_live_n100`, 1–10, 0.7816 | 0.4258 |
+| live 10^3 | `fw_live_n1000`, 1–10, 0.8612 | `fw_live_n1000`, 1–10, 0.8134 | 0.4322 |
+| live 10^4 | `learned_n10k`, 1–3, 0.8589 | `learned_n10k`, 1–3, 0.8111 | 0.4167 |
+| live 10^5 | `live_n100k`, 1–3, 0.8622 | `live_n100k`, 1–3, 0.8356 | 0.4422 |
+| RouterEval 10 / 100 / 1000 | `routereval_mmlu_norep_cal`, 1–5: 0.8747 / 0.7873 / 0.8760 | `routereval_mmlu_norep_cal`, 1–5: 0.7080 / 0.6653 / 0.6860 | 0.5440 / 0.5400 / 0.5307 |
+| RouterEval 5000 | `routereval5k_norep_cal`, 1–3, 0.9200 | `routereval5k_norep_cal`, 1–3, 0.7389 | 0.5267 |
 
-The line is not restricted to the seeds each framework actually has, and at 10^4 it comes from `learned_n10k`, not the
-frameworks' `live_n10k_v2` (identical values). The RouterEval lines now come from the no-repeat reruns, so MIDIAN-VA can
+Random comes from the same grid set as the oracle row of the cell (the grid with the most seeds wins per arm). The lines are not restricted to the seeds each framework actually has, and at 10^4 it comes from `learned_n10k`, not the
+frameworks' `live_n10k_v2` (identical values). The RouterEval lines now come from the no-repeat reruns, so MIDIAN can
 no longer memorise repeated test prompts (the old `routereval_mmlu` line carried about +0.02 of that, leakage audit L10).
 Their cartel values are 0.7080 / 0.6620 / 0.6953 / 0.7333; at m = 1,000 the cartel line would sit above the honest one.
 
 ## 5.2 Figure E: `E_shortlists_by_n` (live, specialist, n = 10^2 … 10^5)
 
 **Question.** On the live LLM backend (specialist population), how well do deployed frameworks route under each shortlist
-source, and how does that change with n? How far are they from the oracle and from MIDIAN-VA routing the whole population,
+source, and how does that change with n? How far are they from the oracle and from MIDIAN routing the whole population,
 honest and under the β = 0.5 low-skill cartel?
 
-**Code.** `fig_E(s, ref)` (`shortlist_condensed.py:79-89`).
-- **x axis**: one group per n (100, 1,000, 10,000, 100,000), tick "n = …".
-- **Within a group**: one fixed slot per source in `MAIN` order (`:29`): TF-IDF, MiniLM, dense I-comp, dense I-demo, rerank,
-  rerank I-comp, rerank I-demo, declared top-k, VA cohort. BM25 and plain Qwen dense are left out (10^3 ablation only).
+**Code.** `by_n(s, ref, "E_shortlists_by_n", MAIN, figspec.SHORTLIST_APPENDIX, "appendix", "n", ncol=3)` (`shortlist_condensed.py:97-105`, called at `:146`); appendix canvas 5.5 × 2.4 in.
+- **x axis**: one group per n (100, 1,000, 10,000, 100,000), ticks $n = 10^2$, $10^3$, … (`figspec.pow10_ticks`).
+- **Within a group**: one fixed slot per source in `MAIN` order (`:27`, `figspec.SHORTLIST_ORDER` without BM25 and plain dense): hashed TF-IDF, MiniLM, dense competence instr., dense demonstration instr., fusion + reranker no instr., fusion + reranker competence instr., fusion + reranker demonstration instr., declared top-k, MIDIAN cohort. BM25 and plain Qwen dense are left out (10^3 ablation only).
 - **Slot geometry**: w = 0.86/18 ≈ 0.048; source j at `i + (2j+1−9)·w`, honest at −w/2 and cartel at +w/2.
-- **Marks**: bars = mean over frameworks (`dots=False`), so **E has no black dots**; reference lines span `i ± 0.46`
-  and use β = 0 values; y 0.2–0.95; colours from SOURCES, legend labels from `SHORT` (`:25-27`).
-- **Title `*`**: on while any of the 72 slots is empty or any drawn bar has `star`. Today all 72 are drawn and no counted
-  framework has an outstanding erratum-28 rerun, so E's title has no ` *`.
+- **Marks**: bars = mean over frameworks (no dots), so **E has no black dots**; the three reference lines (oracle, random,
+  MIDIAN, no framework) span `i ± 0.46` and use β = 0 values; y 0.2–0.95; colours and legend labels from `figspec`
+  (appendix names); one legend row block above the axes, 3 columns.
+- **Completeness**: reported (not drawn) while any of the 72 slots is empty or any drawn bar has `star`. Today all 72 are
+  drawn and no counted framework has an outstanding erratum-28 rerun.
 - **Declared top-k on live** ranks by the frameworks' real self-described claims (`declared_source = self_described`, the
   model's own self-rating; §3.4.9), and the lie inflates them for the cartel.
 
 **Provenance per bar.** Winning grids:
 
-| n | TF-IDF | MiniLM | rerank | VA cohort | declared / dense-I / rerank-I |
+| n | TF-IDF | MiniLM | rerank | MIDIAN cohort | declared / dense-I / rerank-I |
 |---|---|---|---|---|---|
 | 100 | `fw_live_n100` / `fw_live_n100_lowskill` | `fw_live_n100_em` / `…_lowskill_em` | `fw_live_n100_sota` / `…_lowskill_sota` | `fw_live_n100_verified_va` / `…_verified_va_lowskill` | `fw_live_n100_backfill` / `fw_live_n100_lowskill_backfill` (3 seeds; drawn) |
 | 1,000 | `fw_live_n1000` / `fw_live_n1000_lowskill` | `fw_live_n1000_em` / `…_lowskill_em` | `fw_live_n1000_sota` / `…_lowskill_sota` | `fw_live_n1000_verified_va` / `…_verified_va_lowskill` | `fw_live_n1000_backfill` / `fw_live_n1000_lowskill_backfill` (3 seeds; drawn) |
@@ -2899,18 +3016,23 @@ honest only) are in the CSV but not drawn.
 ## 5.3 Figure F: `F_shortlists_1e5` (live, specialist, n = 100,000)
 
 **Question.** At the one scale where all nine shortlist sources ran (live 10^5), which shortlist makes deployed
-frameworks route best? What does the best single framework reach? How far are both from the oracle and from MIDIAN-VA?
+frameworks route best? What does the best single framework reach? How far are both from the oracle and from MIDIAN?
 
-**Code.** `fig_F(s, ref, n=100000)` (`shortlist_condensed.py:92-101`).
-- **x axis**: shortlists at n = 10^5, **sorted by the honest mean, descending**; tick labels are the long SOURCES names,
-  rotated 28°.
+**Code.** `fig_F(body(s), ref, "F_shortlists_1e5", figspec.SHORTLIST_BODY, "body")` and `fig_F(s, ref, "F_shortlists_1e5_appendix", figspec.SHORTLIST_APPENDIX, "appendix")` (`shortlist_condensed.py:108-116`, called at `:147-148`).
+- **Two versions.** `F_shortlists_1e5` (Figure 3, body canvas 5.5 × 1.9 in) draws the body shortlists: declared top-k,
+  MIDIAN cohort, MiniLM, hashed TF-IDF, and dense (Qwen3-8B) and fusion + reranker each as its best instruction variant at
+  10^5 by honest mean (`body`; today both the competence instruction, `dense_icomp` 0.4833 and `sota_icomp` 0.4320; the
+  CSV's `variant` column names it). BM25 has no 10^5 bar, so the body figure has six shortlists (12 bars).
+  `F_shortlists_1e5_appendix` (appendix canvas) draws all nine 10^5 shortlists with the appendix names (18 bars).
+- **x axis**: shortlists at n = 10^5, **sorted by the honest mean, descending**; tick labels are the figspec names,
+  rotated 30°.
 - **Bars**: at each x a solid honest bar at x − 0.19 and a hatched cartel bar at x + 0.19 (w = 0.38), height = mean over
   the full-seed frameworks (at least 6).
 - **Black dot**: on each bar, the **best single framework's seed mean** (`best`).
-- **Reference lines**: dotted oracle 0.8622 and solid MIDIAN-VA 0.8356 across the full width, the β = 0 values from
-  `live_n100k` seeds 1–3. MIDIAN-VA's own cartel value (0.8278) is not drawn.
-- **Title `*`** on while a slot is empty or a bar has `star`; today all 18 bars are drawn and none is flagged, so F has
-  no ` *`. The legend sits inside at upper right (oracle, MIDIAN-VA, "best single framework").
+- **Reference lines**: dotted oracle 0.8622, dotted random 0.4422 and solid MIDIAN 0.8356 ("MIDIAN, no framework")
+  across the full width, the β = 0 values from `live_n100k` seeds 1–3. MIDIAN's own cartel value (0.8278) is not drawn.
+- **Completeness** is reported, not drawn; today every bar of both versions is drawn and none is flagged. The legend is
+  one row above the axes: oracle, random, MIDIAN, no framework, "best framework" (the dot).
 - Every cell is a `mirror_of: live_n100k` (K = 16, b = 3, Q = 300, specialist, self-described, seeds 1–3). The TF-IDF dot
   equals its bar: every framework scores exactly 0.378889 = mean(0.3467, 0.3667, 0.4233) in every regime (the clone
   shortlist, §5.4).
@@ -2941,18 +3063,19 @@ frameworks route best? What does the best single framework reach? How far are bo
 **Question.** How much does each shortlist source improve a framework over the pre-registered hashed TF-IDF shortlist,
 framework by framework, honest and under the cartel?
 
-**Code.** `fig_G(d, n=100000)` (`shortlist_condensed.py:113-137`), the only figure computed from the per-framework rows.
-1. `fw` = the framework rows at n = 10^5 **with the maximum seed count of their shortlist** (3 for every shortlist) (`:114`); `base` = TF-IDF means by (regime,
+**Code.** `fig_G(d, n=100000)` (`shortlist_condensed.py:119-141`), the only figure computed from the per-framework rows; appendix canvas.
+1. `fw` = the framework rows at n = 10^5 **with the maximum seed count of their shortlist** (3 for every shortlist) (`:120`); `base` = TF-IDF means by (regime,
    framework).
 2. For each (regime, shortlist ≠ tfidf): `diff = mean[shortlist] − base` aligned on (regime, framework), `.dropna()`.
    **Paired within framework**: each framework is compared with its own TF-IDF number in the same regime.
-3. `k` = number of paired frameworks; if `k < MIN_FW` (6) the bar is left out and the title gets ` *` (`:120`).
+3. `k` = number of paired frameworks; if `k < MIN_FW` (6) the bar is left out and the script reports it (`:126`).
 4. `lift = diff.mean()`; the whisker is **±1 standard error across frameworks**,
-   `half = sd(diff, ddof=1) / √k` (`:121`), a ~68 % interval, not a 95 % CI. It measures spread across frameworks; seed
+   `half = sd(diff, ddof=1) / √k` (`:127`), a ~68 % interval, not a 95 % CI. It measures spread across frameworks; seed
    noise enters only through each framework's 3-seed mean.
-5. `star` = any `rerun_outstanding` among the shortlist's rows; it puts the title ` *` on (TF-IDF's own flag is not read).
-6. **Order** by honest lift, descending; bars like F without dots, plus an error bar and a zero line. The y range is
-   automatic (no 0.2 floor).
+5. `star` = any `rerun_outstanding` among the shortlist's rows; the script reports it (TF-IDF's own flag is not read).
+6. **Order** by honest lift, descending; bars like F without dots, plus a ±1 s.e. whisker (`figspec.whisker`) and a zero
+   line; tick labels are the appendix names, rotated 30°; y label "gain in task success over hashed TF-IDF" on two lines,
+   no legend. The y range is automatic (no 0.2 floor).
 
 **Erratum 25: G is a gain over a floor.** At 10^5 the pre-registered adapter's TF-IDF top 10 is **exactly one prompt
 signature** (ten clones; `CHANGES_AND_ERRATA.md:241-258`), so every framework scores the same 0.378889 in every seed and
@@ -2980,16 +3103,22 @@ floor. Every other drawn shortlist is deduplicated, so G mixes the retriever gai
 | 7 | sota | honest | +0.0321 | 0.0194 | 10 |
 | 7 | sota | cartel | +0.0306 | 0.0156 | 10 |
 
-No G bar is flagged (`star` False throughout) and none is left out, so G's title has no ` *`.
+No G bar is flagged (`star` False throughout) and none is left out.
 
 ## 5.5 Figure H: `H_routereval_shortlists` (RouterEval, strong-to-weak pools m = 10/100/1000 + leaderboard 5000)
 
 **Question.** Is the live shortlist ranking reproduced on real LLM pools (RouterEval, MMLU), where "agents" are real LLMs with
 real per-question correctness and self-descriptions are rendered from the declaration vector?
 
-**Code.** The same `fig_E`, called as `fig_E(s, ref, "H_routereval_shortlists", title, MAIN, "pool m")`
-(`shortlist_condensed.py:143-144`), on `summarise(load("routereval"))`: the same nine `MAIN` slots, the same full-seed and
-`MIN_FW` rules, the same single title ` *`, no dots, y 0.2–0.95, β = 0 reference lines. **Pool m** is the backend's `n`.
+**Code.** The same `by_n` as E, called as `by_n(body(s), ref, "H_routereval_shortlists", BODY_H, figspec.SHORTLIST_BODY, "body", "m", ncol=5)`
+(`shortlist_condensed.py:150-151`) on `summarise(load("routereval"))`: Figure 4, body canvas 5.5 × 1.9 in, **six body
+shortlists** per m (`BODY_H`, `:28`: hashed TF-IDF, MiniLM, dense (Qwen3-8B), fusion + reranker, declared top-k, MIDIAN
+cohort), dense and fusion + reranker each at its best instruction variant at that m by honest mean (`body`; today dense
+competence instr. at every m, fusion + reranker stock at m = 10 and 1,000, demonstration instr. at 100, competence instr.
+at 5,000; the CSV's `variant` column). The same full-seed and `MIN_FW` rules, no dots, y 0.2–0.95, the three β = 0
+reference lines (oracle, random, MIDIAN, no framework; random at every m since `routereval_mmlu_norep_cal` runs it),
+ticks $m = 10$, $10^2$, $10^3$, $5{,}000$, legend one block above in 5 columns. **Pool m** is the backend's `n`. The
+instruction variants are in the table below (from `summarise`) but not in the figure.
 
 **Which rows H reads: the erratum-30 reruns, switched all at once.** `shortlist_figs.GRIDS["routereval"]` reads the
 `*_norep_cal` grids only when `h30()` is true, i.e. when **all** 15 framework mirrors in `H30_FW` and both reference grids
@@ -3004,7 +3133,7 @@ the reruns. On those rows:
   text shortlist (TF-IDF, MiniLM, dense, rerank) and every supervisor read the calibrated claims, and the supervisor sees
   only the subject name, never the prompt. Calibrated claims tie often, so rendered texts coincide and the dedup
   shortlists retrieve from a smaller pool (§3.9 #1).
-- **No test prompt repeats** within a stream (`no_repeat`, Q = 300), so neither the frameworks nor the MIDIAN-VA reference
+- **No test prompt repeats** within a stream (`no_repeat`, Q = 300), so neither the frameworks nor the MIDIAN reference
   line can gain from repeats.
 - **The agent order is shuffled per seed** (`shuffle`), so lowest-index tie-breaks (declared top-k, TF-IDF on tied scores)
   are random rather than weakest-first.
@@ -3019,7 +3148,7 @@ the leaderboard backend (`dataset: leaderboard_mmlu`), a single pool with `dist:
 names are synthetic.
 
 **Provenance.** `fw_routereval_small_norep_cal` (m = 10, 100), `fw_routereval_1k_norep_cal`, `fw_routereval_5k_norep_cal`
-(TF-IDF), each with `_em` (MiniLM) and `_va` (VA cohort) mirrors, `re_sl_declared_{small,1k,5k}_norep_cal` (declared
+(TF-IDF), each with `_em` (MiniLM) and `_va` (MIDIAN cohort) mirrors, `re_sl_declared_{small,1k,5k}_norep_cal` (declared
 top-k) and `re_sl_embed_{small,1k,5k}_norep_cal` (Qwen3 dense I-comp / I-demo, rerank stock / I-comp / I-demo)
 (`grid.yaml:1203-1217`): cells `dist: [strong_to_weak]` (the 5k grids `all`), β ∈ {0, 0.5}, `low_skill_first`,
 calibrated claims, `no_repeat`, `shuffle`, Q = 300. Magentic-One is excluded by design, so at most 9 frameworks; all 9 have
@@ -3031,7 +3160,7 @@ rows show one `oracle_success` per unit (no family-order split, §1.10 #1).
 10 agents (fewer after dedup when rendered texts coincide, §3.9 #1); only the order differs. Differences at m = 10
 reflect ordering and the supervisor, not retrieval quality.
 
-**H table** (`H_routereval_shortlists.csv`; same columns as the E table).
+**H table** (every shortlist `summarise` computes on RouterEval; same columns as the E table). `H_routereval_shortlists.csv` holds the 48 drawn rows (six body shortlists × 4 m × 2 regimes, with `variant`).
 
 | slot | shortlist | regime | mean | best | k | seeds/fw | frameworks |
 |---|---|---|---|---|---|---|---|
@@ -3108,8 +3237,8 @@ reflect ordering and the supervisor, not retrieval quality.
 | pool m = 5,000 | va_cohort | honest | 0.6109 | 0.6333 | 9 | 3 | adk autogen camel crewai langgraph llama maf openai smol |
 | pool m = 5,000 | va_cohort | cartel | 0.5512 | 0.5756 | 9 | 3 | adk autogen camel crewai langgraph llama maf openai smol |
 
-**Completeness (H).** All 72 slots are drawn, each averaging all 9 frameworks at full seeds, and no bar has an outstanding
-erratum-28 rerun, so H's title has no ` *`.
+**Completeness (H).** All 48 slots are drawn, each averaging all 9 frameworks at full seeds, and no bar has an outstanding
+erratum-28 rerun.
 
 ## 5.6 Discrepancies, open questions, possible issues
 
@@ -3117,8 +3246,8 @@ Severity: **[H]** can change a reader's conclusion; **[M]** misleading labelling
 
 - **D1 [M]: Frameworks can drop out of bars silently.** A framework enters a bar only with the full seed count of that
   (n, shortlist) (5.1.3); nothing on the figure says which frameworks a bar averages. Today four E bars drop one framework
-  each (5.2 reading notes) and no H bar drops any. The title ` *` covers empty slots and outstanding erratum-28 reruns,
-  not partial-seed exclusions of a drawn bar.
+  each (5.2 reading notes) and no H bar drops any. The completeness report (script output, `scripts/ops/figure_status.py`) covers empty slots, outstanding erratum-28
+  reruns and bars under `MIN_FW`, not partial-seed exclusions of a drawn bar.
 - **D2 [M]: Means over different framework sets or seed counts sit side by side.** The four E honest bars that drop a
   framework sit next to cartel twins with all ten; at 10^2 / 10^3 the backfill bars rest on 3 seeds per framework and the
   others on 10. `MIN_FW = 6` bounds how thin a bar can be, not how different two bars' sets are. G is paired within
@@ -3126,28 +3255,26 @@ Severity: **[H]** can change a reader's conclusion; **[M]** misleading labelling
 - **D3 [M]: H is not live.** On RouterEval the agent descriptions are rendered claim vectors (calibrated claims now), the
   supervisor sees only the subject name, and the pool is fixed across seeds; only live (E–G) has real self-descriptions
   and real prompts (5.5). The calibrated claims are a post-hoc model of live self-ratings (§1.3.3).
-- **D4 [M]: G's whisker is a between-framework spread.** It is ±1 standard error across frameworks (`:121`), not seed
+- **D4 [M]: G's whisker is a between-framework spread.** It is ±1 standard error across frameworks (`:127`), not seed
   uncertainty.
 - **D5 [M]: Unequal seeds within one framework series are never averaged** (full-seed rule), but bars in one group can have
   different seed counts (the 10^2 / 10^3 backfill shortlists, 3 vs 10).
 - **D6 [M]: The figures are only as fresh as the last `shortlist_figs.py` run.** The condensed script never checks freshness.
 - **D7 [M]: The reference lines are honest-only and not seed-matched** (5.1.3, 5.1.5); the comment above `REF_GRIDS`
   claims pooling and seed matching the code does not do.
-- **D8 [M]: E–H are not budget-matched.** The frameworks spend no probes; the VA-cohort bars and the MIDIAN-VA line spend
+- **D8 [M]: E–H are not budget-matched.** The frameworks spend no probes; the MIDIAN-cohort bars and the MIDIAN line spend
   about 1.03 × n·K·b (protocol audit F3).
-- **D9 [M]: G is a lift over a degenerate floor** (5.4). The figure title only says "gain over the pre-registered TF-IDF
-  shortlist".
+- **D9 [M]: G is a lift over a degenerate floor** (5.4). The figure's y label only says "gain in task success over hashed
+  TF-IDF"; the caption must say that at 10^5 TF-IDF is the clone floor.
 - **D10 [M]: Only the TF-IDF bar is un-deduplicated**, so at 10^5 "better retriever" and "no clones" are conflated.
 - **D11 [L]: At RouterEval m = 10, k = 10 = m** (5.5).
-- **D12 [L]: Legend ranking mixes n** in E and H (a shortlist is ranked by its first drawn honest bar).
-- **D13 [L]: The bars start at y = 0.2 in E, F and H** (`finish`, `:105`), which exaggerates ratios; G has an automatic
+- **D12 [L]: (resolved)** Legends are no longer ranked by value; E and H list the shortlists in the fixed `figspec.SHORTLIST_ORDER`.
+- **D13 [L]: The bars start at y = 0.2 in E, F and H** (`finish`, `:89-90`), which exaggerates ratios; G has an automatic
   range with a zero line.
-- **D14 [L]: Documentation drift.** `shortlist_condensed.py:2` says it writes E and F only (it also writes G and H); `pair`'s
-  docstring mentions a black dot on each bar, but E and H call it with `dots=False`; `shortlist_condensed.py:3` calls the
-  shortlist CSV's interval a "95% CI". `shortlist_figs.py`'s docstring and `INDEX.md` text still say an asterisk marks a
-  bar with an outstanding rerun and that bars and lines carry a 95 % seed-bootstrap band; no per-condition figure draws a
-  marker, and every interval is ±1 s.e. (`extra_figs.se`). The comment on `summarise` (`:43-44`) is accurate about the
-  per-(n, shortlist) seed rule.
+- **D14 [L]: Documentation drift.** `shortlist_figs.py`'s docstring (`:9-11`) and `INDEX.md` text (`:184-186`) still say
+  an asterisk marks a bar with an outstanding rerun and that the lines carry a 95 % seed-bootstrap band; no per-condition
+  figure draws a marker, and every interval is ±1 s.e. (`extra_figs.se`). The comment on `summarise` (`:44-47`) is
+  accurate about the per-(n, shortlist) seed rule.
 - **D15 [L]: The `RTE_DATA` default is a trap** (5.1.1).
 - **Open question: is the per-framework "best" dot comparable across bars?** It is the max over frameworks of a 3-seed
   mean at 10^5, upward-biased by selection, more so for bars with more frameworks (TF-IDF: all tie).
@@ -3157,12 +3284,12 @@ Severity: **[H]** can change a reader's conclusion; **[M]** misleading labelling
 ## 6. Figures C and D: routing work and energy per query
 
 Scope: `figures/condensed_sample/C_routing_work_vs_n.{png,pdf,csv}` and `D_energy_per_query.{png,pdf,csv}`, written
-by `python scripts/efficiency_figs.py` (133 lines). The script reuses the ledger cache `cost_by_n.csv` when it exists
-(§6.1.1). That script imports `scripts/energy.py`
-(130 lines) for the energy model and the framework numbers. It also takes `ARMS`, `BANDIT`, `LEARNED`, `NOT_RUNNABLE`,
-`OUT`, `POOLS` and `save` from `scripts/condensed_figs.py` (`efficiency_figs.py:18`), `label` from `scripts/seed_tables.py` (`:17`) and the legend rule
-from `scripts/extra_figs.py` (`:16`). Importing `condensed_figs` also applies its rcParams (`condensed_figs.py:28-29`), so C
-and D share A and B's fonts. Line citations in this part are to `efficiency_figs.py` unless another file is named.
+by `python scripts/efficiency_figs.py` (150 lines). The script reuses the ledger cache `cost_by_n.csv` when it exists
+(§6.1.1). It imports `scripts/figspec.py` for canvas, fonts, colours, names and legends (`:20`), `scripts/energy.py`
+for the energy model and the framework numbers (in `draw_D`), `label` from `scripts/seed_tables.py` (`:21`),
+`rte.methods.keys` (`:22`, every row is read through `keys.normalize`, so rows stored under the old MIDIAN keys load under
+the new ones), and `BANDIT`, `LEARNED`, `NOT_RUNNABLE`, `OUT`, `POOLS` from `scripts/condensed_figs.py` (`:23`). Line
+citations in this part are to `efficiency_figs.py` unless another file is named.
 
 **How this part was checked (read-only).**
 - The C CSV was re-derived from `cost_by_n.csv`, including the flat-NSW exclusion and both edges' slopes. The cache itself was re-derived from `bernoulli_scale_v5/rows.csv`
@@ -3178,58 +3305,58 @@ and D share A and B's fonts. Line citations in this part are to `efficiency_figs
 
 ### 6.1 Shared inputs
 
-#### 6.1.1 The ledger cache `cost_by_n.csv` (`costs`, `:27-34`)
+#### 6.1.1 The ledger cache `cost_by_n.csv` (`costs`, `:32-40`)
 - **Source.** `$RTE_DATA/results/bernoulli_scale_v5/rows.csv`, read in chunks of 500,000 rows. Only the columns in
-  `COLS` are kept (`:22`). The grid has no `rows.d` files, so rows.csv is complete.
-- **Filter** (`:29-30`). `beta == 0`, and either `b == 3` or `method == "midian_va"`. So every arm is kept at b = 3, and
-  MIDIAN-VA at every b the grid ran: b = 3 at every n, plus b = 1 at 10^6 and 10^7 (the grid's only b = 1 cells, §1.6.3).
+  `COLS` are kept (`:27`), and every chunk goes through `keys.normalize` (`:35`). The grid has no `rows.d` files, so rows.csv is complete.
+- **Filter** (`:34`). `beta == 0`, and either `b == 3` or MIDIAN (`method == "midian"` with params `{}`). So every arm is kept at b = 3, and
+  MIDIAN at every b the grid ran: b = 3 at every n, plus b = 1 at 10^6 and 10^7 (the grid's only b = 1 cells, §1.6.3).
   The b = 1 rows are there for D's build ledger. There is no filter on `dist`, `liar_select` or `declared_source`. It
   needs none: every kept row is `dist = specialist`, `liar_select = random`, `declared_source = programmatic` (checked).
-- **Labels.** `seed_tables.label(method, params)` (`:32`) applies `ALIAS`, so `flat_probe_argmax{"online":true}` becomes
-  `flat_probe_argmax_online`. Only labels in `SHOW` are kept (`:33`). `SHOW` (`:24`) is the four fixed arms in `FIXED`
-  (`:23`: MIDIAN-VA, MIDIAN, flat probe argmax online, declared argmax) plus every member of `LEARNED` and `BANDIT`
-  (`condensed_figs.py:30-31`). `warm_start_bandit[n0=0.5]` and `linucb_honest[bonus=own]` are in the bandit pool (`POOLS`,
-  `condensed_figs.py:35-36`) but not in `BANDIT`, so they are not in `SHOW`, and `bernoulli_scale_v5` has no rows for them anyway.
+- **Labels.** `seed_tables.label(method, params)` (`:38`) applies `ALIAS`, so `flat_probe_argmax{"online":true}` becomes
+  `flat_probe_argmax_online`. Only labels in `SHOW` are kept (`:39`). `SHOW` (`:29`) is the four fixed arms in `FIXED`
+  (`:28`: `midian`, `midian_wo_defenses`, `flat_probe_argmax_online`, `declared_argmax`) plus every member of `LEARNED`
+  and `BANDIT` (`condensed_figs.py:30-31`). `warm_start_bandit[n0=0.5]` and `linucb_honest[bonus=own]` are in the bandit pool (`POOLS`,
+  `condensed_figs.py:34-35`) but not in `BANDIT`, so they are not in `SHOW`, and `bernoulli_scale_v5` has no rows for them anyway.
   Conversely the cache holds the old context-bonus `linucb_honest` (it is in `BANDIT`), which `POOLS` no longer contains, so
-  `draw_I` leaves it out of the bandit band (its work is n like every other bandit, so the band is unchanged).
+  `draw_C` leaves it out of "any flat scan"'s member check (its work is n like every other bandit).
 - **Aggregation.** The median over rows per (label, n, b) of `messages_per_task`, `comparisons_per_task`, `build_probes`
-  and `build_messages` (`:33`). There is one row per seed. The file has **83 rows** and a `b` column:
+  and `build_messages` (`:39`). There is one row per seed. The file has **83 rows** and a `b` column:
   - 81 at b = 3: 11 labels × 7 n (n = 10 … 10^7), plus `trueskill_per_family` at 4 n (10 … 10^4). The grid has no
-    TrueSkill rows at n ≥ 10^5; that arm is also `NOT_RUNNABLE` there (`condensed_figs.py:43`).
-  - 2 at b = 1: MIDIAN-VA at 10^6 (16,799,988.5 build probes) and 10^7 (167,999,523.5).
+    TrueSkill rows at n ≥ 10^5; that arm is also `NOT_RUNNABLE` there (`condensed_figs.py:42`).
+  - 2 at b = 1: MIDIAN at 10^6 (16,799,988.5 build probes) and 10^7 (167,999,523.5).
   - `knn_router`, `knn_router_online` and `mlp_router` have no rows: they need prompt text, so they are `NOT_RUNNABLE` on
-    bernoulli (`condensed_figs.py:43-44`) and were never run there.
+    bernoulli (`condensed_figs.py:42-43`) and were never run there.
 
   | n | 10, 100, 1,000, 10^4 | 10^5 | 10^6 | 10^7 |
   |---|---|---|---|---|
   | seeds per (arm, n, b) | 1,000 | 500 | 200 | 100 |
 
-  The seed counts are the same for every arm, and for MIDIAN-VA b = 1. Per-query counts are identical across seeds for
+  The seed counts are the same for every arm, and for MIDIAN b = 1. Per-query counts are identical across seeds for
   every arm except `cluster_head_router` (n ≥ 100) and `disrouter_cascade` (all n), whose medians are plotted. For
   example, at n = 10^7 the per-seed range is 1,000,011–1,000,018 and 3,471,301–4,023,174. Among build counts, only
-  MIDIAN-VA's `build_probes` varies (e.g. 49,325–49,586 at n = 10^3).
-- **Caching.** When the file exists it is read back and the rows are not touched (`:28`). The docstring says to delete it
-  to re-read (`:10`). It covers n = 10 … 10^7; C
-  draws n ≥ 100 at b = 3 (`:73`, `:80`, `:89`).
-- **Arms, labels and colours.** C draws exactly A and B's `ARMS` (`condensed_figs.py:32-34`), in that order and with the
-  same labels and colours (`:74`): MIDIAN-VA `#2ecc71`, MIDIAN `#c0392b`, flat probe argmax (online) `#3498db`, best learned
-  router `#ff7f0e`, best bandit `#9467bd`, declared argmax `#5d6d7e`, random `#bbbbbb`. The oracle and the frameworks are
-  not in C. D uses only the `midian_va` rows.
+  MIDIAN's `build_probes` varies (e.g. 49,325–49,586 at n = 10^3).
+- **Caching.** When the file exists it is read back and the rows are not touched (`:33`). The docstring says to delete it
+  to re-read (`:12`). It covers n = 10 … 10^7; C
+  draws n ≥ 100 at b = 3 (`:83`, `:85`, `:89`, `:96`). The current file was written 2026-09-24 11:03 with the new labels.
+- **Arms, labels and colours.** C draws MIDIAN, MIDIAN w/o defenses, "any flat scan" and the learned band, with the names
+  and colours of `figspec` (`NAME`, `COLOR`): MIDIAN `#2ecc71`, MIDIAN w/o defenses `#c0392b`, any flat scan `#3498db`
+  (flat probe argmax's blue), best learned/declared router `#ff7f0e`. The oracle, random and the frameworks are not in C.
+  D uses only MIDIAN's rows (`label == "midian"`).
 
 #### 6.1.2 What "routing work" counts
-C's y value is `messages_per_task + comparisons_per_task` at b = 3 (`:73`). These are the ledger's per-task counts (§1.1.7). Hops
+C's y value is `messages_per_task + comparisons_per_task` at b = 3 (`:83`). These are the ledger's per-task counts (§1.1.7). Hops
 and reports are not counted, and neither is the build. Per arm (§2.11), with depth = ⌈log₁₀ n⌉ at r = 10:
-- MIDIAN-VA: 2 + depth messages and 1 + 10·depth comparisons, so work = 3 + 11·depth.
-- MIDIAN: 3·depth messages and 20·depth comparisons, so work = 23·depth.
+- MIDIAN: 2 + depth messages and 1 + 10·depth comparisons, so work = 3 + 11·depth.
+- MIDIAN w/o defenses: 3·depth messages and 20·depth comparisons, so work = 23·depth.
 - Flat probe argmax, declared argmax and every bandit (UCB, Thompson, warm-start, LinUCB, TrueSkill): 0 messages and n
-  comparisons.
+  comparisons (C's "any flat scan").
 - Flat-NSW router: 0 messages and ef = 50 comparisons. Its ⌈log₂ n⌉ hops are not in C.
 - Cluster-head router: 4 messages plus about n/10 + 10 comparisons (#heads + cluster size, §2.11). The cache has 24.6 at
   n = 10², 114.7 at 10³ and 1,000,014 at 10⁷.
 - DisRouter cascade: messages only, 0 comparisons. They grow almost linearly: 54.4 at 10², 3,742,796 at 10⁷.
 
-The cache confirms each formula at every n. MIDIAN's and MIDIAN-VA's work is therefore linear in tree depth, which is
-log₁₀ n rounded up: it grows like log n, not like a power of n. MIDIAN-VA's b = 1 rows at 10^6 / 10^7 have the same
+The cache confirms each formula at every n. MIDIAN w/o defenses' and MIDIAN's work is therefore linear in tree depth, which is
+log₁₀ n rounded up: it grows like log n, not like a power of n. MIDIAN's b = 1 rows at 10^6 / 10^7 have the same
 per-query counts as its b = 3 rows. Messages and comparisons are added one for one, although they cost very different
 amounts (§6.3.2: 1e-3 J against 1e-8 J).
 
@@ -3238,62 +3365,54 @@ amounts (§6.3.2: 1e-3 J against 1e-8 J).
 ### 6.2 Figure C: `C_routing_work_vs_n`
 
 **Question answered.** For the arms of A and B, how does the communication and computation a router spends on each query
-grow with the population n? In particular, how do MIDIAN and MIDIAN-VA compare with flat arms that scan every agent?
+grow with the population n? In particular, how do MIDIAN and MIDIAN w/o defenses compare with flat arms that scan every
+agent?
 
-**What is drawn** (`draw_I`, `:70-96`):
-- **Single arms** (MIDIAN-VA, MIDIAN, flat probe argmax, declared argmax; `:89-91`). One line each: circle markers (ms 3),
-  lw 1.6, at n = 10², 10³ … 10⁷ (b = 3 rows only). There are no error bars.
-- **Pooled arms** (best learned router, best bandit; `:77-88`). A pooled bar in B is a different member per cell and per
-  seed (§2.1.3), so C draws the pool's range instead of one line.
-  - At each n ≥ 10², the pool is `POOLS[k]` minus `NOT_RUNNABLE("bernoulli", n)` (`:78`), limited to the members that
-    have cache rows.
-  - **Constant-cost members are left out** (`:79`). A member whose own work over n ≥ 10² has `growth(slope) ==
-    "constant"` is dropped from the band at every n. Only `flat_nsw_router` qualifies: its work is ef = 50 at every n, slope
-    about 0. Its cost is constant, so the band would otherwise run from a flat floor. The code comment (`:79`) now says only
-    "constant-cost members (flat_nsw) are left out of the band"; the cross-fit picks it often (the majority pick in 21 of
-    the 54 A / B "best learned router" bars, table below). Every bandit member is n, so nothing is dropped from that pool.
-  - The band spans the smallest to the largest remaining member's work at that n (`:80`). It is filled in the arm's
-    colour at α 0.3 (`:82`), with a lw 1.0 line along each edge (`:83`). There are no markers.
-  - The pools' CSV rows hold the lower edge in `work` and the upper edge in `work_max`, with a slope for each (`slope`,
-    `slope_max`, `:87`).
-- **Random** (`:75-76`) routes blindly and does no routing work, which a log axis cannot show. It gets a legend entry only:
-  "random  (0: no routing work)". It has no CSV rows.
-- **Overlap.** Flat probe argmax, declared argmax and the whole best-bandit band are exactly n at every n. Every bandit
-  member is n, so the band has zero height and both its edges lie on the line. Declared argmax is drawn after them in
-  `ARMS` order, so only its grey line shows. Blue (flat) and the purple bandit edges are underneath.
-- Both axes are log (`:92`). x = "population n (agents)", y = "messages + comparisons per query". The major grid is lw
-  0.3, α 0.4 (`:93`).
-- **Legend** (`:95`): two columns, top left, font 6.
-  - A single arm's entry is `name  (growth)` (`:91`). `growth(s)` (`:65-67`) turns the fitted slope s into words:
+**What is drawn** (`draw_C`, `:80-107`; appendix canvas 5.5 × 2.4 in, `fig(draw_C, …, "appendix")`, `:150`):
+- **Three lines** (`:88-92`): MIDIAN, MIDIAN w/o defenses and **"any flat scan"**, circle markers (ms 3), lw 1.4, in
+  `figspec.COLOR` (green, red, blue), at n = 10², 10³ … 10⁷ (b = 3 rows only). There are no error bars.
+  - "Any flat scan" stands for flat probe argmax, declared argmax and every best-bandit pool member (`FLAT_SCAN`,
+    `:77`), which all compare n agents per query and send no messages. The line is drawn from flat probe argmax's rows
+    (`:89`); the script first prints how far the runnable members differ at any n (`:85-87`; 0.0 % on the current cache:
+    every member is exactly n). The bandits therefore get no band of their own, and declared argmax no line of its own.
+- **The learned band** (best learned/declared router, `:93-103`). A pooled bar in A / B is a different member per cell
+  and per seed (§2.1.3), so C draws the pool's range instead of one line.
+  - At each n ≥ 10², the pool is `POOLS["best_learned"]` minus `NOT_RUNNABLE("bernoulli", n)` (`runnable`, `:84`),
+    limited to the members that have cache rows.
+  - **Constant-cost members are left out** (`:95`). A member whose own work over n ≥ 10² has `growth(slope) ==
+    "constant"` is dropped from the band at every n. Only `flat_nsw_router` qualifies: its work is ef = 50 at every n,
+    slope about 0. The cross-fit picks it often (the majority pick in 19 of the 54 A / B "best learned/declared router"
+    bars, table below).
+  - The band spans the smallest to the largest remaining member's work at that n (`:96`). It is filled in orange at α 0.3
+    (`:98`), with a lw 1.0 line along each edge (`:99`). There are no markers.
+  - The band's CSV rows hold the lower edge in `work` and the upper edge in `work_max`, with a slope for each (`slope`,
+    `slope_max`, `:103`).
+- **Random** routes blindly and does no routing work; it is not drawn and has no CSV rows.
+- Both axes are log (`:104`). x = "population size n", y = "messages + comparisons per query" (`figspec.AXIS`, `:105`).
+  Horizontal grid only; no title.
+- **Legend** (`:106`): inside the axes, top left, one column, in drawing order (never ranked by value).
+  - Each entry is `name (growth)` (`:92`, `:102`). `growth(s)` (`:72-74`) turns a fitted slope s into words:
     "constant" if |s| < 0.02, "∝ log n" if s < 0.3, otherwise "∝ n^s" with two decimals.
-  - A pool's entry (`:84-86`) gives `growth` of both edges' slopes. If the two phrases agree it is that phrase. Else,
-    if both slopes are ≥ 0.3, it is a range "∝ n^a–z" with the smaller slope first, two decimals. Else it is "X to Y
-    across its pool". Its handle is an empty line in the arm's colour, with a marker.
-  - The current entries are: MIDIAN-VA (∝ log n), MIDIAN (∝ log n), flat probe argmax (online) (∝ n^1.00), declared
-    argmax (∝ n^1.00), best learned router (∝ n^0.97–0.99), best bandit (∝ n^1.00), random (0: no routing work). The
-    learned range runs from the upper edge's slope (0.971) to the lower edge's (0.987).
-  - The legend goes through the `extra_figs` wrapper with `rank="asc"` (`extra_figs.py:16-54`). Entries with data are
-    sorted by the mean of their plotted y values, lowest first. The two pool handles and random's plot no data, so they
-    keep `ARMS` order after the ranked ones. The layout is row-major, and it reads: MIDIAN-VA / MIDIAN, flat probe argmax /
-    declared argmax, best learned router / best bandit, random. The pools are therefore placed last whatever their cost.
-- **Title** (`:94`): "C  routing work per query, the arms of A / B: MIDIAN grows like log n (calibrated bernoulli, b = 3,
-  exact ledger)".
-- Figure size 7.2 × 2.8 in; PNG at 250 dpi, plus a PDF (`:126-129`, `condensed_figs.py:86-87`).
+  - The band's entry gives `growth` of both edges' slopes: if the two phrases agree it is that phrase; else, if both
+    slopes are ≥ 0.3, a range "∝ n^a to n^z" with the smaller slope first (`:100-101`).
+  - The current entries are: MIDIAN (∝ log n), MIDIAN w/o defenses (∝ log n), any flat scan (∝ n^1.00), best
+    learned/declared router (∝ n^0.97 to n^0.99). The learned range runs from the upper edge's slope (0.971) to the lower
+    edge's (0.987).
 
-**The slope** (`slope`, `:60-62`). An ordinary least-squares line through (log₁₀ n, log₁₀ work) for n ≥ 10³ and work > 0,
-via `np.polyfit(..., 1)`. That is five points, n = 10³ … 10⁷; n = 10² is drawn but not fitted. For a pool it is fitted to
-each edge separately (`:81`). The slope goes into the CSV but only picks the legend's wording.
-- MIDIAN's and MIDIAN-VA's work is 23·depth and 3 + 11·depth (§6.1.2), linear in log n. A power law fitted to such a curve
-  has a small slope (0.09) that falls as n grows, so `growth` labels it "∝ log n".
+**The slope** (`slope`, `:67-69`). An ordinary least-squares line through (log₁₀ n, log₁₀ work) for n ≥ 10³ and work > 0,
+via `np.polyfit(..., 1)`. That is five points, n = 10³ … 10⁷; n = 10² is drawn but not fitted. For the band it is fitted to
+each edge separately (`:97`). The slope goes into the CSV but only picks the legend's wording.
+- MIDIAN w/o defenses' and MIDIAN's work is 23·depth and 3 + 11·depth (§6.1.2), linear in log n. A power law fitted to
+  such a curve has a small slope (0.09) that falls as n grows, so `growth` labels it "∝ log n".
 - The learned band's lower edge (cluster head) has slope 0.987 and its upper edge (DisRouter) 0.971. The flat-NSW
   router's slope is about 0, which is what removes it from the band.
 - The thresholds 0.02 and 0.3 are fixed in the code. The fitted values here are about 0 (flat-NSW), 0.086–0.091,
   0.971, 0.987 and 1.000, so the thresholds sit far from all of them.
 
-**Values** (`C_routing_work_vs_n.csv`: columns `arm, n, work, slope, work_max, slope_max`; one row per drawn n per arm;
-random has none):
+**Values** (`C_routing_work_vs_n.csv`: columns `arm, key, n, work, slope, work_max, slope_max`; one row per drawn n per
+line or band, 24 rows):
 
-| n | MIDIAN-VA | MIDIAN | flat probe argmax, declared argmax, best bandit (both edges) | best learned router, lower edge | best learned router, upper edge |
+| n | MIDIAN | MIDIAN w/o defenses | any flat scan (flat probe argmax, declared argmax, every bandit) | best learned/declared router, lower edge | best learned/declared router, upper edge |
 |---|---|---|---|---|---|
 | 10² | 25 | 46 | 100 | 24.58 (cluster head) | 54.35 (DisRouter) |
 | 10³ | 36 | 69 | 1,000 | 114.74 (cluster head) | 488.06 (DisRouter) |
@@ -3304,18 +3423,18 @@ random has none):
 | fitted slope (n ≥ 10³) | 0.0860 | 0.0912 | 1.0000 | 0.9875 | 0.9709 |
 
 **Pool members' work per query** (`cost_by_n.csv`, b = 3, medians over seeds; messages + comparisons). "—" means no row.
-The pool at a given n is the members with a value there. The band column says whether C draws the member.
+The pool at a given n is the members with a value there. The last column says where C draws the member.
 
-| member | pool | in band | 10² | 10³ | 10⁴ | 10⁵ | 10⁶ | 10⁷ |
+| member | pool | drawn as | 10² | 10³ | 10⁴ | 10⁵ | 10⁶ | 10⁷ |
 |---|---|---|---|---|---|---|---|---|
-| `cluster_head_router` | learned | yes (lower edge) | 24.58 | 114.74 | 1,014.0 | 10,013.8 | 100,013.8 | 1,000,013.7 |
-| `flat_nsw_router` | learned | no (constant) | 50 | 50 | 50 | 50 | 50 | 50 |
-| `disrouter_cascade` | learned | yes (upper edge) | 54.35 | 488.06 | 4,533.7 | 42,499.9 | 394,053.4 | 3,742,795.6 |
+| `cluster_head_router` | learned | band (lower edge) | 24.58 | 114.74 | 1,014.0 | 10,013.8 | 100,013.8 | 1,000,013.7 |
+| `flat_nsw_router` | learned | not drawn (constant) | 50 | 50 | 50 | 50 | 50 | 50 |
+| `disrouter_cascade` | learned | band (upper edge) | 54.35 | 488.06 | 4,533.7 | 42,499.9 | 394,053.4 | 3,742,795.6 |
 | `knn_router`, `knn_router_online`, `mlp_router` | learned | no rows | — | — | — | — | — | — |
-| `ucb_per_family`, `thompson_per_family`, `warm_start_bandit` | bandit | yes | 100 | 1,000 | 10,000 | 100,000 | 1,000,000 | 10,000,000 |
-| `linucb_honest` (old context bonus) | not in `POOLS` | no | 100 | 1,000 | 10,000 | 100,000 | 1,000,000 | 10,000,000 |
+| `ucb_per_family`, `thompson_per_family`, `warm_start_bandit` | bandit | any flat scan | 100 | 1,000 | 10,000 | 100,000 | 1,000,000 | 10,000,000 |
+| `linucb_honest` (old context bonus) | not in `POOLS` | not drawn | 100 | 1,000 | 10,000 | 100,000 | 1,000,000 | 10,000,000 |
 | `linucb_honest[bonus=own]` | bandit | no rows | — | — | — | — | — | — |
-| `trueskill_per_family` | bandit | yes | 100 | 1,000 | 10,000 | — | — | — |
+| `trueskill_per_family` | bandit | any flat scan | 100 | 1,000 | 10,000 | — | — | — |
 | `warm_start_bandit[n0=0.5]` | bandit | no rows | — | — | — | — | — | — |
 
 `knn_router`, `knn_router_online` and `mlp_router` cannot run on bernoulli, so C has no values for them. Where they did
@@ -3325,88 +3444,88 @@ minimum and maximum of `messages_per_task + comparisons_per_task` equal n in eve
 n = 10 … 10³ for MLP (MLP is `NOT_RUNNABLE` from n = 5,000).
 
 **Reading.**
-- At n = 10² the learned band's floor (cluster head, 24.58) is just under MIDIAN-VA (25), and MIDIAN (46) is under the
-  flat arms (100).
-- From 10³ on, both edges of the learned band are above MIDIAN and MIDIAN-VA and grow almost like n: the floor is about
-  n/10 + 14 (cluster head), the ceiling about 0.37·n at 10⁷ (DisRouter).
-- The flat-NSW router's constant 50, if it were drawn, would sit under MIDIAN-VA up to 10⁴ (47) and over it from 10⁵ (58).
+- At n = 10² the learned band's floor (cluster head, 24.58) is just under MIDIAN (25), and MIDIAN w/o defenses (46) is
+  under any flat scan (100).
+- From 10³ on, both edges of the learned band are above MIDIAN w/o defenses and MIDIAN and grow almost like n: the floor
+  is about n/10 + 14 (cluster head), the ceiling about 0.37·n at 10⁷ (DisRouter).
+- The flat-NSW router's constant 50, if it were drawn, would sit under MIDIAN up to 10⁴ (47) and over it from 10⁵ (58).
 
-**A band is not the cost of the arm B reports.** B's "best learned router" and "best bandit" bars are the cross-fitted
-pick of one member per seed (§2.1.3). C's band brackets what the pick could cost only among the members it draws.
+**A band is not the cost of the arm B reports.** B's "best learned/declared router" bars are the cross-fitted pick of one
+member per seed (§2.1.3). C's band brackets what the pick could cost only among the members it draws.
 - **The band is not the whole pool.** `flat_nsw_router` is left out of C's band, but it is still a candidate in A and
-  B's "best learned router": `POOLS` (`condensed_figs.py:30, 35-36`) feeds `arms_at` (`condensed_figs.py:68-83`), which
-  calls `seed_tables.crossfit` (`seed_tables.py:125-135`) with the whole runnable pool. A seed that picks it pays 50
-  comparisons per query, below the band.
-- **Who the cross-fit picks.** From the "best learned router" rows of `A_live_allb.csv` and `B_families_allb.csv`
-  (`chosen` column of the 09:46 CSVs; 54 bars, the live 10⁵ bars counted in both files; 4 are marked INCOMPLETE POOL, the
-  live 10⁵ cartel b = 1 / 5 bars). "Majority" is the number of bars whose most-picked member it is (the first listed in
-  `chosen`); "seed-level" sums the per-seed picks over all 54 bars (1,002 seeds). Growth is the member's work per query over n: C's cache for the three declared / probe-index
-  members, the live and other ledgers for kNN and MLP (above).
+  B's "best learned/declared router": `POOLS` (`condensed_figs.py:30, 34-35`) feeds `arms_at` (`condensed_figs.py:67-87`),
+  which calls `seed_tables.crossfit` with the whole runnable pool. A seed that picks it pays 50 comparisons per query,
+  below the band.
+- **Who the cross-fit picks.** From the "best learned/declared router" rows of `A_live_allb.csv` and `B_families_allb.csv`
+  (`chosen` column of the 11:35 CSVs; 54 bars, the live 10⁵ bars counted in both files; none is incomplete). "Majority" is
+  the number of bars whose most-picked member it is (the first listed in `chosen`); "seed-level" sums the per-seed picks
+  over all 54 bars (1,002 seeds). Growth is the member's work per query over n: C's cache for the three declared /
+  probe-index members, the live and other ledgers for kNN and MLP (above).
 
   | member | growth | majority (of 54 bars) | seed-level picks |
   |---|---|---|---|
-  | `flat_nsw_router` | constant (50) | 21 (live 10⁴ b = 1, 3 both regimes; live 10⁵ cartel b = 5 in A and B; bernoulli 10⁷ b = 3, 5 both regimes; all 6 replay 10⁶ bars; RouterEval 5,000 honest b = 1, 3, 5 and cartel b = 3, 5) | 614 |
-  | `knn_router_online` | n | 18 | 114 |
+  | `flat_nsw_router` | constant (50) | 19 (live 10⁴ b = 1, 3 both regimes; bernoulli 10⁷ b = 3, 5 both regimes; all 6 replay 10⁶ bars; RouterEval 5,000 honest b = 1, 3, 5 and cartel b = 3, 5) | 610 |
+  | `knn_router_online` | n | 22 | 122 |
   | `mlp_router` | n | 10 | 64 |
-  | `disrouter_cascade` | ~n^0.97 | 4 | 107 |
+  | `disrouter_cascade` | ~n^0.97 | 2 | 103 |
   | `cluster_head_router` | ~n^0.99 | 1 | 103 |
 
-  So a constant-cost member is the majority pick in 21 of 54 bars and a minority pick in 4 more (live 10⁴ b = 5 both
-  regimes, live 10⁵ honest b = 5 in A and B); for those bars the arm A / B reports does 50 comparisons per query, below
-  MIDIAN at every n and below MIDIAN-VA from 10⁵ up (figures audit F4). The live 10⁵ counts may move slightly while the
-  last kNN seeds land.
-- At bernoulli n = 10⁷, b = 3 (C's budget): best learned router `flat_nsw_router` ×100 in both regimes (50 comparisons
-  per query, below the drawn band and below MIDIAN-VA's 80); best bandit `warm_start_bandit` (n0 = 5, on calibrated
-  claims) ×100 in both regimes, n per query. At b = 1 the learned pick is `cluster_head_router` ×100 honest (about
-  n/10 = 1,000,014 per query) and `disrouter_cascade` ×100 cartel (the band's ceiling, 3.7M).
+  So a constant-cost member is the majority pick in 19 of 54 bars and a minority pick in 6 more (live 10⁴ b = 5 both
+  regimes, live 10⁵ b = 5 both regimes in A and B); for those bars the arm A / B reports does 50 comparisons per query,
+  below MIDIAN w/o defenses at every n and below MIDIAN from 10⁵ up (figures audit F4).
+- At bernoulli n = 10⁷, b = 3 (C's budget): best learned/declared router `flat_nsw_router` ×100 in both regimes (50
+  comparisons per query, below the drawn band and below MIDIAN's 80); best bandit `warm_start_bandit` (n0 = 5, on
+  calibrated claims) ×100 in both regimes, n per query (on the "any flat scan" line). At b = 1 the learned pick is
+  `cluster_head_router` ×100 honest (about n/10 = 1,000,014 per query) and `disrouter_cascade` ×100 cartel (the band's
+  ceiling, 3.7M).
 
-So at C's budget the arm B reports as "best learned router" at 10⁷ does constant work, outside C's band; its "best
-bandit" does work of order n.
+So at C's budget the arm B reports as "best learned/declared router" at 10⁷ does constant work, outside C's band; its
+"best bandit" does work of order n.
 
 ### 6.3 Figure D: `D_energy_per_query`
 
 **Question answered.** Counting LLM calls, messages and comparisons in joules, after how many routed queries does
-MIDIAN-VA's one-off probing build cost less than a framework that calls a supervisor LLM on every query? How does that
+MIDIAN's one-off probing build cost less than a framework that calls a supervisor LLM on every query? How does that
 point move with n and b?
 
-**What is drawn** (`draw_J`, `:99-123`):
-- **x** = queries served T, 200 log-spaced points from 10² to 10⁹ (`:104`). **y** = energy per query in J, with the build
-  amortised (`:119`). Both axes are log. The figure carries no asterisk; the title and y label say "estimated".
-- **MIDIAN-VA lines.** Nine lines, one per (n, b) with n ∈ {10³, 10⁵, 10⁷} and b ∈ {1, 3, 5} (`:109-115`):
+**What is drawn** (`draw_D`, `:113-141`; canvas "d", 5.5 × 1.8 in, `:150`):
+- **x** = queries served T, 200 log-spaced points from 10² to 10⁹ (`:119`). **y** = energy per query in J, with the build
+  amortised (`:131`). Both axes are log (`:135`); the y axis starts at 1e-6 to leave room for the legend (`:136`). Axis
+  labels "queries served T" and "energy per query (J)" (`figspec.AXIS`); no title (the word "estimated" is for the
+  caption).
+- **MIDIAN lines.** Nine lines, one per (n, b) with n ∈ {10³, 10⁵, 10⁷} and b ∈ {1, 3, 5} (`:126-134`):
   `y(T) = build_J / T + marginal_J`.
-  - The shade is the base green `#2ecc71` times (1.35 − s), with s = 0.55 / 0.8 / 1.0 for n = 10³ / 10⁵ / 10⁷. That is ×0.80,
-    ×0.55 and ×0.35: darker means a larger n (`:109`, `:114`).
-  - The line style gives b: dotted `:` for b = 1, solid for b = 3, dashed `--` for b = 5 (`:111`). lw 1.4.
+  - The colour is MIDIAN's green shaded by n (`N_SHADE`, `:110`, through `figspec.shade`): n = 10³ light (mixed 50 %
+    toward white), 10⁵ the base green, 10⁷ dark (× 0.6).
+  - The line style gives b (`figspec.B_LINESTYLE`): dotted `:` for b = 1, solid for b = 3, dashed `--` for b = 5. lw 1.2.
   - As T grows each line falls with slope −1 and flattens at `marginal_J`. At T = 10⁹ only the n = 10³ lines have
     reached their floor, about 0.005 J.
-- **The grey band** (`:106-107`) spans all T, from the cheapest to the costliest framework's per-query energy: 20.60 J
-  (AutoGen) to 219.75 J (Magentic-One, 7B). `#bbbbbb`, α 0.5. Legend: "frameworks: 1-10.7 supervisor-call equivalents per
-  query (21-220 J)". The call-equivalent range is the min and max of `sup_call_equiv` over the drawn frameworks (`:105`),
-  printed as `.0f` and `.1f`: 1.000 (AutoGen) and 10.673 (Magentic-One). §6.3.3 says what a call-equivalent is.
-- **The ×s** (`:116-117`): black, ms 3, drawn above the lines. Each is at (break-even T, framework J), where a MIDIAN-VA line
+- **The framework band** (`:120-124`) spans all T, from the cheapest to the costliest framework's per-query energy
+  (`energy.table().per_task_J` over the `fw_*` rows without a `supervisor` override, `:116-117`): 20.60 J (AutoGen) to
+  219.75 J (Magentic-One, 7B). Light grey `#e5e5e5` fill; both edges are drawn as grey lines (lw 0.6) and named at the
+  right margin, outside the axes: "AutoGen, 20.6 J" and "Magentic-One, 220 J" (`doc_tables.NAMES`, `:122-124`). The band
+  has no legend entry.
+- **The ×s** (`:132-133`): black, ms 3, drawn above the lines. Each is at (break-even T, framework J), where a MIDIAN line
   crosses the lower edge (vs the cheapest framework) or the upper edge (vs the costliest). There are 18: 9 lines × 2 edges.
-- **Legend** (`:122`): four columns above the axes, font 5.5, `rank="asc"`. The lines are ranked by the mean of their y
-  values, which is set by build energy, so the order runs from n = 10³, b = 1 to n = 10⁷, b = 5. The band has no y data
-  (`extra_figs._plotted` returns None for it), so it comes last. The legend reads, row by row: 10³ b1, 10³ b3, 10³ b5,
-  10⁵ b1 / 10⁵ b3, 10⁵ b5, 10⁷ b1, 10⁷ b3 / 10⁷ b5, band.
-- **Title** (`:121`): "D  estimated energy per query: MIDIAN-VA pays one probing build, then ~0.01 J / query; frameworks
-  pay supervisor LLM calls every query". The y label is "estimated energy per query, J (build amortised)" (`:119`).
+- **Legend** (`:138-140`): inside the axes, bottom left, two columns: three colour entries $n = 10^3$ / $10^5$ / $10^7$
+  (lw 2.5 in the three greens) and three line-style entries b = 1 / b = 3 / b = 5 (black), instead of nine separate
+  entries.
 
-#### 6.3.1 MIDIAN-VA's build probes (`va_build`, `:40-57`)
-- **Grids read** (`VA_GRIDS`, `:37`): `va_b_bernoulli_1e7`, `va_b_n1000`, `va_b_n100k`, `fw_live_n1000`, `live_n100k`. For
-  each, every `rows.d/*.json` and the `rows.csv` are read (`:46-50`). rows.csv and rows.d hold the same rows in four of
-  the five grids. Rows are deduplicated on `rid`; rows without a `rid` are all kept (`:52`). Every rows.csv here has a
+#### 6.3.1 MIDIAN's build probes (`va_build`, `:46-64`)
+- **Grids read** (`VA_GRIDS`, `:43`): `va_b_bernoulli_1e7`, `va_b_n1000`, `va_b_n100k`, `fw_live_n1000`, `live_n100k`. For
+  each, every `rows.d/*.json` and the `rows.csv` are read, each through `keys.normalize` (`:52-57`). rows.csv and rows.d hold the same rows in four of
+  the five grids. Rows are deduplicated on `rid`; rows without a `rid` are all kept (`:59`). Every rows.csv here has a
   `rid` column.
-- **Aggregation** (`:53`): `method == "midian_va"`, then the median of `build_probes` per (n, b). There is no filter on
+- **Aggregation** (`:60`): `method == "midian"` with params `{}` (the full method), then the median of `build_probes` per (n, b). There is no filter on
   β, `dist`, `liar_select` or channel.
-- **Bernoulli fill-in** (`:54`): for every (n, b) of MIDIAN-VA in the cache, the grid value is kept if there is one, else the
+- **Bernoulli fill-in** (`:61`): for every (n, b) of MIDIAN in the cache, the grid value is kept if there is one, else the
   cache's value (the `bernoulli_scale_v5` median) is used. So the live and `va_b` ledgers come first, then the bernoulli
   sweep. D uses the sweep for (10⁷, 1) and (10⁷, 3). The cache values at 10³ (49,440) and 10⁵ (4,959,820) are overridden
   by the live grids.
-- **Ratio fallback** (`:55-56`): for each b, `ratio[b]` = the median over the n available at that b of
+- **Ratio fallback** (`:62-64`): for each b, `ratio[b]` = the median over the n available at that b of
   `build_probes / (n · 16 · b)`. Any (n, b) with no value would become `ratio[b] · n · 16 · b` and be tagged
   `ratio r x nKb` in the CSV's `build_source` column. K = 16 is hard-coded. No D cell uses it now; the docstring says so
-  (`:41-43`).
+  (`:47-49`).
 
 | n | b | build probes | ÷ n·K·b | CSV `build_source` | where the number comes from |
 |---|---|---|---|---|---|
@@ -3446,8 +3565,8 @@ Everything is estimated from call counts, not measured on a power meter. The mod
   | bimodal | 80 % 0.5B, 20 % 7B | 0.0020319 | 1.4223 |
 
   Per model at 700 W: 0.5B 0.10 J, 1.5B 0.86 J, 2B 0.50 J, 3B 2.87 J, 7B 6.70 J, 9B 3.84 J, 14B 13.40 J.
-- **Watts.** 700 W, the H100 TDP (`WATTS`, `energy.py:9`; `table(watts=700)`, `energy.py:28`). `draw_J` multiplies by 700 itself
-  (`:103`). The 400 W "typical draw" entry is used only in the RESULTS_energy.md table (`energy.py:72`).
+- **Watts.** 700 W, the H100 TDP (`WATTS`, `energy.py:9`; `table(watts=700)`, `energy.py:28`). `draw_D` multiplies by 700 itself
+  (`:118`). The 400 W "typical draw" entry is used only in the RESULTS_energy.md table (`energy.py:72`).
 - **Message = 1e-3 J** (`J_MSG`, `energy.py:10`): one RPC handled in about 100 µs on a 10 W core (`energy.py:44`).
 - **Comparison = 1e-8 J** (`J_CMP`, `energy.py:10`): one float compare.
 - **Pessimistic messages.** `table()` also computes `*_pess` columns with 10 × J_MSG = 1e-2 J (`energy.py:45-48`). D
@@ -3457,15 +3576,15 @@ Everything is estimated from call counts, not measured on a power meter. The mod
   CPU-side routing work (tree descent, TF-IDF) is left out of the LLM term (`energy.py:67`). It enters only through the
   ledger's message and comparison counts.
 
-**MIDIAN-VA in D** (`:108-113`):
+**MIDIAN in D** (`:125-131`):
 - `build_J = build_probes · 4.0388 + build_messages · 1e-3`. The build messages are the b = 3 cache value at every b
-  (1,010 / 101,110 / 10,111,110 at n = 10³ / 10⁵ / 10⁷), a rounding term (`:108`, `:113`). Build comparisons are not charged.
+  (1,010 / 101,110 / 10,111,110 at n = 10³ / 10⁵ / 10⁷), a rounding term (`:130`). Build comparisons are not charged.
 - `marginal_J = messages_per_task · 1e-3 + comparisons_per_task · 1e-8` from the cache (b = 3). That is 5 msgs + 31 cmp =
   0.00500031 J at 10³, 7 + 51 = 0.00700051 J at 10⁵ and 9 + 71 = 0.00900071 J at 10⁷. It is the same at every b, as the
   ledger's per-query counts are.
-- No LLM term per query: MIDIAN-VA routes without an LLM call and without run-time probes (§2.3.6).
+- No LLM term per query: MIDIAN routes without an LLM call and without run-time probes (§2.3.6).
 
-#### 6.3.3 The framework band (`energy.table()`, `energy.py:28-54`; filter at `:101`)
+#### 6.3.3 The framework band (`energy.table()`, `energy.py:28-54`; filter at `:116`)
 - **Rows** (`rows`, `energy.py:21-26`): grids `live_f1_n1000`, `variants_f1` and `fw_live_n1000` at n = 1,000, filtered to
   `declared_source == "self_described"`. The per-method **mean** of each ledger column is taken over every such row. β,
   `dist`, seed and quarantine are not filtered. Every `fw_` row comes from `fw_live_n1000`: 10 seeds × 3 shapes ×
@@ -3476,7 +3595,7 @@ Everything is estimated from call counts, not measured on a power meter. The mod
   the latency a "measured median" (`energy.py:49-50`), but it is the mean over rows. This assumes latency is proportional
   to GPU work. It was measured on a shared fleet.
 - **The 14B Magentic-One arm** would be scaled by 14/7 (`energy.py:36`). D excludes it: `~fw.index.str.contains("supervisor")`
-  (`:101`) drops the `fw_magentic_one{"supervisor":"Qwen/Qwen2.5-14B-Instruct"}` row (8.93 call-equivalents, 367.87 J).
+  (`:116`) drops the `fw_magentic_one{"supervisor":"Qwen/Qwen2.5-14B-Instruct"}` row (8.93 call-equivalents, 367.87 J).
   The band is also restricted to `fw_*` rows, so `llm_supervisor` is not in it.
 - **`per_task_J`** (`energy.py:37, 47`) = `(probes_per_task · probe_cost + call-equivalents · SUP) · 700 +
   messages_per_task · 1e-3 + comparisons_per_task · 1e-8`. For every framework, probes_per_task = 0, messages = 12
@@ -3500,7 +3619,7 @@ Only the two edges are drawn. The per-framework values are not in D's CSV. They 
 edges.
 
 #### 6.3.4 Break-even points
-A MIDIAN-VA line meets a framework level F where build/T + marginal = F, so (`:117`)
+A MIDIAN line meets a framework level F where build/T + marginal = F, so (`:133`)
 
   **T\* = build_J / (F − marginal_J)**.
 
@@ -3535,24 +3654,24 @@ queries per agent at b = 1 / 3 / 5 against AutoGen, and 0.31 / 0.91 / 1.53 again
 2. **`build_source` does not name the backend.** All nine D rows say "ledger". Seven are live or `va_b` ledgers (the six
    cells at 10³ / 10⁵, and 10⁷ b = 5 from `va_b_bernoulli_1e7`), and two are the `bernoulli_scale_v5` sweep at 10⁷ b = 1
    and 3. The table
-   in §6.3.1 gives each one's source. The ratio fallback (`:55-56`) is still in the code but unused.
-3. **The learned band leaves out the one constant-cost member, the flat-NSW router.** `draw_I` drops any pool member whose
-   own growth over n ≥ 10² is "constant" (`:79`), and only `flat_nsw_router` is (50 comparisons at every n). It is an ANN
+   in §6.3.1 gives each one's source. The ratio fallback (`:62-64`) is still in the code but unused.
+3. **The learned band leaves out the one constant-cost member, the flat-NSW router.** `draw_C` drops any pool member whose
+   own growth over n ≥ 10² is "constant" (`:95`), and only `flat_nsw_router` is (50 comparisons at every n). It is an ANN
    index over flat probe means held in one place (§2.8.3; METHODS.md calls it a verified-centralised arm). It shows that
    sublinear routing is possible centrally; what MIDIAN adds is routing that is sublinear, decentralised and verified.
-   - It is left out because its cost is constant (code comment `:79`: "constant-cost members (flat_nsw) are left out of
-     the band"). Yet it is the majority pick in 21 of the 54 "best learned router" bars (live 10⁴, live 10⁵ cartel b = 5,
+   - It is left out because its cost is constant (`draw_C`'s docstring: "constant-cost members, flat_nsw, left out").
+     Yet it is the majority pick in 19 of the 54 "best learned/declared router" bars (live 10⁴ b = 1 / 3,
      bernoulli 10⁷ b = 3 / 5, every replay 10⁶ bar, most RouterEval 5,000 bars), including bernoulli 10⁷ at C's own
      budget b = 3 (§6.2).
-   - It is still a candidate in A and B's cross-fitted "best learned router" (`POOLS`, `condensed_figs.py:35`;
-     `seed_tables.crossfit`, `seed_tables.py:125-135`). In those bars, and in 614 of the 1,002 seed-level picks, the arm A / B
-     reports pays 50 per query: below the drawn band, below MIDIAN at every n and below MIDIAN-VA from 10⁵ up. The band is
+   - It is still a candidate in A and B's cross-fitted "best learned/declared router" (`POOLS`, `condensed_figs.py:34`;
+     `seed_tables.crossfit`). In those bars, and in 610 of the 1,002 seed-level picks, the arm A / B
+     reports pays 50 per query: below the drawn band, below MIDIAN w/o defenses at every n and below MIDIAN from 10⁵ up. The band is
      not the whole pool, and a caption should say so (figures audit F4 suggests drawing it as its own dashed line).
    - The exclusion rule itself does not depend on the pick counts: it reads only C's cache.
    - C also leaves out the router's ⌈log₂ n⌉ hops.
 4. **D's advantage is over the frameworks, not over flat probing.** Flat probe argmax builds with exactly n·K·b probes,
-   slightly fewer than MIDIAN-VA's 1.03–1.05 × n·K·b. Its per-query energy is n comparisons: 1e-5 J at 10³, 1e-3 J at 10⁵,
-   0.1 J at 10⁷. Its D curve is not drawn. It would lie within a few percent of MIDIAN-VA's: its build is 3–5 % smaller,
+   slightly fewer than MIDIAN's 1.03–1.05 × n·K·b. Its per-query energy is n comparisons: 1e-5 J at 10³, 1e-3 J at 10⁵,
+   0.1 J at 10⁷. Its D curve is not drawn. It would lie within a few percent of MIDIAN's: its build is 3–5 % smaller,
    and its per-query floor is lower at 10³ and higher at 10⁷. The asymptotic advantage over flat methods is C's routing work, which D prices at near zero.
 5. **The framework band is a live n = 1,000 measurement, applied at every n.**
    - Retrieval over the n descriptions (TF-IDF or embedding scoring) is not charged. The ledger charges each framework
@@ -3567,89 +3686,91 @@ queries per agent at b = 1 / 3 / 5 against AutoGen, and 0.31 / 0.91 / 1.53 again
 6. **The band pools regimes and shapes.** It averages over β ∈ {0, 0.1, 0.25, 0.5} and all three population shapes. Per-β
    means of AutoGen's latency range from 0.92 s to 3.13 s. It includes CrewAI and ADK rows that E–H drop (no quarantine
    filter). Only the edges matter for D: AutoGen and Magentic-One.
-7. **Call-equivalents are a latency ratio, not a count of calls.** The legend says "1-10.7 supervisor-call equivalents per
-   query" (`:106-107`). The floor is AutoGen, one call by construction. The 10.7 at the ceiling is Magentic-One's mean latency
+7. **Call-equivalents are a latency ratio, not a count of calls.** The band's edges are named "AutoGen, 20.6 J" and
+   "Magentic-One, 220 J" (`:122-124`); the 1 to 10.7 call-equivalents behind them (§6.3.3) are for the caption. The floor
+   is AutoGen, one call by construction. The 10.7 at the ceiling is Magentic-One's mean latency
    divided by AutoGen's (§6.3.3). No call count was recorded.
-8. **Energy is an estimate** (the title and y label say "estimated"). Its uncertain parts: B = 5A is assumed; A rests on one 34 req/s throughput figure;
+8. **Energy is an estimate** (the caption must say "estimated"; the figure has no title and its y label is "energy per query (J)"). Its uncertain parts: B = 5A is assumed; A rests on one 34 req/s throughput figure;
    7B / 14B probe tokens are 3B proxies; latency stands in for GPU work; 700 W is the TDP. A 400 W draw would scale every
    LLM term by 4/7. That lowers every y value but leaves T\* almost unchanged, because the build and the band scale
    together. Messages at 1e-3 J are a guess. The 1e-2 J variant moves T\* by under 0.31 %.
-9. **MIDIAN-VA's build is pooled over regimes and shapes.** `va_build` does not filter β or `dist`. The 10³ b = 3 value
+9. **MIDIAN's build is pooled over regimes and shapes.** `va_build` does not filter β or `dist`. The 10³ b = 3 value
    mixes 3 live shapes and 4 β values. The spread is small (49,368–49,468 at 10³ b = 3), so the effect is under 0.2 %.
 10. **The 10⁵ builds rest on 3 seeds.** `va_b_n100k` has 6 rows per b (3 seeds × 2 regimes, whose build counts match per
     seed); `live_n100k` 18 at b = 3.
-11. **The cache does not refresh itself.** `cost_by_n.csv` is reused until it is deleted (`:28`). The `va_build` grids and
+11. **The cache does not refresh itself.** `cost_by_n.csv` is reused until it is deleted (`:33`). The `va_build` grids and
     the framework rows are re-read on every run. A rerun can therefore mix a new build with an old cache. For the counts in
     C this does not matter, because they are deterministic. A cache written before the `b` column was added would fail in
-    `draw_I` (`d.b`, `:73`), so an old file has to be deleted.
+    `draw_C` (`d.b`, `:83`), so an old file has to be deleted. A cache written before the rename would carry old labels
+    (`midian_va`, plain `midian`): the current one (11:03) carries `midian` and `midian_wo_defenses`.
 12. **Running `efficiency_figs.py` writes to result directories.** `energy.table()` loads through `rte.analyze.load`,
     which consolidates rows.d into rows.csv for `live_f1_n1000`, `variants_f1` and `fw_live_n1000` (`rte/analyze.py:57`),
     unless a grid has a `.merge_owner` file (`rte/run.py:190-191`). Without `RTE_DATA`, the default
-    `/scratch/rte/results` (`:20`) holds no grids. The script then stops with an error (`rte/analyze.py:60`) and draws
+    `/scratch/rte/results` (`:25`) holds no grids. The script then stops with an error (`rte/analyze.py:60`) and draws
     nothing.
 13. **C adds unlike units.** A message and a comparison each count 1 in C, although the energy model prices them 1e5 apart.
-    In messages alone, the flat arms send 0 per query and MIDIAN-VA sends 2 + depth.
+    In messages alone, the flat arms send 0 per query and MIDIAN sends 2 + depth.
 
 ---
 
 ## Appendix: figures A and B, per row (seed counts, source grid)
 
-Values as in `A_live_allb.csv` and `B_families_allb.csv` (written 2026-09-24 09:46); B is ÷ oracle. Format: value [mean − 1 s.e., mean + 1 s.e.], seeds, source. For the pooled arms: value [whisker], scored seeds, pick counts, then the pool members missing at that b or missing some of the scored seeds ("missing or partial", which puts the title ` *` on) and "(b-invariant)" when every pick is a never-probing arm. Every slot has a bar. Sources for the four switched families are the erratum-30 per-seed tables (4.0.7); the live 10^5 best-learned-router rows may change slightly once the last kNN seeds land.
+Values as in `A_live_allb.csv` and `B_families_allb.csv` (written 2026-09-24 11:35); B is ÷ oracle. Format: value [mean − 1 s.e., mean + 1 s.e.], seeds, source. For the pooled arms: value [whisker], scored seeds, pick counts, then the pool members missing at that b or missing some of the scored seeds ("missing or partial"; reported by the script and `scripts/ops/figure_status.py`, never drawn; none today) and "(b-invariant)" when every pick is a never-probing arm. Every slot has a bar. Sources for the four switched families are the erratum-30 per-seed tables (4.0.7); the framework arm of A ("best framework, best text shortlist") is listed in §4.1, not here.
 
 ### App. A_live_allb
 
 | group | regime | arm | b=1 | b=3 | b=5 |
 |---|---|---|---|---|---|
-| n = 100 | honest | MIDIAN-VA | 0.7105 [0.699,0.722] 10s (va_b_n100) | 0.7816 [0.769,0.794] 10s (bars) | 0.8121 [0.804,0.820] 10s (va_b_n100) |
-| n = 100 | β=0.5 cartel | MIDIAN-VA | 0.6972 [0.686,0.709] 10s (va_b_n100) | 0.7680 [0.756,0.780] 10s (bars) | 0.8121 [0.804,0.820] 10s (va_b_n100) |
-| n = 100 | honest | MIDIAN | 0.7105 [0.699,0.722] 10s (rivals_b_n100) | 0.7747 [0.764,0.784] 10s (bars) | 0.8002 [0.792,0.808] 10s (rivals_b_n100) |
-| n = 100 | β=0.5 cartel | MIDIAN | 0.6625 [0.653,0.672] 10s (rivals_b_n100) | 0.7359 [0.728,0.744] 10s (bars) | 0.7552 [0.747,0.764] 10s (rivals_b_n100) |
-| n = 100 | honest | flat probe argmax (online) | 0.7023 [0.692,0.712] 10s (rivals_b_n100) | 0.7805 [0.773,0.788] 10s (bars) | 0.8006 [0.794,0.807] 10s (rivals_b_n100) |
-| n = 100 | β=0.5 cartel | flat probe argmax (online) | 0.7023 [0.692,0.712] 10s (rivals_b_n100) | 0.7805 [0.773,0.788] 10s (bars) | 0.8006 [0.794,0.807] 10s (rivals_b_n100) |
-| n = 100 | honest | best learned router | 0.6151 [0.600,0.630] 10s, picks `mlp_router` ×8; `knn_router_online` ×2 | 0.7376 [0.726,0.749] 10s, picks `knn_router_online` ×10 | 0.7788 [0.769,0.789] 10s, picks `knn_router_online` ×10 |
-| n = 100 | β=0.5 cartel | best learned router | 0.6151 [0.600,0.630] 10s, picks `mlp_router` ×8; `knn_router_online` ×2 | 0.7376 [0.726,0.749] 10s, picks `knn_router_online` ×10 | 0.7788 [0.769,0.789] 10s, picks `knn_router_online` ×10 |
+| n = 100 | honest | MIDIAN | 0.7105 [0.699,0.722] 10s (va_b_n100) | 0.7816 [0.769,0.794] 10s (bars) | 0.8121 [0.804,0.820] 10s (va_b_n100) |
+| n = 100 | β=0.5 cartel | MIDIAN | 0.6972 [0.686,0.709] 10s (va_b_n100) | 0.7680 [0.756,0.780] 10s (bars) | 0.8121 [0.804,0.820] 10s (va_b_n100) |
+| n = 100 | honest | MIDIAN w/o defenses | 0.7105 [0.699,0.722] 10s (rivals_b_n100) | 0.7747 [0.764,0.784] 10s (bars) | 0.8002 [0.792,0.808] 10s (rivals_b_n100) |
+| n = 100 | β=0.5 cartel | MIDIAN w/o defenses | 0.6625 [0.653,0.672] 10s (rivals_b_n100) | 0.7359 [0.728,0.744] 10s (bars) | 0.7552 [0.747,0.764] 10s (rivals_b_n100) |
+| n = 100 | honest | flat probe argmax | 0.7023 [0.692,0.712] 10s (rivals_b_n100) | 0.7805 [0.773,0.788] 10s (bars) | 0.8006 [0.794,0.807] 10s (rivals_b_n100) |
+| n = 100 | β=0.5 cartel | flat probe argmax | 0.7023 [0.692,0.712] 10s (rivals_b_n100) | 0.7805 [0.773,0.788] 10s (bars) | 0.8006 [0.794,0.807] 10s (rivals_b_n100) |
+| n = 100 | honest | best learned/declared router | 0.6151 [0.600,0.630] 10s, picks `mlp_router` ×8; `knn_router_online` ×2 | 0.7376 [0.726,0.749] 10s, picks `knn_router_online` ×10 | 0.7788 [0.769,0.789] 10s, picks `knn_router_online` ×10 |
+| n = 100 | β=0.5 cartel | best learned/declared router | 0.6151 [0.600,0.630] 10s, picks `mlp_router` ×8; `knn_router_online` ×2 | 0.7376 [0.726,0.749] 10s, picks `knn_router_online` ×10 | 0.7788 [0.769,0.789] 10s, picks `knn_router_online` ×10 |
 | n = 100 | honest | best bandit | 0.6881 [0.681,0.695] 10s, picks `warm_start_bandit[n0=0.5]` ×10 | 0.7524 [0.744,0.761] 10s, picks `linucb_honest[bonus=own]` ×10 | 0.7729 [0.764,0.782] 10s, picks `linucb_honest[bonus=own]` ×10 |
 | n = 100 | β=0.5 cartel | best bandit | 0.6798 [0.671,0.689] 10s, picks `linucb_honest[bonus=own]` ×10 | 0.7524 [0.744,0.761] 10s, picks `linucb_honest[bonus=own]` ×10 | 0.7729 [0.764,0.782] 10s, picks `linucb_honest[bonus=own]` ×10 |
 | n = 100 | honest | declared argmax | n/a | 0.5992 [0.589,0.609] 10s (bars) | n/a |
 | n = 100 | β=0.5 cartel | declared argmax | n/a | 0.5181 [0.500,0.536] 10s (bars) | n/a |
 | n = 100 | honest | random | n/a | 0.4258 [0.417,0.435] 10s (bars) | n/a |
 | n = 100 | β=0.5 cartel | random | n/a | 0.4258 [0.417,0.435] 10s (bars) | n/a |
-| n = 1,000 | honest | MIDIAN-VA | 0.6913 [0.686,0.697] 10s (va_b_n1000) | 0.8134 [0.809,0.818] 10s (bars) | 0.8377 [0.834,0.841] 10s (va_b_n1000) |
-| n = 1,000 | β=0.5 cartel | MIDIAN-VA | 0.6914 [0.684,0.698] 10s (va_b_n1000) | 0.8074 [0.802,0.813] 10s (bars) | 0.8375 [0.834,0.841] 10s (va_b_n1000) |
-| n = 1,000 | honest | MIDIAN | 0.6913 [0.686,0.697] 10s (rivals_b_n1000) | 0.7890 [0.788,0.791] 10s (bars) | 0.8079 [0.805,0.811] 10s (rivals_b_n1000) |
-| n = 1,000 | β=0.5 cartel | MIDIAN | 0.6505 [0.638,0.663] 10s (rivals_b_n1000) | 0.7379 [0.731,0.745] 10s (bars) | 0.7658 [0.761,0.771] 10s (rivals_b_n1000) |
-| n = 1,000 | honest | flat probe argmax (online) | 0.6860 [0.680,0.692] 10s (rivals_b_n1000) | 0.7871 [0.784,0.790] 10s (bars) | 0.8108 [0.808,0.813] 10s (rivals_b_n1000) |
-| n = 1,000 | β=0.5 cartel | flat probe argmax (online) | 0.6860 [0.680,0.692] 10s (rivals_b_n1000) | 0.7869 [0.784,0.790] 10s (bars) | 0.8108 [0.808,0.813] 10s (rivals_b_n1000) |
-| n = 1,000 | honest | best learned router | 0.6364 [0.625,0.648] 10s, picks `mlp_router` ×9; `knn_router_online` ×1 | 0.7656 [0.760,0.772] 10s, picks `knn_router_online` ×10 | 0.7976 [0.794,0.801] 10s, picks `knn_router_online` ×10 |
-| n = 1,000 | β=0.5 cartel | best learned router | 0.6364 [0.625,0.648] 10s, picks `mlp_router` ×9; `knn_router_online` ×1 | 0.7656 [0.760,0.772] 10s, picks `knn_router_online` ×10 | 0.7976 [0.794,0.801] 10s, picks `knn_router_online` ×10 |
+| n = 1,000 | honest | MIDIAN | 0.6913 [0.686,0.697] 10s (va_b_n1000) | 0.8134 [0.809,0.818] 10s (bars) | 0.8377 [0.834,0.841] 10s (va_b_n1000) |
+| n = 1,000 | β=0.5 cartel | MIDIAN | 0.6914 [0.684,0.698] 10s (va_b_n1000) | 0.8074 [0.802,0.813] 10s (bars) | 0.8375 [0.834,0.841] 10s (va_b_n1000) |
+| n = 1,000 | honest | MIDIAN w/o defenses | 0.6913 [0.686,0.697] 10s (rivals_b_n1000) | 0.7890 [0.788,0.791] 10s (bars) | 0.8079 [0.805,0.811] 10s (rivals_b_n1000) |
+| n = 1,000 | β=0.5 cartel | MIDIAN w/o defenses | 0.6505 [0.638,0.663] 10s (rivals_b_n1000) | 0.7379 [0.731,0.745] 10s (bars) | 0.7658 [0.761,0.771] 10s (rivals_b_n1000) |
+| n = 1,000 | honest | flat probe argmax | 0.6860 [0.680,0.692] 10s (rivals_b_n1000) | 0.7871 [0.784,0.790] 10s (bars) | 0.8108 [0.808,0.813] 10s (rivals_b_n1000) |
+| n = 1,000 | β=0.5 cartel | flat probe argmax | 0.6860 [0.680,0.692] 10s (rivals_b_n1000) | 0.7869 [0.784,0.790] 10s (bars) | 0.8108 [0.808,0.813] 10s (rivals_b_n1000) |
+| n = 1,000 | honest | best learned/declared router | 0.6364 [0.625,0.648] 10s, picks `mlp_router` ×9; `knn_router_online` ×1 | 0.7656 [0.760,0.772] 10s, picks `knn_router_online` ×10 | 0.7976 [0.794,0.801] 10s, picks `knn_router_online` ×10 |
+| n = 1,000 | β=0.5 cartel | best learned/declared router | 0.6364 [0.625,0.648] 10s, picks `mlp_router` ×9; `knn_router_online` ×1 | 0.7656 [0.760,0.772] 10s, picks `knn_router_online` ×10 | 0.7976 [0.794,0.801] 10s, picks `knn_router_online` ×10 |
 | n = 1,000 | honest | best bandit | 0.7038 [0.698,0.710] 10s, picks `warm_start_bandit[n0=0.5]` ×10 | 0.7737 [0.770,0.777] 10s, picks `warm_start_bandit[n0=0.5]` ×10 | 0.8020 [0.799,0.805] 10s, picks `warm_start_bandit[n0=0.5]` ×10 |
 | n = 1,000 | β=0.5 cartel | best bandit | 0.6669 [0.653,0.680] 10s, picks `warm_start_bandit` ×8; `trueskill_per_family` ×2 | 0.7636 [0.760,0.767] 10s, picks `warm_start_bandit` ×7; `warm_start_bandit[n0=0.5]` ×3 | 0.8040 [0.801,0.807] 10s, picks `warm_start_bandit[n0=0.5]` ×10 |
 | n = 1,000 | honest | declared argmax | n/a | 0.6154 [0.604,0.627] 10s (bars) | n/a |
 | n = 1,000 | β=0.5 cartel | declared argmax | n/a | 0.5202 [0.506,0.535] 10s (bars) | n/a |
 | n = 1,000 | honest | random | n/a | 0.4321 [0.427,0.437] 10s (bars) | n/a |
 | n = 1,000 | β=0.5 cartel | random | n/a | 0.4321 [0.427,0.437] 10s (bars) | n/a |
-| n = 10,000 | honest | MIDIAN-VA | 0.6678 [0.656,0.680] 3s (va_b_n10k) | 0.8111 [0.788,0.834] 3s (bars) | 0.8356 [0.814,0.857] 3s (va_b_n10k) |
-| n = 10,000 | β=0.5 cartel | MIDIAN-VA | 0.6700 [0.657,0.683] 3s (va_b_n10k) | 0.8100 [0.788,0.832] 3s (bars) | 0.8311 [0.816,0.847] 3s (va_b_n10k) |
-| n = 10,000 | honest | MIDIAN | 0.6678 [0.656,0.680] 3s (rivals_b_n10k) | 0.7850 [0.764,0.806] 3s (bars) | 0.8089 [0.786,0.831] 3s (rivals_b_n10k) |
-| n = 10,000 | β=0.5 cartel | MIDIAN | 0.6389 [0.623,0.655] 3s (rivals_b_n10k) | 0.7522 [0.724,0.780] 3s (bars) | 0.7933 [0.768,0.818] 3s (rivals_b_n10k) |
-| n = 10,000 | honest | flat probe argmax (online) | 0.6522 [0.626,0.679] 3s (rivals_b_n10k) | 0.7744 [0.741,0.808] 3s (bars) | 0.8022 [0.769,0.835] 3s (rivals_b_n10k) |
-| n = 10,000 | β=0.5 cartel | flat probe argmax (online) | 0.6522 [0.626,0.679] 3s (rivals_b_n10k) | 0.7744 [0.742,0.807] 3s (bars) | 0.8022 [0.769,0.835] 3s (rivals_b_n10k) |
-| n = 10,000 | honest | best learned router | 0.5156 [0.475,0.556] 3s, picks `flat_nsw_router` ×2; `knn_router_online` ×1 | 0.7456 [0.726,0.765] 3s, picks `flat_nsw_router` ×3 | 0.7611 [0.735,0.787] 3s, picks `knn_router_online` ×2; `flat_nsw_router` ×1 |
-| n = 10,000 | β=0.5 cartel | best learned router | 0.5156 [0.475,0.556] 3s, picks `flat_nsw_router` ×2; `knn_router_online` ×1 | 0.7456 [0.726,0.765] 3s, picks `flat_nsw_router` ×3 | 0.7622 [0.737,0.788] 3s, picks `knn_router_online` ×2; `flat_nsw_router` ×1 |
+| n = 10,000 | honest | MIDIAN | 0.6678 [0.656,0.680] 3s (va_b_n10k) | 0.8111 [0.788,0.834] 3s (bars) | 0.8356 [0.814,0.857] 3s (va_b_n10k) |
+| n = 10,000 | β=0.5 cartel | MIDIAN | 0.6700 [0.657,0.683] 3s (va_b_n10k) | 0.8100 [0.788,0.832] 3s (bars) | 0.8311 [0.816,0.847] 3s (va_b_n10k) |
+| n = 10,000 | honest | MIDIAN w/o defenses | 0.6678 [0.656,0.680] 3s (rivals_b_n10k) | 0.7850 [0.764,0.806] 3s (bars) | 0.8089 [0.786,0.831] 3s (rivals_b_n10k) |
+| n = 10,000 | β=0.5 cartel | MIDIAN w/o defenses | 0.6389 [0.623,0.655] 3s (rivals_b_n10k) | 0.7522 [0.724,0.780] 3s (bars) | 0.7933 [0.768,0.818] 3s (rivals_b_n10k) |
+| n = 10,000 | honest | flat probe argmax | 0.6522 [0.626,0.679] 3s (rivals_b_n10k) | 0.7744 [0.741,0.808] 3s (bars) | 0.8022 [0.769,0.835] 3s (rivals_b_n10k) |
+| n = 10,000 | β=0.5 cartel | flat probe argmax | 0.6522 [0.626,0.679] 3s (rivals_b_n10k) | 0.7744 [0.742,0.807] 3s (bars) | 0.8022 [0.769,0.835] 3s (rivals_b_n10k) |
+| n = 10,000 | honest | best learned/declared router | 0.5156 [0.475,0.556] 3s, picks `flat_nsw_router` ×2; `knn_router_online` ×1 | 0.7456 [0.726,0.765] 3s, picks `flat_nsw_router` ×3 | 0.7611 [0.735,0.787] 3s, picks `knn_router_online` ×2; `flat_nsw_router` ×1 |
+| n = 10,000 | β=0.5 cartel | best learned/declared router | 0.5156 [0.475,0.556] 3s, picks `flat_nsw_router` ×2; `knn_router_online` ×1 | 0.7456 [0.726,0.765] 3s, picks `flat_nsw_router` ×3 | 0.7622 [0.737,0.788] 3s, picks `knn_router_online` ×2; `flat_nsw_router` ×1 |
 | n = 10,000 | honest | best bandit | 0.7200 [0.707,0.733] 3s, picks `trueskill_per_family` ×3 | 0.7622 [0.743,0.782] 3s, picks `trueskill_per_family` ×2; `warm_start_bandit[n0=0.5]` ×1 | 0.8100 [0.790,0.830] 3s, picks `warm_start_bandit[n0=0.5]` ×3 |
 | n = 10,000 | β=0.5 cartel | best bandit | 0.7033 [0.676,0.731] 3s, picks `trueskill_per_family` ×2; `warm_start_bandit` ×1 | 0.7833 [0.750,0.817] 3s, picks `warm_start_bandit` ×3 | 0.8178 [0.792,0.844] 3s, picks `warm_start_bandit` ×2; `warm_start_bandit[n0=0.5]` ×1 |
 | n = 10,000 | honest | declared argmax | n/a | 0.6578 [0.621,0.694] 3s (bars) | n/a |
 | n = 10,000 | β=0.5 cartel | declared argmax | n/a | 0.5322 [0.492,0.572] 3s (bars) | n/a |
 | n = 10,000 | honest | random | n/a | 0.4167 [0.391,0.442] 3s (bars) | n/a |
 | n = 10,000 | β=0.5 cartel | random | n/a | 0.4167 [0.391,0.442] 3s (bars) | n/a |
-| n = 100,000 | honest | MIDIAN-VA | 0.6400 [0.611,0.669] 3s (va_b_n100k) | 0.8356 [0.822,0.849] 3s (bars) | 0.8533 [0.836,0.871] 3s (va_b_n100k) |
-| n = 100,000 | β=0.5 cartel | MIDIAN-VA | 0.6178 [0.595,0.641] 3s (va_b_n100k) | 0.8278 [0.820,0.835] 3s (bars) | 0.8522 [0.835,0.869] 3s (va_b_n100k) |
-| n = 100,000 | honest | MIDIAN | 0.6400 [0.611,0.669] 3s (rivals_b_n100k) | 0.7522 [0.730,0.774] 3s (bars) | 0.7922 [0.770,0.814] 3s (rivals_b_n100k) |
-| n = 100,000 | β=0.5 cartel | MIDIAN | 0.5600 [0.487,0.633] 3s (rivals_b_n100k) | 0.7056 [0.685,0.726] 3s (bars) | 0.7567 [0.744,0.769] 3s (rivals_b_n100k) |
-| n = 100,000 | honest | flat probe argmax (online) | 0.6622 [0.620,0.705] 3s (rivals_b_n100k) | 0.7489 [0.718,0.779] 3s (bars) | 0.7856 [0.759,0.813] 3s (rivals_b_n100k) |
-| n = 100,000 | β=0.5 cartel | flat probe argmax (online) | 0.6622 [0.620,0.705] 3s (rivals_b_n100k) | 0.7489 [0.718,0.779] 3s (bars) | 0.7856 [0.759,0.813] 3s (rivals_b_n100k) |
-| n = 100,000 | honest | best learned router | 0.6044 [0.586,0.623] 3s, picks `knn_router_online` ×2; `cluster_head_router` ×1 | 0.7411 [0.722,0.760] 3s, picks `knn_router_online` ×3 | 0.7511 [0.741,0.762] 3s, picks `knn_router_online` ×2; `flat_nsw_router` ×1 |
-| n = 100,000 | β=0.5 cartel | best learned router | 0.5933 [0.578,0.609] 3s, picks `disrouter_cascade` ×2; `knn_router_online` ×1; missing or partial: knn_router, knn_router_online **\*** | 0.7411 [0.722,0.760] 3s, picks `knn_router_online` ×3 | 0.7756 [0.769,0.782] 3s, picks `flat_nsw_router` ×3; missing or partial: knn_router, knn_router_online **\*** |
+| n = 100,000 | honest | MIDIAN | 0.6400 [0.611,0.669] 3s (va_b_n100k) | 0.8356 [0.822,0.849] 3s (bars) | 0.8533 [0.836,0.871] 3s (va_b_n100k) |
+| n = 100,000 | β=0.5 cartel | MIDIAN | 0.6178 [0.595,0.641] 3s (va_b_n100k) | 0.8278 [0.820,0.835] 3s (bars) | 0.8522 [0.835,0.869] 3s (va_b_n100k) |
+| n = 100,000 | honest | MIDIAN w/o defenses | 0.6400 [0.611,0.669] 3s (rivals_b_n100k) | 0.7522 [0.730,0.774] 3s (bars) | 0.7922 [0.770,0.814] 3s (rivals_b_n100k) |
+| n = 100,000 | β=0.5 cartel | MIDIAN w/o defenses | 0.5600 [0.487,0.633] 3s (rivals_b_n100k) | 0.7056 [0.685,0.726] 3s (bars) | 0.7567 [0.744,0.769] 3s (rivals_b_n100k) |
+| n = 100,000 | honest | flat probe argmax | 0.6622 [0.620,0.705] 3s (rivals_b_n100k) | 0.7489 [0.718,0.779] 3s (bars) | 0.7856 [0.759,0.813] 3s (rivals_b_n100k) |
+| n = 100,000 | β=0.5 cartel | flat probe argmax | 0.6622 [0.620,0.705] 3s (rivals_b_n100k) | 0.7489 [0.718,0.779] 3s (bars) | 0.7856 [0.759,0.813] 3s (rivals_b_n100k) |
+| n = 100,000 | honest | best learned/declared router | 0.6044 [0.586,0.623] 3s, picks `knn_router_online` ×2; `cluster_head_router` ×1 | 0.7411 [0.722,0.760] 3s, picks `knn_router_online` ×3 | 0.7511 [0.741,0.762] 3s, picks `knn_router_online` ×2; `flat_nsw_router` ×1 |
+| n = 100,000 | β=0.5 cartel | best learned/declared router | 0.6478 [0.598,0.697] 3s, picks `knn_router_online` ×3 | 0.7411 [0.722,0.760] 3s, picks `knn_router_online` ×3 | 0.7556 [0.744,0.767] 3s, picks `knn_router_online` ×2; `flat_nsw_router` ×1 |
 | n = 100,000 | honest | best bandit | 0.6656 [0.643,0.688] 3s, picks `warm_start_bandit[n0=0.5]` ×2; `warm_start_bandit` ×1 | 0.7544 [0.732,0.777] 3s, picks `warm_start_bandit[n0=0.5]` ×3 | 0.8056 [0.778,0.833] 3s, picks `warm_start_bandit[n0=0.5]` ×3 |
 | n = 100,000 | β=0.5 cartel | best bandit | 0.7078 [0.675,0.740] 3s, picks `warm_start_bandit` ×3 | 0.7778 [0.756,0.800] 3s, picks `warm_start_bandit` ×3 | 0.8022 [0.772,0.833] 3s, picks `warm_start_bandit` ×2; `warm_start_bandit[n0=0.5]` ×1 |
 | n = 100,000 | honest | declared argmax | n/a | 0.6222 [0.597,0.648] 3s (bars) | n/a |
@@ -3661,70 +3782,70 @@ Values as in `A_live_allb.csv` and `B_families_allb.csv` (written 2026-09-24 09:
 
 | group | regime | arm | b=1 | b=3 | b=5 |
 |---|---|---|---|---|---|
-| live n = 100,000 | honest | MIDIAN-VA | 0.7423 [0.709,0.776] 3s (va_b_n100k) | 0.9691 [0.954,0.984] 3s (bars) | 0.9897 [0.969,1.010] 3s (va_b_n100k) |
-| live n = 100,000 | β=0.5 cartel | MIDIAN-VA | 0.7165 [0.690,0.743] 3s (va_b_n100k) | 0.9601 [0.952,0.969] 3s (bars) | 0.9884 [0.969,1.008] 3s (va_b_n100k) |
-| live n = 100,000 | honest | MIDIAN | 0.7423 [0.709,0.776] 3s (rivals_b_n100k) | 0.8724 [0.847,0.898] 3s (bars) | 0.9188 [0.893,0.944] 3s (rivals_b_n100k) |
-| live n = 100,000 | β=0.5 cartel | MIDIAN | 0.6495 [0.564,0.735] 3s (rivals_b_n100k) | 0.8183 [0.794,0.842] 3s (bars) | 0.8776 [0.863,0.892] 3s (rivals_b_n100k) |
-| live n = 100,000 | honest | flat probe argmax (online) | 0.7680 [0.719,0.818] 3s (rivals_b_n100k) | 0.8686 [0.833,0.904] 3s (bars) | 0.9111 [0.880,0.942] 3s (rivals_b_n100k) |
-| live n = 100,000 | β=0.5 cartel | flat probe argmax (online) | 0.7680 [0.719,0.818] 3s (rivals_b_n100k) | 0.8686 [0.833,0.904] 3s (bars) | 0.9111 [0.880,0.942] 3s (rivals_b_n100k) |
-| live n = 100,000 | honest | best learned router | 0.7010 [0.680,0.722] 3s, picks `knn_router_online` ×2; `cluster_head_router` ×1 | 0.8595 [0.837,0.882] 3s, picks `knn_router_online` ×3 | 0.8711 [0.859,0.883] 3s, picks `knn_router_online` ×2; `flat_nsw_router` ×1 |
-| live n = 100,000 | β=0.5 cartel | best learned router | 0.6881 [0.670,0.706] 3s, picks `disrouter_cascade` ×2; `knn_router_online` ×1; missing or partial: knn_router, knn_router_online **\*** | 0.8595 [0.837,0.882] 3s, picks `knn_router_online` ×3 | 0.8995 [0.892,0.907] 3s, picks `flat_nsw_router` ×3; missing or partial: knn_router, knn_router_online **\*** |
+| live n = 100,000 | honest | MIDIAN | 0.7423 [0.709,0.776] 3s (va_b_n100k) | 0.9691 [0.954,0.984] 3s (bars) | 0.9897 [0.969,1.010] 3s (va_b_n100k) |
+| live n = 100,000 | β=0.5 cartel | MIDIAN | 0.7165 [0.690,0.743] 3s (va_b_n100k) | 0.9601 [0.952,0.969] 3s (bars) | 0.9884 [0.969,1.008] 3s (va_b_n100k) |
+| live n = 100,000 | honest | MIDIAN w/o defenses | 0.7423 [0.709,0.776] 3s (rivals_b_n100k) | 0.8724 [0.847,0.898] 3s (bars) | 0.9188 [0.893,0.944] 3s (rivals_b_n100k) |
+| live n = 100,000 | β=0.5 cartel | MIDIAN w/o defenses | 0.6495 [0.564,0.735] 3s (rivals_b_n100k) | 0.8183 [0.794,0.842] 3s (bars) | 0.8776 [0.863,0.892] 3s (rivals_b_n100k) |
+| live n = 100,000 | honest | flat probe argmax | 0.7680 [0.719,0.818] 3s (rivals_b_n100k) | 0.8686 [0.833,0.904] 3s (bars) | 0.9111 [0.880,0.942] 3s (rivals_b_n100k) |
+| live n = 100,000 | β=0.5 cartel | flat probe argmax | 0.7680 [0.719,0.818] 3s (rivals_b_n100k) | 0.8686 [0.833,0.904] 3s (bars) | 0.9111 [0.880,0.942] 3s (rivals_b_n100k) |
+| live n = 100,000 | honest | best learned/declared router | 0.7010 [0.680,0.722] 3s, picks `knn_router_online` ×2; `cluster_head_router` ×1 | 0.8595 [0.837,0.882] 3s, picks `knn_router_online` ×3 | 0.8711 [0.859,0.883] 3s, picks `knn_router_online` ×2; `flat_nsw_router` ×1 |
+| live n = 100,000 | β=0.5 cartel | best learned/declared router | 0.7513 [0.694,0.809] 3s, picks `knn_router_online` ×3 | 0.8595 [0.837,0.882] 3s, picks `knn_router_online` ×3 | 0.8763 [0.863,0.889] 3s, picks `knn_router_online` ×2; `flat_nsw_router` ×1 |
 | live n = 100,000 | honest | best bandit | 0.7719 [0.746,0.798] 3s, picks `warm_start_bandit[n0=0.5]` ×2; `warm_start_bandit` ×1 | 0.8750 [0.849,0.901] 3s, picks `warm_start_bandit[n0=0.5]` ×3 | 0.9343 [0.902,0.967] 3s, picks `warm_start_bandit[n0=0.5]` ×3 |
 | live n = 100,000 | β=0.5 cartel | best bandit | 0.8209 [0.783,0.858] 3s, picks `warm_start_bandit` ×3 | 0.9021 [0.876,0.928] 3s, picks `warm_start_bandit` ×3 | 0.9304 [0.895,0.966] 3s, picks `warm_start_bandit` ×2; `warm_start_bandit[n0=0.5]` ×1 |
 | live n = 100,000 | honest | declared argmax | n/a | 0.7216 [0.692,0.751] 3s (bars) | n/a |
 | live n = 100,000 | β=0.5 cartel | declared argmax | n/a | 0.6701 [0.647,0.694] 3s (bars) | n/a |
 | live n = 100,000 | honest | random | n/a | 0.5129 [0.494,0.531] 3s (bars) | n/a |
 | live n = 100,000 | β=0.5 cartel | random | n/a | 0.5129 [0.494,0.531] 3s (bars) | n/a |
-| bernoulli n = 10,000,000 | honest | MIDIAN-VA | 0.8015 [0.799,0.804] 100s (bernoulli_scale_v5) | 0.9469 [0.945,0.949] 100s (bernoulli_scale_v5) | 0.9764 [0.975,0.978] 100s (va_b_bernoulli_1e7) |
-| bernoulli n = 10,000,000 | β=0.5 cartel | MIDIAN-VA | 0.7977 [0.795,0.801] 100s (bernoulli_scale_v5) | 0.9386 [0.937,0.941] 100s (bernoulli_scale_v5) | 0.9738 [0.972,0.976] 100s (va_b_bernoulli_1e7) |
-| bernoulli n = 10,000,000 | honest | MIDIAN | 0.8015 [0.799,0.804] 100s (bernoulli_scale_v5) | 0.9110 [0.909,0.913] 100s (bernoulli_scale_v5) | 0.9400 [0.938,0.942] 100s (rivals_b_bernoulli_1e7) |
-| bernoulli n = 10,000,000 | β=0.5 cartel | MIDIAN | 0.7450 [0.740,0.750] 100s (bernoulli_scale_v5) | 0.8463 [0.843,0.850] 100s (bernoulli_scale_v5) | 0.8988 [0.896,0.901] 100s (rivals_b_bernoulli_1e7) |
-| bernoulli n = 10,000,000 | honest | flat probe argmax (online) | 0.8005 [0.798,0.803] 100s (bernoulli_scale_v5) | 0.9088 [0.907,0.911] 100s (bernoulli_scale_v5) | 0.9409 [0.939,0.942] 100s (rivals_b_bernoulli_1e7) |
-| bernoulli n = 10,000,000 | β=0.5 cartel | flat probe argmax (online) | 0.8005 [0.798,0.803] 100s (bernoulli_scale_v5) | 0.9088 [0.907,0.911] 100s (bernoulli_scale_v5) | 0.9409 [0.939,0.942] 100s (rivals_b_bernoulli_1e7) |
-| bernoulli n = 10,000,000 | honest | best learned router | 0.6662 [0.659,0.674] 100s, picks `cluster_head_router` ×100 (b-invariant) | 0.7832 [0.778,0.788] 100s, picks `flat_nsw_router` ×100 | 0.8489 [0.844,0.853] 100s, picks `flat_nsw_router` ×100 |
-| bernoulli n = 10,000,000 | β=0.5 cartel | best learned router | 0.6451 [0.640,0.650] 100s, picks `disrouter_cascade` ×100 (b-invariant) | 0.7832 [0.778,0.788] 100s, picks `flat_nsw_router` ×100 | 0.8489 [0.844,0.853] 100s, picks `flat_nsw_router` ×100 |
-| bernoulli n = 10,000,000 | honest | best bandit | 0.8907 [0.889,0.893] 100s, picks `warm_start_bandit` ×100 | 0.9380 [0.936,0.940] 100s, picks `warm_start_bandit` ×100 | 0.9513 [0.950,0.953] 100s, picks `warm_start_bandit` ×100 |
-| bernoulli n = 10,000,000 | β=0.5 cartel | best bandit | 0.8353 [0.833,0.838] 100s, picks `warm_start_bandit` ×100 | 0.9254 [0.924,0.927] 100s, picks `warm_start_bandit` ×100 | 0.9470 [0.945,0.949] 100s, picks `warm_start_bandit` ×100 |
-| bernoulli n = 10,000,000 | honest | declared argmax | n/a | 0.6625 [0.655,0.670] 100s (bernoulli_1e7_cal) | n/a |
-| bernoulli n = 10,000,000 | β=0.5 cartel | declared argmax | n/a | 0.4980 [0.487,0.509] 100s (bernoulli_1e7_cal) | n/a |
-| bernoulli n = 10,000,000 | honest | random | n/a | 0.4936 [0.492,0.496] 100s (bernoulli_scale_v5) | n/a |
-| bernoulli n = 10,000,000 | β=0.5 cartel | random | n/a | 0.4936 [0.492,0.496] 100s (bernoulli_scale_v5) | n/a |
-| RouterBench replay n = 1,000,000 | honest | MIDIAN-VA | 0.8289 [0.825,0.833] 30s (replay_1e6_split_cal) | 0.9658 [0.963,0.969] 30s (replay_1e6_split_cal) | 0.9833 [0.981,0.986] 30s (replay_1e6_split_cal) |
-| RouterBench replay n = 1,000,000 | β=0.5 cartel | MIDIAN-VA | 0.8279 [0.824,0.832] 30s (replay_1e6_split_cal) | 0.9622 [0.959,0.965] 30s (replay_1e6_split_cal) | 0.9824 [0.980,0.985] 30s (replay_1e6_split_cal) |
-| RouterBench replay n = 1,000,000 | honest | MIDIAN | 0.8289 [0.825,0.833] 30s (replay_1e6_split_cal) | 0.8939 [0.890,0.897] 30s (replay_1e6_split_cal) | 0.9231 [0.920,0.927] 30s (replay_1e6_split_cal) |
-| RouterBench replay n = 1,000,000 | β=0.5 cartel | MIDIAN | 0.5138 [0.495,0.533] 30s (replay_1e6_split_cal) | 0.7197 [0.707,0.732] 30s (replay_1e6_split_cal) | 0.8211 [0.816,0.826] 30s (replay_1e6_split_cal) |
-| RouterBench replay n = 1,000,000 | honest | flat probe argmax (online) | 0.8302 [0.827,0.834] 30s (replay_1e6_split_cal) | 0.8976 [0.895,0.900] 30s (replay_1e6_split_cal) | 0.9223 [0.920,0.925] 30s (replay_1e6_split_cal) |
-| RouterBench replay n = 1,000,000 | β=0.5 cartel | flat probe argmax (online) | 0.8302 [0.827,0.834] 30s (replay_1e6_split_cal) | 0.8976 [0.895,0.900] 30s (replay_1e6_split_cal) | 0.9223 [0.920,0.925] 30s (replay_1e6_split_cal) |
-| RouterBench replay n = 1,000,000 | honest | best learned router | 0.7604 [0.755,0.766] 30s, picks `flat_nsw_router` ×30 | 0.9029 [0.899,0.906] 30s, picks `flat_nsw_router` ×30 | 0.9324 [0.929,0.936] 30s, picks `flat_nsw_router` ×30 |
-| RouterBench replay n = 1,000,000 | β=0.5 cartel | best learned router | 0.7604 [0.755,0.766] 30s, picks `flat_nsw_router` ×30 | 0.9029 [0.899,0.906] 30s, picks `flat_nsw_router` ×30 | 0.9324 [0.929,0.936] 30s, picks `flat_nsw_router` ×30 |
+| Bernoulli n = 10,000,000 | honest | MIDIAN | 0.8015 [0.799,0.804] 100s (bernoulli_scale_v5) | 0.9469 [0.945,0.949] 100s (bernoulli_scale_v5) | 0.9764 [0.975,0.978] 100s (va_b_bernoulli_1e7) |
+| Bernoulli n = 10,000,000 | β=0.5 cartel | MIDIAN | 0.7977 [0.795,0.801] 100s (bernoulli_scale_v5) | 0.9386 [0.937,0.941] 100s (bernoulli_scale_v5) | 0.9738 [0.972,0.976] 100s (va_b_bernoulli_1e7) |
+| Bernoulli n = 10,000,000 | honest | MIDIAN w/o defenses | 0.8015 [0.799,0.804] 100s (bernoulli_scale_v5) | 0.9110 [0.909,0.913] 100s (bernoulli_scale_v5) | 0.9400 [0.938,0.942] 100s (rivals_b_bernoulli_1e7) |
+| Bernoulli n = 10,000,000 | β=0.5 cartel | MIDIAN w/o defenses | 0.7450 [0.740,0.750] 100s (bernoulli_scale_v5) | 0.8463 [0.843,0.850] 100s (bernoulli_scale_v5) | 0.8988 [0.896,0.901] 100s (rivals_b_bernoulli_1e7) |
+| Bernoulli n = 10,000,000 | honest | flat probe argmax | 0.8005 [0.798,0.803] 100s (bernoulli_scale_v5) | 0.9088 [0.907,0.911] 100s (bernoulli_scale_v5) | 0.9409 [0.939,0.942] 100s (rivals_b_bernoulli_1e7) |
+| Bernoulli n = 10,000,000 | β=0.5 cartel | flat probe argmax | 0.8005 [0.798,0.803] 100s (bernoulli_scale_v5) | 0.9088 [0.907,0.911] 100s (bernoulli_scale_v5) | 0.9409 [0.939,0.942] 100s (rivals_b_bernoulli_1e7) |
+| Bernoulli n = 10,000,000 | honest | best learned/declared router | 0.6662 [0.659,0.674] 100s, picks `cluster_head_router` ×100 (b-invariant) | 0.7832 [0.778,0.788] 100s, picks `flat_nsw_router` ×100 | 0.8489 [0.844,0.853] 100s, picks `flat_nsw_router` ×100 |
+| Bernoulli n = 10,000,000 | β=0.5 cartel | best learned/declared router | 0.6451 [0.640,0.650] 100s, picks `disrouter_cascade` ×100 (b-invariant) | 0.7832 [0.778,0.788] 100s, picks `flat_nsw_router` ×100 | 0.8489 [0.844,0.853] 100s, picks `flat_nsw_router` ×100 |
+| Bernoulli n = 10,000,000 | honest | best bandit | 0.8907 [0.889,0.893] 100s, picks `warm_start_bandit` ×100 | 0.9380 [0.936,0.940] 100s, picks `warm_start_bandit` ×100 | 0.9513 [0.950,0.953] 100s, picks `warm_start_bandit` ×100 |
+| Bernoulli n = 10,000,000 | β=0.5 cartel | best bandit | 0.8353 [0.833,0.838] 100s, picks `warm_start_bandit` ×100 | 0.9254 [0.924,0.927] 100s, picks `warm_start_bandit` ×100 | 0.9470 [0.945,0.949] 100s, picks `warm_start_bandit` ×100 |
+| Bernoulli n = 10,000,000 | honest | declared argmax | n/a | 0.6625 [0.655,0.670] 100s (bernoulli_1e7_cal) | n/a |
+| Bernoulli n = 10,000,000 | β=0.5 cartel | declared argmax | n/a | 0.4980 [0.487,0.509] 100s (bernoulli_1e7_cal) | n/a |
+| Bernoulli n = 10,000,000 | honest | random | n/a | 0.4936 [0.492,0.496] 100s (bernoulli_scale_v5) | n/a |
+| Bernoulli n = 10,000,000 | β=0.5 cartel | random | n/a | 0.4936 [0.492,0.496] 100s (bernoulli_scale_v5) | n/a |
+| RouterBench replay n = 1,000,000 | honest | MIDIAN | 0.8289 [0.825,0.833] 30s (replay_1e6_split_cal) | 0.9658 [0.963,0.969] 30s (replay_1e6_split_cal) | 0.9833 [0.981,0.986] 30s (replay_1e6_split_cal) |
+| RouterBench replay n = 1,000,000 | β=0.5 cartel | MIDIAN | 0.8279 [0.824,0.832] 30s (replay_1e6_split_cal) | 0.9622 [0.959,0.965] 30s (replay_1e6_split_cal) | 0.9824 [0.980,0.985] 30s (replay_1e6_split_cal) |
+| RouterBench replay n = 1,000,000 | honest | MIDIAN w/o defenses | 0.8289 [0.825,0.833] 30s (replay_1e6_split_cal) | 0.8939 [0.890,0.897] 30s (replay_1e6_split_cal) | 0.9231 [0.920,0.927] 30s (replay_1e6_split_cal) |
+| RouterBench replay n = 1,000,000 | β=0.5 cartel | MIDIAN w/o defenses | 0.5138 [0.495,0.533] 30s (replay_1e6_split_cal) | 0.7197 [0.707,0.732] 30s (replay_1e6_split_cal) | 0.8211 [0.816,0.826] 30s (replay_1e6_split_cal) |
+| RouterBench replay n = 1,000,000 | honest | flat probe argmax | 0.8302 [0.827,0.834] 30s (replay_1e6_split_cal) | 0.8976 [0.895,0.900] 30s (replay_1e6_split_cal) | 0.9223 [0.920,0.925] 30s (replay_1e6_split_cal) |
+| RouterBench replay n = 1,000,000 | β=0.5 cartel | flat probe argmax | 0.8302 [0.827,0.834] 30s (replay_1e6_split_cal) | 0.8976 [0.895,0.900] 30s (replay_1e6_split_cal) | 0.9223 [0.920,0.925] 30s (replay_1e6_split_cal) |
+| RouterBench replay n = 1,000,000 | honest | best learned/declared router | 0.7604 [0.755,0.766] 30s, picks `flat_nsw_router` ×30 | 0.9029 [0.899,0.906] 30s, picks `flat_nsw_router` ×30 | 0.9324 [0.929,0.936] 30s, picks `flat_nsw_router` ×30 |
+| RouterBench replay n = 1,000,000 | β=0.5 cartel | best learned/declared router | 0.7604 [0.755,0.766] 30s, picks `flat_nsw_router` ×30 | 0.9029 [0.899,0.906] 30s, picks `flat_nsw_router` ×30 | 0.9324 [0.929,0.936] 30s, picks `flat_nsw_router` ×30 |
 | RouterBench replay n = 1,000,000 | honest | best bandit | 0.8801 [0.877,0.883] 30s, picks `warm_start_bandit` ×30 | 0.9392 [0.937,0.942] 30s, picks `linucb_honest[bonus=own]` ×30 | 0.9582 [0.956,0.960] 30s, picks `linucb_honest[bonus=own]` ×30 |
 | RouterBench replay n = 1,000,000 | β=0.5 cartel | best bandit | 0.8734 [0.871,0.876] 30s, picks `linucb_honest[bonus=own]` ×30 | 0.9392 [0.937,0.942] 30s, picks `linucb_honest[bonus=own]` ×30 | 0.9582 [0.956,0.960] 30s, picks `linucb_honest[bonus=own]` ×30 |
 | RouterBench replay n = 1,000,000 | honest | declared argmax | n/a | 0.3822 [0.368,0.397] 30s (replay_1e6_split_cal) | n/a |
 | RouterBench replay n = 1,000,000 | β=0.5 cartel | declared argmax | n/a | 0.3029 [0.288,0.317] 30s (replay_1e6_split_cal) | n/a |
 | RouterBench replay n = 1,000,000 | honest | random | n/a | 0.2433 [0.242,0.245] 30s (replay_1e6_split_cal) | n/a |
 | RouterBench replay n = 1,000,000 | β=0.5 cartel | random | n/a | 0.2433 [0.242,0.245] 30s (replay_1e6_split_cal) | n/a |
-| RouterEval n = 5,000 | honest | MIDIAN-VA | 0.7017 [0.670,0.733] 3s (routereval5k_norep_cal) | 0.8031 [0.787,0.819] 3s (routereval5k_norep_cal) | 0.8671 [0.846,0.888] 3s (routereval5k_norep_cal) |
-| RouterEval n = 5,000 | β=0.5 cartel | MIDIAN-VA | 0.6969 [0.665,0.728] 3s (routereval5k_norep_cal) | 0.7971 [0.783,0.811] 3s (routereval5k_norep_cal) | 0.8671 [0.846,0.888] 3s (routereval5k_norep_cal) |
-| RouterEval n = 5,000 | honest | MIDIAN | 0.7017 [0.670,0.733] 3s (routereval5k_norep_cal) | 0.7210 [0.687,0.755] 3s (routereval5k_norep_cal) | 0.7379 [0.715,0.761] 3s (routereval5k_norep_cal) |
-| RouterEval n = 5,000 | β=0.5 cartel | MIDIAN | 0.6920 [0.658,0.726] 3s (routereval5k_norep_cal) | 0.6643 [0.647,0.681] 3s (routereval5k_norep_cal) | 0.6667 [0.648,0.685] 3s (routereval5k_norep_cal) |
-| RouterEval n = 5,000 | honest | flat probe argmax (online) | 0.6304 [0.608,0.653] 3s (routereval5k_norep_cal) | 0.6896 [0.670,0.710] 3s (routereval5k_norep_cal) | 0.7379 [0.723,0.753] 3s (routereval5k_norep_cal) |
-| RouterEval n = 5,000 | β=0.5 cartel | flat probe argmax (online) | 0.6304 [0.608,0.653] 3s (routereval5k_norep_cal) | 0.6896 [0.670,0.710] 3s (routereval5k_norep_cal) | 0.7379 [0.723,0.753] 3s (routereval5k_norep_cal) |
-| RouterEval n = 5,000 | honest | best learned router | 0.6123 [0.580,0.645] 3s, picks `flat_nsw_router` ×2; `cluster_head_router` ×1 | 0.7729 [0.748,0.798] 3s, picks `flat_nsw_router` ×3 | 0.8188 [0.788,0.849] 3s, picks `flat_nsw_router` ×3 |
-| RouterEval n = 5,000 | β=0.5 cartel | best learned router | 0.6969 [0.693,0.701] 3s, picks `disrouter_cascade` ×3 (b-invariant) | 0.7729 [0.748,0.798] 3s, picks `flat_nsw_router` ×3 | 0.8188 [0.788,0.849] 3s, picks `flat_nsw_router` ×3 |
+| RouterEval n = 5,000 | honest | MIDIAN | 0.7017 [0.670,0.733] 3s (routereval5k_norep_cal) | 0.8031 [0.787,0.819] 3s (routereval5k_norep_cal) | 0.8671 [0.846,0.888] 3s (routereval5k_norep_cal) |
+| RouterEval n = 5,000 | β=0.5 cartel | MIDIAN | 0.6969 [0.665,0.728] 3s (routereval5k_norep_cal) | 0.7971 [0.783,0.811] 3s (routereval5k_norep_cal) | 0.8671 [0.846,0.888] 3s (routereval5k_norep_cal) |
+| RouterEval n = 5,000 | honest | MIDIAN w/o defenses | 0.7017 [0.670,0.733] 3s (routereval5k_norep_cal) | 0.7210 [0.687,0.755] 3s (routereval5k_norep_cal) | 0.7379 [0.715,0.761] 3s (routereval5k_norep_cal) |
+| RouterEval n = 5,000 | β=0.5 cartel | MIDIAN w/o defenses | 0.6920 [0.658,0.726] 3s (routereval5k_norep_cal) | 0.6643 [0.647,0.681] 3s (routereval5k_norep_cal) | 0.6667 [0.648,0.685] 3s (routereval5k_norep_cal) |
+| RouterEval n = 5,000 | honest | flat probe argmax | 0.6304 [0.608,0.653] 3s (routereval5k_norep_cal) | 0.6896 [0.670,0.710] 3s (routereval5k_norep_cal) | 0.7379 [0.723,0.753] 3s (routereval5k_norep_cal) |
+| RouterEval n = 5,000 | β=0.5 cartel | flat probe argmax | 0.6304 [0.608,0.653] 3s (routereval5k_norep_cal) | 0.6896 [0.670,0.710] 3s (routereval5k_norep_cal) | 0.7379 [0.723,0.753] 3s (routereval5k_norep_cal) |
+| RouterEval n = 5,000 | honest | best learned/declared router | 0.6123 [0.580,0.645] 3s, picks `flat_nsw_router` ×2; `cluster_head_router` ×1 | 0.7729 [0.748,0.798] 3s, picks `flat_nsw_router` ×3 | 0.8188 [0.788,0.849] 3s, picks `flat_nsw_router` ×3 |
+| RouterEval n = 5,000 | β=0.5 cartel | best learned/declared router | 0.6969 [0.693,0.701] 3s, picks `disrouter_cascade` ×3 (b-invariant) | 0.7729 [0.748,0.798] 3s, picks `flat_nsw_router` ×3 | 0.8188 [0.788,0.849] 3s, picks `flat_nsw_router` ×3 |
 | RouterEval n = 5,000 | honest | best bandit | 0.7802 [0.772,0.788] 3s, picks `linucb_honest[bonus=own]` ×3 | 0.8949 [0.878,0.912] 3s, picks `linucb_honest[bonus=own]` ×3 | 0.9046 [0.885,0.924] 3s, picks `linucb_honest[bonus=own]` ×3 |
 | RouterEval n = 5,000 | β=0.5 cartel | best bandit | 0.7802 [0.772,0.788] 3s, picks `linucb_honest[bonus=own]` ×3 | 0.8949 [0.878,0.912] 3s, picks `linucb_honest[bonus=own]` ×3 | 0.9046 [0.885,0.924] 3s, picks `linucb_honest[bonus=own]` ×3 |
 | RouterEval n = 5,000 | honest | declared argmax | n/a | 0.6739 [0.635,0.713] 3s (routereval5k_norep_cal) | n/a |
 | RouterEval n = 5,000 | β=0.5 cartel | declared argmax | n/a | 0.5568 [0.512,0.601] 3s (routereval5k_norep_cal) | n/a |
 | RouterEval n = 5,000 | honest | random | n/a | 0.5725 [0.550,0.595] 3s (routereval5k_norep_cal) | n/a |
 | RouterEval n = 5,000 | β=0.5 cartel | random | n/a | 0.5725 [0.550,0.595] 3s (routereval5k_norep_cal) | n/a |
-| LLMRouterBench n = 20 | honest | MIDIAN-VA | 0.8444 [0.835,0.854] 5s (llmrouterbench_norep_cal) | 0.8844 [0.874,0.895] 5s (llmrouterbench_norep_cal) | 0.9120 [0.906,0.918] 5s (llmrouterbench_norep_cal) |
-| LLMRouterBench n = 20 | β=0.5 cartel | MIDIAN-VA | 0.8364 [0.831,0.842] 5s (llmrouterbench_norep_cal) | 0.8347 [0.824,0.845] 5s (llmrouterbench_norep_cal) | 0.8720 [0.851,0.893] 5s (llmrouterbench_norep_cal) |
-| LLMRouterBench n = 20 | honest | MIDIAN | 0.8444 [0.835,0.854] 5s (llmrouterbench_norep_cal) | 0.8862 [0.877,0.896] 5s (llmrouterbench_norep_cal) | 0.8951 [0.882,0.908] 5s (llmrouterbench_norep_cal) |
-| LLMRouterBench n = 20 | β=0.5 cartel | MIDIAN | 0.8240 [0.804,0.844] 5s (llmrouterbench_norep_cal) | 0.8107 [0.793,0.829] 5s (llmrouterbench_norep_cal) | 0.8204 [0.799,0.842] 5s (llmrouterbench_norep_cal) |
-| LLMRouterBench n = 20 | honest | flat probe argmax (online) | 0.8124 [0.799,0.826] 5s (llmrouterbench_norep_cal) | 0.8800 [0.871,0.889] 5s (llmrouterbench_norep_cal) | 0.8996 [0.895,0.905] 5s (llmrouterbench_norep_cal) |
-| LLMRouterBench n = 20 | β=0.5 cartel | flat probe argmax (online) | 0.8124 [0.799,0.826] 5s (llmrouterbench_norep_cal) | 0.8800 [0.871,0.889] 5s (llmrouterbench_norep_cal) | 0.8996 [0.895,0.905] 5s (llmrouterbench_norep_cal) |
-| LLMRouterBench n = 20 | honest | best learned router | 0.8684 [0.842,0.895] 5s, picks `mlp_router` ×5 | 0.9262 [0.909,0.944] 5s, picks `mlp_router` ×5 | 0.8996 [0.882,0.917] 5s, picks `mlp_router` ×5 |
-| LLMRouterBench n = 20 | β=0.5 cartel | best learned router | 0.8684 [0.842,0.895] 5s, picks `mlp_router` ×5 | 0.9262 [0.909,0.944] 5s, picks `mlp_router` ×5 | 0.8996 [0.882,0.917] 5s, picks `mlp_router` ×5 |
+| LLMRouterBench n = 20 | honest | MIDIAN | 0.8444 [0.835,0.854] 5s (llmrouterbench_norep_cal) | 0.8844 [0.874,0.895] 5s (llmrouterbench_norep_cal) | 0.9120 [0.906,0.918] 5s (llmrouterbench_norep_cal) |
+| LLMRouterBench n = 20 | β=0.5 cartel | MIDIAN | 0.8364 [0.831,0.842] 5s (llmrouterbench_norep_cal) | 0.8347 [0.824,0.845] 5s (llmrouterbench_norep_cal) | 0.8720 [0.851,0.893] 5s (llmrouterbench_norep_cal) |
+| LLMRouterBench n = 20 | honest | MIDIAN w/o defenses | 0.8444 [0.835,0.854] 5s (llmrouterbench_norep_cal) | 0.8862 [0.877,0.896] 5s (llmrouterbench_norep_cal) | 0.8951 [0.882,0.908] 5s (llmrouterbench_norep_cal) |
+| LLMRouterBench n = 20 | β=0.5 cartel | MIDIAN w/o defenses | 0.8240 [0.804,0.844] 5s (llmrouterbench_norep_cal) | 0.8107 [0.793,0.829] 5s (llmrouterbench_norep_cal) | 0.8204 [0.799,0.842] 5s (llmrouterbench_norep_cal) |
+| LLMRouterBench n = 20 | honest | flat probe argmax | 0.8124 [0.799,0.826] 5s (llmrouterbench_norep_cal) | 0.8800 [0.871,0.889] 5s (llmrouterbench_norep_cal) | 0.8996 [0.895,0.905] 5s (llmrouterbench_norep_cal) |
+| LLMRouterBench n = 20 | β=0.5 cartel | flat probe argmax | 0.8124 [0.799,0.826] 5s (llmrouterbench_norep_cal) | 0.8800 [0.871,0.889] 5s (llmrouterbench_norep_cal) | 0.8996 [0.895,0.905] 5s (llmrouterbench_norep_cal) |
+| LLMRouterBench n = 20 | honest | best learned/declared router | 0.8684 [0.842,0.895] 5s, picks `mlp_router` ×5 | 0.9262 [0.909,0.944] 5s, picks `mlp_router` ×5 | 0.8996 [0.882,0.917] 5s, picks `mlp_router` ×5 |
+| LLMRouterBench n = 20 | β=0.5 cartel | best learned/declared router | 0.8684 [0.842,0.895] 5s, picks `mlp_router` ×5 | 0.9262 [0.909,0.944] 5s, picks `mlp_router` ×5 | 0.8996 [0.882,0.917] 5s, picks `mlp_router` ×5 |
 | LLMRouterBench n = 20 | honest | best bandit | 0.8311 [0.817,0.845] 5s, picks `linucb_honest[bonus=own]` ×4; `warm_start_bandit` ×1 | 0.8596 [0.853,0.866] 5s, picks `linucb_honest[bonus=own]` ×4; `warm_start_bandit[n0=0.5]` ×1 | 0.8844 [0.873,0.896] 5s, picks `linucb_honest[bonus=own]` ×4; `warm_start_bandit[n0=0.5]` ×1 |
 | LLMRouterBench n = 20 | β=0.5 cartel | best bandit | 0.8489 [0.835,0.863] 5s, picks `linucb_honest[bonus=own]` ×5 | 0.8693 [0.856,0.883] 5s, picks `linucb_honest[bonus=own]` ×5 | 0.8996 [0.892,0.907] 5s, picks `linucb_honest[bonus=own]` ×5 |
 | LLMRouterBench n = 20 | honest | declared argmax | n/a | 0.7440 [0.701,0.787] 5s (llmrouterbench_norep_cal) | n/a |

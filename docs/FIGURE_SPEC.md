@@ -37,7 +37,7 @@ or the text.** No in-figure titles, no letters, no file names, no draft annotati
 
 After the rename (MIDIAN = full method), use exactly these strings everywhere:
 
-| current string | submission string |
+| pre-rename string | submission string |
 |---|---|
 | `MIDIAN-VA` | `MIDIAN` |
 | `MIDIAN` (plain tree) | `MIDIAN w/o defenses` |
