@@ -1,25 +1,44 @@
-"""Plain MIDIAN (SPEC §5): a tree of cohorts routed by per-family max-summaries. Leaves are agents in random cohorts
-of r, estimated from probes reported by the r-1 cohort peers and trimmed; each node holds per family the best estimate
-in its subtree and which child has it; upper levels regroup nodes at random. fetch descends ceil(log_r n) levels.
-verify=True = MIDIAN-V (see midian_v.py); stratify=True groups level 0 by measured probe mean. Arrays per level, padded
-to a multiple of r. Subclasses override `_level0` (SH, A) and `_choose` (LLM descent)."""
+"""MIDIAN (SPEC §5): a tree of cohorts routed by per-family max-summaries. Leaves are agents in random cohorts of r,
+estimated from probes reported by the r-1 cohort peers and trimmed; each node holds per family the best estimate in its
+subtree and which child has it; upper levels regroup nodes at random. fetch descends ceil(log_r n) levels.
+
+Two defenses, both ON by default (the method the paper calls MIDIAN):
+  audit=True   report audits with reporter exclusion. At build, a uniform `audit` rate (True = 5%) of level-0 probe
+               instances is re-run by the auditor (`view.probe_at`: the same index-seeded instance, charged as a probe) and
+               every peer's report about it is compared with the truth; a reporter with STRIKES mismatches is excluded from
+               every later aggregation. Online, the same rate of routed outcomes is put to the agent's cohort peers.
+               Level 0 then estimates est = trimmed mean over non-excluded PEERS of each peer's mean report (one round of
+               b0 probes, one report per peer per probe). Build probes = n*K*b0*(1 + audit).
+  verify=True  verification at promotion: level 0 keeps b0 = b-1 probes per cell and the saved n*K probes re-probe every
+               candidate forwarded to a parent, reported by the OTHER children's representatives (trimmed by reporter,
+               excluded reporters masked). `cached` (default = verify) remembers the root's pick per family, so a route
+               costs 1 comparison + 2 messages.
+Ablations switch them off: midian{"verify": false} (w/o verification), midian{"audit": false} (w/o audits; its level 0
+trims by reporter), midian{"audit": false, "verify": false} (w/o defenses: level 0 trims by report). stratify=True
+groups level 0 by measured probe mean. Arrays per level, padded to a multiple of r. `_choose` is the LLM-descent hook."""
 import numpy as np
 
-from ._est import peer_estimate, peer_reported_estimates, probe_outcomes, trim_k
+from ._est import REPORT_ELEMS, peer_estimate, peer_reported_estimates, probe_outcomes, trim_k, trimmed_by_reporter
 from .base import Method
 
 NEG = np.float32(-np.inf)
 CHUNK_ELEMS = 8_000_000
+STRIKES = 2                                            # mismatches before a reporter is excluded (work order 1.2)
+AUDIT_RATE = 0.05                                      # audit=True
 
 
 class Midian(Method):
     name = "midian"
     needs = frozenset({"probe", "reports"})
 
-    def __init__(self, r=10, delta=1 / 3, online=True, verify=False, observers=None, b0=None, cached=False, top=1, stratify=False, cohort=None, **p):
-        super().__init__(r=r, delta=delta, online=online, verify=verify, observers=observers, b0=b0, cached=cached, top=top, stratify=stratify,
-                         **({"cohort": cohort} if cohort else {}), **p)
+    def __init__(self, r=10, delta=1 / 3, online=True, audit=True, verify=True, observers=None, b0=None, cached=None, top=1, stratify=False,
+                 cohort=None, **p):
+        cached = verify if cached is None else cached
+        super().__init__(r=r, delta=delta, online=online, audit=audit, verify=verify, observers=observers, b0=b0, cached=cached, top=top,
+                         stratify=stratify, **({"cohort": cohort} if cohort else {}), **p)
         self.r, self.delta, self.online, self.verify, self.stratify = int(r), float(delta), bool(online), bool(verify), bool(stratify)
+        self.rate = (AUDIT_RATE if audit is True else float(audit)) if audit else 0.0
+        self.audit = self.rate > 0
         # How level-0 cohorts are formed. "random" is plain MIDIAN and the default; the rest are labeled variants and are
         # BUDGET-NEUTRAL: the key reuses the same probes `_level0` would have spent anyway (or, for "declared", none).
         #   stratify  one member per ability stratum  -> maximally DIVERSE cohorts (pre-existing, == stratify=True)
@@ -90,15 +109,76 @@ class Midian(Method):
         agents, step = cand[node, slot, fam], max(1, CHUNK_ELEMS // (r * e))
         for lo in range(0, len(agents), step):
             a, f = agents[lo:lo + step], fam[lo:lo + step]
-            ex = getattr(self, "excluded", None)                    # audited variants (midian_va) mask caught liars
+            ex = getattr(self, "excluded", None)                    # audits on: mask the reporters caught lying
             if ex is not None:
                 ex = ex[rep_of[lo:lo + step]]; ex &= ~ex.all(-1, keepdims=True)
             m_new, _ = peer_estimate(view, a, f, e, rep_of[lo:lo + step], self.delta, exclude=ex)
             self.est[a, f] = (self.est[a, f] * self.k[a, f] + m_new * e) / (self.k[a, f] + e); self.k[a, f] += e
 
     def _level0(self, view, cohorts, b, outcomes=None):
-        """Level-0 estimates est[n, K]: b probes per cell, reported by the cohort peers, trimmed. Variants override this."""
+        """Level-0 estimates est[n, K]: b probes per cell, reported by the cohort peers, trimmed (audited engine when audit)."""
+        if self.audit:
+            return self._level0_audited(view, cohorts, b, outcomes)
         return peer_reported_estimates(view, b, cohorts, self.delta, by_reporter=self.verify, observers=self.observers, outcomes=outcomes)
+
+    def _level0_audited(self, view, cohorts, b, outcomes=None):
+        """One round of b probes per (member, family); every probe outcome reported by the s-1 other members (one report
+        per peer per probe); a uniform `rate` of instances re-run by the auditor; est = trimmed-over-peers mean of each
+        non-excluded peer's mean report."""
+        n, K, r = view.n, view.K, cohorts.shape[1]
+        self.est = np.zeros((n, K), np.float32)
+        self.rsum, self.rcnt = np.zeros((n, K, r - 1), np.float32), np.zeros((n, K, r - 1), np.int32)
+        self.peer_of, self.excluded = np.full((n, r - 1), -1, np.int32), np.zeros(n, bool)
+        short = cohorts[-1, -1] < 0
+        full = cohorts[:len(cohorts) - short]
+        step = max(1, REPORT_ELEMS // (K * r * r * max(b, 1)))
+        blocks = [full[lo:lo + step] for lo in range(0, len(full), step)] + ([cohorts[-1][cohorts[-1] >= 0][None]] if short else [])
+        fam = np.arange(K)[None, :, None]
+        for ag in blocks:
+            C, s = ag.shape
+            if s == 1:                                                              # nobody to report: own probes
+                self.est[ag[:, 0]] = (outcomes[ag[:, 0]] if outcomes is not None else view.probe_many(ag, fam[0], b)).mean(-1)
+                continue
+            peers = np.array([[j for j in range(s) if j != m] for m in range(s)], np.int32)
+            rep_ids = ag[:, peers]                                                  # (C, s, s-1) reporter ids
+            self.peer_of[ag.ravel(), :s - 1] = rep_ids.reshape(-1, s - 1)
+            cidx = np.arange(C)[:, None, None]
+            surv = np.broadcast_to(np.arange(s), (C, K, s)).copy()
+            mem, f = ag[cidx, surv], np.broadcast_to(fam, (C, K, s))                 # (C, K, s)
+            rep = rep_ids[cidx, surv].reshape(-1, s - 1)                             # (V, s-1) reporters of each probe
+            if outcomes is not None:
+                per = view.report_many(rep[:, :, None], mem.reshape(-1, 1, 1), outcomes[mem, f].reshape(-1, 1, b))
+            else:
+                _, per = peer_estimate(view, mem.ravel(), f.ravel(), b, rep, self.delta)
+            self._audit(view, mem.ravel(), f.ravel(), np.zeros(mem.size, np.int32), rep, per)   # claims per[V, s-1, b]
+            per = per.reshape(C, K, s, s - 1, b)
+            np.add.at(self.rsum[:, :, :s - 1], (mem, f), per.sum(-1)); np.add.at(self.rcnt[:, :, :s - 1], (mem, f), b)
+            self.est[ag.ravel()] = self._estimates(ag[:, :, None], fam.reshape(1, 1, K), s).reshape(-1, K)
+        return self.est
+
+    def _estimates(self, mem, fam, s):
+        """Trimmed-over-peers mean of each peer's mean report about mem (index arrays broadcast); excluded peers are
+        masked unless every peer of a member is excluded (then all count)."""
+        cnt, means = self.rcnt[mem, fam][..., :s - 1], self.rsum[mem, fam][..., :s - 1]
+        ex = (cnt == 0) | self.excluded[self.peer_of[mem][..., :s - 1]]
+        ex &= ~ex.all(-1, keepdims=True)
+        return trimmed_by_reporter((means / np.maximum(cnt, 1))[..., None], self.delta, s, ex)
+
+    def _strike(self, reporters, claims, truth):
+        """Count claim != truth per reporter; exclude at STRIKES mismatches; return the ids newly excluded."""
+        if not hasattr(self, "hits"):
+            self.hits = np.zeros(self.excluded.size, np.int32)
+        np.add.at(self.hits, reporters[claims != truth], 1)
+        new = (self.hits >= STRIKES) & ~self.excluded
+        self.excluded |= new
+        return np.flatnonzero(new)
+
+    def _audit(self, view, agents, fams, k, reporters, claims):
+        """Re-run a uniform `rate` of the (probe v, pull j) instances; compare every peer's claim with the truth."""
+        v, j = np.nonzero(view.rng.random(claims[:, 0].shape) < self.rate)             # claims[V, s-1, p] -> (V, p) draws
+        if v.size:
+            truth = view.probe_at(agents[v], fams[v], k[v] + j)                            # same instance, charged as probes
+            self._strike(reporters[v], claims[v, :, j], truth[:, None])
 
     def build(self, view, budget):
         self.view, r, b, K = view, self.r, budget.b, view.K
@@ -166,10 +246,22 @@ class Midian(Method):
             node = int(self.parent[l][node]) if l + 1 < self.depth else node
 
     def observe(self, task, agent, outcome):
-        """Running mean on est[a,f], then recompute f's summary up a's path (log_r n nodes)."""
+        """Running mean on est[a,f], then recompute f's summary up a's path (log_r n nodes); with audits, a `rate` of
+        outcomes is put to the agent's cohort peers and a newly excluded reporter's cohort is re-aggregated."""
         if self.online:
             f, a = int(task.family), int(agent); k = self.cnt[a, f] = self.cnt.get((a, f), self.w0) + 1
             self.est[a, f] += (outcome - self.est[a, f]) / k; self._recompute(int(self.leaf_of[a]), np.array([f]))
+        if not self.audit or self.view.rng.random() >= self.rate:
+            return
+        peers = self.peer_of[agent]; peers = peers[peers >= 0]
+        if not peers.size:
+            return
+        claims = self.view.report_many(peers, np.full(peers.shape, agent), np.full(peers.shape, outcome))
+        for j in self._strike(peers, claims, outcome):                                  # newly excluded reporter j:
+            members = self.leaves[self.leaf_of[j]]; members = members[members >= 0]     # re-aggregate its cohort
+            K = self.view.K
+            self.est[members] = self._estimates(members[:, None], np.arange(K)[None, :], len(members))
+            self._recompute(int(self.leaf_of[members[0]]), np.arange(K))                  # one path: the cohort's own
 
     def churn(self, departed, arrived):
         """Repair (ids reused): each arrived agent is re-probed b times per family, reported by its cohort peers (trimmed

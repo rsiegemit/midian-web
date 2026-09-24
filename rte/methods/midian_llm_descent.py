@@ -17,7 +17,7 @@ class MidianLLMDescent(Midian):
     requires_llm = True
 
     def __init__(self, model="Qwen/Qwen2.5-7B-Instruct", **p):
-        super().__init__(**p)
+        super().__init__(**{"audit": False, "verify": False, **p})          # the undefended tree (the pre-2026-09-24 default)
         self.params["model"] = self.model = model
         self.stats = {"calls": 0, "fallbacks": 0}
 

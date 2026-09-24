@@ -11,6 +11,7 @@ from .budget import Budget
 from .methods import load_method
 from .world import World
 import rte.methods
+from rte.methods import keys
 
 RTE_DATA = os.environ.get("RTE_DATA", "/scratch/rte")
 CELL = ("backend", "n", "K", "dist", "beta", "liar_select", "collude", "declared_source", "lie_mode", "demand", "b", "Q")
@@ -35,10 +36,15 @@ def all_methods(backend):
     return [n for n in names if backend == "llm" or not getattr(load_method(n), "requires_llm", False)]
 
 
+MIDIAN_ABLATIONS = [{"name": "midian", "params": p} for p in ({"verify": False}, {"audit": False}, {"audit": False, "verify": False})]
+
+
 def method_specs(block):
     ms = block["methods"]
-    ms = all_methods(block["backend"]) + list(block.get("extra") or []) if ms == "all" else [x for m in ms for x in (m if isinstance(m, list) else [m])]
+    ms = (all_methods(block["backend"]) + MIDIAN_ABLATIONS + list(block.get("extra") or []) if ms == "all"
+          else [x for m in ms for x in (m if isinstance(m, list) else [m])])
     ms = [{"name": m, "params": {}} if isinstance(m, str) else {"name": m["name"], "params": m.get("params") or {}} for m in ms]
+    ms = [{"name": k[0], "params": k[1]} for k in (keys.to_new(m["name"], m["params"]) for m in ms) if k]   # old keys in a grid still mean the same arm
     drop = set(block.get("exclude") or [])           # LLM-only methods are dropped off the llm backend too, so a
     llm = block["backend"] == "llm" or bool(block.get("allow_llm_methods"))   # bernoulli mirror of a framework grid skips
                                                      # them, not fails them; `allow_llm_methods: true` opts a non-llm grid
@@ -130,7 +136,8 @@ def oracle_line(world, stream, churn):
 
 def run_method(world, stream, spec, b, churn=None):
     m = load_method(spec["name"])(**spec["params"]); view = world.view(m.needs)
-    world.reset(spec["name"] + jkey(spec["params"])); t0 = time.perf_counter(); m.build(view, Budget(b)); wall_build = time.perf_counter() - t0
+    lm, lp = keys.legacy(spec["name"], spec["params"])                  # the pre-rename key seeds the world: reruns reproduce stored rows
+    world.reset(lm + jkey(lp)); t0 = time.perf_counter(); m.build(view, Budget(b)); wall_build = time.perf_counter() - t0
     build = world.ledger.snapshot(); world.ledger.reset()
     if build["probes"] > Budget(b).total_probes(world.n, world.K):
         log(f"  [WARNING] {spec['name']}: build spent {build['probes']} probes > budget {Budget(b).total_probes(world.n, world.K)}")
