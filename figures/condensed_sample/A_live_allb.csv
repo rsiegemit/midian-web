@@ -122,9 +122,9 @@ n = 100,β=0.5 cartel,random,-,random,0.42575,0.4166190848700083,0.4348809151299
 "n = 100,000",honest,best learned router,1,knn_router_online x2; cluster_head_router x1,0.6044444444444443,0.5859518700254518,0.6229370188634369,False
 "n = 100,000",honest,best learned router,3,knn_router_online x3,0.7411111111111112,0.721738226917597,0.7604839953046253,False
 "n = 100,000",honest,best learned router,5,knn_router_online x2; flat_nsw_router x1,0.7511111111111112,0.7405117866509229,0.7617104355712995,False
-"n = 100,000",β=0.5 cartel,best learned router,1,"disrouter_cascade x2; knn_router_online x1 | INCOMPLETE POOL, missing or partial knn_router, knn_router_online",0.5933333333333334,0.577580614579158,0.6090860520875088,False
+"n = 100,000",β=0.5 cartel,best learned router,1,knn_router_online x3,0.6477777777777777,0.5981744126987782,0.6973811428567771,False
 "n = 100,000",β=0.5 cartel,best learned router,3,knn_router_online x3,0.7411111111111112,0.721738226917597,0.7604839953046253,False
-"n = 100,000",β=0.5 cartel,best learned router,5,"flat_nsw_router x3 | INCOMPLETE POOL, missing or partial knn_router, knn_router_online",0.7755555555555556,0.7693691507079666,0.7817419604031445,False
+"n = 100,000",β=0.5 cartel,best learned router,5,knn_router_online x2; flat_nsw_router x1,0.7555555555555555,0.7442790093721198,0.7668321017389913,False
 "n = 100,000",honest,best bandit,1,warm_start_bandit[n0=0.5] x2; warm_start_bandit x1,0.6655555555555556,0.6434168235053652,0.6876942876057459,False
 "n = 100,000",honest,best bandit,3,warm_start_bandit[n0=0.5] x3,0.7544444444444446,0.7321390445556838,0.7767498443332054,False
 "n = 100,000",honest,best bandit,5,warm_start_bandit[n0=0.5] x3,0.8055555555555557,0.7777111909196853,0.8333999201914261,False
