@@ -1184,7 +1184,7 @@ grids:
               {name: warm_start_bandit, params: {n0: 0.5}}, {name: linucb_honest, params: {bonus: own}}, trueskill_per_family]
     blocks: [{b: [1, 5]}, {b: [3], methods: [*lrb_arms, declared_argmax, random]}]
   routereval_mmlu_norep_cal: {mirror_of: routereval_mmlu, backend_kwargs: {dataset: mmlu, no_repeat: true, shuffle: true}, declared_source: [calibrated], Q: 300,
-                              dist: [strong_to_weak], beta: [0, 0.5], liar_select: [low_skill_first], methods: [midian]}
+                              dist: [strong_to_weak], beta: [0, 0.5], liar_select: [low_skill_first], methods: [midian, random]}   # random: H's random reference line at every m
   # OPTIONAL (expensive: one supervisor-LLM call per task on the fleet): H's framework slots on the same no-repeat + calibrated cells
   # (the frameworks read the rendered declaration vector, so both fixes apply). Mirrors keep each source grid's arms and seeds.
   fw_routereval_small_norep_cal:    {mirror_of: fw_routereval_small,    backend_kwargs: {dataset: mmlu, no_repeat: true, shuffle: true}, declared_source: [calibrated], Q: 300, dist: [strong_to_weak], liar_select: [low_skill_first]}

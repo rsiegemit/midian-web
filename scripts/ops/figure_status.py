@@ -19,7 +19,8 @@ def ab(name):
     d = pd.read_csv(f"{OUT}/{name}.csv")
     d["b"] = d.b.astype(str)
     arms, groups, regs = d.arm.unique(), d.group.unique(), d.regime.unique()
-    want = {(g, a, r, b) for g in groups for a in arms for r in regs for b in (("-",) if a in ("declared argmax", "random") else ("1", "3", "5"))}
+    budgetless = ("declared argmax", "random", "best framework, best text shortlist")   # spend no probes: one bar, b does not apply
+    want = {(g, a, r, b) for g in groups for a in arms for r in regs for b in (("-",) if a in budgetless else ("1", "3", "5"))}
     miss = sorted(want - set(zip(d.group, d.arm, d.regime, d.b)))
     inc = d[d.chosen.astype(str).str.contains("INCOMPLETE")]
     print(f"{name}: {len(d)} bars, {len(miss)} missing slots, {len(inc)} incomplete-pool bars")
@@ -54,6 +55,7 @@ def grids():
 
 if __name__ == "__main__":
     for f in ("A_live_allb", "B_families_allb"): ab(f)
-    shortlist("E_shortlists_by_n", MAIN); shortlist("F_shortlists_1e5"); shortlist("G_shortlist_lift_1e5"); shortlist("H_routereval_shortlists", MAIN)
+    shortlist("E_shortlists_by_n", MAIN); shortlist("F_shortlists_1e5"); shortlist("G_shortlist_lift_1e5")
+    shortlist("H_routereval_shortlists", ["tfidf", "embed", "dense", "sota", "declared", "va_cohort"])   # body: best instruction variant per family
     print("switched to erratum-30 rows:", sorted(t.switched()))
     print("grids planned vs landed:"); grids()
