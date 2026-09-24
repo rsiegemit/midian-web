@@ -1219,3 +1219,11 @@ grids:
   re_sl_embed_small_norep_cal:      {mirror_of: re_sl_embed_small,      backend_kwargs: {dataset: mmlu, no_repeat: true, shuffle: true}, declared_source: [calibrated], Q: 300}
   re_sl_embed_1k_norep_cal:         {mirror_of: re_sl_embed_1k,         backend_kwargs: {dataset: mmlu, no_repeat: true, shuffle: true}, declared_source: [calibrated], Q: 300}
   re_sl_embed_5k_norep_cal:         {mirror_of: re_sl_embed_5k,         backend_kwargs: {dataset: leaderboard_mmlu, no_repeat: true, shuffle: true}, declared_source: [calibrated]}
+  # verbal_confidence (2026-09-24, NOT LAUNCHED): verbalized-confidence routing (Tian et al. 2023 style) -- ask the k = 10
+  # shortlisted agents (declared top-k, or MiniLM over self-descriptions) how confident they are on THIS task, route to the
+  # most confident. Liars claim the top of the scale in every lie mode (World.confidence). Cells are fw_live_n1000's
+  # (honest) and fw_live_n1000_lowskill's (cartel) at specialist, seeds 1-3, and lie_max_n1000's, so populations, S,
+  # descriptions and embedding caches are all already built; the oracle row comes with every unit.
+  vc_live_n1000:    {mirror_of: fw_live_n1000, dist: [specialist], seeds: 1-3, methods: &vc_arms [verbal_confidence, {name: verbal_confidence, params: {shortlist: embed}}],
+                     blocks: [{beta: [0]}, {beta: [0.5], liar_select: [low_skill_first]}]}
+  vc_lie_max_n1000: {mirror_of: lie_max_n1000, methods: *vc_arms}
