@@ -11,6 +11,7 @@ verified_decentral | floor | ceiling) comes from its declared `needs` and the fw
 import argparse, json, os, sys, warnings
 import numpy as np, pandas as pd
 from . import run as _run
+from .methods import keys
 
 RTE_DATA, consolidate = _run.RTE_DATA, _run.consolidate
 CELL_COLS = tuple(getattr(_run, "CELL_FIELDS", None) or getattr(_run, "CELL", None) or (
@@ -18,8 +19,9 @@ CELL_COLS = tuple(getattr(_run, "CELL_FIELDS", None) or getattr(_run, "CELL", No
 REF, FLOOR, B_BOOT = "midian", "WITHIN_FLOOR", 2000
 FLAT, FLAT_ON = "flat_probe_argmax_frozen", "flat_probe_argmax_online"
 ALIAS = {"flat_probe_argmax": FLAT, "flat_probe_argmax[online=True]": FLAT_ON, "knn_router[online=True]": "knn_router_online",        # one name per arm everywhere
-         "midian[cached=True,verify=True]": "midian_v", "midian[cached=True,r=5,verify=True]": "midian_v_r5",
-         "sequential_halving[peer_reported=True]": "sequential_halving_peer", "midian[stratify=True]": "midian_stratified",
+         "midian[verify=False]": "midian_wo_verify", "midian[audit=False]": "midian_wo_audit",
+         "midian[audit=False,verify=False]": "midian_wo_defenses", "midian[audit=False,r=5]": "midian_wo_audit_r5",
+         "sequential_halving[peer_reported=True]": "sequential_halving_peer", "midian[audit=False,stratify=True,verify=False]": "midian_stratified",
          "sequential_halving[churn_mode=rebuild,peer_reported=True]": "sequential_halving_peer_rebuild",
          "sequential_halving[churn_mode=stale,peer_reported=True]": "sequential_halving_peer_stale"}
 STATS = ("success_strict", "fallback_rate")               # framework accountings carried inside method_stats (0.2)
@@ -55,7 +57,7 @@ def load(grids):
     for g in grids:
         d = f"{RTE_DATA}/results/{g}"
         if os.path.isdir(f"{d}/rows.d"): consolidate(d)    # refresh rows.csv from the per-row files
-        if os.path.exists(f"{d}/rows.csv"): frames.append(pd.read_csv(f"{d}/rows.csv"))
+        if os.path.exists(f"{d}/rows.csv"): frames.append(keys.normalize(pd.read_csv(f"{d}/rows.csv"), d))   # old MIDIAN keys -> current
         else: log(f"[analyze] no rows for grid {g!r} at {d}")
     if not frames: raise SystemExit(f"no rows found for grids {grids}")
     return prepare(pd.concat(frames, ignore_index=True))

@@ -15,6 +15,7 @@ matplotlib.use("Agg"); import matplotlib.pyplot as plt
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import extra_figs  # noqa: F401  (legend rule: best top-left, row-major)
 from seed_tables import label
+from rte.methods import keys
 from condensed_figs import ARMS, BANDIT, LEARNED, NOT_RUNNABLE, OUT, POOLS, save
 
 R = os.environ.get("RTE_DATA", "/scratch/rte") + "/results"
@@ -26,8 +27,9 @@ SHOW = set(FIXED) | set(LEARNED) | set(BANDIT)                                  
 
 def costs():
     if os.path.exists(COST): return pd.read_csv(COST)
-    parts = [c[((c.b == 3) | (c.method == "midian_va")) & (c.beta == 0)]            # MIDIAN-VA at every b: D's build ledger
-             for c in pd.read_csv(f"{R}/bernoulli_scale_v5/rows.csv", usecols=COLS, chunksize=500000, low_memory=False)]
+    parts = [c[((c.b == 3) | ((c.method == "midian") & (c.params == "{}"))) & (c.beta == 0)]   # MIDIAN at every b: D's build ledger
+             for c in (keys.normalize(c, f"{R}/bernoulli_scale_v5")
+                       for c in pd.read_csv(f"{R}/bernoulli_scale_v5/rows.csv", usecols=COLS, chunksize=500000, low_memory=False))]
     d = pd.concat(parts, ignore_index=True)
     d["label"] = [label(m, str(p)) for m, p in zip(d.method, d.params)]
     d = d[d.label.isin(list(SHOW))].groupby(["label", "n", "b"])[COLS[5:]].median().reset_index()
@@ -44,14 +46,15 @@ def va_build(d):
     import glob, json
     fr = []
     for g in VA_GRIDS:
-        fr += [pd.DataFrame([{**json.load(open(f)), "rid": os.path.basename(f)[:-5]} for f in glob.glob(f"{R}/{g}/rows.d/*.json")])]
+        fr += [keys.normalize(pd.DataFrame([{**json.load(open(f)), "rid": os.path.basename(f)[:-5]} for f in glob.glob(f"{R}/{g}/rows.d/*.json")]), f"{R}/{g}")]
         if os.path.exists(f"{R}/{g}/rows.csv"):
             head = pd.read_csv(f"{R}/{g}/rows.csv", nrows=0).columns
-            fr.append(pd.read_csv(f"{R}/{g}/rows.csv", usecols=[c for c in ("rid", "n", "b", "method", "build_probes") if c in head], low_memory=False))
+            fr.append(keys.normalize(pd.read_csv(f"{R}/{g}/rows.csv", usecols=[c for c in ("rid", "n", "b", "method", "params", "build_probes") if c in head],
+                                                 low_memory=False), f"{R}/{g}"))
     L = pd.concat([f for f in fr if not f.empty])
     L = L.drop_duplicates("rid")                                             # a row can sit in both rows.d and rows.csv
-    L = L[L.method == "midian_va"].groupby(["n", "b"]).build_probes.median()
-    for (n, b), v in d[d.label == "midian_va"].set_index(["n", "b"]).build_probes.items(): L.loc[(n, b)] = L.get((n, b), v)
+    L = L[(L.method == "midian") & (L.params.fillna("{}").astype(str) == "{}")].groupby(["n", "b"]).build_probes.median()   # the full method
+    for (n, b), v in d[d.label == "midian"].set_index(["n", "b"]).build_probes.items(): L.loc[(n, b)] = L.get((n, b), v)
     ratio = {b: float((L.xs(b, level="b") / (L.xs(b, level="b").index * 16 * b)).median()) for b in (1, 3, 5)}
     return {(n, b): ((float(L[(n, b)]), "ledger") if (n, b) in L.index else (ratio[b] * n * 16 * b, f"ratio {ratio[b]:.3f} x nKb"))
             for n in (1000, 100000, 10 ** 7) for b in (1, 3, 5)}

@@ -17,6 +17,7 @@ import glob, json, os, sys
 import numpy as np, pandas as pd
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__)))); sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from rte.analyze import ALIAS
+from rte.methods import keys
 
 R = os.environ.get("RTE_DATA", "/scratch/rte") + "/results"
 COLS = ["rid", "n", "b", "dist", "beta", "liar_select", "declared_source", "seed", "method", "params", "success"]
@@ -36,6 +37,7 @@ def rows(grid, n):
         head = pd.read_csv(f"{R}/{grid}/rows.csv", nrows=0).columns
         fr.append(pd.concat(c[c.n == n] for c in pd.read_csv(f"{R}/{grid}/rows.csv", usecols=[c for c in COLS if c in head], chunksize=500000, low_memory=False)))
     df = pd.concat([f for f in fr if not f.empty], ignore_index=True) if any(not f.empty for f in fr) else pd.DataFrame(columns=COLS)
+    df = keys.normalize(df, f"{R}/{grid}")                              # old MIDIAN keys -> current (rte.methods.keys)
     df = df[(df.n == n) & ~df.method.astype(str).str.startswith("fw_")]
     if "rid" in df: df = df.drop_duplicates("rid")
     return df.assign(grid=grid, params=df.params.astype(str))

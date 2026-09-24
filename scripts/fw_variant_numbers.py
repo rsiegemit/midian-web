@@ -7,6 +7,9 @@ Regimes follow RESULTS: beta0 (liar-free, one cell), beta<x>_random, beta<x>_car
 from __future__ import annotations
 import glob, json, os
 import numpy as np, pandas as pd
+import sys
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from rte.methods import keys
 
 RTE_DATA = os.environ.get("RTE_DATA", "/scratch/rte"); R = f"{RTE_DATA}/results"
 PENDING: set = set()
@@ -29,6 +32,7 @@ def load(grid):
     if df.empty: return df
     if "rid" in df: df = df.drop_duplicates("rid")
     df["params"] = df.params.astype(str)
+    df = keys.normalize(df, f"{R}/{grid}")                              # old MIDIAN keys / cohort names -> current
     return df.drop_duplicates([c for c in ("n", "b", "dist", "beta", "liar_select", "seed", "method", "params") if c in df])   # n, b: some grids hold several
 
 

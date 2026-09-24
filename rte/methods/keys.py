@@ -77,3 +77,27 @@ def assert_v2(method: str, params: dict | None, where: str = "") -> None:
         raise AssertionError(f"{where}: old MIDIAN key {method!r} in a migrated ({SENTINEL}) directory")
     if method.startswith("fw_") and (params or {}).get("retrieval") == "midian_va":
         raise AssertionError(f"{where}: old retrieval 'midian_va' in a migrated directory")
+
+
+def _jkey(d):
+    import json
+    return json.dumps(d, sort_keys=True, separators=(",", ":"), default=str)
+
+
+def normalize(df, results_dir: str):
+    """Rows read from `results_dir` under the current keys. A migrated directory (SENTINEL) is checked, never coerced;
+    an unmigrated one is translated on read and loses its withdrawn-variant rows. params are stored as compact JSON."""
+    import json, os
+    if df is None or len(df) == 0 or "method" not in df: return df
+    old = list(zip(df.method.astype(str), (df["params"].fillna("{}").astype(str) if "params" in df else ["{}"] * len(df))))
+    load = lambda p: json.loads(p) if p.startswith("{") else {}
+    if os.path.exists(os.path.join(results_dir, SENTINEL)):
+        for m, p in set(old): assert_v2(m, load(p), results_dir)
+        return df
+    new = {mp: to_new(mp[0], load(mp[1])) for mp in set(old)}
+    if all(v is not None and v[0] == mp[0] and _jkey(v[1]) == _jkey(load(mp[1])) for mp, v in new.items()): return df
+    keep = [new[mp] is not None for mp in old]
+    df = df[keep].copy(); kept = [mp for mp, k in zip(old, keep) if k]
+    df["method"] = [new[mp][0] for mp in kept]
+    if "params" in df: df["params"] = [_jkey(new[mp][1]) for mp in kept]
+    return df
