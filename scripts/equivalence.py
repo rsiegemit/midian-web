@@ -7,8 +7,9 @@ from rte.budget import Budget
 from rte.methods import load_method
 from rte.world import World
 
-SPECS = [("midian", {}), ("midian", {"r": 5}), ("midian", {"verify": True, "cached": True}), ("midian_v", {}),
-         ("midian", {"stratify": True}), ("midian_sh", {}), ("midian_a", {}), ("midian_sha", {})]
+OFF = {"audit": False, "verify": False}                  # MIDIAN w/o defenses
+SPECS = [("midian", OFF), ("midian", {**OFF, "r": 5}), ("midian", {"audit": False}), ("midian", {**OFF, "stratify": True}),
+         ("midian", {"verify": False})]
 CELLS = [(n, d, s) for n in (100, 1000) for d in ("specialist", "heavy_tail") for s in (1, 2, 3)]
 h = lambda *xs: hashlib.blake2b(b"|".join(np.ascontiguousarray(x).tobytes() if isinstance(x, np.ndarray) else json.dumps(x, sort_keys=True).encode() for x in xs), digest_size=12).hexdigest()
 

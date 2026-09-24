@@ -24,9 +24,10 @@ def depth_of(n, r):
 
 
 def built(n=100, K=16, r=10, b=3, beta=0.0, delta=1 / 3, seed=1, exact=None, **wkw):
-    """A built Midian, its world, and the ledger delta of build. `exact` mocks the estimate stage."""
+    """A built MIDIAN w/o defenses (the tree these invariants describe), its world, and the ledger delta of build.
+    `exact` mocks the estimate stage."""
     w = World(n, K, "specialist", beta, seed=seed, **wkw)
-    m = Midian(r=r, delta=delta)
+    m = Midian(r=r, delta=delta, audit=False, verify=False)
     if exact is not None:
         exact.setattr("rte.methods.midian.peer_reported_estimates", lambda *a, **k: w.S.copy())
     before = w.ledger.snapshot()
@@ -144,7 +145,7 @@ def test_trimming_vs_no_trimming_on_liar_cohorts(capsys):
 def test_timing_at_1e5(capsys):
     n, K, b = 100_000, 16, 1
     w = World(n, K, "specialist", 0.0, seed=1)
-    m = Midian(r=10)
+    m = Midian(r=10, audit=False, verify=False)
     t0 = time.perf_counter()
     m.build(w.view(m.needs), Budget(b))
     t_build = time.perf_counter() - t0
@@ -164,7 +165,7 @@ def test_timing_at_1e5(capsys):
 
 # ------------------------------------------------------------------ the LLM-descent ablation
 def test_llm_descent_falls_back_to_the_arithmetic_argmax(monkeypatch):
-    """Same tree, same estimates, same ledger; on an unparseable answer it routes as plain MIDIAN."""
+    """Same tree, same estimates, same ledger; on an unparseable answer it routes as MIDIAN w/o defenses."""
     from rte.methods.midian_llm_descent import MidianLLMDescent
     w1, m1, _ = built(n=500, r=10, b=1, seed=3)
     w2 = World(500, 16, "specialist", 0.0, seed=3)
@@ -193,27 +194,28 @@ def test_llm_descent_follows_a_parseable_answer(monkeypatch):
     assert m.stats["fallbacks"] == 0
 
 
-# ---------------------------------------------------------------- v2 (2026-09-03): per-probe reports, stratify, churn, midian_v
+# ---------------------------------------------------------------- v2 (2026-09-03): per-probe reports, stratify, churn, MIDIAN w/o audits
 def _build(name, n, seed=1, beta=0.0, **kw):
     w = World(n, 16, "specialist", beta, seed=seed); M = load_method(name)(**kw); v = w.view(M.needs)
     s0 = w.ledger.snapshot(); M.build(v, Budget(3)); return w, M, v, w.ledger.diff(s0)
 
 
 @pytest.mark.parametrize("n", [100, 1000])
-def test_midian_v_reports_one_per_reporter_per_probe(n):
-    """0.3: every arm charges one report per (peer, member, family, probe): reports == probes * (r-1) for V too."""
-    _, _, _, d = _build("midian_v", n)
+def test_midian_wo_audit_reports_one_per_reporter_per_probe(n):
+    """0.3: every arm charges one report per (peer, member, family, probe): reports == probes * (r-1) w/o audits too."""
+    _, _, _, d = _build("midian", n, audit=False)
     assert d["reports"] == d["probes"] * 9 and d["probes"] <= n * 16 * 3
 
 
-def test_midian_v_equals_midian_verify_cached():
-    wa, A, _, da = _build("midian_v", 300, seed=4, beta=0.25); wb, B_, _, db = _build("midian", 300, seed=4, beta=0.25, verify=True, cached=True)
+def test_midian_wo_audit_caches_by_default():
+    """cached defaults to verify: midian{audit: false} == midian{audit: false, verify: true, cached: true}."""
+    wa, A, _, da = _build("midian", 300, seed=4, beta=0.25, audit=False); wb, B_, _, db = _build("midian", 300, seed=4, beta=0.25, audit=False, verify=True, cached=True)
     assert da == db and [A.fetch(t) for t in wa.tasks(50)] == [B_.fetch(t) for t in wb.tasks(50)]
 
 
 def test_stratified_cohorts_take_one_member_per_stratum(monkeypatch):
     """1.5: with exact probes the key is S.mean(1); every full cohort holds exactly one agent from each of the r deciles."""
-    w = World(100, 16, "specialist", 0.0, seed=3); M = load_method("midian")(stratify=True); v = w.view(M.needs)
+    w = World(100, 16, "specialist", 0.0, seed=3); M = load_method("midian")(stratify=True, audit=False, verify=False); v = w.view(M.needs)
     monkeypatch.setattr("rte.methods.midian.probe_outcomes", lambda view, b: np.broadcast_to(w.S[:, :, None], (100, 16, b)).astype(np.float32))
     s0 = w.ledger.snapshot(); M.build(v, Budget(3)); d = w.ledger.diff(s0)
     assert d["probes"] == 0 and d["reports"] == 100 * 16 * 3 * 9            # (mocked probes; reports still charged)
@@ -224,7 +226,7 @@ def test_stratified_cohorts_take_one_member_per_stratum(monkeypatch):
 
 
 def test_churn_repairs_only_the_arrived_agents():
-    w, M, v, _ = _build("midian", 200, seed=2)
+    w, M, v, _ = _build("midian", 200, seed=2, audit=False, verify=False)
     arrived = np.array([3, 50, 77]); before = M.est.copy(); s0 = w.ledger.snapshot()
     M.churn(arrived, arrived); d = w.ledger.diff(s0)
     assert d["probes"] == 3 * 16 * 3 and d["reports"] == 3 * 16 * 3 * 9

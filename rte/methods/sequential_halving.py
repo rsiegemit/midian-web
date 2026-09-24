@@ -9,7 +9,7 @@ from ._est import CHUNK, trimmed_by_reporter
 def halving(view, f, budget, peers=0, delta=1 / 3):
     """Sequential halving over all agents for family f. Returns (best agent, probes used).
     peers>0: the router is NOT a trusted observer — each probe outcome reaches it only as the reports of `peers` random
-    other agents (liars may corrupt them), aggregated by a per-reporter trimmed mean, exactly MIDIAN-V's channel."""
+    other agents (liars may corrupt them), aggregated by a per-reporter trimmed mean, exactly the channel of MIDIAN w/o audits."""
     n = view.n
     alive, tot, cnt, used = np.arange(n), np.zeros(n), np.zeros(n, np.int64), 0
     rounds = max(1, math.ceil(math.log2(n)))

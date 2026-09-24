@@ -3,7 +3,7 @@
 Two figures, one panel each (they replace the old C paired-gap and D heatmap figures):
   C   routing work per query vs n (10^2..10^7, calibrated bernoulli, b = 3, honest; exact ledger counts: messages +
      comparisons per routed task), one line per arm; legend: growth() of the log-log slope over n >= 10^3 (log n, n^s).
-  D   energy per routed query vs queries served: (build J) / T + marginal J per query. MIDIAN-VA at n = 10^3, 10^5, 10^7
+  D   energy per routed query vs queries served: (build J) / T + marginal J per query. MIDIAN at n = 10^3, 10^5, 10^7
      (its build probes from the same ledger); the frameworks' per-query supervisor energy (live n = 1,000 measurement,
      scripts/energy.py) as a band. Energy model = scripts/energy.py (probe 4.04 J on specialist, 7B supervisor call
      20.6 J, message 1e-3 J, comparison 1e-8 J; 700 W). The routed task's own execution is common to all and excluded.
@@ -21,7 +21,7 @@ from condensed_figs import ARMS, BANDIT, LEARNED, NOT_RUNNABLE, OUT, POOLS, save
 R = os.environ.get("RTE_DATA", "/scratch/rte") + "/results"
 COST = f"{OUT}/cost_by_n.csv"
 COLS = ["n", "b", "beta", "method", "params", "messages_per_task", "comparisons_per_task", "build_probes", "build_messages"]
-FIXED = ["midian_va", "midian", "flat_probe_argmax_online", "declared_argmax"]      # C draws exactly A / B's arms (ARMS)
+FIXED = ["midian", "midian_wo_defenses", "flat_probe_argmax_online", "declared_argmax"]      # C draws exactly A / B's arms (ARMS)
 SHOW = set(FIXED) | set(LEARNED) | set(BANDIT)                                      # + every member of the two pools
 
 
@@ -36,11 +36,11 @@ def costs():
     d.to_csv(COST, index=False); return d
 
 
-VA_GRIDS = ["va_b_bernoulli_1e7", "va_b_n1000", "va_b_n100k", "fw_live_n1000", "live_n100k"]   # exact MIDIAN-VA build ledgers by (n, b)
+VA_GRIDS = ["va_b_bernoulli_1e7", "va_b_n1000", "va_b_n100k", "fw_live_n1000", "live_n100k"]   # exact MIDIAN build ledgers by (n, b)
 
 
 def va_build(d):
-    """{(n, b): (build probes, source)} for MIDIAN-VA at n = 10^3, 10^5, 10^7 and b = 1, 3, 5, from the exact ledger
+    """{(n, b): (build probes, source)} for MIDIAN at n = 10^3, 10^5, 10^7 and b = 1, 3, 5, from the exact ledger
     wherever that cell ran (the live / va_b grids first, then the bernoulli sweep); else the measured build / (n K b)
     ratio at that b (no cell needs it today)."""
     import glob, json
@@ -108,20 +108,20 @@ def draw_J(ax, d):
     ce = fw.sup_call_equiv                               # supervisor call-equivalents: latency ratio to one-call AutoGen
     ax.fill_between(T, fwJ.min(), fwJ.max(), color="#bbbbbb", alpha=0.5, lw=0,
                     label=f"frameworks: {ce.min():.0f}-{ce.max():.1f} supervisor-call equivalents per query ({fwJ.min():.0f}-{fwJ.max():.0f} J)")
-    va = d[(d.label == "midian_va") & (d.b == 3)].set_index("n"); VB = va_build(d)
+    va = d[(d.label == "midian") & (d.b == 3)].set_index("n"); VB = va_build(d)
     for n, shade in ((1000, 0.55), (100000, 0.8), (10 ** 7, 1.0)):
         r = va.loc[n]; marg = r.messages_per_task * energy.J_MSG + r.comparisons_per_task * energy.J_CMP
         for b, ls in ((1, ":"), (3, "-"), (5, "--")):
             probes, src = VB[(n, b)]
             build = probes * PJ + r.build_messages * energy.J_MSG          # build messages: the b = 3 ledger (a rounding term)
             c = tuple(np.array(matplotlib.colors.to_rgb("#2ecc71")) * (1.35 - shade) ** 1.0)
-            ax.plot(T, build / T + marg, ls, lw=1.4, color=c, label=f"MIDIAN-VA n = 10^{int(np.log10(n))}, b = {b}")
+            ax.plot(T, build / T + marg, ls, lw=1.4, color=c, label=f"MIDIAN n = 10^{int(np.log10(n))}, b = {b}")
             for lo, hi in ((fwJ.min(), "cheapest"), (fwJ.max(), "costliest")):
                 t = build / (lo - marg); ax.plot(t, lo, "x", color="black", ms=3, zorder=5)
                 rec.append(dict(n=n, b=b, build_probes=probes, build_source=src, build_J=build, marginal_J=marg, vs=hi, fw_J=lo, break_even_queries=t))
     ax.set_xscale("log"); ax.set_yscale("log"); ax.set_xlabel("queries served T"); ax.set_ylabel("estimated energy per query, J (build amortised)")
     ax.grid(which="major", lw=0.3, alpha=0.4)
-    ax.set_title("D  estimated energy per query: MIDIAN-VA pays one probing build, then ~0.01 J / query; frameworks pay supervisor LLM calls every query", pad=38)
+    ax.set_title("D  estimated energy per query: MIDIAN pays one probing build, then ~0.01 J / query; frameworks pay supervisor LLM calls every query", pad=38)
     ax.legend(ncol=4, frameon=False, loc="lower center", bbox_to_anchor=(0.5, 1.0), fontsize=5.5, rank="asc")
     return pd.DataFrame(rec)
 

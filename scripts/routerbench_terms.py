@@ -5,7 +5,7 @@ split, route each held-out prompt, sweep a willingness-to-pay lambda, score = me
 summary = AIQ), their baselines (oracle, zero router = hull of the single models, KNN and MLP predictive routers).
 One deviation for every router alike: prompt embeddings are a local all-MiniLM-L6-v2, not OpenAI's.
 Our arm: the probe-family router (b probe prompts per eval_name, every model looked up on them, family PREDICTED at test
-time by k-NN over the probe prompts).  Plain MIDIAN at n = 11 is a max-tree over the same scores (asserted == argmax).
+time by k-NN over the probe prompts).  MIDIAN w/o defenses at n = 11 is a max-tree over the same scores (asserted == argmax).
 AIQ here = mean over the cost range [cheapest model, dearest model] of the best performance reachable at that cost
 (step envelope of the router's lambda sweep), i.e. area under the non-decreasing quality-vs-cost curve, normalised."""
 import os, sys, json, numpy as np, pandas as pd
@@ -35,7 +35,7 @@ def embed(prompts):
 
 
 def midian_tree_pick(score, r=R_MIDIAN):
-    """Plain MIDIAN's pick over n agents with scores (n,): cohorts of r by index, best per cohort promoted, until one."""
+    """The pick of MIDIAN w/o defenses over n agents with scores (n,): cohorts of r by index, best per cohort promoted, until one."""
     idx = np.arange(len(score))
     while len(idx) > 1:
         idx = np.array([c[np.argmax(score[c])] for c in np.array_split(idx, max(1, int(np.ceil(len(idx) / r))))])

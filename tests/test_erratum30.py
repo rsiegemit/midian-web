@@ -19,7 +19,7 @@ LRB = f"{DATA}/data/llmrouterbench/perf_matrix.npz"
 MMLU = f"{DATA}/data/routereval/router_dataset/mmlu_router_dataset.pkl"
 LIVE_S = f"{DATA}/populations/specialist_n1000_K16_seed1/S.npy"
 METHODS = [{"name": "declared_argmax", "params": {}}, {"name": "flat_probe_argmax", "params": {"online": True}},
-           {"name": "warm_start_bandit", "params": {}}, {"name": "midian_va", "params": {}}]
+           {"name": "warm_start_bandit", "params": {}}, {"name": "midian", "params": {}}]
 
 
 def fake_cells(path, K=8, M=4, prompts=40):

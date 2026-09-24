@@ -54,7 +54,7 @@ def trimmed_mean(x: np.ndarray, t: int) -> np.ndarray:
 def trimmed_by_reporter(rep: np.ndarray, delta: float, s: int, exclude: np.ndarray | None = None):
     """rep[..., s-1, b] -> mean after dropping the floor(delta*(s-1)) highest- and lowest-reporting PEERS
     (a colluding peer corrupts all b of its reports at once, so trimming reports one by one under-trims).
-    `exclude[..., s-1]` (bool) drops reporters before trimming (MIDIAN-A audits); the trim then adapts to how many remain."""
+    `exclude[..., s-1]` (bool) drops reporters before trimming (MIDIAN's audits); the trim then adapts to how many remain."""
     per = rep.mean(-1)
     if exclude is None:
         return trimmed_mean(per, min(int(delta * (s - 1) + 1e-9), (s - 2) // 2))

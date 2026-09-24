@@ -1,6 +1,6 @@
 """SAMPLE condensed replacements for the 48 figures/bars files -- one panel and one row each.
     python scripts/condensed_figs.py      -> figures/condensed_sample/{A,B}_{allb,stacked}.{png,pdf,csv}
-b = 3 cells from figures/bars/<family>.csv; b = 1 / 5 from the va_b_* (MIDIAN-VA) and rivals_b_* (budget-matched rivals)
+b = 3 cells from figures/bars/<family>.csv; b = 1 / 5 from the va_b_* (MIDIAN) and rivals_b_* (budget-matched rivals)
 rows and, for bernoulli / replay b = 1, their scale matrices. b is NEVER pooled: every bar is one budget.
   A  live headline: n = 10^2..10^5 (specialist), solid = honest, hatched = beta = 0.5 low-skill cartel.
   B  every family at its largest population, success / oracle, same arms and style.
@@ -29,7 +29,7 @@ plt.rcParams.update({"pdf.fonttype": 42, "font.family": "DejaVu Sans", "font.siz
                      "xtick.labelsize": 6.5, "ytick.labelsize": 6.5, "axes.linewidth": 0.6, "figure.constrained_layout.use": True})
 LEARNED = ["knn_router", "knn_router_online", "mlp_router", "flat_nsw_router", "cluster_head_router", "disrouter_cascade"]
 BANDIT = ["ucb_per_family", "thompson_per_family", "warm_start_bandit", "linucb_honest", "trueskill_per_family"]
-ARMS = [("midian_va", "MIDIAN-VA", "#2ecc71"), ("midian", "MIDIAN", "#c0392b"), ("flat_probe_argmax_online", "flat probe argmax (online)", "#3498db"),
+ARMS = [("midian", "MIDIAN", "#2ecc71"), ("midian_wo_defenses", "MIDIAN w/o defenses", "#c0392b"), ("flat_probe_argmax_online", "flat probe argmax (online)", "#3498db"),
         ("best_learned", "best learned router", "#ff7f0e"), ("best_bandit", "best bandit", "#9467bd"),
         ("declared_argmax", "declared argmax", "#5d6d7e"), ("random", "random", "#bbbbbb")]
 POOLS = {"best_learned": LEARNED,                      # the bandit pool takes the TUNED warm-start bandit (n0 = 0.5) and drops the
@@ -157,7 +157,7 @@ def fig_B(C):
 
 
 def add_budgets(C):
-    """b = 1 / 5 for every arm: live / RouterEval / LLMRouterBench / bernoulli 10^7 / replay 10^6 from the va_b_* (MIDIAN-VA)
+    """b = 1 / 5 for every arm: live / RouterEval / LLMRouterBench / bernoulli 10^7 / replay 10^6 from the va_b_* (MIDIAN)
     and rivals_b_* (budget-matched rivals) rows (per-seed means, whiskers set by narrow()); bernoulli / replay b = 1 from their
     scale matrices. A cell the runs have not reached simply has no bar (a * marks it)."""
     sys.path.insert(0, ROOT)

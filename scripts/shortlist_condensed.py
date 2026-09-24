@@ -2,7 +2,7 @@
     python scripts/shortlist_condensed.py   -> figures/condensed_sample/{E_shortlists_by_n,F_shortlists_1e5}.{png,pdf,csv}
 Reads figures/shortlist/live.csv (per framework x shortlist x cell: seed mean and 95% CI; written by shortlist_figs.py).
   E  live specialist, n = 10^2 .. 10^5: per n, one bar per shortlist = the MEAN over frameworks (solid honest, hatched
-     beta = 0.5 low-skill cartel); oracle dotted and MIDIAN-VA (whole population) solid, as lines over each group.
+     beta = 0.5 low-skill cartel); oracle dotted and MIDIAN (whole population) solid, as lines over each group.
   F  n = 10^5 (every shortlist ran there), shortlists sorted by the honest mean; a black dot = the BEST single framework.
   G  n = 10^5: each shortlist's gain over the pre-registered TF-IDF shortlist, paired WITHIN each framework, averaged over
      frameworks (whisker = +/- 1 s.e. across frameworks). At 10^5 TF-IDF is the clone shortlist (0.379 for every
@@ -24,7 +24,7 @@ REG = {"beta0": "honest", "cartel": "β=0.5 cartel"}
 NAME = {k: v for k, v, _ in SOURCES}; COL = {k: c for k, _, c in SOURCES}; ORDER = [k for k, _, _ in SOURCES]
 SHORT = {"tfidf": "TF-IDF (pre-reg.)", "embed": "MiniLM", "dense_icomp": "dense, I-comp", "dense_idemo": "dense, I-demo",
          "sota": "rerank", "sota_icomp": "rerank, I-comp", "sota_idemo": "rerank, I-demo", "declared": "declared top-k",
-         "va_cohort": "VA cohort", "bm25": "BM25", "dense": "dense"}
+         "va_cohort": "MIDIAN cohort", "bm25": "BM25", "dense": "dense"}
 INCOMPLETE = [False]                                         # set while drawing a figure: any slot empty or rerun outstanding -> " *" in its title
 MAIN = [k for k in ORDER if k not in ("bm25", "dense")]     # E: the shortlists run (or queued) at every n; BM25 / plain dense are 10^3 ablation only
 
@@ -56,7 +56,7 @@ def lines(ax, ref, n, x0, x1, first):
     if (n, "beta0") not in ref.index: return
     o = ref.loc[(n, "beta0")]
     ax.hlines(o.get("oracle"), x0, x1, colors="#7f8c8d", linestyles=":", lw=1.2, zorder=4, label="oracle" if first else None)
-    ax.hlines(o.get("MIDIAN-VA (whole population)"), x0, x1, colors="#2ecc71", lw=1.4, zorder=4, label="MIDIAN-VA (whole population)" if first else None)
+    ax.hlines(o.get("MIDIAN (whole population)"), x0, x1, colors="#2ecc71", lw=1.4, zorder=4, label="MIDIAN (whole population)" if first else None)
 
 
 def pair(ax, x, w, q, src, label, dots=True):

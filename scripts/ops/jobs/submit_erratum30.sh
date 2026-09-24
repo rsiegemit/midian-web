@@ -16,7 +16,7 @@ sub lrb_cal sapphire,serial_requeue 4 32G 1:00:00 4 llmrouterbench_cal
 sub mmlu_norep sapphire,serial_requeue 4 32G 2:00:00 4 routereval_mmlu_norep_cal
 sub lrb_norep sapphire,serial_requeue 4 64G 6:00:00 4 llmrouterbench_norep_cal
 sub re5k_norep_fast sapphire,serial_requeue 4 64G 6:00:00 4 routereval5k_norep_cal \
-    --methods midian_va,midian,flat_probe_argmax,flat_nsw_router,cluster_head_router,disrouter_cascade,ucb_per_family,thompson_per_family,warm_start_bandit,linucb_honest,trueskill_per_family,declared_argmax,random
+    --methods midian,flat_probe_argmax,flat_nsw_router,cluster_head_router,disrouter_cascade,ucb_per_family,thompson_per_family,warm_start_bandit,linucb_honest,trueskill_per_family,declared_argmax,random
 for beta in 0.0 0.5; do for s in 1 2 3; do for b in 1 3 5; do   # kNN: ~4.1 h per row single-threaded; one job per (regime, seed, b), 8 threads
   OMP_NUM_THREADS=8 MKL_NUM_THREADS=8 sub re5k_norep_knn_${beta}_${s}_b$b sapphire,shared 8 48G 12:00:00 1 routereval5k_norep_cal --methods knn_router --only beta=$beta,b=$b --seeds $s; done; done; done
 for d in specialist heavy_tail bimodal; do for beta in 0.0 0.5; do for s in 1-15 16-30; do

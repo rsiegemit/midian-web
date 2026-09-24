@@ -15,7 +15,7 @@ Our arm, the **probe-family router**: b probe prompts per family drawn from the 
 on them, estimate = per-(candidate, family) accuracy, pick = argmax for the test prompt's PREDICTED family. Families:
 `cluster{K}` = KMeans(K) over train embeddings (unsupervised; nearest centroid at test; K = 3 is exactly their cluster
 baseline's partition, so cluster3 vs C-RoBERTa-cluster isolates the label budget) and, on mmlu only, `subject` = the
-MMLU subject named in the prompt (57; predicted at test by 5-NN over the probe prompts' embeddings). Plain MIDIAN over
+MMLU subject named in the prompt (57; predicted at test by 5-NN over the probe prompts' embeddings). MIDIAN w/o defenses over
 m truthful candidates is a max-tree over the same estimates and picks identically (asserted, as in part A); the
 report-channel / liar dimension is part D2 (the routereval backend inside our benchmark), not here."""
 import os, re, sys, pickle, numpy as np, pandas as pd

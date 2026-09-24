@@ -157,7 +157,7 @@ class FrameworkMethod(Method):
         # retrieval="embed" (2026-09-15, labeled variant): rank by cosine over all-MiniLM-L6-v2 embeddings of the same
         # descriptions (the encoder knn_router uses) instead of hashed TF-IDF -- the dense retriever a deployed stack
         # would put in front of a framework. Embeddings are cached per population dir (descriptions_minilm.npy).
-        if retrieval in ("midian", "midian_va"):             # verified shortlist: MIDIAN-V's (or MIDIAN-VA's) leaf cohort (k = r)
+        if retrieval in ("midian", "midian_wo_audit"):        # verified shortlist: MIDIAN's (or MIDIAN w/o audits') leaf cohort (k = r)
             self.needs = self.needs | {"probe", "reports"}
         self.stats = {"picks": 0, "fallbacks": 0, "failures": 0, "bad_name": 0, "invalid_action": 0, "success_strict": 0.0, "fallback_rate": 0.0}
         self._picked, self._n, self._strict, self._calls = False, 0, 0, 0
@@ -287,9 +287,9 @@ class FrameworkMethod(Method):
         self.bridge = Bridge(self.env, self.worker); self._pre = {}
         self.base_url = self._base_url or _endpoint(self.supervisor)
         view.ledger.message(view.n)                         # every agent sends its description to the registry once
-        if self.retrieval in ("midian", "midian_va"):
-            from ..midian import Midian; from ..midian_va import MidianVA
-            self.mid = (MidianVA(r=self.r) if self.retrieval == "midian_va" else Midian(verify=True, cached=True, r=self.r)); self.mid.build(view, budget)
+        if self.retrieval in ("midian", "midian_wo_audit"):
+            from ..midian import Midian
+            self.mid = Midian(r=self.r) if self.retrieval == "midian" else Midian(audit=False, r=self.r); self.mid.build(view, budget)
 
     def _index(self, view):
         """Texts, retrieval vectors and shortlist tables: everything build() derives from the population alone, with no
@@ -310,7 +310,7 @@ class FrameworkMethod(Method):
         self._sota = self._sota_table(view) if self.retrieval == "sota" else None   # (K, k) -- needs _pool, so after it
 
     def retrieve(self, task) -> np.ndarray:
-        if self.retrieval in ("midian", "midian_va"):         # MIDIAN's pick first, then the rest of its leaf cohort
+        if self.retrieval in ("midian", "midian_wo_audit"):    # MIDIAN's pick first, then the rest of its leaf cohort
             a = self.mid.fetch(task)
             coh = self.mid.leaves[self.mid.leaf_of[a]]
             out = np.concatenate([[a], coh[(coh >= 0) & (coh != a)]])
@@ -334,7 +334,7 @@ class FrameworkMethod(Method):
         self._n += 1; self._strict += int(outcome) if self._picked else 0
         self.stats["success_strict"] = self._strict / self._n
         self.stats["fallback_rate"] = 1 - self.stats["picks"] / max(1, sum(self.stats[k] for k in ("picks", "fallbacks", "failures", "bad_name", "invalid_action")))
-        if self.retrieval in ("midian", "midian_va"):
+        if self.retrieval in ("midian", "midian_wo_audit"):
             self.mid.observe(task, agent, outcome)
 
     def prefetch(self, stream):
@@ -343,7 +343,7 @@ class FrameworkMethod(Method):
         memory, so a pick cannot depend on which requests came before it -- fetch() sees exactly the response a
         sequential run would. The MIDIAN cohorts learn online (retrieve depends on earlier observes) and stay sequential."""
         n = int(os.environ.get("RTE_FW_PARALLEL", "1"))
-        if n <= 1 or self.retrieval in ("midian", "midian_va"): return
+        if n <= 1 or self.retrieval in ("midian", "midian_wo_audit"): return
         import queue
         from concurrent.futures import ThreadPoolExecutor
         free = queue.Queue()

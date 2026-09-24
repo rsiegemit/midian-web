@@ -1,16 +1,16 @@
-"""Per-condition bars of every framework under every shortlist source, against the oracle and MIDIAN-VA.
+"""Per-condition bars of every framework under every shortlist source, against the oracle and MIDIAN.
     python scripts/shortlist_figs.py [live routereval]   -> figures/shortlist/<family>__n<n>__<dist>__<regime>.{png,pdf}
                                                            + figures/shortlist/<family>.csv + figures/shortlist/INDEX.md
 One figure per condition (family, n, population shape, liar regime); one panel and one row, always. One group per
 framework, one bar per shortlist source that has data in the condition (SOURCES: the pre-registered hashed TF-IDF,
 MiniLM, BM25, Qwen3-Embedding-8B dense with and without a task instruction, BM25+dense fusion + the Qwen3
-cross-encoder with and without an instruction, the declared-claim top-k and the MIDIAN-VA leaf cohort). Not drawn:
-dedup TF-IDF, fusion without the reranker, the MIDIAN-V cohort; a condition with fewer than two shortlists is skipped).
-The oracle (dotted) and MIDIAN-VA routing the whole population (solid) are horizontal lines across the panel
+cross-encoder with and without an instruction, the declared-claim top-k and the MIDIAN leaf cohort). Not drawn:
+dedup TF-IDF, fusion without the reranker, the cohort of MIDIAN w/o audits; a condition with fewer than two shortlists is skipped).
+The oracle (dotted) and MIDIAN routing the whole population (solid) are horizontal lines across the panel
 with their 95% seed-bootstrap band. A source is recognised from each row's params, so a new shortlist grid needs only
 an entry in SOURCES. Bars whose rows still have an erratum-28 rerun outstanding carry an asterisk.
 Rows come from rows.csv AND rows.d (reruns write rows.d only). b = 3 only -- never pooled with b = 1.
-Do-not-add list (extra_figs.excluded) applies; MIDIAN cohorts other than r = 10, the shuffled VA cohort (a position control), the lying-text condition and the 14B
+Do-not-add list (extra_figs.excluded) applies; MIDIAN cohorts other than r = 10, the shuffled MIDIAN cohort (a position control), the lying-text condition and the 14B
 Magentic-One supervisor arm are not shortlist sources and are never drawn."""
 from __future__ import annotations
 import glob, json, os, sys
@@ -33,7 +33,7 @@ SOURCES = [("tfidf", "hashed TF-IDF (pre-registered)", "#b0b0b0"), ("bm25", "BM2
            ("sota", "fusion + reranker", "#ff9896"), ("sota_icomp", "fusion + reranker, I-competent", "#d62728"),
            ("sota_idemo", "fusion + reranker, I-demonstrated", "#8b0000"),
            ("declared", "declared-claim top-k", "#e7ba52"),
-           ("va_cohort", "MIDIAN-VA leaf cohort", "#117a3d")]
+           ("va_cohort", "MIDIAN leaf cohort", "#117a3d")]
 SRC_NAME = {k: v for k, v, _ in SOURCES}; SRC_COLOR = {k: c for k, _, c in SOURCES}
 # Erratum 30: H moves to the no-repeat + calibrated-claims reruns (*_norep_cal) once ALL of them have landed; until then the
 # old rows stand, never a mix. H30_FW / H30_REF are those grids.
@@ -58,17 +58,17 @@ GRIDS = {"live": lambda g: g.startswith("fw_live_n") and "lietext" not in g or g
 
 def source(params):
     """params JSON of a framework row -> shortlist source key, or None when the row is not drawn (not a shortlist arm, or
-    dropped: dedup TF-IDF, fusion without the reranker, the MIDIAN-V cohort, the shuffled VA cohort, r != 10)."""
+    dropped: dedup TF-IDF, fusion without the reranker, the cohort of MIDIAN w/o audits, the shuffled MIDIAN cohort, r != 10)."""
     p = json.loads(params) if isinstance(params, str) and params.startswith("{") else {}
     if "supervisor" in p or "lie_text" in p: return None
     ret = p.get("retrieval"); ins = str(p.get("embed_instruct", ""))
     tag = "_icomp" if "competent" in ins else "_idemo" if "demonstrated" in ins else ""
     if ret is None: return None if p.get("dedup") else "tfidf"
-    if ret == "midian_va": return "va_cohort" if p.get("r") == 10 and not p.get("shuffle") else None
+    if ret == "midian": return "va_cohort" if p.get("r") == 10 and not p.get("shuffle") else None
     if ret == "embed": return ("dense" + tag) if "Qwen" in str(p.get("embed_model", "")) else "embed"
     if ret == "sota": return "sota" + tag
     return ret if ret in ("bm25", "declared") else None
-# where the oracle and MIDIAN-VA for a condition come from: every grid at that n is pooled and matched on (dist, regime, seed)
+# where the oracle and MIDIAN for a condition come from: every grid at that n is pooled and matched on (dist, regime, seed)
 REF_GRIDS = {"live": {100: ["fw_live_n100", "learned_n100", "live_core_n100", "fw_live_n100_lowskill"],
                       1000: ["fw_live_n1000", "live_f1_n1000", "variants_f1", "learned_f1", "fw_live_n1000_lowskill"],
                       10000: ["learned_n10k", "live_n10k_v2", "fw_live_n10k_cartel", "learned_n10k_beta01"],
@@ -93,7 +93,7 @@ def tagged(df):
 
 
 def collect(family):
-    """(n, dist, regime) -> {framework -> {source -> per-seed Series}}, the oracle / MIDIAN-VA per-seed Series, and the
+    """(n, dist, regime) -> {framework -> {source -> per-seed Series}}, the oracle / MIDIAN per-seed Series, and the
     (framework, source) pairs with an erratum-28 rerun outstanding."""
     cells: dict[tuple, dict] = {}; pending = pending_reruns()
     for grid in sorted(os.path.basename(g) for g in glob.glob(f"{R}/*") if GRIDS[family](os.path.basename(g))):
@@ -118,7 +118,8 @@ def collect(family):
         for grid in (H30_REF if family == "routereval" and h30() else REF_GRIDS[family]).get(n, []):
             df = rows(grid)
             if df.empty: continue
-            q = tagged(df[df.method.isin(["oracle", "midian_va"]) & (df.n == n) & (df.dist.astype(str) == dist)])
+            full = (df.method == "midian") & (df.params.fillna("{}").astype(str) == "{}")          # MIDIAN, the full method
+            q = tagged(df[((df.method == "oracle") | full) & (df.n == n) & (df.dist.astype(str) == dist)])
             q = q[q.regime == reg]
             if reg == "beta0" and q.liar_select.nunique() > 1: q = q[q.liar_select == "random"]
             for m, g in q.groupby("method"):
@@ -135,7 +136,7 @@ def draw(family, key, cell, csv_rows):
     w = 0.84 / len(srcs); xfw = list(range(len(fws)))              # one group per framework, one bar per source
     fig, ax = plt.subplots(figsize=(max(6.4, (0.35 + 0.075 * len(srcs)) * len(fws) + 2.0), 2.9))
 
-    for m, lbl, ls in (("oracle", "oracle", ":"), ("midian_va", "MIDIAN-VA (whole population)", "-")):   # reference lines
+    for m, lbl, ls in (("oracle", "oracle", ":"), ("midian", "MIDIAN (whole population)", "-")):   # reference lines
         if m not in cell["ref"]: continue
         s = cell["ref"][m]; lo, hi = _ci(s); v = float(s.mean()); c = _COLOR.get(m, "#555")
         ax.axhspan(lo, hi, color=c, alpha=0.12, lw=0, zorder=1)
@@ -180,7 +181,7 @@ def main(families):
         pd.DataFrame(csv_rows, columns=["family", "regime", "dist", "n", "arm", "shortlist", "mean", "ci_lo", "ci_hi", "seeds", "rerun_outstanding"]).to_csv(f"{OUT}/{family}.csv", index=False)
     with open(f"{OUT}/INDEX.md", "w") as f:
         f.write("# figures/shortlist -- every framework under every shortlist source, per condition\n\n"
-                "One figure per (family, n, population shape, liar regime); one panel and one row. The oracle (dotted) and MIDIAN-VA routing\n"
+                "One figure per (family, n, population shape, liar regime); one panel and one row. The oracle (dotted) and MIDIAN routing\n"
                 "the whole population (solid) are horizontal lines with their 95% seed-bootstrap band; each framework group carries one bar per\n"
                 "shortlist source. Error bars are the 95% seed bootstrap; * marks a bar with an erratum-28 rerun outstanding. b = 3 only.\n"
                 "Do-not-add arms (extra_figs.excluded) are never drawn.\n\n"

@@ -6,7 +6,7 @@ and seeds, from the MEASURED S (read for measurement only; no method ever sees i
   position 1  S of the list's first entry               liar frac      fraction of the list that is a liar
 Lists are built exactly as the framework adapter builds them (rte/methods/frameworks/_common.py retrieve): TF-IDF
 without dedup (pre-registered), every other source over the dedup pool; declared = top-k by the regime's lied-to D;
-dense / rerank from the cached Qwen3 files. The VA cohort is MIDIAN-VA's pick + its leaf cohort, rebuilt on a bernoulli
+dense / rerank from the cached Qwen3 files. The MIDIAN cohort is MIDIAN's pick + its leaf cohort, rebuilt on a bernoulli
 world carrying the population's exact S (as scripts/declared_cohort.py), so it is a reconstruction.
 Recovery per framework = (framework success - list mean) / (best in list - list mean), framework success from
 figures/shortlist/live.csv (seed mean, same cell); 0 = a uniform pick from the list, 1 = the list's best agent."""
@@ -17,7 +17,7 @@ from rte.backends import families
 from rte.budget import Budget
 from rte.methods._learned import embed
 from rte.methods.frameworks._common import _hash_tfidf
-from rte.methods.midian_va import MidianVA
+from rte.methods.midian import Midian
 from rte.stable_hash import stable_seed_32
 from rte.world import World, select_liars, apply_lying, DELTA_INFLATE
 
@@ -50,7 +50,7 @@ for n in (10000, 100000):
             L = dict(lists, declared=rank(lambda f: D[:, f]))
             w = World(n, K, "specialist", beta, seed=seed, liar_select=ls, backend="bernoulli", backend_kwargs={"calibrate_from": f"{P}/S.npy"})
             w.backend._S = S
-            m = MidianVA(r=10); m.build(w.view(m.needs), Budget(3)); va = {}
+            m = Midian(r=10); m.build(w.view(m.needs), Budget(3)); va = {}
             for t in w.tasks(400):
                 f = int(t.family)
                 if f in va: continue

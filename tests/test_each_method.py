@@ -28,7 +28,7 @@ from rte.world import AccessError, World
 
 N, K, DIST, BETA, SEED, N_TASKS = 100, 16, "specialist", 0.25, 1, 100
 BUDGET = Budget(3)
-EXCLUDE = {"base", "__init__"}
+EXCLUDE = {"base", "__init__", "keys"}          # keys: the old-MIDIAN-key mapping, not a method
 NO_CHARGE = {"random"}                 # learns nothing, charges nothing: only `tasks` may move
 DUMMY_URL = "http://127.0.0.1:9/v1"    # fw_echo never calls it; it exercises the bridge protocol
 
@@ -234,9 +234,10 @@ def fetch_messages(world, m, tasks) -> float:
     return world.ledger.messages / len(tasks)
 
 
-def test_midian_sends_two_messages_per_level(world):
-    """CONTRACT: MIDIAN's fetch = 2 messages per level (request down, answer up) = 2*ceil(log_r n)."""
-    m = _new(_cls("midian"), "midian")
+def test_midian_wo_defenses_sends_two_messages_per_level(world):
+    """CONTRACT: the fetch of MIDIAN w/o defenses (the full descent, no cached root pick) = 2 messages per level
+    (request down, answer up) = 2*ceil(log_r n)."""
+    m = _cls("midian")(audit=False, verify=False)
     _build(m, world.view(m.needs), "midian")
     r = m.params.get("r", 10)
     depth = math.ceil(math.log(world.n, r))

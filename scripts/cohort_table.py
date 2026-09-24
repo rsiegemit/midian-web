@@ -8,19 +8,21 @@ Deltas are paired per (shape, seed) cell and bootstrapped over seeds, the conven
 liar-selection cells are bit-identical and only one is kept; `cartel` is beta = 0.5 with liar_select=low_skill_first.
 The n = 100,000 pool keeps its cohort arms in live_n100k_cohort and its cohort=random baselines in live_n100k, so the
 two grids are loaded together."""
-import argparse, os, sys
+import argparse, json, os, sys
 import numpy as np
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from rte.analyze import load
 from extra_figs import ci
+from seed_tables import label
 
 POOLS = [("RouterEval m=1,000", ["cohort_routereval"]), ("RouterEval m=5,000", ["cohort_routereval5k"]),
          ("LLMRouterBench m=20", ["cohort_llmrouterbench"]), ("RTE n=1,000", ["cohort_rte"]),
          ("RTE n=100,000", ["live_n100k_cohort", "live_n100k"])]
-MODES = [("stratify", "{b}_stratified"), ("block", "{b}[cohort=block]"),
-         ("specialty", "{b}[cohort=specialty]"), ("declared", "{b}[cohort=declared]")]
-BASES = [("MIDIAN", "midian"), ("MIDIAN-A", "midian_a"), ("MIDIAN-VA", "midian_va")]
+MODES = [("stratify", {"stratify": True}), ("block", {"cohort": "block"}),
+         ("specialty", {"cohort": "specialty"}), ("declared", {"cohort": "declared"})]
+BASES = [("MIDIAN w/o defenses", {"audit": False, "verify": False}), ("MIDIAN w/o verification", {"verify": False}), ("MIDIAN", {})]
+arm = lambda *p: label("midian", json.dumps({k: v for d in p for k, v in d.items()}))   # the arm's label, as rte.analyze builds it
 
 
 def delta(df, base, lab, b, beta, ls):
@@ -54,8 +56,8 @@ def main():
             for b in sorted(df.b.dropna().unique()):
                 for blabel, base in BASES:
                     cells = []
-                    for _, tmpl in MODES:
-                        r = delta(df, base, tmpl.format(b=base), b, beta, ls)
+                    for _, mode in MODES:
+                        r = delta(df, arm(base), arm(base, mode), b, beta, ls)
                         cells.append("--" if r is None else
                                      f"{r[0]:+.3f}{'*' if (r[1] > 0 or r[2] < 0) else ''}")
                     if set(cells) == {"--"}: continue

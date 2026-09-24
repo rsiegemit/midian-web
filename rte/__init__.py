@@ -1,1 +1,1 @@
-"""RTE: routing-to-experts benchmark. Plain MIDIAN vs. self-contained rivals."""
+"""RTE: routing-to-experts benchmark. MIDIAN vs. self-contained rivals."""

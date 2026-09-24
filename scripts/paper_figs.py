@@ -18,8 +18,8 @@ plt.rcParams.update({"pdf.fonttype": 42, "ps.fonttype": 42, "font.family": "Deja
                      "lines.markersize": 3, "xtick.major.width": 0.5, "ytick.major.width": 0.5, "grid.linewidth": 0.4, "figure.constrained_layout.use": True, "figure.constrained_layout.h_pad": 0.02, "figure.constrained_layout.w_pad": 0.02})
 cm = lambda x: x / 2.54
 COLOR = {**COLOR, "knn_router": "#1abc9c", "mlp_router": "#795548", "fw_band": "#bbbbbb"}      # figures/COLOURS.md
-NAME = {"oracle": "oracle", HALP: "seq. halving (peer)", HAL: "seq. halving (trusted)", "midian_va": "MIDIAN-VA", "midian_v": "MIDIAN-V", "midian_a": "MIDIAN-A",
-        "midian": "MIDIAN", FLAT_ON: "flat probe argmax (online)", "knn_router": "RouterBench KNN router", "mlp_router": "RouterBench MLP router",
+NAME = {"oracle": "oracle", HALP: "seq. halving (peer)", HAL: "seq. halving (trusted)", "midian": "MIDIAN", "midian_wo_audit": "MIDIAN w/o audits", "midian_wo_verify": "MIDIAN w/o verification",
+        "midian_wo_defenses": "MIDIAN w/o defenses", FLAT_ON: "flat probe argmax (online)", "knn_router": "RouterBench KNN router", "mlp_router": "RouterBench MLP router",
         "declared_argmax": "declared argmax", "warm_start_bandit": "warm-start bandit", "random": "random"}
 SHORT = {**NAME, HALP: "halving (peer)", HAL: "halving (trusted)", FLAT_ON: "flat online", "knn_router": "KNN router", "mlp_router": "MLP router", "warm_start_bandit": "warm-start bandit"}
 FWS = ["fw_autogen", "fw_camel_workforce", "fw_crewai", "fw_google_adk", "fw_langgraph", "fw_llamaindex", "fw_maf", "fw_magentic_one", "fw_openai_agents", "fw_smolagents"]
@@ -62,13 +62,13 @@ def save(fig, name):
 
 
 # ----------------------------------------------------------------------------------------------------- M1
-M1_SERIES = [l for l in ["oracle", HALP, "midian_va", "midian_a", "midian", FLAT_ON, "knn_router", "declared_argmax", "random"] if not excluded(l)]
+M1_SERIES = [l for l in ["oracle", HALP, "midian", "midian_wo_verify", "midian_wo_defenses", FLAT_ON, "knn_router", "declared_argmax", "random"] if not excluded(l)]
 SIM_SKIP = {"knn_router",            # not run on the calibrated backend
             "declared_argmax"}       # the calibrated sweep declares on the PROGRAMMATIC channel (honest S + noise); the live points are
                                      # self-described (over-claiming), so one curve across both would read a channel change as scale
-STYLE = {"oracle": dict(ls=":", color=COLOR["oracle"]), "random": dict(ls="--", color=COLOR["random"]), "midian_va": dict(lw=2.0),
+STYLE = {"oracle": dict(ls=":", color=COLOR["oracle"]), "random": dict(ls="--", color=COLOR["random"]), "midian": dict(lw=2.0),
          "declared_argmax": dict(ls="--"), "knn_router": dict(ls="--"),    # dashed = reads no reports
-         "midian_a": dict(marker="s")}    # colours are fixed (figures/COLOURS.md); A's dark red is close to MIDIAN's red at print size, so separate it by marker
+         "midian_wo_verify": dict(marker="s")}    # colours are fixed (figures/COLOURS.md); w/o verification's dark red is close to w/o defenses' red at print size, so separate it by marker
 
 
 def m1_points(cartel):
@@ -150,7 +150,7 @@ def M1():
     axes[0].set_ylabel("success"); csv("M1_success_vs_n", recs); save(fig, "M1_success_vs_n")
 
 
-M1F_SERIES = [l for l in ["oracle", HALP, "declared_argmax", "warm_start_bandit", "midian_va", "midian_v", "midian", "mlp_router", FLAT_ON, "knn_router", "random"] if not excluded(l)]
+M1F_SERIES = [l for l in ["oracle", HALP, "declared_argmax", "warm_start_bandit", "midian", "midian_wo_audit", "midian_wo_defenses", "mlp_router", FLAT_ON, "knn_router", "random"] if not excluded(l)]
 
 
 def M1_full():
@@ -178,8 +178,8 @@ def M1_full():
 
 
 # ----------------------------------------------------------------------------------------------------- M2
-M2_SERIES = [l for l in ["oracle", HALP, "midian_va", "midian_v", "midian_a", "midian", FLAT_ON, "mlp_router", "knn_router", "declared_argmax"] if not excluded(l)]
-BAND = {l for l in ("midian_va", "midian_v", HALP, "declared_argmax") if not excluded(l)}
+M2_SERIES = [l for l in ["oracle", HALP, "midian", "midian_wo_audit", "midian_wo_verify", "midian_wo_defenses", FLAT_ON, "mlp_router", "knn_router", "declared_argmax"] if not excluded(l)]
+BAND = {l for l in ("midian", "midian_wo_audit", HALP, "declared_argmax") if not excluded(l)}
 REPORT_FREE = {FLAT_ON, "mlp_router", "knn_router", "declared_argmax", "oracle"}
 
 
@@ -195,7 +195,7 @@ def M2():
                 m, l, h, k, sd = mean_ci(w[s]); ys.append(m); lo.append(l); hi.append(h)
                 recs.append(dict(panel=ttl, series=NAME[s], beta=b, mean=m, ci_lo=l, ci_hi=h, units=k, seeds=sd, grid="variants_f1+learned_f1+live_f1_n1000"))
             x = np.arange(len(betas)); ls = ":" if s == "oracle" else ("--" if s in REPORT_FREE else "-")
-            lw = 2.0 if s == "midian_va" else (0.8 if s in REPORT_FREE else 1.1)
+            lw = 2.0 if s == "midian" else (0.8 if s in REPORT_FREE else 1.1)
             ax.plot(x, ys, ls=ls, lw=lw, color=COLOR[s], marker="o", ms=2.8 if s not in REPORT_FREE else 2.2, label=SHORT[s])
             if s in BAND: ax.fill_between(x, lo, hi, color=COLOR[s], alpha=.15, lw=0)
         ax.set_xticks(np.arange(len(betas))); ax.set_xticklabels([str(b) for b in betas]); ax.set_xlabel("β (liar fraction)"); ax.set_ylim(0.35, 0.75); ax.grid(alpha=.3, lw=0.4)
@@ -232,33 +232,33 @@ def F1_energy():
     fws = [m for m in t.index if m.startswith("fw_") and "14B" not in m]; light = plt.cm.Blues(np.linspace(0.35, 0.8, len(fws)))
     for m, c in zip(fws, light):
         r = t.loc[m]; ax.plot(T, r.build_J + T * r.per_task_J, color=c, lw=0.7); recs.append(dict(series=m, build_J=float(r.build_J), per_task_J=float(r.per_task_J), grid="fw_live_n1000 (ledger) × scripts/energy.py cost model"))
-    r = t.loc["midian"]; ax.plot(T, r.build_J + T * r.per_task_J, color=COLOR["midian"], lw=1.4); recs.append(dict(series="midian", build_J=float(r.build_J), per_task_J=float(r.per_task_J), grid="live_f1_n1000+variants_f1 (ledger) × scripts/energy.py cost model"))
+    r = t.loc["midian_wo_defenses"]; ax.plot(T, r.build_J + T * r.per_task_J, color=COLOR["midian_wo_defenses"], lw=1.4); recs.append(dict(series="midian_wo_defenses", build_J=float(r.build_J), per_task_J=float(r.per_task_J), grid="live_f1_n1000+variants_f1 (ledger) × scripts/energy.py cost model"))
     for b, lab, xy, ha in (("fw_magentic_one", "Magentic", (-2, -8), "right"), ("fw_crewai", "CrewAI", (0, 5), "center"), ("fw_autogen", "AutoGen", (2, -8), "left")):
-        xj = energy.crossing(t, "midian", b, "build_J", "per_task_J"); xg = energy.crossing(t, "midian", b); y = r.build_J + xj * r.per_task_J
+        xj = energy.crossing(t, "midian_wo_defenses", b, "build_J", "per_task_J"); xg = energy.crossing(t, "midian_wo_defenses", b); y = r.build_J + xj * r.per_task_J
         ax.plot([xj], [y], "kx", ms=4, mew=0.9); ax.annotate(f"{lab}\n{xj:,.0f}", (xj, y), textcoords="offset points", xytext=xy, ha=ha, va="top" if xy[1] < 0 else "bottom", fontsize=5.5, linespacing=0.9)
-        recs.append(dict(series=f"crossing midian vs {b}", tasks_joules=float(xj), tasks_gpu_s=float(xg), label_uses=round(xj)))
+        recs.append(dict(series=f"crossing midian_wo_defenses vs {b}", tasks_joules=float(xj), tasks_gpu_s=float(xg), label_uses=round(xj)))
     ax.set_xscale("log"); ax.set_yscale("log"); ax.set_xticks([1e2, 1e3, 1e4, 1e5]); ax.set_xlim(1e2, 1e5); ax.set_xlabel("tasks routed", fontsize=7); ax.set_ylabel("cumulative J", fontsize=7)
     ax.tick_params(labelsize=6, pad=1); ax.minorticks_off(); ax.grid(alpha=.25, lw=0.3, which="major"); ax.xaxis.labelpad = 1; ax.yaxis.labelpad = 1; csv("F1_energy_crossings", recs); save(fig, "F1_energy_crossings")
 
 
 def F1_shortlist():
     d = rows("fw_live_n1000", "fw_live_n1000_verified_va"); d = d[d.declared_source == "self_described"] if "declared_source" in d else d
-    cols = [f + s for f in FWS for s in ("", "[r=10,retrieval=midian_va]")] + ["midian_va", "oracle"]
+    cols = [f + s for f in FWS for s in ("", "[r=10,retrieval=midian]")] + ["midian", "oracle"]
     w = d[d.label.isin(cols)].pivot_table(index=["dist", "beta", "seed"], columns="label", values="success")[cols].dropna()
     fig = plt.figure(figsize=(cm(3.9), cm(3.2)), layout="none"); ax = fig.add_axes([0.25, 0.34, 0.71, 0.64]); x = np.arange(len(FWS)); recs = []
-    for off, suf, lab, c in ((-.2, "", "own", "#2980b9"), (.2, "[r=10,retrieval=midian_va]", "+VA", "#e67e22")):
+    for off, suf, lab, c in ((-.2, "", "own", "#2980b9"), (.2, "[r=10,retrieval=midian]", "+MIDIAN cohort", "#e67e22")):
         vals = [mean_ci(w[f + suf]) for f in FWS]
         ax.bar(x + off, [v[0] for v in vals], .4, color=c, label=lab, yerr=[[v[0] - v[1] for v in vals], [v[2] - v[0] for v in vals]], capsize=0.8, error_kw=dict(elinewidth=0.4))
         for f, v in zip(FWS, vals): recs.append(dict(framework=f, arm=lab, mean=v[0], ci_lo=v[1], ci_hi=v[2], units=v[3], seeds=v[4], grid="fw_live_n1000 / fw_live_n1000_verified_va"))
-    mv, orc = mean_ci(w["midian_va"]), mean_ci(w["oracle"])
-    ax.axhline(mv[0], color=COLOR["midian_va"], ls="--", lw=0.8, label=f"VA {mv[0]:.3f}"); ax.axhline(orc[0], color=COLOR["oracle"], ls=":", lw=0.8, label=f"oracle {orc[0]:.3f}")
-    recs += [dict(framework="", arm="midian_va", mean=mv[0], ci_lo=mv[1], ci_hi=mv[2], units=mv[3], seeds=mv[4], grid="fw_live_n1000"), dict(framework="", arm="oracle", mean=orc[0], ci_lo=orc[1], ci_hi=orc[2], units=orc[3], seeds=orc[4], grid="fw_live_n1000")]
+    mv, orc = mean_ci(w["midian"]), mean_ci(w["oracle"])
+    ax.axhline(mv[0], color=COLOR["midian"], ls="--", lw=0.8, label=f"MIDIAN {mv[0]:.3f}"); ax.axhline(orc[0], color=COLOR["oracle"], ls=":", lw=0.8, label=f"oracle {orc[0]:.3f}")
+    recs += [dict(framework="", arm="midian", mean=mv[0], ci_lo=mv[1], ci_hi=mv[2], units=mv[3], seeds=mv[4], grid="fw_live_n1000"), dict(framework="", arm="oracle", mean=orc[0], ci_lo=orc[1], ci_hi=orc[2], units=orc[3], seeds=orc[4], grid="fw_live_n1000")]
     ax.set_xticks(x); ax.set_xticklabels([ABBR[f] for f in FWS], rotation=45, ha="right", fontsize=6.0, rotation_mode="anchor"); ax.set_xlim(-0.7, len(FWS) - 0.3); ax.set_ylim(0.40, 0.85); ax.set_ylabel("success", fontsize=7); ax.tick_params(axis="y", labelsize=6, pad=1); ax.tick_params(axis="x", pad=1)
     ax.grid(axis="y", alpha=.25, lw=0.3); ax.legend(loc="upper left", ncol=2, fontsize=5.5, frameon=True, framealpha=0.7, edgecolor="none", handlelength=1.0, labelspacing=0.15, columnspacing=0.5, borderpad=0.15, handletextpad=0.4); csv("F1_shortlist_lift_n1000", recs); save(fig, "F1_shortlist_lift_n1000")
 
 
 # ----------------------------------------------------------------------------------------------------- M5 (probe budget)
-M5_SERIES = ["oracle", "midian_va", "midian_a", "midian", "midian_v", FLAT_ON, "warm_start_bandit", "declared_argmax", "random"]
+M5_SERIES = ["oracle", "midian", "midian_wo_verify", "midian_wo_defenses", "midian_wo_audit", FLAT_ON, "warm_start_bandit", "declared_argmax", "random"]
 M5_LAB = {FLAT_ON: "flat_probe_argmax_online"}
 
 
@@ -281,10 +281,10 @@ def M5():
 
 # ----------------------------------------------------------------------------------------------------- M6 (shortlist sources)
 def M6():
-    """Frameworks pooled by shortlist source vs n, specialist, honest and cartel; MIDIAN-VA itself and the oracle beside. Data via scripts/doc_tables.py."""
+    """Frameworks pooled by shortlist source vs n, specialist, honest and cartel; MIDIAN itself and the oracle beside. Data via scripts/doc_tables.py."""
     from doc_tables import SOURCES, NINE, fw_rows, cell, ref
     fig, axes = plt.subplots(1, 2, figsize=(cm(13.97), cm(5.6)), sharey=True); recs = []
-    colors = {"TF-IDF (pre-registered)": "#7f8c8d", "dedup": "#95a5a6", "MiniLM": "#2980b9", "MIDIAN-V cohort": "#e67e22", "MIDIAN-VA cohort": "#c0392b"}
+    colors = {"TF-IDF (pre-registered)": "#7f8c8d", "dedup": "#95a5a6", "MiniLM": "#2980b9", "MIDIAN w/o audits cohort": "#e67e22", "MIDIAN cohort": "#c0392b"}
     for ax, reg, ttl in zip(axes, ("beta0", "cartel"), ("honest, β = 0", "colluding low-skill cartel, β = 0.5")):
         for name, kind, honest, cartel in SOURCES:
             xs, ys, lo, hi = [], [], [], []
@@ -298,12 +298,12 @@ def M6():
             if xs:
                 ax.plot(xs, ys, marker="o", ms=3.2, lw=1.0, color=colors[name], label=name)
                 ax.fill_between(xs, lo, hi, color=colors[name], alpha=0.12, lw=0)
-        for arm, st in (("midian_va", dict(color=COLOR["midian_va"], lw=2.0, marker="o")), ("oracle", dict(color=COLOR["oracle"], ls=":", marker="o"))):
+        for arm, st in (("midian", dict(color=COLOR["midian"], lw=2.0, marker="o")), ("oracle", dict(color=COLOR["oracle"], ls=":", marker="o"))):
             xs = [n for n in (100, 1000, 10000, 100000)]; ys = [ref(n, reg, "specialist", arm) for n in xs]
-            ax.plot(xs, ys, ms=3.2, label=SHORT[arm] + (" itself" if arm == "midian_va" else ""), **st)
+            ax.plot(xs, ys, ms=3.2, label=SHORT[arm] + (" itself" if arm == "midian" else ""), **st)
             for n, y in zip(xs, ys): recs.append(dict(panel=ttl, source=arm, n=n, frameworks_mean=y, best=None, best_framework=None, partial="", grid="reference"))
         ax.set_xscale("log"); ax.set_xlabel("n (agents)"); ax.set_ylim(0.2, 0.9); ax.grid(alpha=.3, lw=0.4); ax.set_title(ttl)
-    axes[0].set_ylabel("success (specialist)"); h, l = axes[0].get_legend_handles_labels()      # the honest panel carries every source (V cohort exists at 10^2-10^3 only)
+    axes[0].set_ylabel("success (specialist)"); h, l = axes[0].get_legend_handles_labels()      # the honest panel carries every source (the w/o-audits cohort exists at 10^2-10^3 only)
     fig.legend(h, l, loc="outside lower center", ncol=4, fontsize=5.6, frameon=False, handlelength=1.1, columnspacing=0.8, labelspacing=0.12, title="frameworks pooled by shortlist source (line) with a band up to the best single framework", title_fontsize=5.6)
     csv("M6_frameworks_by_shortlist", recs); save(fig, "M6_frameworks_by_shortlist")
 
@@ -340,20 +340,20 @@ def M4():
             for beta_tag, dd in (("beta=0", d[np.isclose(d.beta, 0)]), ("all_beta", d)):
                 w = dd.pivot_table(index=["dist", "beta", "liar_select", "seed"], columns="label", values="success")
                 x = w.xs(dist, level="dist"); fws = [f for f in FWS + [MAG14] if f in x]
-                diff = pd.concat([(x[f] - x["midian"]).dropna() for f in fws])
+                diff = pd.concat([(x[f] - x["midian_wo_defenses"]).dropna() for f in fws])
                 lo, hi = _ci(diff)
                 srecs.append(dict(n=n, shape=dist, beta=beta_tag, spearman_pooled=round(rho.spearman.mean(), 4),
                                   spearman_within_family=round(rho.spearman_per_family.mean(), 4),
-                                  framework_minus_midian=round(float(diff.mean()), 4), ci_lo=round(float(lo), 4), ci_hi=round(float(hi), 4),
+                                  framework_minus_midian_wo_defenses=round(float(diff.mean()), 4), ci_lo=round(float(lo), 4), ci_hi=round(float(hi), 4),
                                   pairs=int(len(diff)), frameworks=len(fws), seeds=int(rho.seed.nunique()), grid=f"fw_live_n{n} + legibility.json"))
     csv("M4_legibility_stats", srecs)
     # ---- panel A
     d = rows("fw_live_n1000", "learned_f1"); d = d[d.declared_source == "self_described"] if "declared_source" in d else d
-    w = units(d, FWS + [MAG14, "declared_argmax", "midian", "midian_va", "oracle"], None, 0.0, "random")
+    w = units(d, FWS + [MAG14, "declared_argmax", "midian_wo_defenses", "midian", "oracle"], None, 0.0, "random")
     fig = plt.figure(figsize=(cm(13.97), cm(5.0)), layout="none")
     gs = fig.add_gridspec(1, 2, width_ratios=[7.5, 6.0], left=0.055, right=0.995, bottom=0.155, top=0.98, wspace=0.28)
     axA, axB = fig.add_subplot(gs[0]), fig.add_subplot(gs[1])
-    bars = [("declared_argmax", "declared argmax", COLOR["declared_argmax"]), ("midian", "MIDIAN", COLOR["midian"]), ("midian_va", "MIDIAN-VA", COLOR["midian_va"])]
+    bars = [("declared_argmax", "declared argmax", COLOR["declared_argmax"]), ("midian_wo_defenses", "MIDIAN w/o defenses", COLOR["midian_wo_defenses"]), ("midian", "MIDIAN", COLOR["midian"])]
     recs = []; bw = 0.2
     for i, dist in enumerate(SHAPES):
         x = w.xs(dist, level="dist"); fws = [f for f in FWS + [MAG14] if f in x]
@@ -379,7 +379,7 @@ def M4():
     JIT = 0.012                       # D and S are heavily quantised (bimodal: 6 distinct D, 31 distinct (D,S) pairs over
                                       # 16,000 cells), so an un-jittered scatter collapses onto a handful of dots and hides
                                       # all density. Gaussian jitter of this size is well below the gap between levels.
-    for dist, c in (("specialist", COLOR["midian"]), ("bimodal", "#2980b9")):
+    for dist, c in (("specialist", COLOR["midian_wo_defenses"]), ("bimodal", "#2980b9")):
         D, S = _m4_world(dist)
         pts = np.column_stack([D.ravel(), S.ravel()])
         n_tot = len(pts)

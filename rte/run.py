@@ -32,7 +32,7 @@ def seeds(spec):
 def all_methods(backend):
     """Every algorithmic method file (frameworks are listed explicitly in their own grids: one supervisor call per task);
     LLM-only classes only on the llm backend."""
-    names = [m.name for m in pkgutil.iter_modules(rte.methods.__path__) if not m.ispkg and not m.name.startswith("_") and m.name != "base"]
+    names = [m.name for m in pkgutil.iter_modules(rte.methods.__path__) if not m.ispkg and not m.name.startswith("_") and m.name not in ("base", "keys")]
     return [n for n in names if backend == "llm" or not getattr(load_method(n), "requires_llm", False)]
 
 
@@ -44,7 +44,7 @@ def method_specs(block):
     ms = (all_methods(block["backend"]) + MIDIAN_ABLATIONS + list(block.get("extra") or []) if ms == "all"
           else [x for m in ms for x in (m if isinstance(m, list) else [m])])
     ms = [{"name": m, "params": {}} if isinstance(m, str) else {"name": m["name"], "params": m.get("params") or {}} for m in ms]
-    ms = [{"name": k[0], "params": k[1]} for k in (keys.to_new(m["name"], m["params"]) for m in ms) if k]   # old keys in a grid still mean the same arm
+    ms = list({m["name"] + jkey(m["params"]): m for m in ms}.values())   # one spec per arm ("all" + extra can repeat one)
     drop = set(block.get("exclude") or [])           # LLM-only methods are dropped off the llm backend too, so a
     llm = block["backend"] == "llm" or bool(block.get("allow_llm_methods"))   # bernoulli mirror of a framework grid skips
                                                      # them, not fails them; `allow_llm_methods: true` opts a non-llm grid

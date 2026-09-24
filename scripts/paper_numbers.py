@@ -50,34 +50,34 @@ def paired(key, w, a, b, grid, note=None):
 
 
 # ------------------------------------------------------------------------------------------------ (a) headline
-fw = rows("fw_live_n1000"); wf = W(fw, FWS + ["midian", "midian_va", "midian_v", "oracle", "random", MAG14])
+fw = rows("fw_live_n1000"); wf = W(fw, FWS + ["midian_wo_defenses", "midian", "midian_wo_audit", "oracle", "random", MAG14])
 fmeans = wf[fws(wf)].mean(); put_v("a.frameworks_all_beta_range_n1000", [round(fmeans.min(), 3), round(fmeans.max(), 3)], "fw_live_n1000", missing(wf) or "min/max over the ten frameworks of the mean over 120 units", 120)
-f1 = rows("variants_f1", "learned_f1", "live_f1_n1000"); w0 = W(f1, ["midian", "midian_va", "midian_v", "midian_a", "oracle", HALP, HAL, FLAT_ON, "knn_router", "mlp_router", "declared_argmax", "random"], beta=0.0)
-for s in ("midian", "midian_va", "midian_v", "oracle"):
+f1 = rows("variants_f1", "learned_f1", "live_f1_n1000"); w0 = W(f1, ["midian_wo_defenses", "midian", "midian_wo_audit", "midian_wo_verify", "oracle", HALP, HAL, FLAT_ON, "knn_router", "mlp_router", "declared_argmax", "random"], beta=0.0)
+for s in ("midian_wo_defenses", "midian", "midian_wo_audit", "oracle"):
     put(f"a.{s}_beta0_n1000", w0[s], "variants_f1 (β = 0, both liar-selection cells, 3 shapes, 10 seeds)")
     put(f"a.{s}_beta0_n1000_random_cells_only", W(f1, [s], beta=0.0, liar_select="random")[s], "variants_f1 (β = 0, liar_select = random cells only)")
-put("a.midian_all_beta_n1000_table1", wf["midian"], "fw_live_n1000 (all β, random liars)"); put("a.midian_va_all_beta_n1000_table1", wf["midian_va"], "fw_live_n1000 (all β)")
-for f in FWS: paired(f"a.paired_{f}_minus_midian", wf, f, "midian", "fw_live_n1000, 120 units")
-put_v("a.paired_framework_minus_midian_range", [round(min(N[f"a.paired_{f}_minus_midian"]["value"] for f in FWS), 3), round(max(N[f"a.paired_{f}_minus_midian"]["value"] for f in FWS), 3)], "fw_live_n1000")
+put("a.midian_wo_defenses_all_beta_n1000_table1", wf["midian_wo_defenses"], "fw_live_n1000 (all β, random liars)"); put("a.midian_all_beta_n1000_table1", wf["midian"], "fw_live_n1000 (all β)")
+for f in FWS: paired(f"a.paired_{f}_minus_midian_wo_defenses", wf, f, "midian_wo_defenses", "fw_live_n1000, 120 units")
+put_v("a.paired_framework_minus_midian_wo_defenses_range", [round(min(N[f"a.paired_{f}_minus_midian_wo_defenses"]["value"] for f in FWS), 3), round(max(N[f"a.paired_{f}_minus_midian_wo_defenses"]["value"] for f in FWS), 3)], "fw_live_n1000")
 sp = wf.xs("specialist", level="dist"); put("a.specialist_frameworks_mean", sp[fws(sp)].stack(), "fw_live_n1000 specialist cells (4 β × 10 seeds × 10 frameworks)", missing(sp))
-for s in ("midian", "midian_v", "midian_va", "oracle"): put(f"a.specialist_{s}", sp[s], "fw_live_n1000 specialist cells")
-put_v("a.specialist_pairs_framework_beats_midian", f"{int((sp[fws(sp)].gt(sp['midian'], axis=0)).sum().sum())} / {sp[fws(sp)].size}", "fw_live_n1000 specialist cells", missing(sp))
-n10 = rows("live_n10k_v2"); w10 = W(n10, FWS + ["midian", "midian_v", "midian_va", "random", "oracle"], beta=0.0)
+for s in ("midian_wo_defenses", "midian_wo_audit", "midian", "oracle"): put(f"a.specialist_{s}", sp[s], "fw_live_n1000 specialist cells")
+put_v("a.specialist_pairs_framework_beats_midian_wo_defenses", f"{int((sp[fws(sp)].gt(sp['midian_wo_defenses'], axis=0)).sum().sum())} / {sp[fws(sp)].size}", "fw_live_n1000 specialist cells", missing(sp))
+n10 = rows("live_n10k_v2"); w10 = W(n10, FWS + ["midian_wo_defenses", "midian_wo_audit", "midian", "random", "oracle"], beta=0.0)
 put_v("a.n10k_frameworks_range", [round(w10[fws(w10)].mean().min(), 3), round(w10[fws(w10)].mean().max(), 3)], "live_n10k_v2 (β = 0, specialist, 3 seeds, Q = 300)", missing(w10), units=3)
-put("a.n10k_random", w10["random"], "live_n10k_v2 β = 0"); put("a.n10k_midian", w10["midian"], "live_n10k_v2 β = 0"); put("a.n10k_midian_v", w10["midian_v"], "live_n10k_v2 β = 0"); put("a.n10k_midian_va", w10["midian_va"], "live_n10k_v2 β = 0")
-w10b = W(n10, FWS + ["midian", "midian_v", "midian_va", "random"], beta=0.25); put_v("a.n10k_frameworks_range_beta025", [round(w10b[fws(w10b)].mean().min(), 3), round(w10b[fws(w10b)].mean().max(), 3)], "live_n10k_v2 (β = 0.25)", missing(w10b))
-# VA − KNN / MLP
-w100 = W(rows("learned_n100"), ["midian_va", "knn_router", "mlp_router", HALP, "oracle"], beta=0.0); paired("a.va_minus_knn_n100_beta0", w100, "midian_va", "knn_router", "learned_n100 β = 0 (3 shapes × 2 liar-selection cells × 10 seeds)")
-paired("a.va_minus_knn_n1000_beta0", w0, "midian_va", "knn_router", "variants_f1 + learned_f1, β = 0"); w10k = W(rows("learned_n10k"), ["midian_va", "knn_router", HALP, "oracle", "midian", FLAT_ON], beta=0.0)
-paired("a.va_minus_knn_n10k_beta0", w10k, "midian_va", "knn_router", "learned_n10k β = 0 (specialist, 2 cells × 3 seeds, Q = 300)")
+put("a.n10k_random", w10["random"], "live_n10k_v2 β = 0"); put("a.n10k_midian_wo_defenses", w10["midian_wo_defenses"], "live_n10k_v2 β = 0"); put("a.n10k_midian_wo_audit", w10["midian_wo_audit"], "live_n10k_v2 β = 0"); put("a.n10k_midian", w10["midian"], "live_n10k_v2 β = 0")
+w10b = W(n10, FWS + ["midian_wo_defenses", "midian_wo_audit", "midian", "random"], beta=0.25); put_v("a.n10k_frameworks_range_beta025", [round(w10b[fws(w10b)].mean().min(), 3), round(w10b[fws(w10b)].mean().max(), 3)], "live_n10k_v2 (β = 0.25)", missing(w10b))
+# MIDIAN − KNN / MLP
+w100 = W(rows("learned_n100"), ["midian", "knn_router", "mlp_router", HALP, "oracle"], beta=0.0); paired("a.midian_minus_knn_n100_beta0", w100, "midian", "knn_router", "learned_n100 β = 0 (3 shapes × 2 liar-selection cells × 10 seeds)")
+paired("a.midian_minus_knn_n1000_beta0", w0, "midian", "knn_router", "variants_f1 + learned_f1, β = 0"); w10k = W(rows("learned_n10k"), ["midian", "knn_router", HALP, "oracle", "midian_wo_defenses", FLAT_ON], beta=0.0)
+paired("a.midian_minus_knn_n10k_beta0", w10k, "midian", "knn_router", "learned_n10k β = 0 (specialist, 2 cells × 3 seeds, Q = 300)")
 for b in (0.0, 0.1, 0.25, 0.5):
-    wb = W(f1, ["midian_va", "mlp_router"], beta=b); paired(f"a.va_minus_mlp_n1000_beta{b}", wb, "midian_va", "mlp_router", f"variants_f1 + learned_f1, β = {b}")
-    wb2 = W(f1, ["midian_va", "mlp_router"], beta=b, liar_select="low_skill_first"); paired(f"a.va_minus_mlp_n1000_beta{b}_lowskill", wb2, "midian_va", "mlp_router", f"variants_f1 + learned_f1, β = {b}, low-skill-first")
+    wb = W(f1, ["midian", "mlp_router"], beta=b); paired(f"a.midian_minus_mlp_n1000_beta{b}", wb, "midian", "mlp_router", f"variants_f1 + learned_f1, β = {b}")
+    wb2 = W(f1, ["midian", "mlp_router"], beta=b, liar_select="low_skill_first"); paired(f"a.midian_minus_mlp_n1000_beta{b}_lowskill", wb2, "midian", "mlp_router", f"variants_f1 + learned_f1, β = {b}, low-skill-first")
 put_v("a.mlp_at_n10k", "absent (mlp_router excluded at n = 10,000: agent one-hot over 480k probes)", "learned_n10k")
-# halving − VA
-paired("a.halving_minus_va_n100_beta0", w100, HALP, "midian_va", "learned_n100 β = 0"); paired("a.halving_minus_va_n1000_beta0", w0, HALP, "midian_va", "variants_f1 β = 0"); paired("a.halving_minus_va_n10k_beta0", w10k, HALP, "midian_va", "learned_n10k β = 0")
-re5 = rows("routereval_mmlu5k"); w5 = W(re5, [HALP, HAL, "midian_va", "midian_v", "midian", "declared_argmax", "knn_router", FLAT_ON, "oracle", "random", "warm_start_bandit", "linucb_honest"], beta=0.0)
-paired("a.halving_peer_minus_va_5000real_beta0", w5, HALP, "midian_va", "routereval_mmlu5k β = 0 (2 liar-selection cells × 3 seeds)"); paired("a.halving_trusted_minus_va_5000real_beta0", w5, HAL, "midian_va", "routereval_mmlu5k β = 0")
+# halving − MIDIAN
+paired("a.halving_minus_midian_n100_beta0", w100, HALP, "midian", "learned_n100 β = 0"); paired("a.halving_minus_midian_n1000_beta0", w0, HALP, "midian", "variants_f1 β = 0"); paired("a.halving_minus_midian_n10k_beta0", w10k, HALP, "midian", "learned_n10k β = 0")
+re5 = rows("routereval_mmlu5k"); w5 = W(re5, [HALP, HAL, "midian", "midian_wo_audit", "midian_wo_defenses", "declared_argmax", "knn_router", FLAT_ON, "oracle", "random", "warm_start_bandit", "linucb_honest"], beta=0.0)
+paired("a.halving_peer_minus_midian_5000real_beta0", w5, HALP, "midian", "routereval_mmlu5k β = 0 (2 liar-selection cells × 3 seeds)"); paired("a.halving_trusted_minus_midian_5000real_beta0", w5, HAL, "midian", "routereval_mmlu5k β = 0")
 # external benchmarks on their terms: parse the summaries
 def grab(path, pattern, key, note):
     txt = open(path).read(); m = re.search(pattern, txt); put_v(key, m.group(1) if m else f"NOT FOUND ({pattern})", path.replace(RTE_DATA + "/", ""), note)
@@ -92,33 +92,33 @@ if os.path.exists(S): put_v("a.llmrouterbench_terms_rows", [l for l in open(S).r
 import energy
 t = pd.read_pickle(f"{CACHE}/energy_table.pkl") if CACHE and os.path.exists(f"{CACHE}/energy_table.pkl") else energy.table()
 put_v("b.autogen_J_per_task", round(float(t.loc["fw_autogen", "per_task_J"]), 2), "scripts/energy.py cost model × fw_live_n1000 ledger"); put_v("b.autogen_latency_s", round(float(t.loc["fw_autogen", "latency_s"]), 3), "fw_live_n1000 median supervisor wall-clock")
-put_v("b.midian_build_probes", int(round(t.loc["midian", "build_msgs"] * 0 + rows("variants_f1").query("label == 'midian'").build_probes.mean())), "variants_f1 ledger"); put_v("b.midian_build_gpu_s", round(float(t.loc["midian", "build_gpu_s"]), 1), "energy.py (specialist)")
-put_v("b.midian_v_comparisons_per_task", round(float(t.loc["midian_v", "cmp_per_task"]), 2), "ledger"); put_v("b.midian_v_messages_per_task", round(float(t.loc["midian_v", "msgs_per_task"]), 2), "ledger"); put_v("b.midian_v_latency_s", round(float(t.loc["midian_v", "latency_s"]), 4), "energy.py latency model")
-put_v("b.midian_va_comparisons_per_task", round(float(t.loc["midian_va", "cmp_per_task"]), 2), "ledger"); put_v("b.midian_va_messages_per_task", round(float(t.loc["midian_va", "msgs_per_task"]), 2), "ledger")
+put_v("b.midian_wo_defenses_build_probes", int(round(t.loc["midian_wo_defenses", "build_msgs"] * 0 + rows("variants_f1").query("label == 'midian_wo_defenses'").build_probes.mean())), "variants_f1 ledger"); put_v("b.midian_wo_defenses_build_gpu_s", round(float(t.loc["midian_wo_defenses", "build_gpu_s"]), 1), "energy.py (specialist)")
+put_v("b.midian_wo_audit_comparisons_per_task", round(float(t.loc["midian_wo_audit", "cmp_per_task"]), 2), "ledger"); put_v("b.midian_wo_audit_messages_per_task", round(float(t.loc["midian_wo_audit", "msgs_per_task"]), 2), "ledger"); put_v("b.midian_wo_audit_latency_s", round(float(t.loc["midian_wo_audit", "latency_s"]), 4), "energy.py latency model")
+put_v("b.midian_comparisons_per_task", round(float(t.loc["midian", "cmp_per_task"]), 2), "ledger"); put_v("b.midian_messages_per_task", round(float(t.loc["midian", "msgs_per_task"]), 2), "ledger")
 for b in ("fw_magentic_one", "fw_crewai", "fw_autogen"):
-    put_v(f"b.crossing_joules_midian_vs_{b}", round(float(energy.crossing(t, "midian", b, "build_J", "per_task_J"))), "energy.py joules (H11 / F1_energy)"); put_v(f"b.crossing_gpu_s_midian_vs_{b}", round(float(energy.crossing(t, "midian", b))), "energy.py GPU-s (RESULTS_energy.md)")
+    put_v(f"b.crossing_joules_midian_wo_defenses_vs_{b}", round(float(energy.crossing(t, "midian_wo_defenses", b, "build_J", "per_task_J"))), "energy.py joules (H11 / F1_energy)"); put_v(f"b.crossing_gpu_s_midian_wo_defenses_vs_{b}", round(float(energy.crossing(t, "midian_wo_defenses", b))), "energy.py GPU-s (RESULTS_energy.md)")
 for g in ("bernoulli_scale", "combined_scale"):
     p = f"{R}/{g}/summary.md"; p = f"{p}/summary.md" if os.path.isdir(p) else p
     if os.path.isfile(p):
-        txt = open(p).read(); i = txt.find("Cost exponents"); put_v(f"b.cost_exponents_{g}", txt[i:i + 1500].splitlines()[:25] if i >= 0 else "section not found", f"results/{g}/summary.md", "n^k fits (paper: MIDIAN n^0.14, flat n^1.00)")
+        txt = open(p).read(); i = txt.find("Cost exponents"); put_v(f"b.cost_exponents_{g}", txt[i:i + 1500].splitlines()[:25] if i >= 0 else "section not found", f"results/{g}/summary.md", "n^k fits (paper: MIDIAN w/o defenses n^0.14, flat n^1.00)")
 
 # ------------------------------------------------------------------------------------------------ (c) robustness
 re1 = rows("routereval_mmlu")
 for n in (1000,):
-    for s in ("declared_argmax", HALP, "midian", "midian_a", "midian_va", "mlp_router", FLAT_ON, "knn_router"):
+    for s in ("declared_argmax", HALP, "midian_wo_defenses", "midian_wo_verify", "midian", "mlp_router", FLAT_ON, "knn_router"):
         put(f"c.real{n}_{s}_beta0", W(re1, [s], beta=0.0, n=n)[s], f"routereval_mmlu n = {n} β = 0 (3 pool types × 2 cells × 5 seeds)"); put(f"c.real{n}_{s}_beta05_lowskill", W(re1, [s], beta=0.5, liar_select="low_skill_first", n=n)[s], f"routereval_mmlu n = {n} β = 0.5 low-skill-first")
-for s in ("declared_argmax", HALP, "midian_va", "midian_v", "midian", "knn_router", FLAT_ON):
+for s in ("declared_argmax", HALP, "midian", "midian_wo_audit", "midian_wo_defenses", "knn_router", FLAT_ON):
     put(f"c.real5000_{s}_beta0", W(re5, [s], beta=0.0)[s], "routereval_mmlu5k β = 0"); put(f"c.real5000_{s}_beta05_lowskill", W(re5, [s], beta=0.5, liar_select="low_skill_first")[s], "routereval_mmlu5k β = 0.5 low-skill-first")
-for s in (HALP, "midian", "midian_a", "midian_va", "midian_v", "declared_argmax"):
+for s in (HALP, "midian_wo_defenses", "midian_wo_verify", "midian", "midian_wo_audit", "declared_argmax"):
     put(f"c.rte_{s}_beta0", W(f1, [s], beta=0.0)[s], "variants_f1 (+ live_f1_n1000 for declared) β = 0"); put(f"c.rte_{s}_beta05_lowskill", W(f1, [s], beta=0.5, liar_select="low_skill_first")[s], "variants_f1 β = 0.5 low-skill-first")
-sc = rows("scale_100k"); put_v("c.va_comparisons_per_task_100k", round(float(sc[(sc.label == "midian_va") & (sc.n == 100000)].comparisons_per_task.mean()), 1), "scale_100k ledger, n = 100,000")
+sc = rows("scale_100k"); put_v("c.midian_comparisons_per_task_100k", round(float(sc[(sc.label == "midian") & (sc.n == 100000)].comparisons_per_task.mean()), 1), "scale_100k ledger, n = 100,000")
 put_v("c.flat_comparisons_per_task_100k", round(float(sc[(sc.label == FLAT_ON) & (sc.n == 100000)].comparisons_per_task.mean()), 1), "scale_100k ledger, n = 100,000")
-# VA within 0.05 of its honest score per population; VA +0.15 over every framework under the cartel
-low = rows("fw_live_n1000_lowskill"); wl = W(low, FWS + ["midian_va", "midian", "midian_v", "midian_a", FLAT, "declared_argmax", "random", "oracle"]); wv0 = W(f1, ["midian_va"], beta=0.0)
+# MIDIAN within 0.05 of its honest score per population; MIDIAN +0.15 over every framework under the cartel
+low = rows("fw_live_n1000_lowskill"); wl = W(low, FWS + ["midian", "midian_wo_defenses", "midian_wo_audit", "midian_wo_verify", FLAT, "declared_argmax", "random", "oracle"]); wv0 = W(f1, ["midian"], beta=0.0)
 for d in ("specialist", "heavy_tail", "bimodal"):
-    put_v(f"c.va_honest_vs_cartel_{d}", [round(float(wv0["midian_va"].xs(d, level="dist").mean()), 3), round(float(wl["midian_va"].xs(d, level="dist").mean()), 3)], "variants_f1 β = 0 vs fw_live_n1000_lowskill β = 0.5 low-skill", "VA honest, VA under the cartel")
-for f in FWS: paired(f"c.cartel_va_minus_{f}", wl, "midian_va", f, "fw_live_n1000_lowskill, 30 units")
-put_v("c.cartel_va_minus_framework_min", round(min(N[f"c.cartel_va_minus_{f}"]["value"] for f in FWS), 3), "fw_live_n1000_lowskill")
+    put_v(f"c.midian_honest_vs_cartel_{d}", [round(float(wv0["midian"].xs(d, level="dist").mean()), 3), round(float(wl["midian"].xs(d, level="dist").mean()), 3)], "variants_f1 β = 0 vs fw_live_n1000_lowskill β = 0.5 low-skill", "MIDIAN honest, MIDIAN under the cartel")
+for f in FWS: paired(f"c.cartel_midian_minus_{f}", wl, "midian", f, "fw_live_n1000_lowskill, 30 units")
+put_v("c.cartel_midian_minus_framework_min", round(min(N[f"c.cartel_midian_minus_{f}"]["value"] for f in FWS), 3), "fw_live_n1000_lowskill")
 
 # ------------------------------------------------------------------------------------------------ (d) 14B and shortlists
 m = fw[fw.label.isin(["fw_magentic_one", MAG14])].copy(); m["strict"] = stat(m, "success_strict"); m["fallback"] = stat(m, "fallback_rate")
@@ -127,25 +127,25 @@ for arm, tag in (("fw_magentic_one", "7B"), (MAG14, "14B")):
 a, b = m[m.label == "fw_magentic_one"].set_index(["dist", "beta", "seed"]), m[m.label == MAG14].set_index(["dist", "beta", "seed"])
 for col in ("success", "strict", "fallback"):
     diff = (b[col] - a[col]).dropna(); cells = diff.groupby(level=["dist", "beta"]).mean(); put(f"d.magentic_14B_minus_7B_{col}", diff, "fw_live_n1000, 120 paired units", f"cells 14B lower / equal / higher: {int((cells < -1e-9).sum())} / {int((cells.abs() <= 1e-9).sum())} / {int((cells > 1e-9).sum())} of {len(cells)}")
-ver = rows("fw_live_n1000", "fw_live_n1000_verified", "fw_live_n1000_verified_va"); cols = [f + s for f in FWS for s in ("", "[r=10,retrieval=midian]", "[r=10,retrieval=midian_va]")] + ["midian_v", "midian_va"]
+ver = rows("fw_live_n1000", "fw_live_n1000_verified", "fw_live_n1000_verified_va"); cols = [f + s for f in FWS for s in ("", "[r=10,retrieval=midian_wo_audit]", "[r=10,retrieval=midian]")] + ["midian_wo_audit", "midian"]
 wv = ver[ver.label.isin(cols)].pivot_table(index=["dist", "beta", "seed"], columns="label", values="success")
 for f in FWS:
-    paired(f"d.lift_V_r10_{f}", wv, f + "[r=10,retrieval=midian]", f, "fw_live_n1000_verified vs fw_live_n1000, 120 units"); paired(f"d.trail_{f}_Vcohort_minus_midian_v", wv, f + "[r=10,retrieval=midian]", "midian_v", "fw_live_n1000_verified vs fw_live_n1000")
-    paired(f"d.lift_VA_r10_{f}", wv, f + "[r=10,retrieval=midian_va]", f, "fw_live_n1000_verified_va vs fw_live_n1000"); paired(f"d.VAcohort_minus_Vcohort_{f}", wv, f + "[r=10,retrieval=midian_va]", f + "[r=10,retrieval=midian]", "fw_live_n1000_verified_va vs _verified")
-lifts = {f: N[f"d.lift_V_r10_{f}"]["value"] for f in FWS}; put_v("d.lift_V_r10_range_excl_llamaindex", [round(min(v for f, v in lifts.items() if f != "fw_llamaindex"), 3), round(max(lifts.values()), 3)], "fw_live_n1000_verified")
-trail = {f: N[f"d.trail_{f}_Vcohort_minus_midian_v"]["value"] for f in FWS}; put_v("d.trail_Vcohort_minus_midian_v_range", [round(min(trail.values()), 3), round(max(trail.values()), 3)], "fw_live_n1000_verified")
-wvb = wv.xs(0.5, level="beta"); put("d.VAcohort_minus_Vcohort_beta05_mean_over_frameworks", pd.concat([(wvb[f + "[r=10,retrieval=midian_va]"] - wvb[f + "[r=10,retrieval=midian]"]) for f in FWS]), "fw_live_n1000_verified_va vs _verified, β = 0.5, 10 frameworks × 3 shapes × 10 seeds")
+    paired(f"d.lift_wo_audit_cohort_r10_{f}", wv, f + "[r=10,retrieval=midian_wo_audit]", f, "fw_live_n1000_verified vs fw_live_n1000, 120 units"); paired(f"d.trail_{f}_wo_audit_cohort_minus_midian_wo_audit", wv, f + "[r=10,retrieval=midian_wo_audit]", "midian_wo_audit", "fw_live_n1000_verified vs fw_live_n1000")
+    paired(f"d.lift_midian_cohort_r10_{f}", wv, f + "[r=10,retrieval=midian]", f, "fw_live_n1000_verified_va vs fw_live_n1000"); paired(f"d.midian_cohort_minus_wo_audit_cohort_{f}", wv, f + "[r=10,retrieval=midian]", f + "[r=10,retrieval=midian_wo_audit]", "fw_live_n1000_verified_va vs _verified")
+lifts = {f: N[f"d.lift_wo_audit_cohort_r10_{f}"]["value"] for f in FWS}; put_v("d.lift_wo_audit_cohort_r10_range_excl_llamaindex", [round(min(v for f, v in lifts.items() if f != "fw_llamaindex"), 3), round(max(lifts.values()), 3)], "fw_live_n1000_verified")
+trail = {f: N[f"d.trail_{f}_wo_audit_cohort_minus_midian_wo_audit"]["value"] for f in FWS}; put_v("d.trail_wo_audit_cohort_minus_midian_wo_audit_range", [round(min(trail.values()), 3), round(max(trail.values()), 3)], "fw_live_n1000_verified")
+wvb = wv.xs(0.5, level="beta"); put("d.midian_cohort_minus_wo_audit_cohort_beta05_mean_over_frameworks", pd.concat([(wvb[f + "[r=10,retrieval=midian]"] - wvb[f + "[r=10,retrieval=midian_wo_audit]"]) for f in FWS]), "fw_live_n1000_verified_va vs _verified, β = 0.5, 10 frameworks × 3 shapes × 10 seeds")
 
 # ------------------------------------------------------------------------------------------------ §4
-pool = rows("llmrouterbench_pool"); wp = W(pool, [FLAT_ON, "mlp_router", "midian_va", "midian_a", "midian", "midian_v", HALP, "declared_argmax", "knn_router", "oracle"])
-for s in (FLAT_ON, "mlp_router", "midian_va", "midian_a", "midian", "midian_v", HALP, "declared_argmax"): put(f"s4.pool20_{s}_all_beta", wp[s], "llmrouterbench_pool (all β, both liar selections, 5 seeds)")
+pool = rows("llmrouterbench_pool"); wp = W(pool, [FLAT_ON, "mlp_router", "midian", "midian_wo_verify", "midian_wo_defenses", "midian_wo_audit", HALP, "declared_argmax", "knn_router", "oracle"])
+for s in (FLAT_ON, "mlp_router", "midian", "midian_wo_verify", "midian_wo_defenses", "midian_wo_audit", HALP, "declared_argmax"): put(f"s4.pool20_{s}_all_beta", wp[s], "llmrouterbench_pool (all β, both liar selections, 5 seeds)")
 ch = rows("churn_n1000")
 if "churn" in ch:
     import ast
     ch = ch.assign(frac=ch.churn.map(lambda c: (c if isinstance(c, dict) else ast.literal_eval(str(c))).get("frac")))
     for fr in sorted(ch.frac.dropna().unique()):
         q = ch[ch.frac == fr].pivot_table(index=["dist", "seed"], columns="label", values="success")
-        if {"midian", "midian_va"} <= set(q.columns): put(f"s4.churn_{int(fr*100)}pct_va_minus_midian", (q["midian_va"] - q["midian"]).dropna(), f"churn_n1000, churn {int(fr*100)}%")
+        if {"midian_wo_defenses", "midian"} <= set(q.columns): put(f"s4.churn_{int(fr*100)}pct_midian_minus_midian_wo_defenses", (q["midian"] - q["midian_wo_defenses"]).dropna(), f"churn_n1000, churn {int(fr*100)}%")
 put_v("s4.phase1_targets_missed", "5 of 6 (T2 split) — TARGETS_rte.md / RESULTS_rte.md §8", "static")
 
 # ------------------------------------------------------------------------------------------------ (v4) cohort modes
@@ -155,7 +155,7 @@ put_v("s4.phase1_targets_missed", "5 of 6 (T2 split) — TARGETS_rte.md / RESULT
 # Regimes follow RESULTS_rte_v4: β = 0 has NO liars, so its two liar-selection cells are bit-identical and only one is
 # kept; under the cartel the two cells are different worlds and are reported separately.
 V4_POOLS = {"m1000": "cohort_routereval", "m5000": "cohort_routereval5k", "lrb20": "cohort_llmrouterbench", "rte": "cohort_rte"}
-V4_MODES = {"stratify": "{b}_stratified", "block": "{b}[cohort=block]", "specialty": "{b}[cohort=specialty]", "declared": "{b}[cohort=declared]"}
+from cohort_table import BASES as V4_BASES, MODES as V4_MODES, arm       # MIDIAN base arms x cohort modes, labelled as rte.analyze does
 def v4_regimes(co):
     """(tag, β, liar-selection) per regime: β = 0 once (liar-free, so the liar-selection axis is degenerate), each β > 0 per cell."""
     for beta in sorted(co.beta.dropna().unique()):
@@ -166,16 +166,16 @@ def v4_cohort_deltas():
     for pool, grid in V4_POOLS.items():
         try: co = rows(grid)
         except SystemExit: print(f"[v4] {grid}: no rows yet, skipped"); continue
-        for base in ("midian", "midian_a", "midian_va"):
-            labs = [base] + [t.format(b=base) for t in V4_MODES.values()]
+        for _, bp in V4_BASES:
+            base = arm(bp); labs = [base] + [arm(bp, mp) for _, mp in V4_MODES]
             for bb in sorted(co.b.dropna().unique()):
                 for reg, beta, ls in v4_regimes(co):
                     w = W(co, labs, b=bb, beta=beta, liar_select=ls)
                     if base not in w or w[base].dropna().empty: continue
                     tag, where = f"v4.{pool}.{base}_b{int(bb)}_{reg}", f"{grid} (b = {int(bb)}, β = {beta:g}, liars = {ls})"
                     put(f"{tag}_random", w[base], where)
-                    for mode, tmpl in V4_MODES.items():
-                        lab = tmpl.format(b=base)
+                    for mode, mp in V4_MODES:
+                        lab = arm(bp, mp)
                         if lab in w: paired(f"{tag}_{mode}", w, lab, base, where, "paired by cell × seed against cohort=random")
 v4_cohort_deltas()
 
@@ -211,18 +211,18 @@ _v6(N)
 # ------------------------------------------------------------------------------------------------ appendix source tables
 def table(key, df, labels, by, grid, **f):
     w = W(df, labels, **f); N[key] = dict(value={l: {str(k): round(float(v), 4) for k, v in w[l].groupby(level=by).mean().items()} for l in labels if l in w}, grid=grid, units=int(len(w)), ci=None)
-table("T2.fw_live_n1000_by_beta", fw, FWS + [MAG14, "midian", "midian_v", "midian_va", "midian_a", "oracle", "random", "declared_argmax", "llm_supervisor", FLAT], "beta", "fw_live_n1000")
-table("T2.n10k_by_beta", n10, FWS + ["midian", "midian_v", "midian_va", "midian_a", "midian_sh", FLAT_ON, "warm_start_bandit", "linucb_honest", "verify_on_claim", HALP, "oracle", "random"], "beta", "live_n10k_v2")
-table("T3.variants_f1_by_beta_random", rows("variants_f1"), ["oracle", HALP, "midian_va", "midian_a", "midian_v", "midian", "midian_sh", "midian_sha", FLAT_ON, "linucb_honest"], "beta", "variants_f1", liar_select="random")
-table("T3.variants_f1_by_beta_lowskill", rows("variants_f1"), ["oracle", HALP, "midian_va", "midian_a", "midian_v", "midian", "midian_sh", "midian_sha", FLAT_ON, "linucb_honest"], "beta", "variants_f1", liar_select="low_skill_first")
+table("T2.fw_live_n1000_by_beta", fw, FWS + [MAG14, "midian_wo_defenses", "midian_wo_audit", "midian", "midian_wo_verify", "oracle", "random", "declared_argmax", "llm_supervisor", FLAT], "beta", "fw_live_n1000")
+table("T2.n10k_by_beta", n10, FWS + ["midian_wo_defenses", "midian_wo_audit", "midian", "midian_wo_verify", FLAT_ON, "warm_start_bandit", "linucb_honest", "verify_on_claim", HALP, "oracle", "random"], "beta", "live_n10k_v2")
+table("T3.variants_f1_by_beta_random", rows("variants_f1"), ["oracle", HALP, "midian", "midian_wo_verify", "midian_wo_audit", "midian_wo_defenses", FLAT_ON, "linucb_honest"], "beta", "variants_f1", liar_select="random")
+table("T3.variants_f1_by_beta_lowskill", rows("variants_f1"), ["oracle", HALP, "midian", "midian_wo_verify", "midian_wo_audit", "midian_wo_defenses", FLAT_ON, "linucb_honest"], "beta", "variants_f1", liar_select="low_skill_first")
 table("T3.learned_f1_by_beta_random", rows("learned_f1"), ["knn_router", "knn_router_online", "mlp_router"], "beta", "learned_f1", liar_select="random"); table("T3.learned_f1_by_beta_lowskill", rows("learned_f1"), ["knn_router", "knn_router_online", "mlp_router"], "beta", "learned_f1", liar_select="low_skill_first")
-table("T5.learned_n100_by_beta_lowskill", rows("learned_n100"), ["oracle", HALP, HAL, "midian_va", "midian_a", "midian_v", "midian", FLAT_ON, FLAT, "knn_router", "mlp_router", "declared_argmax", "warm_start_bandit"], "beta", "learned_n100", liar_select="low_skill_first")
-table("T5.learned_n10k_by_beta_lowskill", rows("learned_n10k"), ["oracle", HALP, "midian_va", "midian_a", "midian_v", "midian", FLAT_ON, FLAT, "knn_router", "declared_argmax", "warm_start_bandit"], "beta", "learned_n10k", liar_select="low_skill_first")
-for n in (10000, 100000): table(f"T5.scale_100k_n{n}_by_beta_lowskill", sc, ["oracle", HALP, HAL, "midian_va", "midian_a", "midian_v", "midian", FLAT_ON, FLAT, "declared_argmax", "warm_start_bandit", "linucb_honest", "random"], "beta", "scale_100k", n=n, liar_select="low_skill_first")
-for n in (10, 100, 1000): table(f"T7.routereval_mmlu_n{n}_by_beta_lowskill", re1, ["oracle", HAL, HALP, "declared_argmax", "warm_start_bandit", "midian_va", "midian_v", "midian_a", "midian", "mlp_router", FLAT_ON, "knn_router", "linucb_honest", "random"], "beta", "routereval_mmlu", n=n, liar_select="low_skill_first")
-table("T7.routereval_mmlu5k_by_beta_lowskill", re5, ["oracle", HAL, HALP, "declared_argmax", "warm_start_bandit", "midian_va", "midian_v", "midian_a", "midian", FLAT_ON, "knn_router", "linucb_honest", "random"], "beta", "routereval_mmlu5k", liar_select="low_skill_first")
-table("T8.llmrouterbench_pool_by_beta_lowskill", pool, ["oracle", HAL, HALP, "declared_argmax", "warm_start_bandit", "midian_va", "midian_v", "midian_a", "midian", "mlp_router", FLAT_ON, "knn_router", "random"], "beta", "llmrouterbench_pool", liar_select="low_skill_first")
-bud = rows("budget_sweep"); N["D.budget_sweep_by_b"] = dict(value={l: {str(k): round(float(v), 4) for k, v in bud[bud.label == l].groupby("b").success.mean().items()} for l in ["oracle", HAL, "midian_va", "midian_a", "midian_v", "midian", FLAT, "declared_argmax", "warm_start_bandit"]}, grid="budget_sweep (programmatic, β = 0.25)", units=int(len(bud)), ci=None)
+table("T5.learned_n100_by_beta_lowskill", rows("learned_n100"), ["oracle", HALP, HAL, "midian", "midian_wo_verify", "midian_wo_audit", "midian_wo_defenses", FLAT_ON, FLAT, "knn_router", "mlp_router", "declared_argmax", "warm_start_bandit"], "beta", "learned_n100", liar_select="low_skill_first")
+table("T5.learned_n10k_by_beta_lowskill", rows("learned_n10k"), ["oracle", HALP, "midian", "midian_wo_verify", "midian_wo_audit", "midian_wo_defenses", FLAT_ON, FLAT, "knn_router", "declared_argmax", "warm_start_bandit"], "beta", "learned_n10k", liar_select="low_skill_first")
+for n in (10000, 100000): table(f"T5.scale_100k_n{n}_by_beta_lowskill", sc, ["oracle", HALP, HAL, "midian", "midian_wo_verify", "midian_wo_audit", "midian_wo_defenses", FLAT_ON, FLAT, "declared_argmax", "warm_start_bandit", "linucb_honest", "random"], "beta", "scale_100k", n=n, liar_select="low_skill_first")
+for n in (10, 100, 1000): table(f"T7.routereval_mmlu_n{n}_by_beta_lowskill", re1, ["oracle", HAL, HALP, "declared_argmax", "warm_start_bandit", "midian", "midian_wo_audit", "midian_wo_verify", "midian_wo_defenses", "mlp_router", FLAT_ON, "knn_router", "linucb_honest", "random"], "beta", "routereval_mmlu", n=n, liar_select="low_skill_first")
+table("T7.routereval_mmlu5k_by_beta_lowskill", re5, ["oracle", HAL, HALP, "declared_argmax", "warm_start_bandit", "midian", "midian_wo_audit", "midian_wo_verify", "midian_wo_defenses", FLAT_ON, "knn_router", "linucb_honest", "random"], "beta", "routereval_mmlu5k", liar_select="low_skill_first")
+table("T8.llmrouterbench_pool_by_beta_lowskill", pool, ["oracle", HAL, HALP, "declared_argmax", "warm_start_bandit", "midian", "midian_wo_audit", "midian_wo_verify", "midian_wo_defenses", "mlp_router", FLAT_ON, "knn_router", "random"], "beta", "llmrouterbench_pool", liar_select="low_skill_first")
+bud = rows("budget_sweep"); N["D.budget_sweep_by_b"] = dict(value={l: {str(k): round(float(v), 4) for k, v in bud[bud.label == l].groupby("b").success.mean().items()} for l in ["oracle", HAL, "midian", "midian_wo_verify", "midian_wo_audit", "midian_wo_defenses", FLAT, "declared_argmax", "warm_start_bandit"]}, grid="budget_sweep (programmatic, β = 0.25)", units=int(len(bud)), ci=None)
 
 os.makedirs(os.path.dirname(OUT), exist_ok=True); json.dump(N, open(OUT, "w"), indent=1, ensure_ascii=False); print(f"{len(N)} entries -> {OUT}")
 for k, v in N.items():

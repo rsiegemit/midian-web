@@ -44,4 +44,4 @@ print("-" * 56)
 for k in sorted(top1, key=lambda k: np.mean(top1[k])):
     m = f"{np.mean(mean10[k]):12.3f}" if k in mean10 else " " * 12
     print(f"{k:30s} {np.mean(top1[k]):11.3f} {m}")
-print(f"{'MIDIAN-VA (its verified pick)':30s} {0.832:11.3f} {0.447:12.3f}   [measured in jobs/cohort_skill.py]")
+print(f"{'MIDIAN (its verified pick)':30s} {0.832:11.3f} {0.447:12.3f}   [measured in jobs/cohort_skill.py]")

@@ -1,12 +1,12 @@
 #!/bin/bash
-# MIDIAN-VA at b in {1,5} for condensed A / B. Resumable via logs/launch_va_b.txt.
+# MIDIAN at b in {1,5} for condensed A / B. Resumable via logs/launch_va_b.txt.
 D=/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte; LOG=$D/logs/launch_va_b.txt; touch $LOG; cd /n/home02/rsiegelmann/rte
 sub() {  # key partition cpus mem time workers grid args...
   local key=$1 p=$2 c=$3 m=$4 t=$5 w=$6 g=$7; shift 7
   grep -qF " $key" $LOG && return
   while :; do
-    j=$(sbatch --parsable -p $p -A sompolinsky_lab -c $c --mem=$m -t $t -J rte_${g}__midian_va -o $D/logs/units/%x-%j.out -e $D/logs/units/%x-%j.err \
-        --export=ALL,RTE_DATA=$D,RTE_PYTHON=$D/env/rte/bin/python,RTE_WORKERS=$w,RTE_CONSOLIDATE=0 scripts/run_grid.sbatch $g --methods midian_va "$@" 2>&1)
+    j=$(sbatch --parsable -p $p -A sompolinsky_lab -c $c --mem=$m -t $t -J rte_${g}__midian -o $D/logs/units/%x-%j.out -e $D/logs/units/%x-%j.err \
+        --export=ALL,RTE_DATA=$D,RTE_PYTHON=$D/env/rte/bin/python,RTE_WORKERS=$w,RTE_CONSOLIDATE=0 scripts/run_grid.sbatch $g --methods midian "$@" 2>&1)
     case "$j" in *QOSMax*) sleep 120;; ''|*[!0-9]*) echo "FAIL $key $j" >&2; return;; *) echo "$j $key" >> $LOG; return;; esac
   done
 }

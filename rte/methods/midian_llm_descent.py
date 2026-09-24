@@ -1,5 +1,5 @@
-"""MIDIAN with an LLM making the descent decisions (SPEC §9). Same tree, same estimates, same
-ledger as `midian`; only the choice among a node's r children changes, so the ablation is
+"""MIDIAN w/o defenses with an LLM making the descent decisions (SPEC §9). Same tree, same estimates, same
+ledger as midian{"audit": false, "verify": false}; only the choice among a node's r children changes, so the ablation is
 quality-only. An unparseable or out-of-range answer falls back to the argmax, counted in `stats`."""
 import re
 

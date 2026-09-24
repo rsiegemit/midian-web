@@ -1,6 +1,6 @@
-"""Diagnostic ONLY: is the DECLARED top-10 a better cohort source than MIDIAN-VA's leaf cohort?
+"""Diagnostic ONLY: is the DECLARED top-10 a better cohort source than MIDIAN's leaf cohort?
 Declared top-10 is built from the live backend's own self-described D with the regime's liars applied
-(world.select_liars + world.apply_lying, the exact benchmark mechanism). The MIDIAN-VA cohort is
+(world.select_liars + world.apply_lying, the exact benchmark mechanism). The MIDIAN cohort is
 reconstructed on a bernoulli world carrying the population's exact measured S. S is read for MEASUREMENT
 only; no method ever sees it."""
 import os, sys
@@ -8,7 +8,7 @@ import numpy as np
 sys.path.insert(0, '/n/home02/rsiegelmann/rte')
 from rte.budget import Budget
 from rte.world import World, select_liars, apply_lying, DELTA_INFLATE
-from rte.methods.midian_va import MidianVA
+from rte.methods.midian import Midian
 from rte.stable_hash import stable_seed_32
 
 RD = os.environ["RTE_DATA"]; K, B, TOPK = 16, 3, 10
@@ -33,18 +33,18 @@ for seed in (1, 2, 3):
         for t in w.tasks(400):
             tasks.setdefault(int(t.family), t)
             if len(tasks) == K: break
-        m = MidianVA(r=10); m.build(w.view(m.needs), Budget(B))
+        m = Midian(r=10); m.build(w.view(m.needs), Budget(B))
         mus, bss, lrs = [], [], []
         for f, t in sorted(tasks.items()):
             a = m.fetch(t); coh = m.leaves[m.leaf_of[a]]
             sel = np.concatenate([[a], coh[(coh >= 0) & (coh != a)]])[:TOPK]
             mus.append(S[sel, f].mean()); bss.append(S[sel, f].max()); lrs.append(w.liars[sel].mean())
-        acc.setdefault((lbl, "MIDIAN-VA cohort"), []).append((np.mean(mus), np.mean(bss), np.mean(lrs)))
+        acc.setdefault((lbl, "MIDIAN cohort"), []).append((np.mean(mus), np.mean(bss), np.mean(lrs)))
     print(f"seed {seed} done", flush=True)
 print(f"\nCohort sources at n = 10^5 specialist, top-{TOPK}, mean over 3 seeds")
 print(f"{'regime':20s} {'source':18s} {'mean skill':>11s} {'best in list':>13s} {'liar frac':>10s}")
 print("-" * 76)
 for beta, ls, lbl in REG:
-    for src in ("declared top-10", "MIDIAN-VA cohort"):
+    for src in ("declared top-10", "MIDIAN cohort"):
         v = np.array(acc[(lbl, src)]).mean(0)
         print(f"{lbl:20s} {src:18s} {v[0]:11.3f} {v[1]:13.3f} {v[2]:10.2f}")

@@ -164,7 +164,7 @@ def test_shuffle_permutes_the_midian_cohort_without_changing_its_members():
         needs = frozenset({"declared", "probe", "reports"})
 
     def built(**kw):
-        m = _M(base_url="http://127.0.0.1:1/v1", retrieval="midian_va", r=10, **kw)
+        m = _M(base_url="http://127.0.0.1:1/v1", retrieval="midian", r=10, **kw)
         m.build(World(N, K, "specialist", 0.0, seed=1).view(m.needs), Budget(3))
         m.bridge.select = lambda *a, **k: {"choice": None, "error": None, "raw": None}
         return m
@@ -291,7 +291,7 @@ def test_parallel_prefetch_gives_exactly_the_sequential_picks(monkeypatch, retri
 def test_midian_cohorts_are_never_prefetched(monkeypatch):
     """The cohort shortlists learn online, so their requests must stay in order."""
     monkeypatch.setenv("RTE_FW_PARALLEL", "8")
-    m = _built(retrieval="midian_va", r=10)
+    m = _built(retrieval="midian", r=10)
     m.prefetch(list(_tasks(5)))
     assert m._pre == {}
 

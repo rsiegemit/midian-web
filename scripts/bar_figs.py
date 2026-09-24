@@ -6,7 +6,7 @@ One panel and one row per figure, always. No framework arms: they are drawn per 
 Families: live (RTE live backend, 10^2-10^5, grouped by population shape; self-described channel),
 bernoulli (calibrated synthetic, 10..10^7, 1000 seeds, b = 3), replay (RouterBench outcomes, 10..10^6, shapes pooled),
 routereval (real LLM pools 10 / 100 / 1,000 per pool config and the 5,000-LLM leaderboard pool), llmrouterbench (20 models).
-Do-not-add list (extra_figs.excluded): MIDIAN with r != 10, MIDIAN-SH, MIDIAN-SHA, the trusted-observer halving arm.
+Do-not-add list (extra_figs.excluded): MIDIAN with r != 10, the trusted-observer halving arm.
 route_to_k_majority executes THREE agents per task and majority-votes, so it can sit above the single-agent oracle: it is drawn hatched and named so."""
 from __future__ import annotations
 import os, sys

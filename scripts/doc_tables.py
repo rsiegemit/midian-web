@@ -2,8 +2,8 @@
     python scripts/doc_tables.py             # print every table (markdown)
     python scripts/doc_tables.py --verify    # every generated table row must appear verbatim in RESULTS.md; exit 1 otherwise
     python scripts/doc_tables.py --sync      # rewrite every <!-- doc_tables:NAME --> ... <!-- /doc_tables --> block in RESULTS.md
-Sources: the pre-registered TF-IDF rows (source grids), dedup (_dd), MiniLM (_em), MIDIAN-V cohort (_verified), MIDIAN-VA cohort
-(_verified_va*). Cells: frameworks pooled (mean of per-framework seed means) and the best single framework. Asterisks mark
+Sources: the pre-registered TF-IDF rows (source grids), dedup (_dd), MiniLM (_em), MIDIAN w/o audits cohort (_verified), MIDIAN
+cohort (_verified_va*). Cells: frameworks pooled (mean of per-framework seed means) and the best single framework. Asterisks mark
 cells whose framework set is incomplete (a framework with fewer seeds than the cell has) or that still has an erratum-28 rerun outstanding."""
 from __future__ import annotations
 import os, re, sys
@@ -20,8 +20,8 @@ SOURCES = [("TF-IDF (pre-registered)", "plain", {100: "fw_live_n100", 1000: "fw_
             {100: "fw_live_n100_lowskill_dd", 1000: "fw_live_n1000_lowskill_dd", 10000: "fw_live_n10k_cartel_dd", 100000: "fw_live_n100k_dd"}),
            ("MiniLM", "embed", {100: "fw_live_n100_em", 1000: "fw_live_n1000_em", 10000: "fw_live_n10k_em", 100000: "fw_live_n100k_em"},
             {100: "fw_live_n100_lowskill_em", 1000: "fw_live_n1000_lowskill_em", 10000: "fw_live_n10k_cartel_em", 100000: "fw_live_n100k_em"}),
-           ("MIDIAN-V cohort", "midian", {100: "fw_live_n100_verified", 1000: "fw_live_n1000_verified"}, {}),
-           ("MIDIAN-VA cohort", "midian_va", {100: "fw_live_n100_verified_va", 1000: "fw_live_n1000_verified_va", 10000: "fw_live_n10k_verified_va", 100000: "fw_live_n100k_verified_va"},
+           ("MIDIAN w/o audits cohort", "midian_wo_audit", {100: "fw_live_n100_verified", 1000: "fw_live_n1000_verified"}, {}),
+           ("MIDIAN cohort", "midian", {100: "fw_live_n100_verified_va", 1000: "fw_live_n1000_verified_va", 10000: "fw_live_n10k_verified_va", 100000: "fw_live_n100k_verified_va"},
             {100: "fw_live_n100_verified_va_lowskill", 1000: "fw_live_n1000_verified_va_lowskill", 10000: "fw_live_n10k_cartel_verified_va", 100000: "fw_live_n100k_verified_va"})]
 NINE = {"fw_live_n10k_cartel", "fw_live_n10k_cartel_dd", "fw_live_n10k_cartel_em", "fw_live_n10k_cartel_verified_va"}   # Magentic-One excluded there by design
 REF = {100: "fw_live_n100", 1000: "fw_live_n1000", 10000: "live_n10k_v2", 100000: "live_n100k"}
@@ -56,8 +56,8 @@ def ref(n, reg, dist, arm):
 
 
 def shortlist_table(dist="specialist"):
-    """Frameworks pooled by shortlist source, n x regime; VA itself and the oracle beside. Cell = mean (best framework)."""
-    lines = [f"| n | regime | " + " | ".join(s[0] for s in SOURCES) + " | MIDIAN-VA itself | oracle |", "|---|---|" + "---|" * (len(SOURCES) + 2)]
+    """Frameworks pooled by shortlist source, n x regime; MIDIAN itself and the oracle beside. Cell = mean (best framework)."""
+    lines = [f"| n | regime | " + " | ".join(s[0] for s in SOURCES) + " | MIDIAN itself | oracle |", "|---|---|" + "---|" * (len(SOURCES) + 2)]
     for n in (100, 1000, 10000, 100000):
         for reg in ("beta0", "cartel"):
             cells = []
@@ -66,7 +66,7 @@ def shortlist_table(dist="specialist"):
                 c = cell(fw_rows(g, kind), dist, reg, 9 if g in NINE else 10) if g else None
                 cells.append("--" if c is None else f"{c[0]:.3f} ({c[1]:.3f}){c[3]}")
             if all(x == "--" for x in cells): continue
-            lines.append(f"| 10^{int(np.log10(n))} | {'honest' if reg == 'beta0' else 'cartel'} | " + " | ".join(cells) + f" | {ref(n, reg, dist, 'midian_va'):.3f} | {ref(n, reg, dist, 'oracle'):.3f} |")
+            lines.append(f"| 10^{int(np.log10(n))} | {'honest' if reg == 'beta0' else 'cartel'} | " + " | ".join(cells) + f" | {ref(n, reg, dist, 'midian'):.3f} | {ref(n, reg, dist, 'oracle'):.3f} |")
     return "\n".join(lines)
 
 

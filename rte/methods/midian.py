@@ -39,7 +39,7 @@ class Midian(Method):
         self.r, self.delta, self.online, self.verify, self.stratify = int(r), float(delta), bool(online), bool(verify), bool(stratify)
         self.rate = (AUDIT_RATE if audit is True else float(audit)) if audit else 0.0
         self.audit = self.rate > 0
-        # How level-0 cohorts are formed. "random" is plain MIDIAN and the default; the rest are labeled variants and are
+        # How level-0 cohorts are formed. "random" is the default; the rest are labeled variants and are
         # BUDGET-NEUTRAL: the key reuses the same probes `_level0` would have spent anyway (or, for "declared", none).
         #   stratify  one member per ability stratum  -> maximally DIVERSE cohorts (pre-existing, == stratify=True)
         #   block     contiguous ability blocks       -> maximally HOMOGENEOUS cohorts

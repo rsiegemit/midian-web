@@ -1,4 +1,4 @@
-"""v6.* entries: the framework shortlist variants (pre-registered TF-IDF, dedup, MiniLM embed, MIDIAN-VA cohort) and the live
+"""v6.* entries: the framework shortlist variants (pre-registered TF-IDF, dedup, MiniLM embed, MIDIAN cohort) and the live
 10^5 peer-halving cells. Read straight from each grid's rows.csv / rows.d (<= 1,500 rows per grid; never through rte.analyze.load).
     python scripts/fw_variant_numbers.py            # standalone: prints the entries
     from fw_variant_numbers import collect; collect(N)   # from paper_numbers.py
@@ -18,9 +18,9 @@ VARIANTS = {                                   # variant -> [(grid, filter on pa
               ("live_n10k_v2", "plain"), ("fw_live_n10k_cartel", "plain"), ("live_n100k", "plain")],
     "dedup": [(g, "dedup") for g in ("fw_live_n100_dd", "fw_live_n1000_dd", "fw_live_n100_lowskill_dd", "fw_live_n1000_lowskill_dd", "fw_live_n10k_dd", "fw_live_n10k_cartel_dd", "fw_live_n100k_dd")],
     "embed": [(g, "embed") for g in ("fw_live_n100_em", "fw_live_n1000_em", "fw_live_n100_lowskill_em", "fw_live_n1000_lowskill_em", "fw_live_n10k_em", "fw_live_n10k_cartel_em", "fw_live_n100k_em")],
-    "va_cohort": [(g, "midian_va") for g in ("fw_live_n100_verified_va", "fw_live_n100_verified_va_lowskill", "fw_live_n1000_verified_va", "fw_live_n1000_verified_va_lowskill",
+    "va_cohort": [(g, "midian") for g in ("fw_live_n100_verified_va", "fw_live_n100_verified_va_lowskill", "fw_live_n1000_verified_va", "fw_live_n1000_verified_va_lowskill",
                                              "fw_live_n10k_verified_va", "fw_live_n10k_cartel_verified_va", "fw_live_n100k_verified_va")],
-    "v_cohort": [(g, "midian") for g in ("fw_live_n100_verified", "fw_live_n1000_verified")],
+    "v_cohort": [(g, "midian_wo_audit") for g in ("fw_live_n100_verified", "fw_live_n1000_verified")],
 }
 
 
@@ -69,8 +69,7 @@ def select(df, kind):
     if kind == "plain": return fw[~fw.params.str.contains("retrieval|dedup")]
     if kind == "dedup": return fw[fw.params.str.contains('"dedup"') & ~fw.params.str.contains("retrieval")]
     if kind == "embed": return fw[fw.params.str.contains('"embed"')]
-    if kind == "midian_va": return fw[fw.params.str.contains('"midian_va"') & fw.params.str.contains('"r":10')]
-    if kind == "midian": return fw[fw.params.str.contains('"retrieval":"midian"') & fw.params.str.contains('"r":10')]
+    if kind in ("midian", "midian_wo_audit"): return fw[fw.params.str.contains(f'"retrieval":"{kind}"') & fw.params.str.contains('"r":10')]   # a MIDIAN cohort
     raise ValueError(kind)
 
 

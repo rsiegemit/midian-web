@@ -1,5 +1,6 @@
-"""Correctness + ledger-accounting checker (CONTRACT 'Correctness checks'). Run on any method names:
-    PYTHONPATH=. python scripts/check_methods.py flat_probe_argmax ucb_per_family ...
+"""Correctness + ledger-accounting checker (CONTRACT 'Correctness checks'). Run on any method names
+(or the MIDIAN ablation labels in ARMS):
+    PYTHONPATH=. python scripts/check_methods.py flat_probe_argmax ucb_per_family midian_wo_defenses ...
 Per method, at n in {100, 1000} on bernoulli specialist beta=0: valid ids; build probes <= budget; build/per-fetch ledger vs the
 documented formula (EXPECT); success >= random; exact-estimate argmax check for methods with an `est`/`best` table."""
 import math, sys
@@ -12,7 +13,7 @@ K, B, Q = 16, 3, 400
 
 
 def vprobes(n, r=10):
-    """MIDIAN-V build probes: n*K*(B-1) at level 0 + e per forwarded candidate, e = floor(n / C), C = child slots above level 0."""
+    """MIDIAN w/o audits build probes: n*K*(B-1) at level 0 + e per forwarded candidate, e = floor(n / C), C = child slots above level 0."""
     C, m = 0, math.ceil(n / r)
     while m > 1:
         C += m; m = math.ceil(m / r)
@@ -26,8 +27,8 @@ EXPECT = {
     "sequential_halving":  (lambda n: dict(messages=0),              lambda n: dict(comparisons=1, messages=0)),
     "verify_on_claim":     (lambda n: dict(probes=0, messages=n),    lambda n: dict(messages=0)),
     "trueskill_per_family":(lambda n: dict(messages=0),              lambda n: dict(comparisons=n, messages=0)),
-    "midian":              (lambda n: dict(probes=n*K*B, reports=n*K*B*9), lambda n: dict(hops=math.ceil(math.log10(n)), comparisons=10*math.ceil(math.log10(n)), messages=2*math.ceil(math.log10(n)))),
-    "midian_v":            (lambda n: dict(probes=vprobes(n), reports=vprobes(n)*9), lambda n: dict(hops=0, comparisons=1, messages=2)),
+    "midian_wo_defenses":  (lambda n: dict(probes=n*K*B, reports=n*K*B*9), lambda n: dict(hops=math.ceil(math.log10(n)), comparisons=10*math.ceil(math.log10(n)), messages=2*math.ceil(math.log10(n)))),
+    "midian_wo_audit":     (lambda n: dict(probes=vprobes(n), reports=vprobes(n)*9), lambda n: dict(hops=0, comparisons=1, messages=2)),
     "cnp_self_bid":        (lambda n: dict(messages=n),              lambda n: dict(messages=2*n, comparisons=n)),
     "declared_argmax":     (lambda n: dict(messages=n),              lambda n: dict(comparisons=n, messages=0)),
     "random":              (lambda n: dict(),                        lambda n: dict(probes=0, messages=0)),
@@ -38,10 +39,12 @@ EXPECT = {
     "flat_nsw_router":     (lambda n: dict(probes=n*K*B, messages=0),
                             lambda n: dict(hops=math.ceil(math.log2(n)), comparisons=50, messages=0)),
 }
+ARMS = {"midian_wo_defenses": ("midian", {"audit": False, "verify": False}), "midian_wo_audit": ("midian", {"audit": False})}   # label -> (method, params)
+make = lambda name, **kw: (lambda m, p: load_method(m)(**p, **kw))(*ARMS.get(name, (name, {})))
 
 
 def run(name, n, **kw):
-    w = World(n, K, "specialist", 0.0, seed=1); M = load_method(name)(**kw); v = w.view(M.needs)
+    w = World(n, K, "specialist", 0.0, seed=1); M = make(name, **kw); v = w.view(M.needs)
     s0 = w.ledger.snapshot(); M.build(v, Budget(B)); build = w.ledger.diff(s0)
     ts = w.tasks(Q); s1 = w.ledger.snapshot(); ok = []
     for t in ts:
@@ -55,7 +58,7 @@ def run(name, n, **kw):
 
 def exact_argmax(name, n):
     """Make probes return S exactly; an argmax-type method must then return argmax S for every family."""
-    w = World(n, K, "specialist", 0.0, seed=1); M = load_method(name)(); v = w.view(M.needs)
+    w = World(n, K, "specialist", 0.0, seed=1); M = make(name); v = w.view(M.needs)
     v.probe_many = lambda agents, fams, reps: np.broadcast_to(w.S[np.asarray(agents), np.asarray(fams)][..., None], np.broadcast_arrays(np.asarray(agents), np.asarray(fams))[0].shape + (reps,)).astype(np.float64)
     v.report_many = lambda R, A, O: np.broadcast_arrays(R, A, O)[2].astype(np.float64)   # honest pass-through, float
     M.build(v, Budget(B)); truth = w.oracle_all()

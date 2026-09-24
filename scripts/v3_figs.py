@@ -7,7 +7,7 @@ sys.path.insert(0, os.path.dirname(__file__)); from extra_figs import rows, ci, 
 from rte.analyze import load
 
 from extra_figs import excluded
-_ARMS0 = ["oracle", "sequential_halving_peer", "midian_va", "midian_v", "midian_a", "midian", "flat_probe_argmax_online", "mlp_router", "knn_router", "fw_autogen"]
+_ARMS0 = ["oracle", "sequential_halving_peer", "midian", "midian_wo_audit", "midian_wo_verify", "midian_wo_defenses", "flat_probe_argmax_online", "mlp_router", "knn_router", "fw_autogen"]
 ARMS = [a for a in _ARMS0 if not excluded(a)]
 COLOR.update({"mlp_router": "#2ecc71", "knn_router": "#16a085", "knn_router_online": "#1abc9c", "fw_autogen": "#2980b9"})
 
@@ -25,7 +25,7 @@ def X3():
         df = load(gs); df = df[(df.n == n) & (df.declared_source == "self_described") & df.label.isin(ARMS)]
         for l in ARMS:
             sub = df[df.label == l]
-            if len(sub): line(ax, sub, l, lw=2.2 if l == "midian_va" else 1.2, ls="--" if l in ("knn_router", "mlp_router") else "-")
+            if len(sub): line(ax, sub, l, lw=2.2 if l == "midian" else 1.2, ls="--" if l in ("knn_router", "mlp_router") else "-")
         ax.set_title(f"n = {n:,}" + (" (specialist, 3 seeds)" if n == 10000 else " (3 shapes × 2 liar selections × 10 seeds)")); ax.set_xlabel("β (liar fraction)"); ax.grid(alpha=.3)
     axes[0].set_ylabel("success"); axes[2].legend(fontsize=7)
     fig.suptitle("X3  RouterBench's learned routers (dashed) inside our benchmark vs MIDIAN variants, on identical cells"); fig.savefig(f"{O}/X3_learned_vs_midian.png", dpi=300, bbox_inches="tight"); print("[X3] written")
@@ -43,7 +43,7 @@ def X4():
 
 
 def X5():
-    df = load(["routereval_mmlu", "routereval_mmlu5k"]); arms = [l for l in ["oracle", "sequential_halving_peer", "midian_va", "midian_v", "midian_a", "midian", "flat_probe_argmax_online", "mlp_router", "knn_router", "warm_start_bandit", "declared_argmax"] if not excluded(l)]
+    df = load(["routereval_mmlu", "routereval_mmlu5k"]); arms = [l for l in ["oracle", "sequential_halving_peer", "midian", "midian_wo_audit", "midian_wo_verify", "midian_wo_defenses", "flat_probe_argmax_online", "mlp_router", "knn_router", "warm_start_bandit", "declared_argmax"] if not excluded(l)]
     COLOR.setdefault("declared_argmax", "#5d6d7e")
     fig, axes = plt.subplots(2, 4, figsize=(20, 9), sharey="row")
     for j, n in enumerate([10, 100, 1000, 5000]):
@@ -51,14 +51,14 @@ def X5():
             ax = axes[i][j]; sub = df[(df.n == n) & (df.liar_select == ls)]
             for l in arms:
                 x = sub[sub.label == l]
-                if len(x): line(ax, x, l, lw=2.2 if l == "midian_va" else 1.2, ls="--" if l in ("knn_router", "mlp_router") else "-")
+                if len(x): line(ax, x, l, lw=2.2 if l == "midian" else 1.2, ls="--" if l in ("knn_router", "mlp_router") else "-")
             ax.set_title(f"n = {n:,} real LLMs, liars = {ls}" + (" (3 pools × 5 seeds)" if n < 5000 else " (leaderboard, 3 seeds)"), fontsize=10); ax.set_xlabel("β"); ax.grid(alpha=.3)
     axes[0][0].set_ylabel("success (MMLU test prompts)"); axes[1][0].set_ylabel("success"); axes[0][3].legend(fontsize=7)
     fig.suptitle("X5  Every arm with liars on RouterEval's real LLM pools (MMLU, 16 subjects, b = 3)"); fig.savefig(f"{O}/X5_routereval_liars.png", dpi=300, bbox_inches="tight"); print("[X5] written")
 
 
 def X6():
-    df = load(["scale_100k"]); arms = [l for l in ["oracle", "sequential_halving_peer", "midian_va", "midian_v", "midian_a", "midian", "flat_probe_argmax_online", "warm_start_bandit", "declared_argmax", "linucb_honest"] if not excluded(l)]
+    df = load(["scale_100k"]); arms = [l for l in ["oracle", "sequential_halving_peer", "midian", "midian_wo_audit", "midian_wo_verify", "midian_wo_defenses", "flat_probe_argmax_online", "warm_start_bandit", "declared_argmax", "linucb_honest"] if not excluded(l)]
     COLOR.setdefault("declared_argmax", "#5d6d7e")
     fig, axes = plt.subplots(2, 2, figsize=(12, 9), sharey=True)
     for j, n in enumerate([10000, 100000]):
@@ -66,7 +66,7 @@ def X6():
             ax = axes[i][j]; sub = df[(df.n == n) & (df.liar_select == ls)]
             for l in arms:
                 x = sub[sub.label == l]
-                if len(x): line(ax, x, l, lw=2.2 if l == "midian_va" else 1.2)
+                if len(x): line(ax, x, l, lw=2.2 if l == "midian" else 1.2)
             ax.set_title(f"n = {n:,} (3 shapes × 3 seeds), liars = {ls}", fontsize=10); ax.set_xlabel("β"); ax.grid(alpha=.3)
     axes[0][0].set_ylabel("success"); axes[1][0].set_ylabel("success"); axes[0][1].legend(fontsize=7)
     fig.suptitle("X6  Every arm at n = 10,000 and 100,000 agents (calibrated synthetic backend)"); fig.savefig(f"{O}/X6_scale_100k.png", dpi=300, bbox_inches="tight"); print("[X6] written")

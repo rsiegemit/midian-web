@@ -16,10 +16,11 @@ from rte.run import blocks, cells, method_specs, row_id, seeds, RTE_DATA
 from inflight import inflight, queue
 
 L = f"{RTE_DATA}/logs"; R = f"{RTE_DATA}/results"
-FIG_ARMS = {"midian_va", "midian", "flat_probe_argmax", "declared_argmax", "random", "knn_router", "mlp_router", "flat_nsw_router",
+FIG_ARMS = {"midian", "flat_probe_argmax", "declared_argmax", "random", "knn_router", "mlp_router", "flat_nsw_router",
             "cluster_head_router", "disrouter_cascade", "ucb_per_family", "thompson_per_family", "warm_start_bandit", "linucb_honest",
             "trueskill_per_family"}                          # what A / B draw (condensed_figs ARMS + POOLS); E-H: the fw_* arms
-DRAWN = lambda name, params: name.startswith("fw_") or (name in FIG_ARMS and (name != "midian" or params.get("r", 10) == 10)
+MIDIAN_DRAWN = lambda p: ("audit" not in p and "verify" not in p) or (p.get("audit") is False and p.get("verify") is False and p.get("r", 10) == 10)   # MIDIAN; w/o defenses at r = 10
+DRAWN = lambda name, params: name.startswith("fw_") or (name in FIG_ARMS and (name != "midian" or MIDIAN_DRAWN(params))
                                                         and (name != "flat_probe_argmax" or params.get("online")))
 FOCUS = lambda c: (c["beta"] == 0 or (c["beta"] == 0.5 and c["liar_select"] == "low_skill_first")) and \
                   (c["backend"] != "llm" or c["dist"] == "specialist") and (c["backend"] != "routereval" or c["dist"] in ("strong_to_weak", "all"))
@@ -32,7 +33,7 @@ def figure_grids(cfg):
           "fw_live_n100", "learned_n100", "live_core_n100", "fw_live_n100_lowskill", "fw_live_n1000", "live_f1_n1000", "variants_f1",
           "learned_f1", "fw_live_n1000_lowskill", "learned_n10k", "live_n10k_cartel_random"}
     re_ = {x for x in g if x.startswith(("fw_routereval_", "re_sl_"))}
-    return sorted(x for x in (live | ab | re_) & g if "shuffled" not in x)   # shuffled VA cohort: removed from the figures
+    return sorted(x for x in (live | ab | re_) & g if "shuffled" not in x)   # shuffled MIDIAN cohort: removed from the figures
 
 
 def have(grid):

@@ -62,7 +62,7 @@ RED, ORG, YEL, BLU, GRN, PUR, GRY, DRK = "#c0392b", "#e67e22", "#f1c40f", "#3498
 HAL, HALP = "sequential_halving", "sequential_halving_peer"
 HAL_RB, HAL_ST = "sequential_halving[churn_mode=rebuild,peer_reported=True]", "sequential_halving[churn_mode=stale,peer_reported=True]"
 MAG14 = "fw_magentic_one[supervisor=Qwen/Qwen2.5-14B-Instruct]"
-COLOR = {"oracle": GRY, "midian": RED, "midian_v": ORG, "midian_v_r5": YEL, "midian_sh": "#d35400", "midian_a": "#7b241c", "midian_sha": "#e74c3c", "midian_va": "#2ecc71",
+COLOR = {"oracle": GRY, "midian_wo_defenses": RED, "midian_wo_audit": ORG, "midian_wo_audit_r5": YEL, "midian_wo_verify": "#7b241c", "midian": "#2ecc71",
          FLAT: "#7f8c8d", FLAT_ON: BLU, HAL: DRK, HALP: PUR, HAL_RB: PUR, HAL_ST: "#bb8fce", "warm_start_bandit": GRN, "linucb_honest": "#16a085",
          "declared_argmax": "#5d6d7e", "llm_supervisor": "#34495e", "fw_autogen": "#2980b9", "fw_magentic_one": "#1f618d", MAG14: "#5dade2", "random": "#ccc"}
 CLASS_COLOR = {"framework": "#2980b9", "midian": RED, "ceiling": GRY, "floor": "#ccc", "declared": "#5d6d7e", "verified_central": GRN, "verified_decentral": PUR}
@@ -115,13 +115,13 @@ def line(ax, s, label, **kw):
     ax.errorbar(xs, ys, yerr=[np.nan_to_num(lo), np.nan_to_num(hi)], label=label, color=col(label) if "color" not in kw else kw.pop("color"), **STYLE, **kw)
 
 
-# DO-NOT-ADD list for EVERY figure (2026-09-17, user directive): MIDIAN variants with r != 10 (midian[r=5], midian_v_r5,
-# midian[r=20,...], ...), MIDIAN-SH, MIDIAN-SHA, and the trusted-observer halving arm (erratum 26). Applied by need() here,
+# DO-NOT-ADD list for EVERY figure (2026-09-17, user directive): MIDIAN variants with r != 10 (midian[...,r=5,...],
+# midian_wo_audit_r5, midian[r=20], ...) and the trusted-observer halving arm (erratum 26). Applied by need() here,
 # by bar_figs.py, and by paper_figs.py through excluded().
-DO_NOT_ADD = {"midian_sh", "midian_sha", "sequential_halving",
+DO_NOT_ADD = {"sequential_halving",
               "route_to_k_majority",          # 2026-09-17: executes THREE agents per task (majority vote) -- not one execution per task like every other arm
               "midian_llm_descent",           # SPEC §9 descent ablation: appendix only
-              "midian[online=False]"}         # online updates off: internals ablation
+              "midian[audit=False,online=False,verify=False]"}   # online updates off: internals ablation
 _R = re.compile(r"(?:\[|,)r=(\d+)|_r(\d+)$")
 _DELTA = re.compile(r"delta=([0-9.]+)")
 _VARIANT = re.compile(r"cohort=|stratify=True|churn_mode=|online=False")   # v4 cohort modes (their own tables), churn-mode arms (H9), online-off ablations
@@ -131,7 +131,7 @@ HIDE_HALVING = True          # TEMPORARY (2026-09-22, user request): every seque
 
 
 def excluded(label):
-    """The do-not-add list for every figure: MIDIAN with r != 10 or delta != 1/3, SH / SHA, the LLM-descent ablation, online-off,
+    """The do-not-add list for every figure: MIDIAN with r != 10 or delta != 1/3, the LLM-descent ablation, online-off,
     the v4 cohort-mode and churn-mode variants, route-to-many, and the trusted-observer halving arm (erratum 26)."""
     label = str(label)
     if label in DO_NOT_ADD: return True
@@ -164,9 +164,9 @@ def selfdesc(df):
 
 # ------------------------------------------------------------------ headline
 def H1():
-    """By shape, n=1000, self-described: oracle / MIDIAN-VA / A / V / MIDIAN / flat online bars; the ten frameworks as a min-max
+    """By shape, n=1000, self-described: oracle / MIDIAN / w/o verification / w/o audits / w/o defenses / flat online bars; the ten frameworks as a min-max
     band (two extreme names + fallback %). Fourth panel: β=0.5 low-skill-first collusion (fw_live_n1000_lowskill), all shapes."""
-    bars = ["oracle", "midian_va", "midian_a", "midian_v", "midian", FLAT_ON]
+    bars = ["oracle", "midian", "midian_wo_verify", "midian_wo_audit", "midian_wo_defenses", FLAT_ON]
     fwr = selfdesc(rows("fw_live_n1000")); var = selfdesc(rows("variants_f1")); low = selfdesc(rows("fw_live_n1000_lowskill"))
     var = var[var.liar_select == "random"] if "liar_select" in var else var
     def frame(df, extra):
@@ -190,32 +190,32 @@ def H1():
         ax.axhline(fm.mean(), color="#2980b9", ls="--", lw=1)
         ax.set_xticks(x); ax.set_xticklabels([b.replace("flat_probe_argmax_online", "flat online") for b in bs], rotation=25, ha="right"); ax.set_title(title.replace("_", " ") if "β" not in title else title, fontsize=10); ax.grid(axis="y", alpha=.3); ax.legend(fontsize=6.5, loc="lower left")
     sp = core.xs("specialist", level="dist") if "specialist" in shapes else None
-    ttl = f"specialist: frameworks {sp[fws].mean().mean():.2f} vs MIDIAN-VA {sp['midian_va'].mean():.2f}" if sp is not None and "midian_va" in sp else ""
+    ttl = f"specialist: frameworks {sp[fws].mean().mean():.2f} vs MIDIAN {sp['midian'].mean():.2f}" if sp is not None and "midian" in sp else ""
     fig.suptitle(f"H1  n=1000, self-described channel, {len(core)} paired cells; {ttl}"); np.atleast_1d(axes)[0].set_ylabel("success")
     save(fig, "H1_headline_by_shape")
 
 
 def H2():
     """Legibility: x = Spearman(D_self_described, S) per shape (scripts/legibility.py -> legibility.json) and x = declared_argmax
-    success; y = framework success - MIDIAN success; one point per (shape, framework, n)."""
+    success; y = framework success - MIDIAN w/o defenses success; one point per (shape, framework, n)."""
     p = f"{O}/legibility.json"
     if not os.path.exists(p): print("[H2] waiting on data: legibility.json (run scripts/legibility.py on a compute node)"); return
     rho = pd.DataFrame(json.load(open(p))).groupby(["n", "dist"]).spearman.mean()
     fig, axes = plt.subplots(1, 2, figsize=(13, 5.5))
     for n in (100, 1000):
         w = piv(selfdesc(rows(f"fw_live_n{n}")))
-        if "midian" not in w or "declared_argmax" not in w: print(f"[H2] waiting on data: fw_live_n{n}"); continue
+        if "midian_wo_defenses" not in w or "declared_argmax" not in w: print(f"[H2] waiting on data: fw_live_n{n}"); continue
         g = w.groupby(level="dist").mean(); fws = [c for c in w.columns if c.startswith("fw_") and c != MAG14]
         for d in g.index:
             for f in fws:
-                y = g.loc[d, f] - g.loc[d, "midian"]
+                y = g.loc[d, f] - g.loc[d, "midian_wo_defenses"]
                 if (n, d) in rho: axes[0].scatter(rho[(n, d)], y, color=CLASS_COLOR["framework"], marker="o" if n == 1000 else "^", alpha=.7)
                 axes[1].scatter(g.loc[d, "declared_argmax"], y, color=CLASS_COLOR["framework"], marker="o" if n == 1000 else "^", alpha=.7)
-            if (n, d) in rho: axes[0].annotate(f"{d} n={n}", (rho[(n, d)], (g.loc[d, fws] - g.loc[d, 'midian']).mean()), fontsize=7)
-            axes[1].annotate(f"{d} n={n}", (g.loc[d, "declared_argmax"], (g.loc[d, fws] - g.loc[d, 'midian']).mean()), fontsize=7)
+            if (n, d) in rho: axes[0].annotate(f"{d} n={n}", (rho[(n, d)], (g.loc[d, fws] - g.loc[d, 'midian_wo_defenses']).mean()), fontsize=7)
+            axes[1].annotate(f"{d} n={n}", (g.loc[d, "declared_argmax"], (g.loc[d, fws] - g.loc[d, 'midian_wo_defenses']).mean()), fontsize=7)
     for ax, xl in zip(axes, ["Spearman(self-described D, true S), per shape", "declared_argmax success on the self-described channel"]):
-        ax.axhline(0, color=GRY, ls=":"); ax.set_xlabel(xl); ax.set_ylabel("framework success - MIDIAN success"); ax.grid(alpha=.3)
-    fig.suptitle("H2  legibility of skill from self-descriptions vs the frameworks' gap to MIDIAN (o n=1000, ^ n=100)")
+        ax.axhline(0, color=GRY, ls=":"); ax.set_xlabel(xl); ax.set_ylabel("framework success - MIDIAN w/o defenses success"); ax.grid(alpha=.3)
+    fig.suptitle("H2  legibility of skill from self-descriptions vs the frameworks' gap to MIDIAN w/o defenses (o n=1000, ^ n=100)")
     save(fig, "H2_legibility")
 
 
@@ -239,10 +239,10 @@ def H3():
 
 def H4():
     """Cost-quality Pareto: x = build + Q*per-task for messages / comparisons / LLM calls at Q in {1e2..1e5}; y = success (n=1000,
-    self-described); break-even Q of midian_v against the one-call framework marked."""
+    self-described); break-even Q of midian_wo_audit against the one-call framework marked."""
     df = selfdesc(rows("fw_live_n1000", "variants_f1")); df = df[df.liar_select == "random"] if "liar_select" in df else df
     if not len(df): return print("[H4] waiting on data")
-    arms = need(df.groupby("label").success.mean(), ["midian", "midian_v", FLAT, HALP, "fw_autogen", "fw_magentic_one"], "H4")
+    arms = need(df.groupby("label").success.mean(), ["midian_wo_defenses", "midian_wo_audit", FLAT, HALP, "fw_autogen", "fw_magentic_one"], "H4")
     g = df[df.label.isin(arms)].groupby("label")[["success", "build_messages", "build_comparisons", "build_probes", "messages_per_task", "comparisons_per_task", "hops_per_task"]].mean()
     g["build_calls"], g["calls_per_task"] = g.build_probes, [1.0 if l.startswith("fw_") else 0.0 for l in g.index]       # frameworks: 1 supervisor call/task (Magentic-One: several; not measured -> lower bound)
     Qs = [1e2, 1e3, 1e4, 1e5]; fig, axes = plt.subplots(1, 3, figsize=(18, 5.5))
@@ -251,10 +251,10 @@ def H4():
         for l in g.index:
             xs = [g.loc[l, b] + Q * g.loc[l, per] for Q in Qs]; ax.plot(xs, [g.loc[l, "success"]] * 4, marker="o", color=col(l), label=l)
             for Q, x_ in zip(Qs, xs): ax.annotate(f"{Q:.0e}", (x_, g.loc[l, "success"]), fontsize=5, xytext=(0, 4), textcoords="offset points", ha="center")
-        if {"midian_v", "fw_autogen"} <= set(g.index):
-            d = g.loc["fw_autogen", per] - g.loc["midian_v", per]; be = (g.loc["midian_v", b] - g.loc["fw_autogen", b]) / d if d > 0 else np.inf
-            ax.axvline(g.loc["midian_v", b] + be * g.loc["midian_v", per], color=ORG, ls="--", lw=1) if np.isfinite(be) and be > 0 else None
-            ax.set_title(f"{ttl}\nbreak-even midian_v vs one-call framework: Q = {be:,.0f}" if np.isfinite(be) and be > 0 else f"{ttl}\nmidian_v cheaper from the first task")
+        if {"midian_wo_audit", "fw_autogen"} <= set(g.index):
+            d = g.loc["fw_autogen", per] - g.loc["midian_wo_audit", per]; be = (g.loc["midian_wo_audit", b] - g.loc["fw_autogen", b]) / d if d > 0 else np.inf
+            ax.axvline(g.loc["midian_wo_audit", b] + be * g.loc["midian_wo_audit", per], color=ORG, ls="--", lw=1) if np.isfinite(be) and be > 0 else None
+            ax.set_title(f"{ttl}\nbreak-even midian_wo_audit vs one-call framework: Q = {be:,.0f}" if np.isfinite(be) and be > 0 else f"{ttl}\nmidian_wo_audit cheaper from the first task")
         ax.set_xscale("symlog"); ax.set_xlabel("build + Q x per-task (points at Q = 1e2, 1e3, 1e4, 1e5)"); ax.grid(alpha=.3, which="both")
     axes[0].set_ylabel("success (n=1000, self-described)"); axes[0].legend(fontsize=8); fig.suptitle("H4  cost-quality with break-even"); save(fig, "H4_cost_quality_breakeven")
 
@@ -262,7 +262,7 @@ def H4():
 def H5():
     """Cost scaling on bernoulli_scale (K=16; b=3 to 1e5, b=1 above) + supervisor latency from the fw rows only."""
     d = rows("bernoulli_scale"); d = d[d.beta.isin([0.0, 0.25])] if len(d) else d
-    keep = {k: v for k, v in {"midian": "-", "midian_v": "-", FLAT: "-", "declared_argmax": "--", "cnp_self_bid": ":", HALP: "-"}.items() if not excluded(k)}
+    keep = {k: v for k, v in {"midian_wo_defenses": "-", "midian_wo_audit": "-", FLAT: "-", "declared_argmax": "--", "cnp_self_bid": ":", HALP: "-"}.items() if not excluded(k)}
     fig, axes = plt.subplots(1, 4, figsize=(22, 5))
     for ax, (c, ttl) in zip(axes[:3], [("comparisons_per_task", "comparisons per task"), ("messages_per_task", "messages per task"), ("build_probes", "build probes (b=1 above 1e5)")]):
         for l, ls in keep.items():
@@ -273,38 +273,38 @@ def H5():
     if len(f) and "wall_clock_per_task" in f:
         q = f.groupby(["label", "n"]).wall_clock_per_task.median().unstack("n"); q.index = [fw(i) for i in q.index]
         q.plot.barh(ax=ax, color=["#aed6f1", "#2980b9"]); ax.set_xlabel("median supervisor seconds per task"); ax.set_title("framework supervisor latency\n(never memoised; shared-fleet load)"); ax.grid(axis="x", alpha=.3)
-    fig.suptitle("H5  cost vs n (calibrated bernoulli, 10^2-10^7): MIDIAN per task = r*ceil(log_r n) (~n^0.11), midian_v 1, flat/declared/CNP = n"); save(fig, "H5_cost_scaling")
+    fig.suptitle("H5  cost vs n (calibrated bernoulli, 10^2-10^7): MIDIAN w/o defenses per task = r*ceil(log_r n) (~n^0.11), midian_wo_audit 1, flat/declared/CNP = n"); save(fig, "H5_cost_scaling")
 
 
 def H6():
     """MIDIAN vs halving by beta x liar selection, self-described, with the Phase-1 variants; second row = replay twin."""
     live = selfdesc(rows("live_f1_n1000", "variants_f1")); rep = rows("replay_mirror_live_f1_n1000")
-    arms = [l for l in ["oracle", HALP, "midian_v", "midian", "midian_sh", "midian_a", "midian_sha", "midian_va", FLAT_ON] if not excluded(l)]   # no trusted-observer halving (erratum 26)
+    arms = [l for l in ["oracle", HALP, "midian_wo_audit", "midian_wo_defenses", "midian_wo_verify", "midian", FLAT_ON] if not excluded(l)]   # no trusted-observer halving (erratum 26)
     fig, axes = plt.subplots(2, 2, figsize=(13, 9), sharey="row")
     for r_, (df, name) in enumerate([(live, "live LLM population, self-described channel"), (rep, "RouterBench replay twin")]):
         w = piv(df, ("dist", "beta", "liar_select", "seed")) if len(df) else pd.DataFrame()
         for ax, ls in zip(axes[r_], ["random", "low_skill_first"]):
             for l in need(w, arms, "H6"):
-                sub = w[l].xs(ls, level="liar_select"); line(ax, sub.groupby(level="beta"), l, lw=2.5 if l == "midian" else 1.8 if l == "midian_va" else 1.2)
+                sub = w[l].xs(ls, level="liar_select"); line(ax, sub.groupby(level="beta"), l, lw=2.5 if l == "midian_wo_defenses" else 1.8 if l == "midian" else 1.2)
             ax.set_title(f"{name}, liars = {ls}"); ax.set_xlabel("β (liar fraction)"); ax.grid(alpha=.3)
         axes[r_][0].set_ylabel("success (n=1000)")
     axes[0][1].legend(fontsize=7); fig.suptitle("H6  MIDIAN and its variants vs sequential halving"); save(fig, "H6_midian_vs_halving")
 
 
 def H7():
-    """Shortlist lift: each framework with its own selection vs with midian_v's cohort (r=10, r=5); midian_v alone as reference."""
+    """Shortlist lift: each framework with its own selection vs with the cohort of midian_wo_audit (r=10, r=5); midian_wo_audit alone as reference."""
     fig, axes = plt.subplots(1, 2, figsize=(14, 5), sharey=True); done = False
     for ax, n in zip(axes, (100, 1000)):
         df = selfdesc(rows(f"fw_live_n{n}", f"fw_live_n{n}_verified")); w = piv(df)
         fws = sorted(c for c in w.columns if c.startswith("fw_") and "[" not in c)
-        cols = [f + s for f in fws for s in ("", "[r=10,retrieval=midian]", "[r=5,retrieval=midian]")] + ["midian_v", "oracle"]
+        cols = [f + s for f in fws for s in ("", "[r=10,retrieval=midian_wo_audit]", "[r=5,retrieval=midian_wo_audit]")] + ["midian_wo_audit", "oracle"]
         if not fws or need(w, cols, "H7") != cols: continue
         c = w[cols].dropna(); x = np.arange(len(fws)); done = True
-        for off, suf, lab, cc in ((-.27, "", "own selection (TF-IDF top-10)", "#2980b9"), (0, "[r=10,retrieval=midian]", "+ midian_v cohort r=10", ORG), (.27, "[r=5,retrieval=midian]", "+ midian_v cohort r=5", YEL)):
+        for off, suf, lab, cc in ((-.27, "", "own selection (TF-IDF top-10)", "#2980b9"), (0, "[r=10,retrieval=midian_wo_audit]", "+ midian_wo_audit cohort r=10", ORG), (.27, "[r=5,retrieval=midian_wo_audit]", "+ midian_wo_audit cohort r=5", YEL)):
             ax.bar(x + off, [c[f + suf].mean() for f in fws], .27, label=lab, color=cc)
-        ax.axhline(c["midian_v"].mean(), color=RED, ls="--", label=f"midian_v alone ({c['midian_v'].mean():.2f})"); ax.axhline(c["oracle"].mean(), color=GRY, ls=":", label="oracle")
+        ax.axhline(c["midian_wo_audit"].mean(), color=RED, ls="--", label=f"midian_wo_audit alone ({c['midian_wo_audit'].mean():.2f})"); ax.axhline(c["oracle"].mean(), color=GRY, ls=":", label="oracle")
         ax.set_xticks(x); ax.set_xticklabels([fw(f) for f in fws], rotation=35, ha="right"); ax.set_ylim(0.4, 0.85); ax.grid(axis="y", alpha=.3); ax.set_title(f"n={n} ({len(c)} paired cells)")
-    if done: axes[0].set_ylabel("success"); axes[1].legend(fontsize=8); fig.suptitle("H7  frameworks with MIDIAN's verified shortlist"); save(fig, "H7_shortlist_lift")
+    if done: axes[0].set_ylabel("success"); axes[1].legend(fontsize=8); fig.suptitle("H7  frameworks with the verified shortlist of MIDIAN w/o audits"); save(fig, "H7_shortlist_lift")
     else: plt.close(fig)
 
 
@@ -312,11 +312,11 @@ def H8():
     """Budget sweep split by declaration channel (budget_sweep: b=1,3,10 programmatic; budget_b10_shapes adds b=10 on both channels)."""
     df = rows("budget_sweep", "budget_b10_shapes")
     if not len(df): return print("[H8] waiting on data")
-    arms = [l for l in ["oracle", HALP, "midian_v", "midian", FLAT, FLAT_ON, "warm_start_bandit", "declared_argmax", "linucb_honest", "fw_langgraph", "fw_autogen"] if not excluded(l)]
+    arms = [l for l in ["oracle", HALP, "midian_wo_audit", "midian_wo_defenses", FLAT, FLAT_ON, "warm_start_bandit", "declared_argmax", "linucb_honest", "fw_langgraph", "fw_autogen"] if not excluded(l)]
     chans = sorted(df.declared_source.unique()); fig, axes = plt.subplots(1, len(chans), figsize=(7 * len(chans), 5.5), sharey=True)
     for ax, ch in zip(np.atleast_1d(axes), chans):
         w = piv(df[df.declared_source == ch], ("dist", "seed", "b"))
-        for l in need(w, arms, "H8"): line(ax, w[l].groupby(level="b"), l, lw=2.5 if l == "midian" else 1.2)
+        for l in need(w, arms, "H8"): line(ax, w[l].groupby(level="b"), l, lw=2.5 if l == "midian_wo_defenses" else 1.2)
         ax.set_xscale("log"); ax.set_xticks([1, 3, 10]); ax.set_xticklabels(["1", "3", "10"]); ax.set_xlabel("probe budget b per (agent, family)")
         ax.set_title(f"{ch}" + (" = upper bound (S + N(0, 0.05))" if ch == "programmatic" else " = the live channel")); ax.grid(alpha=.3); ax.legend(fontsize=7)
     np.atleast_1d(axes)[0].set_ylabel("success (n=1000, β=0.25)"); fig.suptitle("H8  success vs build budget, by declaration channel"); save(fig, "H8_budget_by_channel")
@@ -327,15 +327,15 @@ def H9():
     df = rows("churn_n1000")
     if not len(df) or "churn" not in df: return print("[H9] waiting on data: churn_n1000")
     df = df.assign(frac=df.churn.map(lambda c: (c if isinstance(c, dict) else ast.literal_eval(str(c))).get("frac")), blocks=df.success_by_block.map(lambda b: b if isinstance(b, list) else ast.literal_eval(str(b))))
-    arms = [l for l in ["oracle", "midian", "midian_sh", "midian_a", "midian_v", HAL_RB, HAL_ST, FLAT_ON, "warm_start_bandit", "linucb_honest", "fw_langgraph", "fw_autogen"] if not excluded(l)]
+    arms = [l for l in ["oracle", "midian_wo_defenses", "midian_wo_verify", "midian_wo_audit", HAL_RB, HAL_ST, FLAT_ON, "warm_start_bandit", "linucb_honest", "fw_langgraph", "fw_autogen"] if not excluded(l)]
     fracs = sorted(df.frac.dropna().unique()); fig, axes = plt.subplots(2, len(fracs), figsize=(7 * len(fracs), 9), squeeze=False)
     for j, fr in enumerate(fracs):
         d = df[df.frac == fr]
         for l in [a for a in arms if a in set(d.label)]:
             g = d[d.label == l]; curve = np.mean(np.stack(g.blocks.values), axis=0); x = np.arange(len(curve)) * 100 + 50
-            axes[0][j].plot(x, curve, marker="o", ms=3, color=col(l), label=l, lw=2.5 if l == "midian" else 1.2)
+            axes[0][j].plot(x, curve, marker="o", ms=3, color=col(l), label=l, lw=2.5 if l == "midian_wo_defenses" else 1.2)
             rep = g.get("repair_probes_per_event", pd.Series(0, index=g.index)).fillna(0).mean(); ev = np.floor(np.arange(len(curve)) * 100 / 200)
-            axes[1][j].plot(x, g.build_probes.mean() + ev * rep, color=col(l), label=l, lw=2.5 if l == "midian" else 1.2)
+            axes[1][j].plot(x, g.build_probes.mean() + ev * rep, color=col(l), label=l, lw=2.5 if l == "midian_wo_defenses" else 1.2)
         for k in range(200, 1000, 200): axes[0][j].axvline(k, color=GRY, ls=":", lw=.8); axes[1][j].axvline(k, color=GRY, ls=":", lw=.8)
         axes[0][j].set_title(f"churn {int(fr * 100)}% of agents every 200 tasks"); axes[0][j].set_ylabel("success per 100 tasks"); axes[1][j].set_ylabel("cumulative probes (build + repairs)")
         axes[1][j].set_xlabel("task index"); axes[1][j].set_yscale("log"); [a.grid(alpha=.3) for a in axes[:, j]]
@@ -348,8 +348,11 @@ def A_internals():
     if not len(df): return print("[A_internals] waiting on data: internals_v2")
     df = df.assign(r=df.params.map(lambda p: json.loads(p).get("r")), delta=df.params.map(lambda p: json.loads(p).get("delta")))
     fig, axes = plt.subplots(1, 2, figsize=(13, 5), sharey=True)
-    for ax, m in zip(axes, ["midian", "midian_a"]):
-        d = df[df.method == m]
+    par = df.params.map(json.loads)                             # the two arms by their defense flags (r, delta vary)
+    df = df.assign(arm=[None if m != "midian" else "midian_wo_defenses" if p.get("audit") is False and p.get("verify") is False
+                        else "midian_wo_verify" if p.get("verify") is False and "audit" not in p else None for m, p in zip(df.method, par)])
+    for ax, m in zip(axes, ["midian_wo_defenses", "midian_wo_verify"]):
+        d = df[df.arm == m]
         for (cl, ls), g in d.groupby(["collude", "liar_select"]):
             t = g.pivot_table(index="r", columns="delta", values="success")
             if t.shape[1] == 2: ax.plot(t.index, t.iloc[:, 1] - t.iloc[:, 0], marker="o", label=f"collude={cl}, liars={ls}")
@@ -362,9 +365,9 @@ def A_learning():
     runs = [json.load(open(f)) for f in sorted(__import__("glob").glob(f"{RTE_DATA}/scratch/curve_*.json"))]
     if not runs: return print("[A_learning] waiting on data: scratch/curve_*.json")
     B = 100; fig, ax = plt.subplots(figsize=(9, 5)); orc = np.array([r["oracle"] for r in runs], float).reshape(len(runs), -1, B).mean(axis=(0, 2))
-    for m, lab in [('midian{"cached":true,"verify":true}', "midian_v"), ("midian{}", "midian"), ('midian{"online":false}', "midian[online=False]"), ('flat_probe_argmax{"online":true}', FLAT_ON), ("warm_start_bandit{}", "warm_start_bandit"), ("llm_supervisor{}", "llm_supervisor")]:
+    for m, lab in [('midian{"cached":true,"verify":true}', "midian_wo_audit"), ("midian{}", "midian_wo_defenses"), ('midian{"online":false}', "midian[audit=False,online=False,verify=False]"), ('flat_probe_argmax{"online":true}', FLAT_ON), ("warm_start_bandit{}", "warm_start_bandit"), ("llm_supervisor{}", "llm_supervisor")]:
         arr = np.array([r[m] for r in runs], float).reshape(len(runs), -1, B).mean(axis=(0, 2)) - orc
-        ax.plot(np.arange(len(arr)) * B + B / 2, arr, marker="o", label=lab, color=col(lab), ls="--" if "False" in lab else "-", lw=2.5 if lab == "midian" else 1.2)
+        ax.plot(np.arange(len(arr)) * B + B / 2, arr, marker="o", label=lab, color=col(lab), ls="--" if "False" in lab else "-", lw=2.5 if lab == "midian_wo_defenses" else 1.2)
     ax.axhline(0, color=GRY, ls=":", label="oracle"); ax.set_xlabel("task index (blocks of 100)"); ax.set_ylabel(f"success minus oracle ({len(runs)} live cells, n=1000, β=0.25)"); ax.grid(alpha=.3); ax.legend(fontsize=8)
     ax.set_title("Appendix  learning over the stream"); save(fig, "A_learning_curve")
 
@@ -380,7 +383,7 @@ def A_replay():
     w = piv(rows("replay_mirror_live_f1_n1000"), ("dist", "beta", "liar_select", "declared_source", "seed"))
     if not len(w): return print("[A_replay] waiting on data")
     fig, ax = plt.subplots(figsize=(9, 5.5))
-    for l in need(w, ["oracle", HALP, "declared_argmax", "midian_v", "midian", FLAT_ON, FLAT, "random"], "A_replay"): line(ax, w[l].groupby(level="beta"), l, lw=2.5 if l == "midian" else 1.2)
+    for l in need(w, ["oracle", HALP, "declared_argmax", "midian_wo_audit", "midian_wo_defenses", FLAT_ON, FLAT, "random"], "A_replay"): line(ax, w[l].groupby(level="beta"), l, lw=2.5 if l == "midian_wo_defenses" else 1.2)
     ax.set_xlabel("β"); ax.set_ylabel("success (RouterBench replay, n=1000, K=64, 10 seeds)"); ax.grid(alpha=.3); ax.legend(fontsize=7); ax.set_title("Appendix  replay twin of the F1 sweep"); save(fig, "A_replay_mirror")
 
 
@@ -396,7 +399,7 @@ def A_bandits():
     w = piv(selfdesc(rows("live_f1_n1000")), ("dist", "beta", "liar_select", "declared_source", "seed"))
     if not len(w): return print("[A_bandits] waiting on data")
     fig, ax = plt.subplots(figsize=(8, 5))
-    for l in need(w, ["midian", FLAT_ON, "ucb_per_family", "thompson_per_family", "warm_start_bandit", "linucb_honest"], "A_bandits"): line(ax, w[l].groupby(level="beta"), l, lw=2.5 if l == "midian" else 1.2)
+    for l in need(w, ["midian_wo_defenses", FLAT_ON, "ucb_per_family", "thompson_per_family", "warm_start_bandit", "linucb_honest"], "A_bandits"): line(ax, w[l].groupby(level="beta"), l, lw=2.5 if l == "midian_wo_defenses" else 1.2)
     ax.set_xlabel("β"); ax.set_ylabel("success (n=1000, self-described)"); ax.grid(alpha=.3); ax.legend(fontsize=8)
     ax.set_title("Appendix  UCB / Thompson: 16k arms, Q=1,000, under-explored by construction"); save(fig, "A_bandits")
 

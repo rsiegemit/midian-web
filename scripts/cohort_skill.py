@@ -1,5 +1,5 @@
-"""Diagnostic ONLY: true skill of the MIDIAN-V and MIDIAN-VA leaf cohorts, the rows missing from the
-text-retriever table. MIDIAN-V/VA observe probe OUTCOMES, which on the llm backend are Bernoulli(S) draws, so the
+"""Diagnostic ONLY: true skill of the leaf cohorts of MIDIAN w/o audits and of MIDIAN, the rows missing from the
+text-retriever table. Both observe probe OUTCOMES, which on the llm backend are Bernoulli(S) draws, so the
 cohort is reconstructed on a bernoulli world carrying the population's exact measured S -- statistically the same
 selection the live run makes. S is read for MEASUREMENT only; no method ever sees it.
 """
@@ -9,7 +9,6 @@ sys.path.insert(0, '/n/home02/rsiegelmann/rte')
 from rte.budget import Budget
 from rte.world import World
 from rte.methods.midian import Midian
-from rte.methods.midian_va import MidianVA
 
 RD = os.environ["RTE_DATA"]; K, B = 16, 3
 out = {}
@@ -23,8 +22,8 @@ for seed in (1, 2, 3):
     for t in w.tasks(400):
         tasks.setdefault(int(t.family), t)
         if len(tasks) == K: break
-    for name, mk in [("MIDIAN-V leaf cohort", lambda: Midian(verify=True, cached=True, r=10)),
-                     ("MIDIAN-VA leaf cohort", lambda: MidianVA(r=10))]:
+    for name, mk in [("MIDIAN w/o audits leaf cohort", lambda: Midian(audit=False, r=10)),
+                     ("MIDIAN leaf cohort", lambda: Midian(r=10))]:
         m = mk(); m.build(w.view(m.needs), Budget(B))
         sk, sizes, bst, pick = [], [], [], []
         for f, t in sorted(tasks.items()):
