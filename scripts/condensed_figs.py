@@ -1,14 +1,16 @@
-"""SAMPLE condensed replacements for the 48 figures/bars files -- one panel and one row each.
+"""Figures 1 / 2 of the submission (A_live_stacked, B_families_stacked) and their appendix versions (_allb); style, names,
+legend order and saving from scripts/figspec.py (docs/FIGURE_SPEC.md).
     python scripts/condensed_figs.py      -> figures/condensed_sample/{A,B}_{allb,stacked}.{png,pdf,csv}
 b = 3 cells from figures/bars/<family>.csv; b = 1 / 5 from the va_b_* (MIDIAN) and rivals_b_* (budget-matched rivals)
 rows and, for bernoulli / replay b = 1, their scale matrices. b is NEVER pooled: every bar is one budget.
   A  live headline: n = 10^2..10^5 (specialist), solid = honest, hatched = beta = 0.5 low-skill cartel.
   B  every family at its largest population, success / oracle, same arms and style.
-  Two versions of each: _allb  -- one bar per (arm, regime, b), shade light -> dark = b = 1, 3, 5;
-                        _stacked -- one full-width bar per (arm, regime): b = 1 at the bottom, then the gain to b = 3,
-                                    then to b = 5 (drawn tallest-first, so a non-monotone arm shows out-of-order shades).
-  declared argmax and random spend no probes: one bar (b does not apply). No markers on bars: a budget not in yet is an
-  empty slot, and the title ends in ONE * while any bar of the figure is missing or its pool is incomplete.
+  Two versions of each: _allb  -- one bar per (arm, regime, b), shade light -> dark = b = 1, 3, 5, whiskers +/- 1 s.e.;
+                        _stacked -- one bar per (arm, regime) at b = 3; MIDIAN alone carries the budget overlay (b = 1 light
+                                    in front, 3 mid, 5 dark behind, drawn tallest-first), no whiskers (see _allb).
+  declared argmax and random spend no probes: one bar (b does not apply). No markers on bars and no titles: a budget not in
+  yet is an empty slot, and the script prints INCOMPLETE while any bar is missing or its pool is incomplete.
+  A also carries "best framework, best text shortlist" (b = 3; add_best_framework), cross-fitted per seed like the pooled arms.
   C / D (routing work vs n; energy per query) are scripts/efficiency_figs.py.
 "Best learned router" / "best bandit" are CROSS-FITTED (scripts/seed_tables.py): for each seed the arm is chosen on the
 OTHER seeds and scored on this one, so no bar is the maximum of noisy means over the seeds it reports (no winner's curse).
@@ -17,21 +19,18 @@ still missing a candidate (or a seed of one) at that b puts the one * in the fig
 TEMPORARY extra_figs.HIDE_HALVING switch."""
 from __future__ import annotations
 import os, re, sys
-import numpy as np, pandas as pd, matplotlib
-matplotlib.use("Agg"); import matplotlib.pyplot as plt
+import pandas as pd
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import figspec as S
 from extra_figs import excluded, se
 from seed_tables import tables, crossfit, label, switched
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BARS, OUT = f"{ROOT}/figures/bars", f"{ROOT}/figures/condensed_sample"; os.makedirs(OUT, exist_ok=True)
-plt.rcParams.update({"pdf.fonttype": 42, "font.family": "DejaVu Sans", "font.size": 7, "axes.titlesize": 7.5, "legend.fontsize": 6,
-                     "xtick.labelsize": 6.5, "ytick.labelsize": 6.5, "axes.linewidth": 0.6, "figure.constrained_layout.use": True})
 LEARNED = ["knn_router", "knn_router_online", "mlp_router", "flat_nsw_router", "cluster_head_router", "disrouter_cascade"]
 BANDIT = ["ucb_per_family", "thompson_per_family", "warm_start_bandit", "linucb_honest", "trueskill_per_family"]
-ARMS = [("midian", "MIDIAN", "#2ecc71"), ("midian_wo_defenses", "MIDIAN w/o defenses", "#c0392b"), ("flat_probe_argmax_online", "flat probe argmax (online)", "#3498db"),
-        ("best_learned", "best learned router", "#ff7f0e"), ("best_bandit", "best bandit", "#9467bd"),
-        ("declared_argmax", "declared argmax", "#5d6d7e"), ("random", "random", "#bbbbbb")]
+ARMS = [k for k in S.ORDER if k not in ("oracle", "best_framework")]      # the arms read from the rows, in legend order
+TEXT = {"tfidf", "bm25", "embed", "dense", "dense_icomp", "dense_idemo", "sota", "sota_icomp", "sota_idemo"}   # text shortlists (not declared / cohort)
 POOLS = {"best_learned": LEARNED,                      # the bandit pool takes the TUNED warm-start bandit (n0 = 0.5) and drops the
          "best_bandit": [a for a in BANDIT if a != "linucb_honest"] + ["linucb_honest[bonus=own]", "warm_start_bandit[n0=0.5]"]}
 # linucb_honest -> the fixed bonus (post hoc, audit 2026-09-23: the context bonus picks the WEAKEST tied agent).
@@ -45,7 +44,7 @@ NOT_RUNNABLE = lambda fam, n: ({"trueskill_per_family"} if n >= 10 ** 5 else set
 BUDGETLESS = {"declared_argmax", "random"}
 BS = (1, 3, 5)
 PRIMARY = {"live": "specialist", "routereval": "strong_to_weak"}          # one population shape per family in A / B
-FAMILY = {"live": "live", "bernoulli": "bernoulli", "replay": "RouterBench replay", "routereval": "RouterEval", "llmrouterbench": "LLMRouterBench"}
+FAMILY = list(S.BACKEND)
 REG = {"beta0": "honest", "cartel": "β=0.5 cartel"}
 
 
@@ -77,68 +76,54 @@ def arms_at(cell):
             lo, hi = se(vals.values); miss = [a for a in want if a not in T.columns or T.loc[vals.index, a].isna().any()]   # absent, or missing a seed
             chosen = "; ".join(f"{a} x{c}" for a, c in picks.value_counts().items()) + (f" | INCOMPLETE POOL, missing or partial {', '.join(miss)}" if miss else "")
             out.setdefault(k, {})[b] = (float(vals.mean()), float(lo), float(hi), chosen)
+    if cell.get("fw_seeds") is not None:                 # best framework, best text shortlist: cross-fitted over the pairs
+        vals, picks = crossfit(cell["fw_seeds"], list(cell["fw_seeds"].columns))
+        if len(vals) >= 2:
+            lo, hi = se(vals.values)
+            out["best_framework"] = {3: (float(vals.mean()), float(lo), float(hi), "; ".join(f"{a} x{c}" for a, c in picks.value_counts().items()))}
     for b, raw in cell["raw"].items():
-        for k, _, _ in ARMS:
+        for k in ARMS:
             if k in raw and (b == 3 or k not in BUDGETLESS): out.setdefault(k, {})[b] = (*raw[k], k)
     return out
 
 
-def save(fig, name):
-    fig.savefig(f"{OUT}/{name}.png", dpi=250); fig.savefig(f"{OUT}/{name}.pdf"); plt.close(fig); print(f"[{name}] written")
-
-
-def shade(col, b):
-    import matplotlib.colors as mc
-    c = np.array(mc.to_rgb(col)); return tuple(c + (1 - c) * 0.5) if b == 1 else tuple(c * 0.6) if b == 5 else tuple(c)
-
-
-def budget_bars(C, groups, title, name, norm=False, nested=False, stacked=False):
-    """One group per (x label, cell). _allb: a bar per (arm, regime, b). _nested: one slot per (arm, regime) holding the
-    b = 5, 3, 1 bars widest to narrowest (success rises with b, so each stays visible). A budget not in yet: * in its place."""
-    A = {g: arms_at(C[key[:3] + (r,)]) for _, key in groups for g, r in [((key, r), r) for r in REG] if key[:3] + (r,) in C}
-    arms = [a for a in ARMS if any(a[0] in v for v in A.values())]
-    slots = [(k, r) for k, _, _ in arms for r in REG]                      # nested: one slot each
-    nested = nested or stacked                                          # both: one slot per (arm, regime)
-    if not nested: slots = [(k, r, b) for k, _, _ in arms for r in REG for b in ((3,) if k in BUDGETLESS else BS)]
-    w = 0.86 / len(slots); fig, ax = plt.subplots(figsize=(7.2, 2.8)); rec = []; incomplete = False; col = {k: c for k, _, c in ARMS}; lab = {k: l for k, l, _ in ARMS}
+def budget_bars(C, groups, name, norm=False, stacked=False, skip=()):
+    """One group per (x label, cell). _allb: a bar per (arm, regime, b) with whiskers. _stacked: one slot per (arm, regime)
+    at b = 3; MIDIAN's slot holds its b = 5, 3, 1 bars tallest-first (each level at its true height), no whiskers."""
+    A = {(key, r): arms_at(C[key[:3] + (r,)]) for _, key in groups for r in REG if key[:3] + (r,) in C}
+    arms = [k for k in S.ORDER if k not in skip and any(k in v for v in A.values())]
+    one = lambda k: k in BUDGETLESS or k == "best_framework"            # a single bar: no probes, or frameworks (b = 3 only)
+    slots = [(k, r, None) for k in arms for r in REG] if stacked else [(k, r, b) for k in arms for r in REG for b in ((3,) if one(k) else BS)]
+    fig, ax = S.figure("body" if stacked else "appendix"); w = 0.86 / len(slots); rec = []; incomplete = False
     for i, (xl, key) in enumerate(groups):
         o = C.get(key[:3] + ("beta0",), {}).get("oracle"); z = o[0] if (norm and o) else 1.0
-        for j, sl in enumerate(slots):
-            k, r = sl[0], sl[1]; x = i + (j - (len(slots) - 1) / 2) * w; h = r == "cartel"
-            got = A.get((key, r), {}).get(k, {})
-            bs = [sl[2]] if not nested else ((3,) if k in BUDGETLESS else (5, 3, 1))
-            if stacked: bs = sorted(bs, key=lambda b: -got[b][0] if b in got else 0)   # tallest behind: each level at its true height
+        for j, (k, r, sb) in enumerate(slots):
+            x = i + (j - (len(slots) - 1) / 2) * w; got = A.get((key, r), {}).get(k, {})
+            bs = [sb] if not stacked else sorted((5, 3, 1) if k == "midian" else (3,), key=lambda b: -got[b][0] if b in got else 0)
             for depth, b in enumerate(bs):
-                ww = w * 0.95 * (1.0 if (not nested or stacked) else (1.0, 0.66, 0.36)[depth])
                 if b not in got:
                     incomplete = True; continue
                 m, lo, hi, chosen = got[b]; m, lo, hi = m / z, lo / z, hi / z
                 incomplete |= "INCOMPLETE" in chosen
-                first = i == 0 and not h and (b == 3)
-                ax.bar(x, m, ww, color=shade(col[k], b) if k not in BUDGETLESS else col[k], edgecolor="black", lw=0.3,
-                       hatch="////" if h else None, alpha=0.8 if h else 1, label=lab[k] if first else None, zorder=2 + depth)
-                if not nested or (b == 3 and not stacked):          # stacked: an interval inside the stack misreads; see _allb
-                    ax.errorbar(x, m, yerr=[[m - lo], [hi - m]], fmt="none", ecolor="#222", elinewidth=0.4, capsize=0.6, zorder=6)
-                rec.append(dict(group=xl.replace("\n", " "), regime=REG[r], arm=lab[k], b=b if k not in BUDGETLESS else "-", chosen=chosen, value=m, ci_lo=lo, ci_hi=hi,
+                S.bar(ax, x, m, w * 0.95, k, cartel=r == "cartel", b=None if one(k) else b, z=2 + depth)
+                if not stacked: S.whisker(ax, x, m, lo, hi)
+                rec.append(dict(group=(S.BACKEND[key[0]] + " " if norm else "") + f"n = {key[2]:,}", regime=REG[r], arm=S.NAME[k], key=k,
+                                b=b if not one(k) else "-", chosen=chosen, value=m, ci_lo=lo, ci_hi=hi,
                                 b_invariant=k in B_INVARIANT or (k in POOLS and set(re.findall(r"([\w\[\]=.]+) x\d+", chosen.split("|")[0])) <= B_INVARIANT)))
-        if o: ax.hlines(1.0 if norm else o[0], i - 0.46, i + 0.46, colors="#7f8c8d", linestyles=":", lw=1.2, zorder=7, label="oracle" if i == 0 else None)
-    ax.set_xticks(range(len(groups))); ax.set_xticklabels([xl for xl, _ in groups])
-    ax.set_ylim(0.2, 1.05 if norm else 0.95); ax.set_ylabel("success / oracle" if norm else "success")
-    ax.grid(axis="y", lw=0.3, alpha=0.35); ax.set_axisbelow(True); ax.set_title(title + (" *" if incomplete else ""))
-    ax.legend(ncol=4, frameon=False, loc="lower center", bbox_to_anchor=(0.5, 1.07)); save(fig, name)
-    pd.DataFrame(rec).to_csv(f"{OUT}/{name}.csv", index=False)
-
-
-KEY_ALL = "light / mid / dark = probe budget b = 1 / 3 / 5; whiskers ±1 s.e. over seeds"
-KEY_NEST = "in each slot: wide = b 5, mid = b 3, narrow = b 1"
-KEY_STACK = "stack: b = 1, +gain to b = 3, +gain to b = 5 (CIs in _allb)"
+        if o: S.oracle(ax, i - 0.46, i + 0.46, 1.0 if norm else o[0])
+    ax.set_xticks(range(len(groups))); ax.set_xticklabels([xl for xl, _ in groups]); ax.set_xlim(-0.5, len(groups) - 0.5)
+    S.finish(ax, ylabel=S.AXIS["rel" if norm else "success"], ylim=(0.2, 1.05 if norm else 0.95))
+    keys = ["oracle"] + arms                                            # _allb: three rows, the budget swatches in the last column
+    S.legend(ax, keys, ncol=(3 if "best_framework" in arms else 4) if stacked else -(-len(keys) // 3) + 1,
+             extra=None if stacked else S.budget_handles(-len(keys) % 3))
+    if incomplete: print(f"[{name}] INCOMPLETE: a bar is missing or its pool is incomplete (see the csv)")
+    S.save(fig, name, OUT); pd.DataFrame(rec).to_csv(f"{OUT}/{name}.csv", index=False)
 
 
 def fig_A(C):
     ns = sorted(n for (f, g, n, r) in C if f == "live" and g == "specialist" and r == "beta0")
-    g = [(f"n = {n:,}", ("live", "specialist", n)) for n in ns]
-    budget_bars(C, g, f"A  live RTE, specialist; solid honest, hatched β = 0.5 cartel; {KEY_ALL}", "A_live_allb")
-    budget_bars(C, g, f"A  live, specialist; hatched = β 0.5 cartel; {KEY_STACK}", "A_live_stacked", stacked=True)
+    g = list(zip(S.pow10_ticks(ns, "n"), [("live", "specialist", n) for n in ns]))
+    budget_bars(C, g, "A_live_allb"); budget_bars(C, g, "A_live_stacked", stacked=True)
 
 
 def primary(f, g): return g == PRIMARY.get(f, g)
@@ -151,9 +136,21 @@ def fig_B(C):
         ns = [n for (ff, g, n, r) in C if ff == f and primary(f, g) and r == "cartel" and (ff, g, n, "beta0") in C]
         if not ns: continue
         n = max(ns); g = next(g for (ff, g, nn, r) in C if ff == f and nn == n and primary(f, g))
-        groups.append((f"{FAMILY[f]}\nn = {n:,}", (f, g, n)))
-    budget_bars(C, groups, f"B  each family at its largest n, success / oracle; hatched = cartel; {KEY_ALL}", "B_families_allb", norm=True)
-    budget_bars(C, groups, f"B  each family at its largest n, / oracle; hatched = cartel; {KEY_STACK}", "B_families_stacked", norm=True, stacked=True)
+        groups.append((f"{S.BACKEND[f]}\n{S.pow10(n, 'n')}", (f, g, n)))
+    budget_bars(C, groups, "B_families_allb", norm=True, skip=("best_framework",))
+    budget_bars(C, groups, "B_families_stacked", norm=True, stacked=True, skip=("best_framework",))
+
+
+def add_best_framework(C):
+    """Per live n and regime, the seed x (framework | text shortlist) success table of every pair with the full seed count
+    at that cell (framework rows via shortlist_figs.collect: b = 3, specialist); arms_at cross-fits the best pair per seed."""
+    from shortlist_figs import collect
+    for (n, dist, reg), cell in collect("live").items():
+        key = ("live", "specialist", n, reg)
+        if dist != "specialist" or key not in C: continue
+        T = pd.DataFrame({f"{m} | {src}": v for m, d in cell["fw"].items() for src, v in d.items() if src in TEXT})
+        if T.empty: continue
+        full = T.notna().sum(); C[key]["fw_seeds"] = T[full.index[full == full.max()]]
 
 
 def add_budgets(C):
@@ -210,7 +207,7 @@ def narrow(C, T):
     for key, c in C.items():
         bb = T.get(key, {})
         def fix(v, b, l):
-            if l != "oracle" and l not in {k for k, _, _ in ARMS}: return v   # not drawn (pool members come from the tables)
+            if l != "oracle" and l not in ARMS: return v   # not drawn (pool members come from the tables)
             t = bb.get(b)
             if t is None or l not in t or t[l].notna().sum() == 0: return (v[0], v[0], v[0], *v[3:])
             assert abs(t[l].mean() - v[0]) < 0.01 or l == "oracle" and b != 3, f"{key} b={b} {l}: {t[l].mean():.3f} vs {v[0]:.3f}"
@@ -223,4 +220,5 @@ if __name__ == "__main__":
     d = load(); C = cells(d); SW |= switched(); T = tables(); add_budgets(C); from_tables(C, T); narrow(C, T)
     for key, bb in T.items():                        # per-seed tables for the cross-fitted pooled arms
         if key in C: C[key]["seeds"] = bb
+    add_best_framework(C)
     fig_A(C); fig_B(C)                    # C / D: scripts/efficiency_figs.py

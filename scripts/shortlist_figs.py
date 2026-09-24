@@ -20,20 +20,19 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))));
 from extra_figs import COLOR as _COLOR, se as _ci, excluded   # whiskers +/- 1 s.e. over seeds
 from fw_variant_numbers import load, regime, pending_reruns
 from paper_figs import ABBR
+import figspec
 
 RTE_DATA = os.environ.get("RTE_DATA", "/scratch/rte"); R = f"{RTE_DATA}/results"
 OUT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "figures", "shortlist"); os.makedirs(OUT, exist_ok=True)
 plt.rcParams.update({"pdf.fonttype": 42, "font.family": "DejaVu Sans", "font.size": 7, "axes.labelsize": 7, "axes.titlesize": 7.5, "xtick.labelsize": 6.5,
                      "ytick.labelsize": 6.5, "legend.fontsize": 6, "axes.linewidth": 0.6, "figure.constrained_layout.use": True})
 
-# shortlist source -> (display name, colour); drawn left to right in this order wherever the source has data
-SOURCES = [("tfidf", "hashed TF-IDF (pre-registered)", "#b0b0b0"), ("bm25", "BM25", "#17becf"), ("embed", "MiniLM", "#1f77b4"),
-           ("dense", "Qwen3-8B dense", "#c5b0d5"), ("dense_icomp", "Qwen3-8B dense, I-competent", "#9467bd"),
-           ("dense_idemo", "Qwen3-8B dense, I-demonstrated", "#5b2c83"),
-           ("sota", "fusion + reranker", "#ff9896"), ("sota_icomp", "fusion + reranker, I-competent", "#d62728"),
-           ("sota_idemo", "fusion + reranker, I-demonstrated", "#8b0000"),
-           ("declared", "declared-claim top-k", "#e7ba52"),
-           ("va_cohort", "MIDIAN leaf cohort", "#117a3d")]
+# shortlist source -> (display name, colour); drawn left to right in this order (figspec.SHORTLIST_ORDER) wherever it has data
+_LONG = {"tfidf": "hashed TF-IDF (pre-registered)", "bm25": "BM25", "embed": "MiniLM", "dense": "Qwen3-8B dense",
+         "dense_icomp": "Qwen3-8B dense, I-competent", "dense_idemo": "Qwen3-8B dense, I-demonstrated", "sota": "fusion + reranker",
+         "sota_icomp": "fusion + reranker, I-competent", "sota_idemo": "fusion + reranker, I-demonstrated",
+         "declared": "declared-claim top-k", "va_cohort": "MIDIAN leaf cohort"}
+SOURCES = [(k, _LONG[k], figspec.SHORTLIST_COLOR[k]) for k in figspec.SHORTLIST_ORDER]
 SRC_NAME = {k: v for k, v, _ in SOURCES}; SRC_COLOR = {k: c for k, _, c in SOURCES}
 # Erratum 30: H moves to the no-repeat + calibrated-claims reruns (*_norep_cal) once ALL of them have landed; until then the
 # old rows stand, never a mix. H30_FW / H30_REF are those grids.
@@ -119,7 +118,7 @@ def collect(family):
             df = rows(grid)
             if df.empty: continue
             full = (df.method == "midian") & (df.params.fillna("{}").astype(str) == "{}")          # MIDIAN, the full method
-            q = tagged(df[((df.method == "oracle") | full) & (df.n == n) & (df.dist.astype(str) == dist)])
+            q = tagged(df[(df.method.isin(["oracle", "random"]) | full) & (df.n == n) & (df.dist.astype(str) == dist)])
             q = q[q.regime == reg]
             if reg == "beta0" and q.liar_select.nunique() > 1: q = q[q.liar_select == "random"]
             for m, g in q.groupby("method"):
@@ -136,12 +135,13 @@ def draw(family, key, cell, csv_rows):
     w = 0.84 / len(srcs); xfw = list(range(len(fws)))              # one group per framework, one bar per source
     fig, ax = plt.subplots(figsize=(max(6.4, (0.35 + 0.075 * len(srcs)) * len(fws) + 2.0), 2.9))
 
-    for m, lbl, ls in (("oracle", "oracle", ":"), ("midian", "MIDIAN (whole population)", "-")):   # reference lines
+    for m, lbl, ls in (("oracle", "oracle", ":"), ("midian", figspec.NAME["midian_ref"], "-"), ("random", "random", None)):   # reference lines
         if m not in cell["ref"]: continue
         s = cell["ref"][m]; lo, hi = _ci(s); v = float(s.mean()); c = _COLOR.get(m, "#555")
+        csv_rows.append([family, reg, dist, n, lbl, "-", v, lo, hi, len(s), False])
+        if ls is None: continue                                    # random: in the csv (the condensed figures' line), not drawn here
         ax.axhspan(lo, hi, color=c, alpha=0.12, lw=0, zorder=1)
         ax.axhline(v, color=c, ls=ls, lw=1.4, label=f"{lbl} ({v:.3f})", zorder=4)
-        csv_rows.append([family, reg, dist, n, lbl, "-", v, lo, hi, len(s), False])
 
     stars = []
     for si, src in enumerate(srcs):
