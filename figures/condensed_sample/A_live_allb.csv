@@ -6,10 +6,10 @@ n = 100,β=0.5 cartel,MIDIAN,midian,1,midian,0.6972,0.6858345552953995,0.7085654
 n = 100,β=0.5 cartel,MIDIAN,midian,3,midian,0.768,0.7560055568421595,0.7799944431578405,False
 n = 100,β=0.5 cartel,MIDIAN,midian,5,midian,0.8121,0.8037834168340866,0.8204165831659135,False
 n = 100,honest,MIDIAN w/o defenses,midian_wo_defenses,1,midian_wo_defenses,0.7104999999999999,0.6986347847329543,0.7223652152670456,False
-n = 100,honest,MIDIAN w/o defenses,midian_wo_defenses,3,midian_wo_defenses,0.7746833333333333,0.7643165864389584,0.7839367468943751,False
+n = 100,honest,MIDIAN w/o defenses,midian_wo_defenses,3,midian_wo_defenses,0.77705,0.7673958197286412,0.7865375136046922,False
 n = 100,honest,MIDIAN w/o defenses,midian_wo_defenses,5,midian_wo_defenses,0.8002,0.7924485843586836,0.8079514156413165,False
 n = 100,β=0.5 cartel,MIDIAN w/o defenses,midian_wo_defenses,1,midian_wo_defenses,0.6625,0.6534112401530486,0.6715887598469513,False
-n = 100,β=0.5 cartel,MIDIAN w/o defenses,midian_wo_defenses,3,midian_wo_defenses,0.7358666666666667,0.7275427905515237,0.7441905427818096,False
+n = 100,β=0.5 cartel,MIDIAN w/o defenses,midian_wo_defenses,3,midian_wo_defenses,0.7405,0.7321078740608963,0.7488921259391038,False
 n = 100,β=0.5 cartel,MIDIAN w/o defenses,midian_wo_defenses,5,midian_wo_defenses,0.7552,0.7467162901196862,0.7636837098803138,False
 n = 100,honest,flat probe argmax,flat_probe_argmax_online,1,flat_probe_argmax_online,0.7022999999999999,0.6924431918621357,0.7121568081378642,False
 n = 100,honest,flat probe argmax,flat_probe_argmax_online,3,flat_probe_argmax_online,0.7805,0.773182972674037,0.7878170273259629,False
@@ -29,12 +29,12 @@ n = 100,honest,best bandit,best_bandit,5,linucb_honest[bonus=own] x10,0.77290000
 n = 100,β=0.5 cartel,best bandit,best_bandit,1,linucb_honest[bonus=own] x10,0.6798,0.670934586554731,0.6886654134452689,False
 n = 100,β=0.5 cartel,best bandit,best_bandit,3,linucb_honest[bonus=own] x10,0.7524,0.7438739614513342,0.7609260385486657,False
 n = 100,β=0.5 cartel,best bandit,best_bandit,5,linucb_honest[bonus=own] x10,0.7729000000000001,0.7636726854755389,0.7821273145244614,False
-n = 100,honest,declared argmax,declared_argmax,-,declared_argmax,0.5991666666666667,0.5888261591522481,0.6094938408477519,True
+n = 100,honest,declared argmax,declared_argmax,-,declared_argmax,0.5991000000000002,0.5887834006464233,0.6094165993535771,True
 n = 100,β=0.5 cartel,declared argmax,declared_argmax,-,declared_argmax,0.5181,0.5001863490910176,0.5360136509089825,True
 n = 100,honest,best framework,best_framework,-,fw_magentic_one | embed x10,0.6111,0.5975759884320927,0.6246240115679073,False
 n = 100,β=0.5 cartel,best framework,best_framework,-,fw_magentic_one | sota x10,0.5660999999999999,0.5548133805868285,0.5773866194131714,False
-n = 100,honest,random,random,-,random,0.42575,0.41659059689233113,0.43487606977433557,True
-n = 100,β=0.5 cartel,random,random,-,random,0.42575,0.4166190848700083,0.4348809151299917,True
+n = 100,honest,random,random,-,random,0.4258,0.41670445774629744,0.4348955422537026,True
+n = 100,β=0.5 cartel,random,random,-,random,0.4258,0.41670445774629744,0.4348955422537026,True
 "n = 1,000",honest,MIDIAN,midian,1,midian,0.6913,0.685524476935665,0.6970755230643351,False
 "n = 1,000",honest,MIDIAN,midian,3,midian,0.8134,0.809151601608972,0.817648398391028,False
 "n = 1,000",honest,MIDIAN,midian,5,midian,0.8376999999999999,0.8340301528944957,0.8413698471055041,False

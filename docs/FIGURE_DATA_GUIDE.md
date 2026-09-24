@@ -184,7 +184,7 @@ Severity: **H** = can change a conclusion, **M** = comparability or labelling ca
 | 9 | **MIDIAN overspends the build budget**: 1.03–1.07 × n·K·b (audit re-probes; max 1.070 on LLMRouterBench b = 1) while every rival spends ≤ 1.00 ×. "Same budget" is not literally true; the MIDIAN-cohort shortlist and the E–H reference line spend it too, the frameworks none. | A, B, E–H | M | §1.5, §2.3.4 |
 | 10 | **At b = 1 MIDIAN verifies nothing** (no probes are left), so its b = 1 bar is MIDIAN w/o verification with a cached root; honest, it equals MIDIAN w/o defenses at b = 1 in every cell of A and B. | A, B | M | §2.3, §4.0.6 |
 | 11 | **Whiskers are ±1 standard error** (~68 %), never 95 % CIs: over seeds in A / B (3 seeds at live 10⁴ / 10⁵ and RouterEval, 5 LLMRouterBench, 30 replay, 100 bernoulli), over frameworks in G. | A, B, G | M | §1.7, §4.0.5, §5.4 |
-| 12 | **Live b = 3 bars average rows from several grids per seed, and those rows disagree** by up to 0.076 at n = 100 (mostly old per-method probe instances in `live_core_n100` / early `live_f1_n1000`, averaged into MIDIAN w/o defenses). | A | M | §4.5 #5, §1.10 #2 |
+| 12 | **Live b = 3 bars average rows from several grids per seed, and those rows disagree** by up to 0.020 at n = 1,000 (old per-method probe instances in early `live_f1_n1000`, averaged into MIDIAN w/o defenses). `live_core_n100` (pre-09-02 instances, spread 0.076) was dropped from n = 100 on 2026-09-24: MIDIAN w/o defenses there is 0.777 / 0.741 (was 0.774 / 0.736). | A | M | §4.5 #5, §1.10 #2 |
 | 13 | **Only TF-IDF is not deduplicated.** Every other shortlist carries `dedup: true`. At 10⁵ TF-IDF is ten clones of one agent, so G's "gain over TF-IDF" includes the dedup gain. | E–G | M | §3.4.1, §5.6 D9–D10 |
 | 14 | **Dedup is not a no-op on RouterEval.** Calibrated claims take 11 values, so rendered descriptions coincide: at seed 1, 931 / 1,000 and 4,134 / 5,000 are distinct honest, 681 / 1,000, 88 / 100 and 2,551 / 5,000 under the β = 0.5 cartel. Every dedup shortlist in H (all but TF-IDF) drops 7–49 % of the pool. | H | M | §3.9 #1 |
 | 15 | **RouterEval TF-IDF is not "degenerate".** It shortlists agents whose rendered top-5 claims name the family, and under the cartel liars fill it (7 of 10 on family 0 at m = 1,000, seed 1). It is the best honest H bar at m ≥ 100. | H | M | §3.9 #2–3 |
@@ -2278,7 +2278,7 @@ Scope: `figures/condensed_sample/A_live_allb.{png,pdf,csv}`, `A_live_stacked.*`,
 Code, repo-relative to `~/rte`: `scripts/condensed_figs.py` (224 lines), `scripts/figspec.py` (161 lines: canvas, fonts, colours, names, legend order, drawing helpers) and `scripts/seed_tables.py`. They import `scripts/extra_figs.py` (`excluded`, `se`), `scripts/fw_variant_numbers.py` (`load`, `regime`) and `rte/analyze.py` (`ALIAS`). `condensed_figs.py` also reads the CSVs that `scripts/bar_figs.py` wrote.
 Data root: `RTE_DATA=/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte`, with results under `$RTE_DATA/results/<grid>/`.
 
-**How this section was checked (read-only).** Every value, whisker, `chosen` string and `b_invariant` flag in the tables below is read from `A_live_allb.csv` / `B_families_allb.csv` as written at 2026-09-24 11:35 (144 / 170 rows; the `_stacked` CSVs hold 80 / 90: every arm's b = 3 bar plus MIDIAN's b = 1 and 5). Seed counts and source grids come from running `seed_tables.switched()` and `seed_tables.tables()` read-only on the same rows (`switched()` returns all four non-live families). The live b = 3 values of the single arms are the `figures/bars/live.csv` numbers (`LIVE_GRIDS`, self_described, specialist, per-seed means): MIDIAN w/o defenses (`midian_wo_defenses`) n = 100 / 1,000 / 10^4 / 10^5: 0.7747 / 0.7890 / 0.7850 / 0.7522 honest and 0.7359 / 0.7379 / 0.7522 / 0.7056 cartel; `oracle` 0.8449 / 0.8612 / 0.8589 / 0.8622. The per-seed tables give the same oracle means, and `narrow()` asserts that every drawn single-arm mean agrees with its table within 0.01.
+**How this section was checked (read-only).** Every value, whisker, `chosen` string and `b_invariant` flag in the tables below is read from `A_live_allb.csv` / `B_families_allb.csv` as written at 2026-09-24 11:35 (144 / 170 rows; the `_stacked` CSVs hold 80 / 90: every arm's b = 3 bar plus MIDIAN's b = 1 and 5). Seed counts and source grids come from running `seed_tables.switched()` and `seed_tables.tables()` read-only on the same rows (`switched()` returns all four non-live families). The live b = 3 values of the single arms are the `figures/bars/live.csv` numbers (`LIVE_GRIDS`, self_described, specialist, per-seed means): MIDIAN w/o defenses (`midian_wo_defenses`) n = 100 / 1,000 / 10^4 / 10^5: 0.7770 / 0.7890 / 0.7850 / 0.7522 honest and 0.7405 / 0.7379 / 0.7522 / 0.7056 cartel; `oracle` 0.8449 / 0.8612 / 0.8589 / 0.8622. The per-seed tables give the same oracle means, and `narrow()` asserts that every drawn single-arm mean agrees with its table within 0.01.
 
 ---
 
@@ -2312,7 +2312,7 @@ Today only live's b = 3 single-arm bars come from here. `load()` still reads all
     - Filter `beta` ≈ β and `liar_select == liar`.
     - **Honest (β=0) uses `liar_select == "random"`**. It falls back to all β=0 rows only if that set is empty (`:81`).
     - Then per label: `per = groupby("seed").success.mean()`; plotted mean = `per.mean()`; CI = `extra_figs.ci(per)` (`:84-86`), a bootstrap kept in the bar CSV but not drawn: A and B draw ±1 s.e. (4.0.5).
-  - Grids per n: 100 → `fw_live_n100, learned_n100, live_core_n100, fw_live_n100_lowskill`; 1000 → `fw_live_n1000, live_f1_n1000, variants_f1, learned_f1, fw_live_n1000_lowskill`; 10000 → `learned_n10k, live_n10k_v2, fw_live_n10k_cartel, live_n10k_cartel_random`; 100000 → `live_n100k`.
+  - Grids per n: 100 → `fw_live_n100, learned_n100, fw_live_n100_lowskill` (`live_core_n100` dropped 2026-09-24: pre-09-02 probe instances); 1000 → `fw_live_n1000, live_f1_n1000, variants_f1, learned_f1, fw_live_n1000_lowskill`; 10000 → `learned_n10k, live_n10k_v2, fw_live_n10k_cartel, live_n10k_cartel_random`; 100000 → `live_n100k`.
   - Verified cell axes of those rows after the filter: all `b = 3`, `K = 16`, `lie_mode = inflate`, `demand = uniform`, `collude = True`; `Q = 1000` at n ≤ 10^3 and `Q = 300` at n ≥ 10^4.
   - **There is no deduplication across grids.** If a (label, seed) appears in several grids, all of its rows are averaged into that seed's value (details in 4.5).
 - **bernoulli / replay** (`family_matrix`, `bar_figs.py:145-156`):
@@ -2501,7 +2501,7 @@ The fixes are new cell values, so old rows are untouched on disk: `declared_sour
 
 | n | b = 3 source of the single arms (`live.csv`, self_described + specialist) | b = 1 / b = 5 source |
 |---|---|---|
-| 100 | `fw_live_n100` / `fw_live_n100_lowskill` + `learned_n100` + `live_core_n100` (seeds 1–5). **10 seeds.** | `va_b_n100`, `rivals_b_n100` (10 seeds) |
+| 100 | `fw_live_n100` / `fw_live_n100_lowskill` + `learned_n100`. **10 seeds.** | `va_b_n100`, `rivals_b_n100` (10 seeds) |
 | 1000 | `fw_live_n1000` / `_lowskill` + `variants_f1` + `live_f1_n1000` + `learned_f1`. **10 seeds.** | `va_b_n1000`, `rivals_b_n1000` (10 seeds) |
 | 10000 | `learned_n10k`, `live_n10k_v2`, `fw_live_n10k_cartel`, `live_n10k_cartel_random`. **3 seeds.** | `va_b_n10k`, `rivals_b_n10k` (3 seeds) |
 | 100000 | `live_n100k`. **3 seeds.** | `va_b_n100k`, `rivals_b_n100k` (both regimes, b = 1 and 5; 3 seeds) |
@@ -2514,8 +2514,8 @@ The pooled arms read `LIVE_GRIDS[n]` + `va_b_` / `rivals_b_` / `pool_fill_` / `l
 |---|---|---|---|---|---|
 | n = 100 | honest | MIDIAN | 0.7105 10s (va_b_n100) | 0.7816 10s (bars) | 0.8121 10s (va_b_n100) |
 | n = 100 | cartel | MIDIAN | 0.6972 10s (va_b_n100) | 0.7680 10s (bars) | 0.8121 10s (va_b_n100) |
-| n = 100 | honest | MIDIAN w/o defenses | 0.7105 10s (rivals_b_n100) | 0.7747 10s (bars) | 0.8002 10s (rivals_b_n100) |
-| n = 100 | cartel | MIDIAN w/o defenses | 0.6625 10s (rivals_b_n100) | 0.7359 10s (bars) | 0.7552 10s (rivals_b_n100) |
+| n = 100 | honest | MIDIAN w/o defenses | 0.7105 10s (rivals_b_n100) | 0.7770 10s (bars) | 0.8002 10s (rivals_b_n100) |
+| n = 100 | cartel | MIDIAN w/o defenses | 0.6625 10s (rivals_b_n100) | 0.7405 10s (bars) | 0.7552 10s (rivals_b_n100) |
 | n = 100 | honest | flat probe argmax | 0.7023 10s (rivals_b_n100) | 0.7805 10s (bars) | 0.8006 10s (rivals_b_n100) |
 | n = 100 | cartel | flat probe argmax | 0.7023 10s (rivals_b_n100) | 0.7805 10s (bars) | 0.8006 10s (rivals_b_n100) |
 | n = 100 | honest | best learned/declared router | 0.6151 10s, `mlp_router` ×8; `knn_router_online` ×2 | 0.7376 10s, `knn_router_online` ×10 | 0.7788 10s, `knn_router_online` ×10 |
@@ -2701,7 +2701,7 @@ They are not drawn by `condensed_figs.py`. See Part 6.
 2. **The pools mix channels.** `LEARNED` includes `cluster_head_router` and `disrouter_cascade`, *declared-channel-only* arms (METHODS.md §3) that never probe, and `flat_nsw_router`, a verified-centralised arm (an ANN index over flat probe means), not a published learned router. On the calibrated rows B now draws, the declared-only pair is the majority pick in 3 of the 54 best-learned-router bars, all at b = 1 (bernoulli 10^7 both regimes, RouterEval 5,000 cartel), and flat-NSW in 19 (every replay bar, bernoulli b = 3 / 5, most RouterEval bars, live 10^4 b = 1 / 3). 32 of the 54 bars are majority-picked by a published RouterBench router (kNN 22, MLP 10). The legend label "best learned/declared router" names the declared-only pair but not the ANN index (rivals audit F5). On the old answer-key rows the declared-only pair won almost every non-live bar; those rows are no longer drawn.
 3. **Every pool is complete** (the live 10^5 kNN seeds have landed); nothing is flagged in the CSVs.
 4. **b = 1 / 5 and b = 3 come from different runs.** b = 3 of the single arms is the bars CSV, pooled from several grids per seed; b = 1 / 5 come from one grid each. The task streams match (identical oracles), but, e.g., MIDIAN n = 100 b = 3 averages rows from 3 grids per seed while its b = 1 / 5 twin comes from 1.
-5. **Cross-grid averaging within a seed at b = 3 (live).** `stats_from_rows` averages every row of a (label, seed) across `LIVE_GRIDS`, with no dedup, and the duplicate rows are **not identical**: MIDIAN w/o defenses (then `midian`) n = 100 β = 0 seed 1: 0.816 (`fw_live_n100`), 0.816 (`learned_n100`), 0.783 (`live_core_n100`). The maximum cross-grid spread is 0.076 at n = 100, 0.020 at n = 1,000 and 0.017 at 10^4. The protocol audit (F5) traces most of it to the old per-method probe instances of `live_core_n100` and early `live_f1_n1000`, averaged into MIDIAN w/o defenses, not into MIDIAN.
+5. **Cross-grid averaging within a seed at b = 3 (live).** `stats_from_rows` averages every row of a (label, seed) across `LIVE_GRIDS`, with no dedup, and the duplicate rows are **not identical**: MIDIAN w/o defenses (then `midian`) n = 100 β = 0 seed 1: 0.816 (`fw_live_n100`), 0.816 (`learned_n100`), 0.783 (`live_core_n100`). The maximum cross-grid spread is 0.076 at n = 100, 0.020 at n = 1,000 and 0.017 at 10^4. The protocol audit (F5) traces most of it to the old per-method probe instances of `live_core_n100` and early `live_f1_n1000`, averaged into MIDIAN w/o defenses, not into MIDIAN. Since 2026-09-24 `live_core_n100` is out of `LIVE_GRIDS`: n = 100 MIDIAN w/o defenses 0.7770 / 0.7405 (honest / cartel; was 0.7741 / 0.7359), MIDIAN w/o audits 0.7815 / 0.6793, and the β = 0.25-cartel random and r = 5 bars of the per-family plots, which only that grid had, are gone.
 6. **Unequal seed counts.** Live 10^4 / 10^5 and RouterEval have 3 seeds per bar, LLMRouterBench 5, live 10^2 / 10^3 10, replay 30, bernoulli 100; their whiskers are not comparable in coverage (4.0.5).
 7. **Honest `liar_select` differs by source.** At b = 3 honest uses `liar_select = random` rows (`bar_figs.py:81`); at b = 1 / 5 the `va_b` / `rivals_b` β = 0 rows are tagged `low_skill_first`. The pooled arms take β = 0 rows under either tag (`seed_tables.py:44-45`). Inert at β = 0 (`n_liars = 0`), but a different cell tag.
 8. **Normalisation in B uses one scalar**, the β = 0, b = 3 oracle; the ratio CIs ignore oracle uncertainty and are not per-seed ratios.
@@ -3111,11 +3111,11 @@ No G bar is flagged (`star` False throughout) and none is left out.
 real per-question correctness and self-descriptions are rendered from the declaration vector?
 
 **Code.** The same `by_n` as E, called as `by_n(body(s), ref, "H_routereval_shortlists", BODY_H, figspec.SHORTLIST_BODY, "body", "m", ncol=5)`
-(`shortlist_condensed.py:150-151`) on `summarise(load("routereval"))`: Figure 4, body canvas 5.5 × 1.9 in, **six body
+(`shortlist_condensed.py:154-156`) on `summarise(load("routereval"))`: Figure 4, body canvas 5.5 × 1.9 in, **six body
 shortlists** per m (`BODY_H`, `:28`: hashed TF-IDF, MiniLM, dense (Qwen3-8B), fusion + reranker, declared top-k, MIDIAN
 cohort), dense and fusion + reranker each at its best instruction variant at that m by honest mean (`body`; today dense
 competence instr. at every m, fusion + reranker stock at m = 10 and 1,000, demonstration instr. at 100, competence instr.
-at 5,000; the CSV's `variant` column). The same full-seed and `MIN_FW` rules, no dots, y 0.2–0.95, the three β = 0
+at 5,000; the CSV's `variant` column). The same full-seed and `MIN_FW` rules, no dots, y 0.4–0.95 (random is 0.527–0.544 here), the three β = 0
 reference lines (oracle, random, MIDIAN, no framework; random at every m since `routereval_mmlu_norep_cal` runs it),
 ticks $m = 10$, $10^2$, $10^3$, $5{,}000$, legend one block above in 5 columns. **Pool m** is the backend's `n`. The
 instruction variants are in the table below (from `summarise`) but not in the figure.
@@ -3723,8 +3723,8 @@ Values as in `A_live_allb.csv` and `B_families_allb.csv` (written 2026-09-24 11:
 |---|---|---|---|---|---|
 | n = 100 | honest | MIDIAN | 0.7105 [0.699,0.722] 10s (va_b_n100) | 0.7816 [0.769,0.794] 10s (bars) | 0.8121 [0.804,0.820] 10s (va_b_n100) |
 | n = 100 | β=0.5 cartel | MIDIAN | 0.6972 [0.686,0.709] 10s (va_b_n100) | 0.7680 [0.756,0.780] 10s (bars) | 0.8121 [0.804,0.820] 10s (va_b_n100) |
-| n = 100 | honest | MIDIAN w/o defenses | 0.7105 [0.699,0.722] 10s (rivals_b_n100) | 0.7747 [0.764,0.784] 10s (bars) | 0.8002 [0.792,0.808] 10s (rivals_b_n100) |
-| n = 100 | β=0.5 cartel | MIDIAN w/o defenses | 0.6625 [0.653,0.672] 10s (rivals_b_n100) | 0.7359 [0.728,0.744] 10s (bars) | 0.7552 [0.747,0.764] 10s (rivals_b_n100) |
+| n = 100 | honest | MIDIAN w/o defenses | 0.7105 [0.699,0.722] 10s (rivals_b_n100) | 0.7770 [0.767,0.787] 10s (bars) | 0.8002 [0.792,0.808] 10s (rivals_b_n100) |
+| n = 100 | β=0.5 cartel | MIDIAN w/o defenses | 0.6625 [0.653,0.672] 10s (rivals_b_n100) | 0.7405 [0.732,0.749] 10s (bars) | 0.7552 [0.747,0.764] 10s (rivals_b_n100) |
 | n = 100 | honest | flat probe argmax | 0.7023 [0.692,0.712] 10s (rivals_b_n100) | 0.7805 [0.773,0.788] 10s (bars) | 0.8006 [0.794,0.807] 10s (rivals_b_n100) |
 | n = 100 | β=0.5 cartel | flat probe argmax | 0.7023 [0.692,0.712] 10s (rivals_b_n100) | 0.7805 [0.773,0.788] 10s (bars) | 0.8006 [0.794,0.807] 10s (rivals_b_n100) |
 | n = 100 | honest | best learned/declared router | 0.6151 [0.600,0.630] 10s, picks `mlp_router` ×8; `knn_router_online` ×2 | 0.7376 [0.726,0.749] 10s, picks `knn_router_online` ×10 | 0.7788 [0.769,0.789] 10s, picks `knn_router_online` ×10 |

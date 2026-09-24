@@ -1183,6 +1183,23 @@ grids:
               flat_nsw_router, cluster_head_router, disrouter_cascade, ucb_per_family, thompson_per_family, warm_start_bandit,
               {name: warm_start_bandit, params: {n0: 0.5}}, {name: linucb_honest, params: {bonus: own}}, trueskill_per_family]
     blocks: [{b: [1, 5]}, {b: [3], methods: [*lrb_arms, declared_argmax, random]}]
+  # (d) the five rivals run but not drawn (Appendix B "run but not drawn"), on B's erratum-30 cells at b = 3: their older
+  # bernoulli / replay rows used programmatic (answer-key) claims. The oracle row comes with every unit.
+  rivals5_bernoulli_1e7_cal:
+    mirror_of: bernoulli_scale_v5
+    declared_source: [calibrated]
+    methods: &rivals5 [verify_on_claim, route_to_k_majority, gossip_reputation_greedy, cnp_self_bid, referral_network]
+    blocks: [{n: [10000000], b: [3], seeds: "1-100", beta: [0, 0.5], liar_select: [low_skill_first]}]
+  rivals5_replay_1e6_split_cal:
+    mirror_of: replay_scale_v5
+    declared_source: [calibrated]
+    backend_kwargs: {split: true}
+    methods: *rivals5
+    blocks: [{n: [1000000], b: [3], seeds: "1-30", beta: [0, 0.5], liar_select: [low_skill_first]}]
+  rivals5_routereval5k_norep_cal: {mirror_of: va_b_routereval5k, backend_kwargs: {dataset: leaderboard_mmlu, no_repeat: true, shuffle: true},
+                                   declared_source: [calibrated], Q: 300, methods: *rivals5, blocks: [{b: [3]}]}
+  rivals5_llmrouterbench_norep_cal: {mirror_of: va_b_llmrouterbench, backend_kwargs: {dataset: llmrouterbench, no_repeat: true, shuffle: true},
+                                     declared_source: [calibrated], Q: 300, methods: *rivals5, blocks: [{b: [3]}]}
   routereval_mmlu_norep_cal: {mirror_of: routereval_mmlu, backend_kwargs: {dataset: mmlu, no_repeat: true, shuffle: true}, declared_source: [calibrated], Q: 300,
                               dist: [strong_to_weak], beta: [0, 0.5], liar_select: [low_skill_first], methods: [midian, random]}   # random: H's random reference line at every m
   # OPTIONAL (expensive: one supervisor-LLM call per task on the fleet): H's framework slots on the same no-repeat + calibrated cells

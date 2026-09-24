@@ -26,7 +26,7 @@ REGIMES = [("beta0", 0.0, "random", "honest (β = 0)"), ("beta01_random", 0.1, "
            ("beta05_random", 0.5, "random", "β = 0.5, random liars"), ("cartel", 0.5, "low_skill_first", "β = 0.5, low-skill cartel")]
 MATRIX_REGIME = {"beta0": "beta=0 (no liars)", "beta025_random": "beta=0.25 random liars", "beta025_cartel": "beta=0.25 CARTEL (low-skill-first)",
                  "beta05_random": "beta=0.5 random liars", "cartel": "beta=0.5 CARTEL (low-skill-first)"}
-LIVE_GRIDS = {100: ["fw_live_n100", "learned_n100", "live_core_n100", "fw_live_n100_lowskill"],
+LIVE_GRIDS = {100: ["fw_live_n100", "learned_n100", "fw_live_n100_lowskill"],   # live_core_n100: pre-09-02 probe instances, dropped
               1000: ["fw_live_n1000", "live_f1_n1000", "variants_f1", "learned_f1", "fw_live_n1000_lowskill"],
               10000: ["learned_n10k", "live_n10k_v2", "fw_live_n10k_cartel", "live_n10k_cartel_random"], 100000: ["live_n100k"]}
 _mem = {}; JOBS = []

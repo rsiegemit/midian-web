@@ -153,4 +153,4 @@ if __name__ == "__main__":
     fig_G(d)
     s, ref = summarise(load("routereval"))
     by_n(body(s), ref, "H_routereval_shortlists", BODY_H, S.SHORTLIST_BODY, "body", "m", ncol=5,
-         ylim=(0.4, 0.95), lines_first=True)                            # random is 0.53-0.57 on RouterEval: the floor at 0.4
+         ylim=(0.4, 0.95), lines_first=True)                            # random is 0.527-0.544 on RouterEval: the floor at 0.4
