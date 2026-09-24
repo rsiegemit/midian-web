@@ -1,6 +1,7 @@
 #!/bin/bash
 # THE launcher for llm-backend grids: one unit per job, sized from measurement, resumable. Use this, never a copy.
-#   [RTE_FW_PARALLEL=8 MEM=40G] scripts/launch_units.sh <grid> [--nice N]     (parallel framework requests need the 40 G)
+#   [RTE_FW_PARALLEL=8 MEM=40G] [TODO=1] scripts/launch_units.sh <grid> [--nice N]     (parallel framework requests need the 40 G)
+#   TODO=1: plan only the units with a row still missing (the runner's own rid check), not every unit of the grid
 # Enforces OPS_RULES.md:
 #   R1  units come from the GRID LOADER (rte.run), never a hand-written filter list (a hand list dropped a regime once)
 #   R2  1 CPU: a unit only waits on HTTP to the fleet (2 CPUs ran at ~5% efficiency)
@@ -13,17 +14,25 @@ export RTE_DATA="${RTE_DATA:-/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte}"
 PY="$RTE_DATA/env/rte/bin/python"; LOG="$RTE_DATA/logs/launch_${G}.txt"; mkdir -p "$RTE_DATA/logs/units"; touch "$LOG"
 cd "$(dirname "$0")/.."; export PYTHONPATH="$PWD"
 "$PY" - "$G" <<'PY' > "$LOG.plan"
-import sys, yaml
+import os, sys, yaml
 sys.path.insert(0, "scripts")
-from rte.run import blocks, cells, method_specs, seeds
+from rte.run import RTE_DATA, blocks, cells, method_specs, row_id, seeds
 from job_time import minutes, slurm
-g = sys.argv[1]; cfg = yaml.safe_load(open("configs/grid.yaml"))
+g = sys.argv[1]; cfg = yaml.safe_load(open("configs/grid.yaml")); out = f"{RTE_DATA}/results/{g}"
+have = None
+if os.environ.get("TODO"):                                   # the runner's done-set: rows.d filenames + rows.csv rids
+    have = {f[:-5] for f in os.listdir(f"{out}/rows.d")} if os.path.isdir(f"{out}/rows.d") else set()
+    if os.path.exists(f"{out}/rows.csv"):
+        import pandas as pd; have |= set(pd.read_csv(f"{out}/rows.csv", usecols=["rid"]).rid.dropna())
+plan = {}
 for blk in blocks(cfg, g):
-    names = sorted({s["name"] for s in method_specs(blk)})
+    specs = method_specs(blk)
     for cell in cells(blk):
         only = ",".join(f"{a}={cell[a]}" for a in ("dist", "beta", "liar_select"))
         for seed in seeds(blk["seeds"]):
-            for m in names: print(f"{m}\t{only}\t{seed}\t{slurm(minutes(g, m))}")
+            for s in specs:
+                if have is None or row_id(cell, s["name"], s["params"], seed) not in have: plan[(s["name"], only, seed)] = 1
+for m, only, seed in sorted(plan, key=lambda k: (k[1], k[2], k[0])): print(f"{m}\t{only}\t{seed}\t{slurm(minutes(g, m))}")
 PY
 echo "$G: $(wc -l < "$LOG.plan") units, $(wc -l < "$LOG") already submitted"
 sub=0
