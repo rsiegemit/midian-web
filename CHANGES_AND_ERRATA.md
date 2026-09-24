@@ -486,7 +486,7 @@ and of no other arm.
   MiniLM call instead of one call per prompt; `RTE_MINILM_CUDA=1` runs MiniLM on a GPU (fp32); `RTE_TEXT_PROCS=N`
   generates the probe prompts in N forked processes (identical texts); with the batch path, the last probe-set embedding
   is cached in-process, keyed by the probe-instance matrix, so kNN / kNN-online and both regimes at one b share one encode
-  (the cached array is read-only); `RTE_OUTCOME_CACHE=1` scores each (population, agent, family, instance) probe once per process and forks the scoring over `RTE_TEXT_PROCS` workers (outcomes identical; only the `llm_executions` diagnostic counts fewer calls). Used for `rivals_b_n10k` (cartel kNN), `rivals_b_n100k` (kNN) and the cartel
+  (the cached array is read-only); `RTE_OUTCOME_CACHE=1` scores each (population, agent, family, instance) probe once per process and forks the scoring over `RTE_TEXT_PROCS` workers (outcomes identical; only the `llm_executions` diagnostic counts fewer calls); `RTE_RG_CACHE=1` caches reasoning-gym's word-corpus read and regex scan that letter_counting / word_sequence_reversal redo in every problem's constructor (identical problems and scores, ~27x). Used for `rivals_b_n10k` (cartel kNN), `rivals_b_n100k` (kNN) and the cartel
   `routereval5k_norep_cal` kNN units. Batched vs per-prompt embeddings differ by <= 2.4e-7 and gave identical top-10
   neighbour sets on 300 queries; defaults are unchanged.
 
