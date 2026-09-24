@@ -31,10 +31,10 @@ n = 100,β=0.5 cartel,best bandit,best_bandit,3,linucb_honest[bonus=own] x10,0.7
 n = 100,β=0.5 cartel,best bandit,best_bandit,5,linucb_honest[bonus=own] x10,0.7729000000000001,0.7636726854755389,0.7821273145244614,False
 n = 100,honest,declared argmax,declared_argmax,-,declared_argmax,0.5991666666666667,0.5888261591522481,0.6094938408477519,True
 n = 100,β=0.5 cartel,declared argmax,declared_argmax,-,declared_argmax,0.5181,0.5001863490910176,0.5360136509089825,True
+n = 100,honest,best framework,best_framework,-,fw_magentic_one | embed x10,0.6111,0.5975759884320927,0.6246240115679073,False
+n = 100,β=0.5 cartel,best framework,best_framework,-,fw_magentic_one | sota x10,0.5660999999999999,0.5548133805868285,0.5773866194131714,False
 n = 100,honest,random,random,-,random,0.42575,0.41659059689233113,0.43487606977433557,True
 n = 100,β=0.5 cartel,random,random,-,random,0.42575,0.4166190848700083,0.4348809151299917,True
-n = 100,honest,"best framework, best text shortlist",best_framework,-,fw_magentic_one | embed x10,0.6111,0.5975759884320927,0.6246240115679073,False
-n = 100,β=0.5 cartel,"best framework, best text shortlist",best_framework,-,fw_magentic_one | sota x10,0.5660999999999999,0.5548133805868285,0.5773866194131714,False
 "n = 1,000",honest,MIDIAN,midian,1,midian,0.6913,0.685524476935665,0.6970755230643351,False
 "n = 1,000",honest,MIDIAN,midian,3,midian,0.8134,0.809151601608972,0.817648398391028,False
 "n = 1,000",honest,MIDIAN,midian,5,midian,0.8376999999999999,0.8340301528944957,0.8413698471055041,False
@@ -67,10 +67,10 @@ n = 100,β=0.5 cartel,"best framework, best text shortlist",best_framework,-,fw_
 "n = 1,000",β=0.5 cartel,best bandit,best_bandit,5,warm_start_bandit[n0=0.5] x10,0.804,0.8008908736489705,0.8071091263510296,False
 "n = 1,000",honest,declared argmax,declared_argmax,-,declared_argmax,0.6154499999999999,0.6036454469932191,0.6272878863401141,True
 "n = 1,000",β=0.5 cartel,declared argmax,declared_argmax,-,declared_argmax,0.5202000000000001,0.5057694767939621,0.5346305232060381,True
+"n = 1,000",honest,best framework,best_framework,-,fw_magentic_one | embed x10,0.6315,0.6196450900935988,0.6433549099064011,False
+"n = 1,000",β=0.5 cartel,best framework,best_framework,-,fw_magentic_one | embed x10,0.5598,0.5496021788819594,0.5699978211180405,False
 "n = 1,000",honest,random,random,-,random,0.43215,0.42732177317979575,0.436944893486871,True
 "n = 1,000",β=0.5 cartel,random,random,-,random,0.43215,0.4273080249667907,0.43699197503320936,True
-"n = 1,000",honest,"best framework, best text shortlist",best_framework,-,fw_magentic_one | embed x10,0.6315,0.6196450900935988,0.6433549099064011,False
-"n = 1,000",β=0.5 cartel,"best framework, best text shortlist",best_framework,-,fw_magentic_one | embed x10,0.5598,0.5496021788819594,0.5699978211180405,False
 "n = 10,000",honest,MIDIAN,midian,1,midian,0.6677777777777778,0.6555555555555556,0.68,False
 "n = 10,000",honest,MIDIAN,midian,3,midian,0.8111111111111112,0.7883130171903521,0.8339092050318704,False
 "n = 10,000",honest,MIDIAN,midian,5,midian,0.8355555555555556,0.8144444444444445,0.8566666666666667,False
@@ -103,10 +103,10 @@ n = 100,β=0.5 cartel,"best framework, best text shortlist",best_framework,-,fw_
 "n = 10,000",β=0.5 cartel,best bandit,best_bandit,5,warm_start_bandit x2; warm_start_bandit[n0=0.5] x1,0.8177777777777777,0.7916489421859891,0.8439066133695663,False
 "n = 10,000",honest,declared argmax,declared_argmax,-,declared_argmax,0.6577777777777777,0.6213984321250112,0.6941571234305441,True
 "n = 10,000",β=0.5 cartel,declared argmax,declared_argmax,-,declared_argmax,0.5322222222222223,0.49229945728172964,0.5721449871627149,True
+"n = 10,000",honest,best framework,best_framework,-,fw_magentic_one | dense_idemo x3,0.62,0.6149082492278268,0.6250917507721732,False
+"n = 10,000",β=0.5 cartel,best framework,best_framework,-,fw_magentic_one | dense_icomp x3,0.6233333333333332,0.611627051385719,0.6350396152809473,False
 "n = 10,000",honest,random,random,-,random,0.4166666666666667,0.3912079128058009,0.44212542052753245,True
 "n = 10,000",β=0.5 cartel,random,random,-,random,0.4166666666666667,0.3912079128058009,0.44212542052753245,True
-"n = 10,000",honest,"best framework, best text shortlist",best_framework,-,fw_magentic_one | dense_idemo x3,0.62,0.6149082492278268,0.6250917507721732,False
-"n = 10,000",β=0.5 cartel,"best framework, best text shortlist",best_framework,-,fw_magentic_one | dense_icomp x3,0.6233333333333332,0.611627051385719,0.6350396152809473,False
 "n = 100,000",honest,MIDIAN,midian,1,midian,0.64,0.6111324865405188,0.6688675134594813,False
 "n = 100,000",honest,MIDIAN,midian,3,midian,0.8355555555555556,0.8224911377596613,0.8486199733514499,False
 "n = 100,000",honest,MIDIAN,midian,5,midian,0.8533333333333334,0.8356949912595695,0.8709716754070973,False
@@ -139,7 +139,7 @@ n = 100,β=0.5 cartel,"best framework, best text shortlist",best_framework,-,fw_
 "n = 100,000",β=0.5 cartel,best bandit,best_bandit,5,warm_start_bandit x2; warm_start_bandit[n0=0.5] x1,0.8022222222222223,0.7715306059623709,0.8329138384820737,False
 "n = 100,000",honest,declared argmax,declared_argmax,-,declared_argmax,0.6222222222222222,0.596594305345176,0.6478501390992685,True
 "n = 100,000",β=0.5 cartel,declared argmax,declared_argmax,-,declared_argmax,0.5777777777777778,0.5575628828903776,0.5979926726651781,True
+"n = 100,000",honest,best framework,best_framework,-,fw_magentic_one | dense_icomp x2; fw_magentic_one | dense_idemo x1,0.6166666666666667,0.5981074521238999,0.6352258812094335,False
+"n = 100,000",β=0.5 cartel,best framework,best_framework,-,fw_magentic_one | dense_icomp x3,0.6088888888888889,0.5960749304503659,0.621702847327412,False
 "n = 100,000",honest,random,random,-,random,0.4422222222222222,0.42619754988682673,0.45824689455761775,True
 "n = 100,000",β=0.5 cartel,random,random,-,random,0.4422222222222222,0.42619754988682673,0.45824689455761775,True
-"n = 100,000",honest,"best framework, best text shortlist",best_framework,-,fw_magentic_one | dense_icomp x2; fw_magentic_one | dense_idemo x1,0.6166666666666667,0.5981074521238999,0.6352258812094335,False
-"n = 100,000",β=0.5 cartel,"best framework, best text shortlist",best_framework,-,fw_magentic_one | dense_icomp x3,0.6088888888888889,0.5960749304503659,0.621702847327412,False

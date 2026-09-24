@@ -954,7 +954,7 @@ and the framework arm), in that legend order, plus A's framework arm. Names and 
 | `best_bandit` | best bandit | purple `#9467bd` | the cross-fitted best of the bandit pool in this cell, regime and b (§2.1.3) |
 | `declared_argmax` | declared argmax | slate `#5d6d7e` | method `declared_argmax`, params `{}` (not cached) |
 | `random` | random | light grey `#bbbbbb` | method `random` |
-| `best_framework` (A only) | best framework, best text shortlist | brown `#8e6c3a` | the cross-fitted best (framework, text shortlist) pair at b = 3 (`add_best_framework`, §4.1) |
+| `best_framework` (A only) | best framework (caption: best text shortlist) | brown `#8e6c3a` | the cross-fitted best (framework, text shortlist) pair at b = 3 (`add_best_framework`, §4.1) |
 
 The **oracle** is not an arm. It is the grey dotted horizontal line over each group (`figspec.oracle`,
 `scripts/condensed_figs.py:113`). In B every bar is divided by the oracle's mean (`norm=True`).
@@ -2358,10 +2358,10 @@ Today only live's b = 3 single-arm bars come from here. `load()` still reads all
 | 4 | `best_learned` | best learned/declared router | `#ff7f0e` |
 | 5 | `best_bandit` | best bandit | `#9467bd` |
 | 6 | `declared_argmax` | declared argmax | `#5d6d7e` |
-| 7 | `random` | random | `#bbbbbb` |
-| 8 | `best_framework` (A only) | best framework, best text shortlist | `#8e6c3a` |
+| 7 | `best_framework` (A only) | best framework | `#8e6c3a` |
+| 8 | `random` | random | `#bbbbbb` |
 
-- **Single arms** (1–3, 6, 7): `arms_at` copies `raw[b][key]` for every b that has it; the budget-less arms only at b = 3
+- **Single arms** (1–3, 6, 8): `arms_at` copies `raw[b][key]` for every b that has it; the budget-less arms only at b = 3
   (`:84-86`).
 - **Pooled arms** (4, 5): for each b with a per-seed table in the cell (`:71-78`):
   - `want` (`:73`) = the pool (`POOLS`, `:34-35`) minus `NOT_RUNNABLE(family, n)` (`:42-43`), and minus the pre-registered `warm_start_bandit` (n0 = 5) on bernoulli / replay / RouterEval / LLMRouterBench unless that family is in `SW` (`CLAIM_KEY - SW`, `:39-40`). It is the same at every b of a cell. The rules are in §2.1.3.

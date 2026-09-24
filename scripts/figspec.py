@@ -32,10 +32,10 @@ B_LINESTYLE = {1: ":", 3: "-", 5: "--"}          # line figures (D): b = 1 dotte
 # ---- names: legend strings and tick labels (spec section 2) -----------------------------------------------------------
 NAME = {"oracle": "oracle", "midian": "MIDIAN", "midian_wo_defenses": "MIDIAN w/o defenses",
         "flat_probe_argmax_online": "flat probe argmax", "best_learned": "best learned/declared router", "best_bandit": "best bandit",
-        "declared_argmax": "declared argmax", "random": "random", "best_framework": "best framework, best text shortlist",
+        "declared_argmax": "declared argmax", "random": "random", "best_framework": "best framework",   # "best text shortlist" in the caption: the long form cannot fit a two-row legend
         "midian_ref": "MIDIAN, no framework", "best_fw_dot": "best framework", "flat_scan": "any flat scan", "random_line": "random"}
 ORDER = ["oracle", "midian", "midian_wo_defenses", "flat_probe_argmax_online", "best_learned", "best_bandit", "declared_argmax",
-         "random", "best_framework"]                                   # the same in every figure that shares arms
+         "best_framework", "random"]      # best_framework beside declared argmax: both route on descriptions                                   # the same in every figure that shares arms
 SHORTLIST_BODY = {"declared": "declared top-k", "va_cohort": "MIDIAN cohort", "dense": "dense (Qwen3-8B)", "embed": "MiniLM",
                   "sota": "fusion + reranker", "bm25": "BM25", "tfidf": "hashed TF-IDF"}
 SHORTLIST_APPENDIX = {**SHORTLIST_BODY, "dense_icomp": "dense, competence instr.", "dense_idemo": "dense, demonstration instr.",

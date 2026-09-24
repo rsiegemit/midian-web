@@ -16,7 +16,7 @@ Reads figures/shortlist/{live,routereval}.csv (per framework x shortlist x cell:
 No titles and no incompleteness marks in the figures: a cell with too few full-seed frameworks is an empty slot, and the
 script prints INCOMPLETE for it; framework numbers with an erratum-28 rerun outstanding are flagged in the csv (star)."""
 from __future__ import annotations
-import os, sys
+import os, sys, textwrap
 import numpy as np, pandas as pd
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import figspec as S
@@ -94,25 +94,29 @@ def finish(fig, ax, name, data, keys=(), labels=None, ylabel=S.AXIS["success"], 
     S.save(fig, name, OUT); data.to_csv(f"{OUT}/{name}.csv", index=False)
 
 
-def by_n(s, ref, name, srcs, names, kind, var, ncol):
-    """x = n (E, H): fixed slots per n, one colour per shortlist; the reference lines over each group."""
+def by_n(s, ref, name, srcs, names, kind, var, ncol, ylim=(0.2, 0.95), lines_first=False):
+    """x = n (E, H): fixed slots per n, one colour per shortlist; the reference lines over each group (first in the legend
+    when `lines_first`)."""
     fig, ax = S.figure(kind); ns = sorted(s.n.unique()); w = 0.86 / (2 * len(srcs))
     for i, n in enumerate(ns):
         for j, src in enumerate(srcs):
             pair(ax, i + (2 * j + 1 - len(srcs)) * w, w, s[(s.n == n) & (s.shortlist == src)].set_index("regime"), src)
         lines(ax, ref, n, i - 0.46, i + 0.46)
     ax.set_xticks(range(len(ns))); ax.set_xticklabels(S.pow10_ticks(ns, var)); ax.set_xlim(-0.5, len(ns) - 0.5)
-    finish(fig, ax, name, s, srcs + LINES, [names[k] for k in srcs] + [S.NAME[k] for k in LINES], ncol=ncol)
+    keys, labels = list(srcs) + LINES, [names[k] for k in srcs] + [S.NAME[k] for k in LINES]
+    if lines_first: keys, labels = keys[-len(LINES):] + keys[:-len(LINES)], labels[-len(LINES):] + labels[:-len(LINES)]
+    finish(fig, ax, name, s, keys, labels, ylim=ylim, ncol=ncol)
 
 
-def fig_F(s, ref, name, names, kind, n=100000):
+def fig_F(s, ref, name, names, kind, n=100000, rotate=False):
     """x = shortlist at one n, sorted by the honest mean; black dots = the best single framework."""
     q = s[s.n == n]; order = q[q.regime == "beta0"].sort_values("mean", ascending=False).shortlist.tolist()
     fig, ax = S.figure(kind); w = 0.38
     for i, src in enumerate(order): pair(ax, i, w, q[q.shortlist == src].set_index("regime"), src, dots=True)
     lines(ax, ref, n, -0.5, len(order) - 0.5)
     ax.set_xticks(range(len(order))); ax.set_xlim(-0.5, len(order) - 0.5)
-    ax.set_xticklabels([names[x] for x in order], rotation=30, ha="right", rotation_mode="anchor")   # horizontal ones touch
+    ax.set_xticklabels([names[x] if rotate else textwrap.fill(names[x], 14) for x in order],   # horizontal: long names on two lines
+                       **(dict(rotation=30, ha="right", rotation_mode="anchor") if rotate else dict(linespacing=0.95)))
     finish(fig, ax, name, q, LINES + ["best_fw_dot"])                    # one row above: inside, it meets the dots
 
 
@@ -145,7 +149,8 @@ if __name__ == "__main__":
     d = load(); s, ref = summarise(d)
     by_n(s, ref, "E_shortlists_by_n", MAIN, S.SHORTLIST_APPENDIX, "appendix", "n", ncol=3)
     fig_F(body(s), ref, "F_shortlists_1e5", S.SHORTLIST_BODY, "body")
-    fig_F(s, ref, "F_shortlists_1e5_appendix", S.SHORTLIST_APPENDIX, "appendix")
+    fig_F(s, ref, "F_shortlists_1e5_appendix", S.SHORTLIST_APPENDIX, "appendix", rotate=True)   # the instruction variants: horizontal ones touch
     fig_G(d)
     s, ref = summarise(load("routereval"))
-    by_n(body(s), ref, "H_routereval_shortlists", BODY_H, S.SHORTLIST_BODY, "body", "m", ncol=5)
+    by_n(body(s), ref, "H_routereval_shortlists", BODY_H, S.SHORTLIST_BODY, "body", "m", ncol=5,
+         ylim=(0.4, 0.95), lines_first=True)                            # random is 0.53-0.57 on RouterEval: the floor at 0.4

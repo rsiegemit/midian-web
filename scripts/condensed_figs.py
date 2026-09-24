@@ -114,8 +114,8 @@ def budget_bars(C, groups, name, norm=False, stacked=False, skip=()):
     ax.set_xticks(range(len(groups))); ax.set_xticklabels([xl for xl, _ in groups]); ax.set_xlim(-0.5, len(groups) - 0.5)
     S.finish(ax, ylabel=S.AXIS["rel" if norm else "success"], ylim=(0.2, 1.05 if norm else 0.95))
     keys = ["oracle"] + arms                                            # _allb: three rows, the budget swatches in the last column
-    S.legend(ax, keys, ncol=(3 if "best_framework" in arms else 4) if stacked else -(-len(keys) // 3) + 1,
-             extra=None if stacked else S.budget_handles(-len(keys) % 3))
+    S.legend(ax, keys, ncol=-(-len(keys) // 2) if stacked else -(-len(keys) // 3) + 1,                # _stacked: two rows
+             extra=None if stacked else S.budget_handles(-len(keys) % 3), **(dict(columnspacing=0.5, handlelength=1.0) if stacked else {}))
     if incomplete: print(f"[{name}] INCOMPLETE: a bar is missing or its pool is incomplete (see the csv)")
     S.save(fig, name, OUT); pd.DataFrame(rec).to_csv(f"{OUT}/{name}.csv", index=False)
 

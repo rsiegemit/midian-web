@@ -19,7 +19,7 @@ def ab(name):
     d = pd.read_csv(f"{OUT}/{name}.csv")
     d["b"] = d.b.astype(str)
     arms, groups, regs = d.arm.unique(), d.group.unique(), d.regime.unique()
-    budgetless = ("declared argmax", "random", "best framework, best text shortlist")   # spend no probes: one bar, b does not apply
+    budgetless = ("declared argmax", "random", "best framework")   # spend no probes: one bar, b does not apply
     want = {(g, a, r, b) for g in groups for a in arms for r in regs for b in (("-",) if a in budgetless else ("1", "3", "5"))}
     miss = sorted(want - set(zip(d.group, d.arm, d.regime, d.b)))
     inc = d[d.chosen.astype(str).str.contains("INCOMPLETE")]
