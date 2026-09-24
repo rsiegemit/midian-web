@@ -13,15 +13,15 @@ rows and, for bernoulli / replay b = 1, their scale matrices. b is NEVER pooled:
 "Best learned router" / "best bandit" are CROSS-FITTED (scripts/seed_tables.py): for each seed the arm is chosen on the
 OTHER seeds and scored on this one, so no bar is the maximum of noisy means over the seeds it reports (no winner's curse).
 The pool is the same at every b in a cell (POOL minus the arms that cannot run there, NOT_RUNNABLE); a bar whose pool is
-still missing a candidate at that b carries a * above it. The csv lists how often each arm was chosen. Frameworks are not drawn (figures/shortlist). The do-not-add list applies, and with it the
+still missing a candidate (or a seed of one) at that b puts the one * in the figure title. The csv lists how often each arm was chosen. Frameworks are not drawn (figures/shortlist). The do-not-add list applies, and with it the
 TEMPORARY extra_figs.HIDE_HALVING switch."""
 from __future__ import annotations
 import os, re, sys
 import numpy as np, pandas as pd, matplotlib
 matplotlib.use("Agg"); import matplotlib.pyplot as plt
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from extra_figs import excluded, ci
-from seed_tables import tables, crossfit, label
+from extra_figs import excluded, se
+from seed_tables import tables, crossfit, label, switched
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BARS, OUT = f"{ROOT}/figures/bars", f"{ROOT}/figures/condensed_sample"; os.makedirs(OUT, exist_ok=True)
@@ -38,6 +38,7 @@ POOLS = {"best_learned": LEARNED,                      # the bandit pool takes t
 # The pre-registered warm-start bandit (n0 = 5) trusts the declared claims; on the non-live backends those are true skill
 # + 5 % noise (an answer key), so it counts there only on the calibrated-claims reruns (erratum 30), not on these rows.
 CLAIM_KEY = {"bernoulli", "replay", "routereval", "llmrouterbench"}
+SW = set()                                             # families on the erratum-30 rows (seed_tables.switched): n0 = 5 counts there
 B_INVARIANT = {"declared_argmax", "random", "cluster_head_router", "disrouter_cascade"}   # never probe (needs has no probe / reports)
 NOT_RUNNABLE = lambda fam, n: ({"trueskill_per_family"} if n >= 10 ** 5 else set()) | ({"mlp_router"} if n >= 5000 else set()) \
                               | ({"knn_router", "knn_router_online", "mlp_router"} if fam in ("bernoulli", "replay") else set())   # grid.yaml pool_fill_*
@@ -70,11 +71,11 @@ def arms_at(cell):
     fam, n = cell["key"][0], cell["key"][2]
     for b, T in cell.get("seeds", {}).items():
         for k, pool in POOLS.items():
-            want = [a for a in pool if a not in NOT_RUNNABLE(fam, n) and not (a == "warm_start_bandit" and fam in CLAIM_KEY)]
+            want = [a for a in pool if a not in NOT_RUNNABLE(fam, n) and not (a == "warm_start_bandit" and fam in CLAIM_KEY - SW)]
             vals, picks = crossfit(T, want)
             if len(vals) < 2: continue                       # one seed cannot be cross-fitted: no bar, never the biased pick
-            lo, hi = ci(vals.values); miss = [a for a in want if a not in T.columns]
-            chosen = "; ".join(f"{a} x{c}" for a, c in picks.value_counts().items()) + (f" | INCOMPLETE POOL, missing {', '.join(miss)}" if miss else "")
+            lo, hi = se(vals.values); miss = [a for a in want if a not in T.columns or T.loc[vals.index, a].isna().any()]   # absent, or missing a seed
+            chosen = "; ".join(f"{a} x{c}" for a, c in picks.value_counts().items()) + (f" | INCOMPLETE POOL, missing or partial {', '.join(miss)}" if miss else "")
             out.setdefault(k, {})[b] = (float(vals.mean()), float(lo), float(hi), chosen)
     for b, raw in cell["raw"].items():
         for k, _, _ in ARMS:
@@ -128,7 +129,7 @@ def budget_bars(C, groups, title, name, norm=False, nested=False, stacked=False)
     pd.DataFrame(rec).to_csv(f"{OUT}/{name}.csv", index=False)
 
 
-KEY_ALL = "light / mid / dark = probe budget b = 1 / 3 / 5"
+KEY_ALL = "light / mid / dark = probe budget b = 1 / 3 / 5; whiskers ±1 s.e. over seeds"
 KEY_NEST = "in each slot: wide = b 5, mid = b 3, narrow = b 1"
 KEY_STACK = "stack: b = 1, +gain to b = 3, +gain to b = 5 (CIs in _allb)"
 
@@ -157,7 +158,7 @@ def fig_B(C):
 
 def add_budgets(C):
     """b = 1 / 5 for every arm: live / RouterEval / LLMRouterBench / bernoulli 10^7 / replay 10^6 from the va_b_* (MIDIAN-VA)
-    and rivals_b_* (budget-matched rivals) rows (per-seed means, seed-bootstrap CI); bernoulli / replay b = 1 from their
+    and rivals_b_* (budget-matched rivals) rows (per-seed means, whiskers set by narrow()); bernoulli / replay b = 1 from their
     scale matrices. A cell the runs have not reached simply has no bar (a * marks it)."""
     sys.path.insert(0, ROOT)
     from fw_variant_numbers import load as rows, regime
@@ -166,6 +167,7 @@ def add_budgets(C):
             ("routereval", "strong_to_weak", "routereval5k"), ("llmrouterbench", "20 models", "llmrouterbench"),
             ("bernoulli", "specialist", "bernoulli_1e7"), ("replay", "all shapes pooled", "replay_1e6")]
     for fam, grp, tag in fams:
+        if fam in SW: continue                            # every b comes from the erratum-30 per-seed tables (from_tables)
         for g in (f"va_b_{tag}", f"rivals_b_{tag}"):
             df = rows(g)
             if df.empty: continue
@@ -179,10 +181,11 @@ def add_budgets(C):
                     if by.empty: continue
                     per = by.mean(axis=1)
                 else: per = q.groupby("seed").success.mean()
-                lo, hi = ci(per.values)
+                lo, hi = se(per.values)
                 C[key]["raw"].setdefault(int(b), {})[l] = (float(per.mean()), float(lo), float(hi))
     names = {"beta=0 (no liars)": "beta0", "beta=0.5 CARTEL (low-skill-first)": "cartel"}
     for fam, grp, g in (("bernoulli", "specialist", "bernoulli_scale_v5"), ("replay", "all shapes pooled", "replay_scale_v5")):
+        if fam in SW: continue
         m = pd.read_csv(f"{R}/{g}/matrix_success.csv"); m = m[(m.b == 1) & (m.metric == "success") & m.regime.isin(list(names))]
         for r in m.itertuples():
             key = (fam, grp, int(r.n), names[r.regime])
@@ -190,8 +193,34 @@ def add_budgets(C):
                 C[key]["raw"].setdefault(1, {})[r.label] = (float(r.mean), float(r.ci_lo), float(r.ci_hi))
 
 
+def from_tables(C, T):
+    """A switched family's cell: every arm, b and the oracle from its erratum-30 per-seed tables (whiskers +/- 1 s.e.)."""
+    for key, bb in T.items():
+        if key[0] not in SW or key not in C: continue
+        if 3 not in bb or "oracle" not in bb[3]:              # never fall back to the old rows: an empty (incomplete) cell
+            C[key]["raw"] = {}; continue
+        cell = lambda v: (float(v.mean()), *map(float, se(v.values)))
+        C[key]["oracle"] = (*cell(bb[3]["oracle"].dropna()), "oracle")
+        C[key]["raw"] = {b: {l: cell(t[l].dropna()) for l in t.columns if l != "oracle" and not excluded(l) and t[l].notna().any()} for b, t in bb.items()}
+
+
+def narrow(C, T):
+    """Every whisker = +/- 1 s.e. over seeds, from the per-seed tables (the bar CSVs and scale matrices carry bootstrap CIs).
+    A bar whose per-seed values are not in the tables keeps its mean and gets no whisker; the means must agree."""
+    for key, c in C.items():
+        bb = T.get(key, {})
+        def fix(v, b, l):
+            if l != "oracle" and l not in {k for k, _, _ in ARMS}: return v   # not drawn (pool members come from the tables)
+            t = bb.get(b)
+            if t is None or l not in t or t[l].notna().sum() == 0: return (v[0], v[0], v[0], *v[3:])
+            assert abs(t[l].mean() - v[0]) < 0.01 or l == "oracle" and b != 3, f"{key} b={b} {l}: {t[l].mean():.3f} vs {v[0]:.3f}"
+            return (v[0], *map(float, se(t[l].dropna().values)), *v[3:])
+        c["raw"] = {b: {l: fix(v, b, l) for l, v in r.items()} for b, r in c["raw"].items()}
+        c["oracle"] = fix(c["oracle"], 3, "oracle")
+
+
 if __name__ == "__main__":
-    d = load(); C = cells(d); add_budgets(C)
-    for key, bb in tables().items():                 # per-seed tables for the cross-fitted pooled arms
+    d = load(); C = cells(d); SW |= switched(); T = tables(); add_budgets(C); from_tables(C, T); narrow(C, T)
+    for key, bb in T.items():                        # per-seed tables for the cross-fitted pooled arms
         if key in C: C[key]["seeds"] = bb
     fig_A(C); fig_B(C)                    # C / D: scripts/efficiency_figs.py

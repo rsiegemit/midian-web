@@ -1137,5 +1137,81 @@ grids:
   linucb_fix_n100k: {mirror_of: va_b_n100k, b: [1, 3, 5], methods: [{name: linucb_honest, params: {bonus: own}}]}
   linucb_fix_routereval5k:   {mirror_of: va_b_routereval5k,   b: [1, 3, 5], methods: [{name: linucb_honest, params: {bonus: own}}]}
   linucb_fix_llmrouterbench: {mirror_of: va_b_llmrouterbench, b: [1, 3, 5], methods: [{name: linucb_honest, params: {bonus: own}}]}
+  # TrueSkill after the World._probe duplicate-cell fix (erratum 30): a repeated (agent, family) cell in one probe call now draws
+  # fresh instances; trueskill_per_family is the only arm that sends repeats, so its earlier rows are pre-fix (handicapped).
+  trueskill_fix_n100:  {mirror_of: va_b_n100,  b: [1, 3, 5], methods: [trueskill_per_family]}
+  trueskill_fix_n1000: {mirror_of: va_b_n1000, b: [1, 3, 5], methods: [trueskill_per_family]}
+  trueskill_fix_n10k:  {mirror_of: va_b_n10k,  b: [1, 3, 5], methods: [trueskill_per_family]}
   linucb_fix_bernoulli_1e7:  {mirror_of: bernoulli_scale_v5, methods: [{name: linucb_honest, params: {bonus: own}}],
                               blocks: [{n: [10000000], b: [1, 3, 5], seeds: "1-100", beta: [0, 0.5], liar_select: [low_skill_first]}]}
+
+  # ---- 2026-09-23 ERRATUM 30 reruns (defined, NOT launched). Three opt-in fixes, each a new cell value, so no existing row id moves:
+  #   declared_source: calibrated  -- realistic declarations on the non-live backends (live self-rating pattern, rte/backends/__init__.py
+  #                                   CAL_P, fitted by scripts/fit_declared_calibration.py) instead of clip(S + N(0, .05)), an answer key;
+  #   backend_kwargs split: true   -- replay: probes and S on 70 % of each category's prompts, routed tasks on the other 30 %;
+  #   backend_kwargs no_repeat: true -- RouterEval / LLMRouterBench: each (family, test prompt) at most once per stream, uniform demand
+  #                                   until the smallest family runs out; Q = 300 everywhere (on average the last 0.8-0.9 % of the stream
+  #                                   misses one family; Q > the pool raises).
+  # Arms = B's (scripts/condensed_figs.py ARMS + LEARNED / BANDIT pools with linucb_honest[bonus=own] and warm_start_bandit[n0=0.5],
+  # minus NOT_RUNNABLE). Probing arms and the declared-only pool members run at b = 1 / 3 / 5 (every b needs the whole pool);
+  # declared_argmax and random (BUDGETLESS) at b = 3 only, in the same b = 3 unit (nested method lists flatten). beta = 0 and the beta = 0.5 low-skill cartel, as the va_b_* grids.
+  # shuffle: true (every RouterEval / LLMRouterBench grid here) = a per-seed agent order: the stored pools run weak -> strong,
+  # so lowest-index tie-breaks among the many tied calibrated claims picked the weakest agent (erratum 30).
+  # (a) calibrated claims, claim-reading arms only: world, liars, stream and probes do not depend on declared_source, so every other
+  # arm's rows are the existing programmatic rows (bit-identical by construction).
+  bernoulli_1e7_cal: {mirror_of: bernoulli_scale_v5, declared_source: [calibrated],
+                      methods: &cal_arms [cluster_head_router, disrouter_cascade, warm_start_bandit, {name: warm_start_bandit, params: {n0: 0.5}}],
+                      blocks: [{n: [10000000], b: [1, 5], seeds: "1-100", beta: [0, 0.5], liar_select: [low_skill_first]},
+                               {n: [10000000], b: [3], seeds: "1-100", beta: [0, 0.5], liar_select: [low_skill_first], methods: [*cal_arms, declared_argmax]}]}
+  routereval5k_cal:   {mirror_of: va_b_routereval5k,   backend_kwargs: {dataset: leaderboard_mmlu, shuffle: true}, declared_source: [calibrated], methods: *cal_arms, blocks: [{b: [1, 5]}, {b: [3], methods: [*cal_arms, declared_argmax]}]}
+  llmrouterbench_cal: {mirror_of: va_b_llmrouterbench, backend_kwargs: {dataset: llmrouterbench, shuffle: true}, declared_source: [calibrated], methods: *cal_arms, blocks: [{b: [1, 5]}, {b: [3], methods: [*cal_arms, declared_argmax]}]}
+  # (b) replay 10^6 with split rows AND calibrated claims, every arm B draws there (trueskill: NotImplemented at >= 10^5; knn / mlp:
+  # no prompt text). 30 seeds, not the 100 of replay_scale_v5 / va_b_replay_1e6, for time.
+  replay_1e6_split_cal:
+    mirror_of: replay_scale_v5
+    declared_source: [calibrated]
+    backend_kwargs: {split: true}
+    methods: &replay_arms [midian_va, midian, {name: flat_probe_argmax, params: {online: true}}, flat_nsw_router, cluster_head_router, disrouter_cascade,
+              ucb_per_family, thompson_per_family, warm_start_bandit, {name: warm_start_bandit, params: {n0: 0.5}}, {name: linucb_honest, params: {bonus: own}}]
+    blocks:
+      - {n: [1000000], b: [1, 5], seeds: "1-30", beta: [0, 0.5], liar_select: [low_skill_first]}
+      - {n: [1000000], b: [3], seeds: "1-30", beta: [0, 0.5], liar_select: [low_skill_first], methods: [*replay_arms, declared_argmax, random]}
+  # (c) no repeated test prompts + calibrated claims: B's RouterEval-5k and LLMRouterBench cells (every arm B draws), H's mmlu
+  # strong-to-weak m = 10 / 100 / 1,000 reference line (MIDIAN-VA; the oracle row comes with every unit).
+  routereval5k_norep_cal:
+    mirror_of: va_b_routereval5k
+    backend_kwargs: {dataset: leaderboard_mmlu, no_repeat: true, shuffle: true}
+    declared_source: [calibrated]
+    Q: 300
+    methods: &re5k_arms [midian_va, midian, {name: flat_probe_argmax, params: {online: true}}, knn_router, {name: knn_router, params: {online: true}}, flat_nsw_router,
+              cluster_head_router, disrouter_cascade, ucb_per_family, thompson_per_family, warm_start_bandit, {name: warm_start_bandit, params: {n0: 0.5}},
+              {name: linucb_honest, params: {bonus: own}}, trueskill_per_family]
+    blocks: [{b: [1, 5]}, {b: [3], methods: [*re5k_arms, declared_argmax, random]}]
+  llmrouterbench_norep_cal:
+    mirror_of: va_b_llmrouterbench
+    backend_kwargs: {dataset: llmrouterbench, no_repeat: true, shuffle: true}
+    declared_source: [calibrated]
+    Q: 300
+    methods: &lrb_arms [midian_va, midian, {name: flat_probe_argmax, params: {online: true}}, knn_router, {name: knn_router, params: {online: true}}, mlp_router,
+              flat_nsw_router, cluster_head_router, disrouter_cascade, ucb_per_family, thompson_per_family, warm_start_bandit,
+              {name: warm_start_bandit, params: {n0: 0.5}}, {name: linucb_honest, params: {bonus: own}}, trueskill_per_family]
+    blocks: [{b: [1, 5]}, {b: [3], methods: [*lrb_arms, declared_argmax, random]}]
+  routereval_mmlu_norep_cal: {mirror_of: routereval_mmlu, backend_kwargs: {dataset: mmlu, no_repeat: true, shuffle: true}, declared_source: [calibrated], Q: 300,
+                              dist: [strong_to_weak], beta: [0, 0.5], liar_select: [low_skill_first], methods: [midian_va]}
+  # OPTIONAL (expensive: one supervisor-LLM call per task on the fleet): H's framework slots on the same no-repeat + calibrated cells
+  # (the frameworks read the rendered declaration vector, so both fixes apply). Mirrors keep each source grid's arms and seeds.
+  fw_routereval_small_norep_cal:    {mirror_of: fw_routereval_small,    backend_kwargs: {dataset: mmlu, no_repeat: true, shuffle: true}, declared_source: [calibrated], Q: 300, dist: [strong_to_weak], liar_select: [low_skill_first]}
+  fw_routereval_1k_norep_cal:       {mirror_of: fw_routereval_1k,       backend_kwargs: {dataset: mmlu, no_repeat: true, shuffle: true}, declared_source: [calibrated], Q: 300, dist: [strong_to_weak], liar_select: [low_skill_first]}
+  fw_routereval_5k_norep_cal:       {mirror_of: fw_routereval_5k,       backend_kwargs: {dataset: leaderboard_mmlu, no_repeat: true, shuffle: true}, declared_source: [calibrated], liar_select: [low_skill_first]}
+  fw_routereval_small_em_norep_cal: {mirror_of: fw_routereval_small_em, backend_kwargs: {dataset: mmlu, no_repeat: true, shuffle: true}, declared_source: [calibrated], Q: 300, dist: [strong_to_weak], liar_select: [low_skill_first]}
+  fw_routereval_1k_em_norep_cal:    {mirror_of: fw_routereval_1k_em,    backend_kwargs: {dataset: mmlu, no_repeat: true, shuffle: true}, declared_source: [calibrated], Q: 300, dist: [strong_to_weak], liar_select: [low_skill_first]}
+  fw_routereval_5k_em_norep_cal:    {mirror_of: fw_routereval_5k_em,    backend_kwargs: {dataset: leaderboard_mmlu, no_repeat: true, shuffle: true}, declared_source: [calibrated], liar_select: [low_skill_first]}
+  fw_routereval_small_va_norep_cal: {mirror_of: fw_routereval_small_va, backend_kwargs: {dataset: mmlu, no_repeat: true, shuffle: true}, declared_source: [calibrated], Q: 300, dist: [strong_to_weak], liar_select: [low_skill_first]}
+  fw_routereval_1k_va_norep_cal:    {mirror_of: fw_routereval_1k_va,    backend_kwargs: {dataset: mmlu, no_repeat: true, shuffle: true}, declared_source: [calibrated], Q: 300, dist: [strong_to_weak], liar_select: [low_skill_first]}
+  fw_routereval_5k_va_norep_cal:    {mirror_of: fw_routereval_5k_va,    backend_kwargs: {dataset: leaderboard_mmlu, no_repeat: true, shuffle: true}, declared_source: [calibrated], liar_select: [low_skill_first]}
+  re_sl_declared_small_norep_cal:   {mirror_of: re_sl_declared_small,   backend_kwargs: {dataset: mmlu, no_repeat: true, shuffle: true}, declared_source: [calibrated], Q: 300}
+  re_sl_declared_1k_norep_cal:      {mirror_of: re_sl_declared_1k,      backend_kwargs: {dataset: mmlu, no_repeat: true, shuffle: true}, declared_source: [calibrated], Q: 300}
+  re_sl_declared_5k_norep_cal:      {mirror_of: re_sl_declared_5k,      backend_kwargs: {dataset: leaderboard_mmlu, no_repeat: true, shuffle: true}, declared_source: [calibrated]}
+  re_sl_embed_small_norep_cal:      {mirror_of: re_sl_embed_small,      backend_kwargs: {dataset: mmlu, no_repeat: true, shuffle: true}, declared_source: [calibrated], Q: 300}
+  re_sl_embed_1k_norep_cal:         {mirror_of: re_sl_embed_1k,         backend_kwargs: {dataset: mmlu, no_repeat: true, shuffle: true}, declared_source: [calibrated], Q: 300}
+  re_sl_embed_5k_norep_cal:         {mirror_of: re_sl_embed_5k,         backend_kwargs: {dataset: leaderboard_mmlu, no_repeat: true, shuffle: true}, declared_source: [calibrated]}

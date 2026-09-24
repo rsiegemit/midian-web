@@ -27,7 +27,7 @@ def embed(texts, model: str = MINILM, prompt_name: str | None = None, prompt: st
         import torch
         from sentence_transformers import SentenceTransformer
         big = model != MINILM
-        dev = "cuda" if big and torch.cuda.is_available() else "cpu"
+        dev = "cuda" if (big or os.environ.get("RTE_MINILM_CUDA") == "1") and torch.cuda.is_available() else "cpu"   # opt-in: MiniLM on GPU (fp32)
         kw = {"model_kwargs": {"dtype": torch.bfloat16}} if dev == "cuda" else {}
         _models[model] = SentenceTransformer(resolve(model), device=dev, **kw)
     m = _models[model]
@@ -42,8 +42,34 @@ def probe_set(view, b: int):
     for f in range(view.K):
         for lo in range(0, view.n, CHUNK):
             Y[lo:lo + CHUNK, f], I[lo:lo + CHUNK, f] = view.probe_text(np.arange(lo, min(view.n, lo + CHUNK)), f, b)
-    E = np.stack([vec(view, f, i, True) for a in range(view.n) for f in range(view.K) for i in I[a, f]]).reshape(view.n, view.K * b, -1)
+    if os.environ.get("RTE_EMBED_BATCH") == "1" and view.embedding(0, int(I[0, 0, 0]), True) is None:   # opt-in: one batched encode
+        import hashlib                                          # exact reuse: the same probe instances give the same texts
+        key = (view.n, view.K, b, view.text(0, int(I[0, 0, 0]), True), hashlib.sha1(I.tobytes()).hexdigest())
+        if _E_CACHE.get("key") != key:
+            _E_CACHE.clear(); _E_CACHE.update(key=key, E=embed(_texts(view, [(f, int(i)) for a in range(view.n) for f in range(view.K) for i in I[a, f]])).reshape(view.n, view.K * b, -1))
+            _E_CACHE["E"].flags.writeable = False                # shared by every method of the process: never written in place
+        E = _E_CACHE["E"]
+    else:                                                            # default: one encode per prompt (float-level differences only)
+        E = np.stack([vec(view, f, i, True) for a in range(view.n) for f in range(view.K) for i in I[a, f]]).reshape(view.n, view.K * b, -1)
     return E, Y.reshape(view.n, view.K * b), np.repeat(np.arange(view.K), b)
+
+
+_V = None
+_E_CACHE = {}                                                   # the last probe-set embedding (opt-in batch path only)
+
+
+def _text1(fi):
+    return _V.text(fi[0], fi[1], True)
+
+
+def _texts(view, items):
+    """Probe prompt texts; RTE_TEXT_PROCS > 1 (opt-in) generates them in forked worker processes (deterministic, same texts)."""
+    global _V
+    n = int(os.environ.get("RTE_TEXT_PROCS", "1"))
+    if n <= 1: return [view.text(f, i, True) for f, i in items]
+    import multiprocessing as mp
+    _V = view
+    with mp.get_context("fork").Pool(n) as pool: return pool.map(_text1, items, chunksize=5000)
 
 
 def vec(view, f, inst, probe=False) -> np.ndarray:

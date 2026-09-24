@@ -944,3 +944,32 @@
   multi-partition submission. The six new 10^4 populations (2 shapes × 3 seeds, ~480k generations each) were built by one
   warm-up job apiece before a gate released the other 966 units, so no two jobs raced to generate the same population.
 - **Result.** RESULTS II.4e carries the two findings; COVERAGE.md §9 carries the per-campaign state and the three * items.
+
+## Erratum 30: realistic declarations, replay probe/task split, no repeated RouterEval prompts (2026-09-23, POST-HOC)
+
+- **`declared_source: calibrated`** (bernoulli, replay, routereval; `rte/backends/__init__.py`). D is drawn i.i.d. per
+  (agent, family) from P(D | S decile), the live self-rating's empirical distribution. The table was fitted on the live
+  specialist n = 100 / 1,000 populations by `scripts/fit_declared_calibration.py`, which prints the fit and its
+  validation. Seeded by `stable_seed_32(seed, "declared_calibrated")`. Deviation: live self-ratings carry a per-agent
+  component (25 % of residual variance) and family offsets that this model does not reproduce. The specialist fit is
+  applied to every population shape and backend. `programmatic` / `self_described` are unchanged on these backends; the
+  llm backend rejects `calibrated`.
+- **Replay `split: true`** (`rte/backends/replay.py`). Per category, rng 0, the first 70 % of a permutation are probe
+  rows (execute_many, S, the weakest-model mask, model ranks) and the rest are task rows (execute). This mirrors
+  RouterEval's train/test separation; the 70 / 30 ratio is LLMRouterBench's. The split is the same for every seed.
+- **RouterEval `no_repeat: true`** (`rte/backends/routereval.py`, `rte/world.py` `_tasks_no_repeat`). Each (family, test
+  prompt) at most once per stream; the task instance is the prompt's index in the family's test rows. Chosen over a
+  stream proportional to test-pool sizes, because that would change the family mix (LLMRouterBench: aime 0.8 %,
+  medqa 11 %) away from the uniform demand of every other cell. Demand is uniform until a family runs out, and Q above
+  the pool raises. Q = 300 in the new grids (mmlu and LLMRouterBench had Q = 1,000): uniform demand cannot reach 1,000
+  there (16 x 27 = 432 and 15 x 26 = 390 prompts).
+- **RouterEval `shuffle: true`** (`rte/backends/routereval.py`). The agent pool is permuted per seed
+  (`stable_seed_32(seed, "agent_order")`: Ytr / Yte columns and model names) before S is computed, so lowest-index
+  tie-breaks are random. The stored mmlu pools run weak to strong. Opt-in; set on every RouterEval erratum-30 grid.
+- **Split-replay oracle.** It picks by probe-row S and executes on task rows, so it is not an exact ceiling on the task
+  rows (as on RouterEval). This is unchanged.
+- **Probe index with a repeated (agent, family) in one call** (DEFAULT-CHANGING; trueskill_per_family rows before
+  2026-09-23 16:49 are pre-fix) (`rte/world.py` `_probe`, `_occurrence`). The j-th
+  occurrence of a cell in a call now uses instances k0 + j*reps ... k0 + (j+1)*reps - 1, and the index advances by
+  (occurrences)*reps. Before, all occurrences shared instances k0 .. k0+reps-1. Only `trueskill_per_family` passes
+  repeated cells (erratum 30), so only its rows change.

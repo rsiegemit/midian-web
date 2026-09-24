@@ -26,7 +26,7 @@ LEXICAL = ("bm25", "hybrid", "sota")        # modes that need the BM25 block
 # Framework errors that are the supervisor LLM's own invalid action, not infrastructure (every class that has failed a
 # unit, 2026-09-23): ADK / OpenAI Agents -- a tool named after the agent instead of the routing tool; MAF -- no next
 # speaker. Anything else stays an infrastructure error (erratum 28).
-INVALID_ACTION = re.compile(r"Tool '?[\w.-]+'? not found|ModelBehaviorError|next_speaker must be provided")
+INVALID_ACTION = re.compile(r"Tool '?[\w.-]+'? not found|ModelBehaviorError|next_speaker must be provided|KeyError: '?agent_\d+'?")   # MAF: orchestrator names a non-candidate
 _TOK = re.compile(r"[a-z0-9]+")
 
 

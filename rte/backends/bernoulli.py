@@ -9,7 +9,7 @@ import numpy as np
 
 from ..stable_hash import stable_seed_32
 from ..world import sample_skill, Task
-from . import noisy_declared
+from . import declared_for
 
 CHUNK = 1_000_000
 
@@ -40,7 +40,7 @@ class BernoulliBackend:
         return self._S
 
     def declared(self, source: str = "programmatic") -> np.ndarray:
-        return noisy_declared(self._S, self.seed, self.declared_noise)   # no LLM here: both sources are the honest control
+        return declared_for(self._S, self.seed, source, self.declared_noise)   # no LLM here: programmatic / self_described are the honest control
 
     def execute(self, a: int, task: Task) -> int:
         u = np.random.default_rng(stable_seed_32(self.seed, "exec", int(a), task.family, task.instance)).random()

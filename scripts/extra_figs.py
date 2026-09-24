@@ -97,6 +97,16 @@ def ci(x, B=2000):
     return np.percentile([rng.choice(x, len(x)).mean() for _ in range(B)], [2.5, 97.5]) if len(x) else (np.nan, np.nan)
 
 
+def se(x):
+    """mean -/+ 1 standard error over the units of `x` (seeds, or frameworks): the narrowest standard whisker, a ~68 %
+    interval -- captions must say "+/- 1 s.e.", never "95 % CI". Per-seed values if `x` is indexed by seed, as ci()."""
+    if isinstance(x, pd.Series) and "seed" in (x.index.names or []): x = x.dropna().groupby(level="seed").mean()
+    x = np.asarray(x, float); x = x[np.isfinite(x)]
+    if not len(x): return (np.nan, np.nan)
+    h = x.std(ddof=1) / np.sqrt(len(x)) if len(x) > 1 else 0.0
+    return (x.mean() - h, x.mean() + h)
+
+
 def line(ax, s, label, **kw):
     """Curve of the mean per x with 95% seed-bootstrap CIs (see ci): `s` is a SeriesGroupBy over the x level."""
     xs, ys, lo, hi = [], [], [], []

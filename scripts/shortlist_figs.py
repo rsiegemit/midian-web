@@ -17,7 +17,7 @@ import glob, json, os, sys
 import numpy as np, pandas as pd, matplotlib
 matplotlib.use("Agg"); import matplotlib.pyplot as plt
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__)))); sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from extra_figs import COLOR as _COLOR, ci as _ci, excluded
+from extra_figs import COLOR as _COLOR, se as _ci, excluded   # whiskers +/- 1 s.e. over seeds
 from fw_variant_numbers import load, regime, pending_reruns
 from paper_figs import ABBR
 
@@ -35,8 +35,25 @@ SOURCES = [("tfidf", "hashed TF-IDF (pre-registered)", "#b0b0b0"), ("bm25", "BM2
            ("declared", "declared-claim top-k", "#e7ba52"),
            ("va_cohort", "MIDIAN-VA leaf cohort", "#117a3d")]
 SRC_NAME = {k: v for k, v, _ in SOURCES}; SRC_COLOR = {k: c for k, _, c in SOURCES}
+# Erratum 30: H moves to the no-repeat + calibrated-claims reruns (*_norep_cal) once ALL of them have landed; until then the
+# old rows stand, never a mix. H30_FW / H30_REF are those grids.
+H30_FW = [f"{g}_norep_cal" for g in ("fw_routereval_small", "fw_routereval_1k", "fw_routereval_5k", "fw_routereval_small_em",
+          "fw_routereval_1k_em", "fw_routereval_5k_em", "fw_routereval_small_va", "fw_routereval_1k_va", "fw_routereval_5k_va",
+          "re_sl_declared_small", "re_sl_declared_1k", "re_sl_declared_5k", "re_sl_embed_small", "re_sl_embed_1k", "re_sl_embed_5k")]
+H30_REF = {10: ["routereval_mmlu_norep_cal"], 100: ["routereval_mmlu_norep_cal"], 1000: ["routereval_mmlu_norep_cal"], 5000: ["routereval5k_norep_cal"]}
+_h30 = []
+
+
+def h30():
+    """True once every H30 grid is complete (seed_tables.complete, counting framework rows too)."""
+    if not _h30:
+        from seed_tables import complete
+        _h30.append(all(complete(g, rows) for g in H30_FW) and all(complete(g) for v in H30_REF.values() for g in v))   # framework grids are all b = 3
+    return _h30[0]
+
+
 GRIDS = {"live": lambda g: g.startswith("fw_live_n") and "lietext" not in g or g in ("live_n10k_v2", "live_n100k"),
-         "routereval": lambda g: g.startswith(("fw_routereval_", "re_sl_"))}
+         "routereval": lambda g: g.startswith(("fw_routereval_", "re_sl_")) and g.endswith("_norep_cal") == h30()}
 
 
 def source(params):
@@ -98,7 +115,7 @@ def collect(family):
                 if len(s) > len(cell["fw"].setdefault(m, {}).get(src, [])): cell["fw"][m][src] = s      # the grid with the most seeds wins
                 if (grid, m, str(dist), reg) in pending: cell["pending"].add((m, src))
     for (n, dist, reg), cell in cells.items():
-        for grid in REF_GRIDS[family].get(n, []):
+        for grid in (H30_REF if family == "routereval" and h30() else REF_GRIDS[family]).get(n, []):
             df = rows(grid)
             if df.empty: continue
             q = tagged(df[df.method.isin(["oracle", "midian_va"]) & (df.n == n) & (df.dist.astype(str) == dist)])

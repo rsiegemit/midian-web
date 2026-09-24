@@ -76,7 +76,7 @@ def draw_I(ax, d):
             ax.plot([], [], "o-", ms=3, lw=1.6, color=c, label=f"{name}  (0: no routing work)"); continue
         if k in POOLS:
             q = d[d.label.isin(POOLS[k]) & ~pd.Series([l in NOT_RUNNABLE("bernoulli", n) for l, n in zip(d.label, d.n)], index=d.index)]
-            flat = [l for l, g in q[q.n >= 100].groupby("label") if growth(slope(g)) == "constant"]   # flat_nsw: majority pick in 2 of 29 A/B bars
+            flat = [l for l, g in q[q.n >= 100].groupby("label") if growth(slope(g)) == "constant"]   # constant-cost members (flat_nsw) are left out of the band
             q = q[(q.n >= 100) & ~q.label.isin(flat)].groupby("n").work.agg(["min", "max"]).reset_index()
             lo, hi = slope(q.rename(columns={"min": "work"})), slope(q.rename(columns={"max": "work"}))
             ax.fill_between(q.n, q["min"], q["max"], color=c, alpha=0.3, lw=0)

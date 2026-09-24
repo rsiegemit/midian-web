@@ -6,21 +6,26 @@ strong_to_weak}); n must equal m. Families = the K largest MMLU subjects named i
 without subjects, K KMeans clusters of their RoBERTa prompt embeddings). Probes = index-seeded TRAIN prompts of the
 family (a fresh one per (agent, family, k), like the llm backend's instances); tasks = TEST prompts of the family.
 True skill S[a, f] = the agent's mean train score on the family (used for the oracle and liar selection only; never
-shown to a method). Declarations = noisy_declared(S) (no self-descriptions exist here; both sources are the honest
-control, as in replay). `text(f, inst)` returns the prompt, so knn_router / mlp_router run unchanged.
+shown to a method). Declarations = noisy_declared(S) (no self-descriptions exist here; programmatic and self_described are the honest
+control, as in replay; `calibrated` draws the live self-rating pattern, erratum 30). `text(f, inst)` returns the prompt, so
+knn_router / mlp_router run unchanged. `no_repeat: true` (erratum 30): World.tasks visits each (family, test prompt) at
+most once (task instance = the prompt's index in the family's test rows); default: instance % pool, with repeats.
+`shuffle: true` (erratum 30): agents are a per-seed permutation of the pool, so lowest-index tie-breaks are random.
 Data: $RTE_DATA/data/routereval/router_dataset/<dataset>_router_dataset.pkl (scripts: TARGETS_rte_v3.md part D)."""
 from __future__ import annotations
 import os, re, pickle, numpy as np
-from . import noisy_declared
+from . import declared_for
+from ..stable_hash import stable_seed_32
 
 DATA = os.path.join(os.environ.get("RTE_DATA", os.path.expanduser("~/rte_data")), "data", "routereval", "router_dataset")
 SUBJECT = re.compile(r"questions \(with answers\) about (.+?)\.")
 
 
 class RouterEvalBackend:
-    def __init__(self, n: int, K: int, dist: str, seed: int, rng, dataset: str = "mmlu", pool: str | None = None, **_):
+    def __init__(self, n: int, K: int, dist: str, seed: int, rng, dataset: str = "mmlu", pool: str | None = None,
+                 no_repeat: bool = False, shuffle: bool = False, **_):
         pool = pool or dist                                              # the grid's `dist` axis names the pool config
-        self.n, self.dist, self.seed = int(n), dist, int(seed)
+        self.n, self.dist, self.seed, self.no_repeat = int(n), dist, int(seed), bool(no_repeat)
         if dataset == "llmrouterbench":                                  # LLMRouterBench performance setting: 20 models × 15 datasets (scripts/llmrouterbench_terms.py --prep)
             z = np.load(os.path.join(os.path.dirname(DATA), "..", "llmrouterbench", "perf_matrix.npz"), allow_pickle=True)
             Y, fam, P, E = z["Y"], z["fam"], list(z["prompts"]), z["E"].astype(np.float32); rng0 = np.random.default_rng(0)
@@ -42,6 +47,9 @@ class RouterEvalBackend:
             Ptr, Pte = list(d["prompt"]["train_prompt"]), list(d["prompt"]["test_prompt"])
             ftr, fte, names = self._families(dataset, Ptr, Pte, d["embedding"], int(K), seed)
             self._Etr, self._Ete = np.asarray(d["embedding"]["train_embed"], np.float32), np.asarray(d["embedding"]["test_embed"], np.float32)
+        if shuffle:                                                      # per-seed agent order (erratum 30): pools are stored weak ->
+            perm = np.random.default_rng(stable_seed_32(seed, "agent_order")).permutation(Ytr.shape[1])   # strong, so index
+            Ytr, Yte, self.model_names = Ytr[:, perm], Yte[:, perm], [self.model_names[i] for i in perm]  # tie-breaks were not random
         self.families = names; self.K = len(names)
         self._tr = [np.flatnonzero(ftr == k) for k in range(self.K)]     # train prompt rows per family
         self._te = [np.flatnonzero(fte == k) for k in range(self.K)]     # test prompt rows per family
@@ -83,7 +91,7 @@ class RouterEvalBackend:
     def redraw(self, ids, rng): pass
 
     def true_skill(self) -> np.ndarray: return self._S
-    def declared(self, source: str = "programmatic") -> np.ndarray: return noisy_declared(self._S, self.seed)
+    def declared(self, source: str = "programmatic") -> np.ndarray: return declared_for(self._S, self.seed, source)
 
     def text(self, f: int, inst: int, probe: bool = False) -> str:
         """Probe instances (index-seeded) address the family's TRAIN prompts, task instances its TEST prompts."""
@@ -95,6 +103,9 @@ class RouterEvalBackend:
         rows, E = (self._tr, self._Etr) if probe else (self._te, self._Ete)
         if E is None: return None                                            # leaderboard pool: no per-prompt embeddings shipped
         e = E[rows[f][inst % len(rows[f])]]; return e / (np.linalg.norm(e) + 1e-9)
+
+    def task_pool_sizes(self) -> np.ndarray:
+        return np.array([len(r) for r in self._te])
 
     def execute(self, a: int, task) -> int:
         r = self._te[task.family]; return int(self._Yte[r[task.instance % len(r)], a])

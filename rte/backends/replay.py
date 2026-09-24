@@ -9,6 +9,10 @@ Cell table (`scripts/02_download_routerbench.py` builds it):
 
 See DEVIATIONS.md (2026-09-02) for: K=67 not 64 on the real pickle, the per-dist
 profile draw, and the masked-category (handicap) rule.
+
+`split: true` (erratum 30): each category's prompts are split once (rng 0, 70/30 as LLMRouterBench) into probe rows and
+task rows. Probes (execute_many) and S -- hence the oracle, liar selection and declarations -- read only the probe rows;
+routed tasks (execute) only the task rows. Default: one pool for both, as before.
 """
 from __future__ import annotations
 
@@ -16,7 +20,7 @@ import os
 
 import numpy as np
 
-from . import noisy_declared
+from . import declared_for
 from ._profiles import pick_k_per_agent, group_mask
 
 DEFAULT_CELLS_PATH = os.path.join(
@@ -56,7 +60,7 @@ def _draw_profiles(dist: str, n: int, K: int, model_rank: np.ndarray, rng: np.ra
 
 class ReplayBackend:
     def __init__(self, n: int, K: int, dist: str, seed: int, rng: np.random.Generator,
-                 cells_path: str | None = None, **_):
+                 cells_path: str | None = None, split: bool = False, **_):
         self.n, self.seed, self.dist = int(n), int(seed), dist
         d = np.load(cells_path or DEFAULT_CELLS_PATH)
         self.model_names = [str(x) for x in d["model_names"]]
@@ -68,9 +72,12 @@ class ReplayBackend:
         self.K = len(sel)
         self.families = [cat_names[i] for i in sel]
         self._row_start, self._n_prompts = offsets[sel], n_prompts_full[sel]
+        self._p_out, self._p_start, self._p_n = self._outcomes, self._row_start, self._n_prompts   # probe pool = task pool
+        if split:
+            self._split()
 
-        model_cat_acc = np.stack([self._outcomes[s:s + c].mean(0)
-                                  for s, c in zip(self._row_start, self._n_prompts)], axis=1)  # (M,K)
+        model_cat_acc = np.stack([self._p_out[s:s + c].mean(0)
+                                  for s, c in zip(self._p_start, self._p_n)], axis=1)  # (M,K)
         self._model_cat_acc = model_cat_acc.astype(np.float32)
         self._weakest_model = np.argmin(model_cat_acc, axis=0)         # (K,) per-category weakest
         model_rank = np.argsort(-model_cat_acc.mean(axis=1))           # (M,) best -> worst overall
@@ -78,6 +85,17 @@ class ReplayBackend:
         self._model_rank = model_rank
         self.model_id, self.mask = _draw_profiles(dist, self.n, self.K, model_rank, rng)
         self._S = self._skill(self.model_id, self.mask)
+
+    def _split(self, probe_frac=0.7):
+        """Probe rows -> _p_*, task rows -> _outcomes/_row_start/_n_prompts, each packed contiguously per category."""
+        rng0 = np.random.default_rng(0)
+        perm = [s + rng0.permutation(c) for s, c in zip(self._row_start, self._n_prompts)]
+        cut = [int(probe_frac * c) for c in self._n_prompts]
+        self.probe_rows, self.task_rows = [p[:k] for p, k in zip(perm, cut)], [p[k:] for p, k in zip(perm, cut)]   # table row ids
+        pack = lambda parts: (self._outcomes[np.concatenate(parts)], np.cumsum([0] + [len(x) for x in parts[:-1]]),
+                              np.array([len(x) for x in parts], np.int64))
+        self._p_out, self._p_start, self._p_n = pack(self.probe_rows)
+        self._outcomes, self._row_start, self._n_prompts = pack(self.task_rows)
 
     def _skill(self, model_id, mask):
         own = self._model_cat_acc[model_id, :]
@@ -95,7 +113,7 @@ class ReplayBackend:
         return self._S
 
     def declared(self, source: str = "programmatic") -> np.ndarray:
-        return noisy_declared(self._S, self.seed)                       # no LLM here: both sources are the honest control
+        return declared_for(self._S, self.seed, source)                     # no LLM here: programmatic / self_described are the honest control
 
     def execute(self, a: int, task) -> int:
         f = task.family
@@ -105,9 +123,9 @@ class ReplayBackend:
 
     def execute_many(self, agents, families, inst) -> np.ndarray:
         agents, families, inst = np.broadcast_arrays(np.asarray(agents), np.asarray(families), np.asarray(inst))
-        rows = self._row_start[families] + inst % self._n_prompts[families]
+        rows = self._p_start[families] + inst % self._p_n[families]
         model_idx = np.where(self.mask[agents, families], self._weakest_model[families], self.model_id[agents])
-        return self._outcomes[rows, model_idx].astype(np.int8)
+        return self._p_out[rows, model_idx].astype(np.int8)
 
     def stats(self) -> dict:
         return {"replay_K_used": self.K, "replay_n_models": len(self.model_names), "replay_dist": self.dist}

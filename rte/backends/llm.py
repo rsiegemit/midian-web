@@ -25,6 +25,8 @@ from .. import llm_client                      # module-level: __init__ reads ll
 from ..stable_hash import stable_seed_32
 from . import families, prompts, tools
 from .population import bands, draw_profiles, ladder, signature
+
+_OUTCOMES: dict = {}                           # RTE_OUTCOME_CACHE: (population, agent, family, instance) -> outcome
 from .prompts import build as build_prompt, extract_answer, find_tool_call, parse_rating  # re-export
 
 RTE_DATA = Path(os.environ.get("RTE_DATA", "/scratch/rte"))
@@ -148,6 +150,17 @@ class LLMBackend:
         return out
 
     def _outcomes(self, items) -> np.ndarray:
+        if os.environ.get("RTE_OUTCOME_CACHE") == "1":          # opt-in, exact: an (agent, family, instance) outcome is fixed
+            pop = str(self.dir)                                 # (memoised answer, deterministic scoring), so score it once per process
+            miss = list(dict.fromkeys(it for it in items if (pop,) + it not in _OUTCOMES))
+            args = [(self.families[f], i, x) for (_, f, i), x in zip(miss, self._answers(miss) if miss else [])]
+            n = int(os.environ.get("RTE_TEXT_PROCS", "1"))
+            if n > 1 and len(args) > 20000:                     # scoring rebuilds each instance: fork it (pure function, same result)
+                import multiprocessing as mp
+                with mp.get_context("fork").Pool(n) as pool: res = pool.starmap(families.correct, args, chunksize=5000)
+            else: res = [families.correct(*a) for a in args]
+            _OUTCOMES.update({(pop,) + it: r for it, r in zip(miss, res)})
+            return np.array([_OUTCOMES[(pop,) + it] for it in items], dtype=np.int8)
         return np.array([families.correct(self.families[f], i, x)
                          for (_, f, i), x in zip(items, self._answers(items))], dtype=np.int8)
 

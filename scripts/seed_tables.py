@@ -62,17 +62,58 @@ def _table(df, pooled_shapes=False):
     return out
 
 
+# Erratum 30: the non-live families switch to the calibrated-claims / split / no-repeat reruns once that grid has every row
+# (complete()); until then the old rows stand. bernoulli: only the claim-reading arms change (the world, liars, stream and probes
+# do not depend on declared_source), so their programmatic rows are swapped for the calibrated ones; the others move wholesale.
+CLAIM_READERS = {"cluster_head_router", "disrouter_cascade", "warm_start_bandit", "warm_start_bandit[n0=0.5]", "declared_argmax"}
+ERRATUM30 = {"bernoulli": "bernoulli_1e7_cal", "replay": "replay_1e6_split_cal", "routereval": "routereval5k_norep_cal",
+             "llmrouterbench": "llmrouterbench_norep_cal"}
+_done = {}
+
+
+def planned(grid):
+    """The set of (n, b, dist, beta, liar_select, seed, arm label) rows the grid loader plans for `grid` (oracle rows excluded)."""
+    import yaml
+    from rte.run import blocks, cells, method_specs, seeds
+    cfg = yaml.safe_load(open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "configs", "grid.yaml")))
+    return {(int(c["n"]), int(c["b"]), str(c["dist"]), float(c["beta"]), str(c["liar_select"]), int(s), label(m["name"], json.dumps(m["params"])))
+            for blk in blocks(cfg, grid) for c in cells(blk) for s in seeds(blk["seeds"]) for m in method_specs(blk)}
+
+
+def complete(grid, load=None):
+    """True once EVERY planned row of `grid` has landed (set comparison, so stray or duplicate rows cannot stand in for a
+    missing one). `load(grid)` returns its rows; default rows(), which drops framework arms -- pass a loader for those."""
+    if grid not in _done:
+        want = planned(grid)
+        df = load(grid) if load else pd.concat([rows(grid, n) for n in {k[0] for k in want}], ignore_index=True)
+        have = set() if df.empty else {(int(n), int(b), str(d), float(be), str(ls), int(s), label(m, p)) for n, b, d, be, ls, s, m, p
+                                       in zip(df.n, df.b, df.dist, df.beta, df.liar_select, df.seed, df.method, df.params.astype(str))}
+        _done[grid] = want <= have
+    return _done[grid]
+
+
+def switched():
+    """The families whose B cell reads the erratum-30 rows."""
+    return {f for f, g in ERRATUM30.items() if complete(g)}
+
+
 def tables():
     from bar_figs import LIVE_GRIDS
-    b_grids = lambda t: [f"va_b_{t}", f"rivals_b_{t}", f"pool_fill_{t}"]
+    b_grids = lambda t: [f"va_b_{t}", f"rivals_b_{t}", f"pool_fill_{t}", f"linucb_fix_{t}", f"trueskill_fix_{t}"]
+    sw = switched()
     spec = [(("live", "specialist", n), LIVE_GRIDS[n] + b_grids(t) + [f"tuned_wsb_{t}", f"pool_seeds_{t}"], "live") for n, t in LIVE.items()]
-    spec += [(("routereval", "strong_to_weak", 5000), ["routereval_mmlu5k"] + b_grids("routereval5k"), None),
-             (("llmrouterbench", "20 models", 20), ["llmrouterbench_pool"] + b_grids("llmrouterbench"), None),
-             (("bernoulli", "specialist", 10 ** 7), ["bernoulli_scale_v5"] + b_grids("bernoulli_1e7"), "specialist"),
-             (("replay", "all shapes pooled", 10 ** 6), ["replay_scale_v5"] + b_grids("replay_1e6"), "pooled")]
+    spec += [(("routereval", "strong_to_weak", 5000), ["routereval5k_norep_cal"] if "routereval" in sw else ["routereval_mmlu5k"] + b_grids("routereval5k"), None),
+             (("llmrouterbench", "20 models", 20), ["llmrouterbench_norep_cal"] if "llmrouterbench" in sw else ["llmrouterbench_pool"] + b_grids("llmrouterbench"), None),
+             (("bernoulli", "specialist", 10 ** 7), ["bernoulli_scale_v5"] + b_grids("bernoulli_1e7") + (["bernoulli_1e7_cal"] if "bernoulli" in sw else []), "specialist"),
+             (("replay", "all shapes pooled", 10 ** 6), ["replay_1e6_split_cal"] if "replay" in sw else ["replay_scale_v5"] + b_grids("replay_1e6"), "pooled")]
     out = {}
     for (fam, grp, n), grids, kind in spec:
         df = pd.concat([rows(g, n) for g in grids], ignore_index=True)
+        if not df.empty:                                     # TrueSkill: post probe-duplicate-fix rows only (erratum 30)
+            df = df[(df.method != "trueskill_per_family") | df.grid.str.startswith("trueskill_fix_") | df.grid.isin(list(ERRATUM30.values()))]
+        if fam == "bernoulli" and fam in sw:                 # claim readers: calibrated rows only
+            reads = pd.Series([label(m, p) in CLAIM_READERS for m, p in zip(df.method, df.params)], index=df.index)
+            df = df[~reads | (df.declared_source == "calibrated")]
         if kind in ("live", "specialist") and not df.empty: df = df[df.dist == "specialist"]
         if kind == "live" and "declared_source" in df:       # the live headline is the self-described channel (bar_figs)
             df = df[df.declared_source.isna() | (df.declared_source == "self_described")]

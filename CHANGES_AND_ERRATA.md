@@ -391,7 +391,8 @@ The erratum-28 rule counted EVERY framework-side exception as an infrastructure 
 max(3, 2%) of calls failed. The only exceptions that ever tripped it were the supervisor LLM's own invalid actions:
 - ADK: 58 failed unit logs, "Tool 'agent_000030' not found" (a tool named after the agent, not `transfer_to_agent`);
 - OpenAI Agents: 1, "Tool transfer_to_agent_00128 not found" (ModelBehaviorError);
-- MAF: 1, "next_speaker must be provided".
+- MAF: 1, "next_speaker must be provided"; and (found 2026-09-23 22:45, 14 units at 10^2-10^4) "KeyError: 'agent_005044'":
+  the group-chat orchestrator named a participant that is not among its candidates, so the worker's name lookup fails.
 ADK's honest 10^2 / 10^3 units therefore never landed, and ADK was absent from those shortlist bars with no mark.
 
 These are the framework failing to route, not our infrastructure. `FrameworkMethod.fetch` now treats them as a non-pick
@@ -419,6 +420,75 @@ honest D 0.752 / 0.750 / 0.734, cartel D 0.758 / 0.789 / 0.769, EVERYONE +0.4 wi
 prior 0.689 / 0.697 / 0.700. So the honest warm-start rival is under-tuned (its prior is too pessimistic on self-described
 claims); a tuned honest version would sit near its cartel number. Reported numbers are unchanged (the rival is as
 pre-registered); state it beside any honest-vs-cartel comparison of this arm.
+
+---
+
+## 8f. Erratum 30 -- three leaks on the non-live backends, and their opt-in fixes (2026-09-23, post hoc)
+
+Audit (paper/audit/leakage.md, rivals.md, protocol.md). Fixes 1-3 and the agent shuffle are opt-in: each is a new cell
+value, so no row id moves and default cells stay bit-identical (tests/test_erratum30.py pins fingerprints taken with
+the pre-fix code). The probe-index fix (last bullet) is NOT opt-in; it changes the default rows of `trueskill_per_family`
+and of no other arm.
+- **Declarations were an answer key.** On bernoulli, replay and RouterEval / LLMRouterBench both declared sources were
+  `clip(S + N(0, 0.05))` (corr(S, D) 0.99); live self-ratings are over-confident and weak (mean 0.688 vs S 0.425, corr
+  0.36). Fix: `declared_source: calibrated` draws D from the live self-rating's empirical distribution given S's decile
+  (10 bins x the 11 values live models emit; `rte/backends/__init__.py` `CAL_P`, fitted on the 40 live specialist
+  n = 100 / 1,000 populations, 352,000 pairs, by `scripts/fit_declared_calibration.py`). It reproduces live mean 0.688,
+  sd 0.283, corr 0.354-0.357 (live 0.360), P(D = 0) 0.072, P(D = 1) 0.21. The declared-argmax pick has mean S 0.58
+  (live 0.61, programmatic 0.83, max 0.84). A linear censored-normal fit, clip(0.523 + 0.485 S + N(0, 0.348)), picks
+  worse (0.52) and was rejected.
+  The draws are i.i.d. per (agent, family), but 25 % of the live residual variance is per agent. On heavy_tail / bimodal
+  the calibrated claims are therefore less informative than live: pick 0.39 / 0.42 vs 0.62 / 0.57. Lying is unchanged
+  and applies on top of D.
+- **Calibrated ties broke toward the weakest RouterEval agent** (independent review). Calibrated D takes only 11 values,
+  so many agents tie at the maximum. declared_argmax, declared top-k (stable argsort) and cluster_head_router break
+  ties by the lowest agent index. RouterEval's mmlu pools are stored weak to strong (Spearman 1.0 between index and
+  skill), so on mmlu strong_to_weak n = 1,000 the declared-argmax pick had S 0.25; with random ties it is 0.61-0.63.
+  The same order effect is slight on LLMRouterBench (rho -0.11) and the leaderboard pool (rho -0.05). Bernoulli and
+  replay agents are in random order, so they are unaffected. Fix: routereval `backend_kwargs: {shuffle: true}`
+  permutes the pool per seed (`stable_seed_32(seed, "agent_order")`) before S is computed. It is set on every
+  RouterEval / LLMRouterBench erratum-30 grid. Unshuffled `_cal` / `_norep_cal` RouterEval rows that already landed are
+  superseded.
+- **Replay probed and routed on the same prompts**, and S (oracle, liar selection, declarations) was the accuracy over
+  all of them. Fix: replay `backend_kwargs: {split: true}` splits each category once (rng 0, 70 / 30 as LLMRouterBench)
+  into probe rows (probes, S) and task rows (routed tasks). Under split the oracle picks by probe-row S and executes on
+  task rows, as on RouterEval. It is therefore not an exact ceiling: an arm can beat it on the task rows. This is not
+  changed.
+- **RouterEval / LLMRouterBench streams repeated test prompts** (instance % pool; repeat share 0.48 on mmlu, 0.20 on
+  LLMRouterBench), so online learners that see the prompt could memorise answers. Fix: `backend_kwargs: {no_repeat: true}`
+  makes `World.tasks` visit each (family, test prompt) at most once. Families are drawn by the demand vector over the
+  families that still have prompts, so demand stays uniform until the smallest family runs out, and Q above the pool
+  raises. Test pools in the K used families: mmlu 790 prompts (27-154 per subject), leaderboard 1,570 (53-307),
+  LLMRouterBench 3,445 (26-376). The new grids use Q = 300 everywhere; over 30 seeds the last 0.8-0.9 % of a stream
+  lacks one family on average (at most 15 %).
+- **Repeated cells in one probe call shared one instance** (protocol audit F4). `World._probe` read and bumped the probe
+  index with fancy indexing, so an (agent, family) that appeared m times in ONE call got the same k-th instance m times
+  and the index advanced once. Fixed in `rte/world.py` (`_probe`, `_occurrence`), and the fix CHANGES DEFAULT ROWS:
+  each occurrence now takes the next `reps` instances, as sequential calls would. It went live at 2026-09-23 16:49, so
+  `trueskill_per_family` rows written before then are pre-fix. A small test world shows the size of the change:
+  success 0.85 -> 0.555 at b = 1 on bernoulli (tests pin both fingerprints). The audit saw live 10^3 fall from 0.745 in
+  old rows to 0.607 in new rows. Calls without a repeat take a fast path with the old per-call cost. Calls without a repeated cell are byte-identical, which the tests check. A spy over all 69
+  non-framework arms in grid.yaml (bernoulli and LLMRouterBench, b = 1 / 3 / 5, honest and cartel) found repeats
+  in `trueskill_per_family` only. Its random pairings draw agents with replacement, so about half its probes were
+  duplicates. Every `trueskill_per_family` row predating this fix needs a rerun; no other arm's rows change.
+- **Grids**: `bernoulli_1e7_cal` (claim-reading arms only), `replay_1e6_split_cal` (every B arm, 30 seeds),
+  `routereval5k_norep_cal`, `llmrouterbench_norep_cal` and `routereval_mmlu_norep_cal` ran 2026-09-23 / 24 and B reads
+  them (`seed_tables.ERRATUM30`, switched per family once every planned row landed). `routereval5k_cal` and
+  `llmrouterbench_cal` (calibrated claims, repeated prompts) are superseded by the norep grids and not drawn. H's
+  framework mirrors `fw_routereval_{small,1k,5k}{,_em,_va}_norep_cal` and `re_sl_{declared,embed}_{small,1k,5k}_norep_cal`
+  run after A / B; H switches only when all of them have landed.
+- **Agent order on RouterEval / LLMRouterBench (`shuffle: true`, in every erratum-30 RouterEval grid).** Calibrated
+  claims take 11 values, so many agents tie at the maximum and every claim reader broke ties by the lowest agent index;
+  the RouterEval MMLU pools list agents weak to strong (Spearman 1.0 at m = 10 / 100 / 1,000), which sank declared argmax
+  from 0.62 to 0.25 of skill and favoured MIDIAN-VA. A per-seed permutation of the pool makes the ties random. Unshuffled
+  rows landed before the fix are in `results/_quarantine_unshuffled_2026-09-23` and are not read.
+- **Speed-only opt-ins used for the kNN reruns (2026-09-23 / 24).** `RTE_EMBED_BATCH=1` embeds a probe set in one batched
+  MiniLM call instead of one call per prompt; `RTE_MINILM_CUDA=1` runs MiniLM on a GPU (fp32); `RTE_TEXT_PROCS=N`
+  generates the probe prompts in N forked processes (identical texts); with the batch path, the last probe-set embedding
+  is cached in-process, keyed by the probe-instance matrix, so kNN / kNN-online and both regimes at one b share one encode
+  (the cached array is read-only); `RTE_OUTCOME_CACHE=1` scores each (population, agent, family, instance) probe once per process and forks the scoring over `RTE_TEXT_PROCS` workers (outcomes identical; only the `llm_executions` diagnostic counts fewer calls). Used for `rivals_b_n10k` (cartel kNN), `rivals_b_n100k` (kNN) and the cartel
+  `routereval5k_norep_cal` kNN units. Batched vs per-prompt embeddings differ by <= 2.4e-7 and gave identical top-10
+  neighbour sets on 300 queries; defaults are unchanged.
 
 ## 9. Still open (not results)
 

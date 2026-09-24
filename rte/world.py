@@ -105,6 +105,14 @@ def probe_seed(salt: int, a, f, k) -> np.ndarray:
     return (x & np.uint64(0x7FFFFFFF)).astype(np.int64)
 
 
+def _occurrence(key: np.ndarray) -> np.ndarray:
+    """For each element, how many earlier elements (row-major) share its key."""
+    flat = key.ravel(); order = np.argsort(flat, kind="stable"); ks = flat[order]
+    start = np.flatnonzero(np.r_[True, ks[1:] != ks[:-1]])
+    rank = np.empty(flat.size, np.int64); rank[order] = np.arange(flat.size) - np.repeat(start, np.diff(np.r_[start, flat.size]))
+    return rank.reshape(key.shape)
+
+
 def select_liars(S: np.ndarray, beta: float, how: str, rng: np.random.Generator) -> np.ndarray:
     n = S.shape[0]
     m = int(round(beta * n))
@@ -288,8 +296,24 @@ class World:
         """The paired task stream: identical for every method at a given (world seed, stream_seed)."""
         rng = np.random.default_rng(stable_seed_32(self.seed if stream_seed is None else stream_seed,
                                                    "stream", self.K, self.demand_kind))
+        if getattr(self.backend, "no_repeat", False):
+            return self._tasks_no_repeat(int(Q), rng)
         fams = rng.choice(self.K, size=int(Q), p=self.demand)
         return [Task(i, int(f), int(stable_seed_32(self.seed, "inst", i, int(f)))) for i, f in enumerate(fams)]
+
+    def _tasks_no_repeat(self, Q: int, rng) -> list[Task]:
+        """Each (family, test prompt) at most once (erratum 30): families are drawn by the demand vector renormalised over
+        the families with prompts left, each family's prompts in a random order; instance = the prompt's index in the
+        family's test pool. Demand is exact until the smallest family runs out; Q > the whole pool is an error."""
+        size = np.asarray(self.backend.task_pool_sizes())
+        if Q > size.sum():
+            raise ValueError(f"no_repeat: Q={Q} exceeds the test pool ({int(size.sum())} prompts over {self.K} families)")
+        order, used, out = [rng.permutation(s) for s in size], np.zeros(self.K, np.int64), []
+        for i in range(Q):
+            p = self.demand * (used < size)
+            f = int(rng.choice(self.K, p=p / p.sum()))
+            out.append(Task(i, f, int(order[f][used[f]]))); used[f] += 1
+        return out
 
     # ---- execution
     def execute(self, a: int, task: Task) -> int:
@@ -314,8 +338,16 @@ class World:
         Returns (outcomes, instance seeds), both of shape agents.shape + (reps,)."""
         agents, families = np.broadcast_arrays(np.asarray(agents, np.int64), np.asarray(families, np.int64))
         self.ledger.probe(agents.size * reps)
-        k = self._probe_idx[agents, families].astype(np.int64)[..., None] + np.arange(reps)
-        self._probe_idx[agents, families] += reps; self.seen_epoch[agents] = self.epoch[agents]
+        lin, flat = agents * self.K + families, self._probe_idx.reshape(-1)     # flat view: _probe_idx is C-contiguous
+        k0, pos = flat[lin], np.arange(lin.size, dtype=np.uint32).reshape(lin.shape)
+        flat[lin] = pos                                                  # a repeated cell cannot hold every position written to it
+        if (flat[lin] != pos).any():                                     # repeated cell: each occurrence takes the next instances,
+            flat[lin] = k0; np.add.at(flat, lin, reps)                   # as sequential calls would (erratum 30)
+            k0 = k0.astype(np.int64) + reps * _occurrence(lin)
+        else:
+            flat[lin] = k0 + np.uint32(reps)
+        self.seen_epoch[agents] = self.epoch[agents]
+        k = k0.astype(np.int64)[..., None] + np.arange(reps)
         inst = probe_seed(self._probe_salt, agents[..., None], families[..., None], k)
         return self.backend.execute_many(np.broadcast_to(agents[..., None], inst.shape), np.broadcast_to(families[..., None], inst.shape), inst), inst
 

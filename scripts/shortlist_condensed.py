@@ -5,7 +5,7 @@ Reads figures/shortlist/live.csv (per framework x shortlist x cell: seed mean an
      beta = 0.5 low-skill cartel); oracle dotted and MIDIAN-VA (whole population) solid, as lines over each group.
   F  n = 10^5 (every shortlist ran there), shortlists sorted by the honest mean; a black dot = the BEST single framework.
   G  n = 10^5: each shortlist's gain over the pre-registered TF-IDF shortlist, paired WITHIN each framework, averaged over
-     frameworks (whisker = 95% t-interval across frameworks). At 10^5 TF-IDF is the clone shortlist (0.379 for every
+     frameworks (whisker = +/- 1 s.e. across frameworks). At 10^5 TF-IDF is the clone shortlist (0.379 for every
      framework, erratum 25), so G is the gain over that floor.
 Framework numbers with an erratum-28 rerun outstanding are marked in the csv (star) and by * after the title while any remain."""
 from __future__ import annotations
@@ -40,10 +40,11 @@ MIN_FW = 6                                                   # a bar needs >= 6 
 
 def summarise(d):
     """(n, regime, shortlist) -> mean over frameworks, best framework, any rerun outstanding; plus the reference lines.
-    Only frameworks with the full seed count at that n count, and a bar needs MIN_FW of them; a thinner cell is left out
+    Only frameworks with the full seed count of that (n, shortlist) count -- every seed its grid ran; the 10^2 / 10^3
+    backfill shortlists ran 3 seeds by design, the rest 10 -- and a bar needs MIN_FW of them; a thinner cell is left out
     (an empty slot, which puts the title * on) instead of averaging a different, smaller framework set."""
     fw = d[d.shortlist != "-"]
-    fw = fw[fw.seeds == fw.groupby("n").seeds.transform("max")]
+    fw = fw[fw.seeds == fw.groupby(["n", "shortlist"]).seeds.transform("max")]
     fw = fw[fw.groupby(["n", "regime", "shortlist"]).arm.transform("nunique") >= MIN_FW]
     s = fw.groupby(["n", "regime", "shortlist"]).agg(mean=("mean", "mean"), best=("mean", "max"), k=("arm", "nunique"),
                                                      star=("rerun_outstanding", "any")).reset_index()
@@ -110,14 +111,14 @@ def finish(ax, fig, s, title, name, ncol, inside=False):
 
 
 def fig_G(d, n=100000):
-    fw = d[(d.shortlist != "-") & (d.n == n)]; fw = fw[fw.seeds == fw.seeds.max()]   # full-seed frameworks only, as in summarise
+    fw = d[(d.shortlist != "-") & (d.n == n)]; fw = fw[fw.seeds == fw.groupby("shortlist").seeds.transform("max")]   # full-seed frameworks only, as in summarise
     base = fw[fw.shortlist == "tfidf"].set_index(["regime", "arm"])["mean"]
     rows = []
     for (r, src), q in fw[fw.shortlist != "tfidf"].groupby(["regime", "shortlist"]):
         diff = (q.set_index(["regime", "arm"])["mean"] - base).dropna()
         k = len(diff)
         if k < MIN_FW: INCOMPLETE[0] = True; continue            # too few paired frameworks: left out, title *
-        half = 1.96 * diff.std(ddof=1) / np.sqrt(k) if k > 1 else np.nan
+        half = diff.std(ddof=1) / np.sqrt(k) if k > 1 else np.nan   # +/- 1 s.e. across frameworks
         rows.append(dict(regime=r, shortlist=src, lift=diff.mean(), half=half, frameworks=k, star=bool(q.rerun_outstanding.any())))
     t = pd.DataFrame(rows); order = t[t.regime == "beta0"].sort_values("lift", ascending=False).shortlist.tolist()
     fig, ax = plt.subplots(figsize=(7.2, 2.8)); w = 0.38
@@ -131,7 +132,7 @@ def fig_G(d, n=100000):
     ax.axhline(0, color="black", lw=0.6)
     ax.set_xticks(range(len(order))); ax.set_xticklabels([NAME[x] for x in order], rotation=28, ha="right", rotation_mode="anchor")
     ax.set_xlim(-0.6, len(order) - 0.4); ax.set_ylabel("success gain over TF-IDF"); ax.grid(axis="y", lw=0.3, alpha=0.35); ax.set_axisbelow(True)
-    ax.set_title(f"G  gain over the pre-registered TF-IDF shortlist at n = {n:,}, paired within framework: solid honest, hatched cartel" + (" *" if INCOMPLETE[0] else "")); INCOMPLETE[0] = False
+    ax.set_title(f"G  gain over the pre-registered TF-IDF shortlist at n = {n:,}, paired within framework; whisker ±1 s.e.; solid honest, hatched cartel" + (" *" if INCOMPLETE[0] else "")); INCOMPLETE[0] = False
     fig.savefig(f"{OUT}/G_shortlist_lift_1e5.png", dpi=250); fig.savefig(f"{OUT}/G_shortlist_lift_1e5.pdf"); plt.close(fig)
     t.to_csv(f"{OUT}/G_shortlist_lift_1e5.csv", index=False); print("[G_shortlist_lift_1e5] written")
 
