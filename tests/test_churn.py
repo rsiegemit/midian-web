@@ -42,17 +42,33 @@ def test_epoch_rule_stale_route_scores_zero_once():
 
 
 def test_row_id_unchanged_without_churn():
-    cell = {**{k: v for k, v in zip(CELL, ("bernoulli", 100, 8, "specialist", 0.25, "random", True, "programmatic", "inflate", "uniform", 3, 100))},
-            "backend_kwargs": {}}
-    assert row_id(cell, "midian", {}, 1) == row_id({**cell, "churn": None}, "midian", {}, 1) != row_id({**cell, "churn": {"frac": 0.1, "every": 200}}, "midian", {}, 1)
+    cell = {
+        **{
+            k: v
+            for k, v in zip(
+                CELL,
+                ("bernoulli", 100, 8, "specialist", 0.25, "random", True, "programmatic", "inflate", "uniform", 3, 100),
+            )
+        },
+        "backend_kwargs": {},
+    }
+    assert (
+        row_id(cell, "midian", {}, 1)
+        == row_id({**cell, "churn": None}, "midian", {}, 1)
+        != row_id({**cell, "churn": {"frac": 0.1, "every": 200}}, "midian", {}, 1)
+    )
 
 
 def test_halving_rebuild_charges_full_budget_and_flat_reprobes():
     w = World(**W)
     ids = w.churn(0.1)
     w.reset()
-    for name, params, probes in [("sequential_halving", {"churn_mode": "rebuild"}, None), ("sequential_halving", {"churn_mode": "stale"}, 0),
-                                 ("flat_probe_argmax", {"online": True}, 10 * 8 * 3), ("warm_start_bandit", {}, 10 * 8 * 3)]:
+    for name, params, probes in [
+        ("sequential_halving", {"churn_mode": "rebuild"}, None),
+        ("sequential_halving", {"churn_mode": "stale"}, 0),
+        ("flat_probe_argmax", {"online": True}, 10 * 8 * 3),
+        ("warm_start_bandit", {}, 10 * 8 * 3),
+    ]:
         m = load_method(name)(**params)
         v = w.view(m.needs)
         w.reset()
@@ -61,14 +77,18 @@ def test_halving_rebuild_charges_full_budget_and_flat_reprobes():
         ids = w.churn(0.1)
         m.churn(ids, ids)
         spent = w.ledger.snapshot()["probes"]
-        assert spent == (probes if probes is not None else spent) and (probes is not None or 0 < spent <= 100 * 8 * 3), (name, spent)
+        assert spent == (probes if probes is not None else spent) and (
+            probes is not None or 0 < spent <= 100 * 8 * 3
+        ), (name, spent)
         assert 0 <= m.fetch(w.tasks(1)[0]) < 100
 
 
 def test_runner_churn_row():
     w = World(**W)
     stream = w.tasks(200)
-    row = run_method(w, stream, {"name": "flat_probe_argmax", "params": {"online": True}}, 3, {"frac": 0.1, "every": 50})
+    row = run_method(
+        w, stream, {"name": "flat_probe_argmax", "params": {"online": True}}, 3, {"frac": 0.1, "every": 50}
+    )
     assert row["repair_probes_per_event"] == 10 * 8 * 3 and 0 <= row["success"] <= 1
     assert "repair_probes_per_event" not in run_method(w, stream, {"name": "random", "params": {}}, 3, None)
 

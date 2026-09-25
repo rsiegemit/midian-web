@@ -35,8 +35,11 @@ def mock_url():
     with socket.socket() as s:
         s.bind(("127.0.0.1", 0))
         port = s.getsockname()[1]
-    proc = subprocess.Popen([sys.executable, os.path.join(REPO, "scripts", "checks", "mock_openai_server.py"), str(port)],
-                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    proc = subprocess.Popen(
+        [sys.executable, os.path.join(REPO, "scripts", "checks", "mock_openai_server.py"), str(port)],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
     for _ in range(200):
         try:
             with socket.create_connection(("127.0.0.1", port), 0.2):
@@ -72,7 +75,9 @@ def test_framework_pick_is_its_own_choice(method, env, mock_url):
         m.bridge.select = lambda *a, **kw: seen.append(orig(*a, **kw)) or seen[-1]
         for task in world.tasks(QUERIES):
             a = int(m.fetch(task))
-            assert a == m._name2id[seen[-1]["choice"]] and a in set(map(int, m.retrieve(task))), f"{method}: pick != framework choice"
+            assert a == m._name2id[seen[-1]["choice"]] and a in set(map(int, m.retrieve(task))), (
+                f"{method}: pick != framework choice"
+            )
         assert _picks(m.stats) == {"picks": QUERIES, "fallbacks": 0, "bad_name": 0}, \
             f"{method}: {m.stats}, bridge={m.bridge.stats}"
         # SPEC §6A ledger formula: per fetch, k descriptions compared, one supervisor hop, k+2 messages.

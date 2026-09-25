@@ -74,7 +74,11 @@ def test_hybrid_is_reciprocal_rank_fusion_of_bm25_and_dense():
 
 def test_hybrid_differs_from_either_half_alone():
     """Fusion is only worth running if it is not just one of its inputs; assert it moves the list on some family."""
-    h, bm, em = _built(dedup=True, retrieval="hybrid"), _built(dedup=True, retrieval="bm25"), _built(dedup=True, retrieval="embed")
+    h, bm, em = (
+        _built(dedup=True, retrieval="hybrid"),
+        _built(dedup=True, retrieval="bm25"),
+        _built(dedup=True, retrieval="embed"),
+    )
     tasks = list(_tasks())
     assert any(list(h.retrieve(t)) != list(bm.retrieve(t)) for t in tasks)
     assert any(list(h.retrieve(t)) != list(em.retrieve(t)) for t in tasks)
@@ -94,7 +98,9 @@ def test_sota_reranks_the_fused_pool_once_per_family_at_build_time():
         def _rerank(self, q, d):
             return fake(q, d)
 
-    m = _S(base_url="http://127.0.0.1:1/v1", embed_model="all-MiniLM-L6-v2", dedup=True, retrieval="sota", rerank_pool=25)
+    m = _S(
+        base_url="http://127.0.0.1:1/v1", embed_model="all-MiniLM-L6-v2", dedup=True, retrieval="sota", rerank_pool=25
+    )
     m.build(World(N, K, "specialist", 0.0, seed=1).view(m.needs), Budget(1))
     assert len(calls) == len(set(calls)) == K                # one call per family, at build time
     n_before = len(calls)
@@ -115,7 +121,9 @@ def test_sota_pool_handed_to_the_reranker_is_the_hybrid_ranking():
             got[q] = list(d)
             return np.arange(len(d), dtype=np.float32)
 
-    m = _S(base_url="http://127.0.0.1:1/v1", embed_model="all-MiniLM-L6-v2", dedup=True, retrieval="sota", rerank_pool=25)
+    m = _S(
+        base_url="http://127.0.0.1:1/v1", embed_model="all-MiniLM-L6-v2", dedup=True, retrieval="sota", rerank_pool=25
+    )
     m.build(World(N, K, "specialist", 0.0, seed=1).view(m.needs), Budget(1))
     h = _built(dedup=True, retrieval="hybrid")
     for f in range(4):
@@ -230,7 +238,11 @@ def test_claim_threshold_lists_every_family_above_it():
     class _T(_Fw):
         def _texts(self, view):
             fams = list(view.families)
-            return ([f"Prose. Declared areas: {fams[0]}." for a in range(view.n)], [f"Tasks of family {f}" for f in fams], (lambda task: "t"))
+            return (
+                [f"Prose. Declared areas: {fams[0]}." for a in range(view.n)],
+                [f"Tasks of family {f}" for f in fams],
+                (lambda task: "t"),
+            )
     m = _T(base_url="http://127.0.0.1:1/v1", dedup=True, retrieval="tfidf", lie_text=True, claim_threshold=0.5)
     m.build(World(N, K, "specialist", 0.5, seed=1, liar_select="low_skill_first").view(m.needs), Budget(1))
     D, fams = m.view.declared, list(m.view.families)
@@ -266,8 +278,9 @@ def test_a_framework_naming_nobody_is_still_a_fallback_not_an_error():
                                  "KeyError: 'agent_005044'"])
 def test_a_supervisor_invalid_action_is_a_non_pick_not_an_infrastructure_error(err):
     """Every error class that ever failed a unit (2026-09-23) was the supervisor LLM's own invalid action raised by the
-    framework (ADK / OpenAI Agents: a tool named after the agent; MAF: no next speaker). That is the framework failing to
-    route: a non-pick with the usual declared-argmax fallback, counted in fallback_rate, never retried, never fatal."""
+    framework (ADK / OpenAI Agents: a tool named after the agent; MAF: no next speaker). That is the framework failing
+    to route: a non-pick with the usual declared-argmax fallback, counted in fallback_rate, never retried, never
+    fatal."""
     m = _built(dedup=True, retrieval="tfidf")
     calls = []
     m.bridge.select = lambda *a, **k: calls.append(1) or {"choice": None, "error": err, "raw": None}
@@ -310,7 +323,8 @@ def test_midian_cohorts_are_never_prefetched(monkeypatch):
 
 
 def test_content_keyed_cache_is_opt_in_and_keyed_on_the_texts(monkeypatch, tmp_path):
-    """Non-live backends: no cache unless RTE_EMBED_CACHE_DIR is set; then one directory per exact (agent, family) text set."""
+    """Non-live backends: no cache unless RTE_EMBED_CACHE_DIR is set; then one directory per exact (agent, family)
+    text set."""
     m = _built(dedup=True, retrieval="tfidf")
     monkeypatch.delenv("RTE_EMBED_CACHE_DIR", raising=False)
     assert m._popdir(m.view) is None

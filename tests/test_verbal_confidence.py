@@ -53,14 +53,37 @@ def test_ledger_build_n_messages_fetch_2k_messages_and_k_comparisons():
     assert m.stats["asked"] == 200
 
 
-@pytest.mark.parametrize("text,want", [
-    ("<answer>7</answer>", 0.7), ("<answer>10</answer>", 1.0), ("0", 0.0), ("8/10", 0.8), ("7 out of 10", 0.7),
-    ("I'd say 85%", 0.85), ("<answer>0.6</answer>", 0.6), ("1.0", 1.0), ("<answer>8.5</answer>", 0.85),
-    ("think 3 ... <answer>9</answer>", 0.9), (CONF_MAX, 1.0), ("<answer>10</answer> \n<answer>-3</answer>", 1.0),
-    ("<answer>-1</answer>\n<answer>10</answer> \n", 1.0),
-    ("On a scale of 0 to 10, I'd say 8", 0.8), ("85", 0.85), ("<10></answer>", 1.0), ("<answer>7</answer> (out of 10)", 0.7),
-    ("", None), (None, None), ("no idea", None), ("<answer>eleven</answer>", None), ("-3", None), ("<answer>-3</answer>", None),
-    ("5/0", None), ("150%", None), ("250", None)])
+@pytest.mark.parametrize(
+    "text,want",
+    [
+        ("<answer>7</answer>", 0.7),
+        ("<answer>10</answer>", 1.0),
+        ("0", 0.0),
+        ("8/10", 0.8),
+        ("7 out of 10", 0.7),
+        ("I'd say 85%", 0.85),
+        ("<answer>0.6</answer>", 0.6),
+        ("1.0", 1.0),
+        ("<answer>8.5</answer>", 0.85),
+        ("think 3 ... <answer>9</answer>", 0.9),
+        (CONF_MAX, 1.0),
+        ("<answer>10</answer> \n<answer>-3</answer>", 1.0),
+        ("<answer>-1</answer>\n<answer>10</answer> \n", 1.0),
+        ("On a scale of 0 to 10, I'd say 8", 0.8),
+        ("85", 0.85),
+        ("<10></answer>", 1.0),
+        ("<answer>7</answer> (out of 10)", 0.7),
+        ("", None),
+        (None, None),
+        ("no idea", None),
+        ("<answer>eleven</answer>", None),
+        ("-3", None),
+        ("<answer>-3</answer>", None),
+        ("5/0", None),
+        ("150%", None),
+        ("250", None),
+    ],
+)
 def test_parse_confidence(text, want):
     got = parse_confidence(text)
     assert got == pytest.approx(want) if want is not None else got is None
@@ -126,7 +149,11 @@ def test_deterministic():
 def test_rate_task_is_the_agents_own_solve_prompt():
     for hand, tool in ((False, "python"), (True, "none")):
         solve, ask = build("gcd", "Q?", hand, tool), rate_task("gcd", "Q?", hand, tool)
-        assert ask[0] == solve[0] and ask[1]["content"].startswith("Q?") and "0 (certainly wrong) to 10" in ask[1]["content"]
+        assert (
+            ask[0] == solve[0]
+            and ask[1]["content"].startswith("Q?")
+            and "0 (certainly wrong) to 10" in ask[1]["content"]
+        )
 
 
 def test_cartel_wins_whenever_a_liar_is_shortlisted():
@@ -139,10 +166,31 @@ def test_cartel_wins_whenever_a_liar_is_shortlisted():
 
 
 # all_methods() computed at 0570629; equal at master 8c38981 (no method file added in between)
-ALL_AT_0570629 = ["cluster_head_router", "cnp_self_bid", "declared_argmax", "declared_softmax", "disrouter_cascade", "flat_nsw_router",
-                  "flat_probe_argmax", "gossip_reputation_greedy", "knn_router", "linucb_honest", "llm_supervisor", "midian",
-                  "midian_llm_descent", "mlp_router", "random", "referral_network", "route_to_k_majority", "sequential_halving",
-                  "thompson_per_family", "trueskill_per_family", "ucb_per_family", "verify_on_claim", "warm_start_bandit"]
+ALL_AT_0570629 = [
+    "cluster_head_router",
+    "cnp_self_bid",
+    "declared_argmax",
+    "declared_softmax",
+    "disrouter_cascade",
+    "flat_nsw_router",
+    "flat_probe_argmax",
+    "gossip_reputation_greedy",
+    "knn_router",
+    "linucb_honest",
+    "llm_supervisor",
+    "midian",
+    "midian_llm_descent",
+    "mlp_router",
+    "random",
+    "referral_network",
+    "route_to_k_majority",
+    "sequential_halving",
+    "thompson_per_family",
+    "trueskill_per_family",
+    "ucb_per_family",
+    "verify_on_claim",
+    "warm_start_bandit",
+]
 
 
 @pytest.mark.parametrize("backend", ["llm", "bernoulli"])
@@ -162,7 +210,8 @@ def test_rejects_unknown_shortlist_and_params():
 
 
 def test_llm_backend_asks_each_agent_its_own_model_and_prompt_deduplicated(monkeypatch, tmp_path):
-    """The real path below the World: LLMBackend.confidence -> llm_client.complete_batch, with only the network stubbed."""
+    """The real path below the World: LLMBackend.confidence -> llm_client.complete_batch, with only the network
+    stubbed."""
     from rte import llm_client
     from rte.backends import families
     from rte.backends import llm as L
@@ -172,7 +221,9 @@ def test_llm_backend_asks_each_agent_its_own_model_and_prompt_deduplicated(monke
     monkeypatch.setattr(llm_client, "_memo", lambda: (memo, shard))
     monkeypatch.setattr(llm_client, "_refresh", lambda force=False: None)
     sent = []
-    monkeypatch.setattr(llm_client, "_generate", lambda model, msgs, mt: sent.append((model, msgs, mt)) or "<answer>7</answer>")
+    monkeypatch.setattr(
+        llm_client, "_generate", lambda model, msgs, mt: sent.append((model, msgs, mt)) or "<answer>7</answer>"
+    )
     be = L.LLMBackend(n=40, K=16, dist="specialist", seed=1, population_dir=str(tmp_path))
     agents, f, inst = np.arange(40), 3, 7
     fam = be.families[f]
@@ -183,6 +234,9 @@ def test_llm_backend_asks_each_agent_its_own_model_and_prompt_deduplicated(monke
     assert {(m, str(msgs)) for m, msgs, _ in sent} == want and len(sent) == len(want) < 40
     assert {mt for *_, mt in sent} == {32}
     sent.clear()
-    be.confidence(agents, f, inst, again=True)          # first replies are memo hits; only the follow-ups generate
-    again = {(s[0], str(rate_again(rate_task(fam, q, s[1], s[2]), "<answer>7</answer>"))) for s in (be._sig(int(a), f) for a in agents)}
+    be.confidence(agents, f, inst, again=True)  # first replies are memo hits; only the follow-ups generate
+    again = {
+        (s[0], str(rate_again(rate_task(fam, q, s[1], s[2]), "<answer>7</answer>")))
+        for s in (be._sig(int(a), f) for a in agents)
+    }
     assert {(m, str(msgs)) for m, msgs, _ in sent} == again and len(sent) == len(want)

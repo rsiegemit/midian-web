@@ -194,7 +194,7 @@ def test_llm_descent_follows_a_parseable_answer(monkeypatch):
     assert m.stats["fallbacks"] == 0
 
 
-# ---------------------------------------------------------------- v2 (2026-09-03): per-probe reports, stratify, churn, MIDIAN w/o audits
+# ------------------------------------------ v2 (2026-09-03): per-probe reports, stratify, churn, MIDIAN w/o audits
 def _build(name, n, seed=1, beta=0.0, **kw):
     w = World(n, 16, "specialist", beta, seed=seed)
     M = load_method(name)(**kw)
@@ -219,11 +219,15 @@ def test_midian_wo_audit_caches_by_default():
 
 
 def test_stratified_cohorts_take_one_member_per_stratum(monkeypatch):
-    """1.5: with exact probes the key is S.mean(1); every full cohort holds exactly one agent from each of the r deciles."""
+    """1.5: with exact probes the key is S.mean(1); every full cohort holds exactly one agent from each of the r
+    deciles."""
     w = World(100, 16, "specialist", 0.0, seed=3)
     M = load_method("midian")(stratify=True, audit=False, verify=False)
     v = w.view(M.needs)
-    monkeypatch.setattr("rte.methods.midian.probe_outcomes", lambda view, b: np.broadcast_to(w.S[:, :, None], (100, 16, b)).astype(np.float32))
+    monkeypatch.setattr(
+        "rte.methods.midian.probe_outcomes",
+        lambda view, b: np.broadcast_to(w.S[:, :, None], (100, 16, b)).astype(np.float32),
+    )
     s0 = w.ledger.snapshot()
     M.build(v, Budget(3))
     d = w.ledger.diff(s0)

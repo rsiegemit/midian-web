@@ -37,8 +37,11 @@ def _built(name):
 @pytest.fixture(scope="module")
 def mock_url():
     port = next(p for p in range(8200, 8300) if socket.socket().connect_ex(("127.0.0.1", p)) != 0)
-    proc = subprocess.Popen([sys.executable, os.path.join(REPO, "scripts", "checks", "mock_openai_server.py"), str(port)],
-                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    proc = subprocess.Popen(
+        [sys.executable, os.path.join(REPO, "scripts", "checks", "mock_openai_server.py"), str(port)],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
     url = f"http://127.0.0.1:{port}/v1"
     for _ in range(100):
         try:

@@ -1,4 +1,5 @@
-"""RouterEval MMLU families must not depend on PYTHONHASHSEED ('high school biology' and 'philosophy' tie at 248 train prompts)."""
+"""RouterEval MMLU families must not depend on PYTHONHASHSEED ('high school biology' and 'philosophy' tie at 248 train
+prompts)."""
 import os
 import subprocess
 import sys
@@ -7,10 +8,13 @@ import pytest
 
 from rte.backends.routereval import DATA
 
-CODE = ("import sys; sys.path.insert(0, '.'); from rte.world import World; "
-        "w = World(backend='routereval', n=10, K=16, dist='strong_to_weak', beta=0.0, liar_select='random', collude=True, "
-        "declared_source='programmatic', lie_mode='inflate', demand='uniform', seed=1, backend_kwargs={'dataset': 'mmlu'}); "
-        "print('|'.join(w.backend.families))")
+CODE = (
+    "import sys; sys.path.insert(0, '.'); from rte.world import World; "
+    "w = World(backend='routereval', n=10, K=16, dist='strong_to_weak', beta=0.0, liar_select='random', collude=True, "
+    "declared_source='programmatic', lie_mode='inflate', demand='uniform', seed=1, "
+    "backend_kwargs={'dataset': 'mmlu'}); "
+    "print('|'.join(w.backend.families))"
+)
 
 
 @pytest.mark.skipif(not os.path.exists(f"{DATA}/mmlu_router_dataset.pkl"), reason="RouterEval data not staged")

@@ -1,5 +1,5 @@
-"""linucb_honest bonus="own" (post-hoc fix): the default keeps the pre-registered params (so existing rows keep their id),
-and the fixed bonus no longer collapses at scale on a calibrated bernoulli world."""
+"""linucb_honest bonus="own" (post-hoc fix): the default keeps the pre-registered params (so existing rows keep their
+id), and the fixed bonus no longer collapses at scale on a calibrated bernoulli world."""
 import os
 
 import pytest

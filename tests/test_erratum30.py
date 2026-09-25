@@ -26,16 +26,27 @@ METHODS = [{"name": "declared_argmax", "params": {}}, {"name": "flat_probe_argma
 def fake_cells(path, K=8, M=4, prompts=40):
     rng = np.random.default_rng(0)
     bias = rng.uniform(0.2, 0.9, M)
-    np.savez(path, model_names=np.array([f"m{m}" for m in range(M)]), category_names=np.array([f"c{k}" for k in range(K)]),
-             offsets=np.arange(K + 1, dtype=np.int64) * prompts, n_prompts=np.full(K, prompts, np.int64),
-             outcomes=(rng.random((K * prompts, M)) < bias).astype(np.int8))
+    np.savez(
+        path,
+        model_names=np.array([f"m{m}" for m in range(M)]),
+        category_names=np.array([f"c{k}" for k in range(K)]),
+        offsets=np.arange(K + 1, dtype=np.int64) * prompts,
+        n_prompts=np.full(K, prompts, np.int64),
+        outcomes=(rng.random((K * prompts, M)) < bias).astype(np.int8),
+    )
     return path
 
 
 def fingerprint(kw, Q=200):
     w = World(**kw)
     h = hashlib.sha256()
-    for x in (w.S, np.asarray(w.backend.declared("programmatic")), np.asarray(w.backend.declared("self_described")), w.D, w.liars):
+    for x in (
+        w.S,
+        np.asarray(w.backend.declared("programmatic")),
+        np.asarray(w.backend.declared("self_described")),
+        w.D,
+        w.liars,
+    ):
         h.update(np.ascontiguousarray(x).tobytes())
     stream = w.tasks(Q)
     h.update(np.array([(t.family, t.instance) for t in stream], np.int64).tobytes())
@@ -49,16 +60,31 @@ def fingerprint(kw, Q=200):
 
 def worlds(tmp):
     base = dict(beta=0.5, liar_select="low_skill_first", seed=3)
-    out = {"bernoulli": dict(n=60, K=8, dist="specialist", backend="bernoulli", **base),
-           "replay_fake": dict(n=60, K=8, dist="specialist", backend="replay", backend_kwargs={"cells_path": fake_cells(f"{tmp}/c.npz")}, **base)}
+    out = {
+        "bernoulli": dict(n=60, K=8, dist="specialist", backend="bernoulli", **base),
+        "replay_fake": dict(
+            n=60,
+            K=8,
+            dist="specialist",
+            backend="replay",
+            backend_kwargs={"cells_path": fake_cells(f"{tmp}/c.npz")},
+            **base,
+        ),
+    }
     if os.path.exists(LIVE_S):
-        out["bernoulli_cal"] = dict(n=60, K=16, dist="specialist", backend="bernoulli", backend_kwargs={"calibrate_from": LIVE_S}, **base)
+        out["bernoulli_cal"] = dict(
+            n=60, K=16, dist="specialist", backend="bernoulli", backend_kwargs={"calibrate_from": LIVE_S}, **base
+        )
     if os.path.exists(REPLAY_NPZ):
         out["replay_real"] = dict(n=60, K=64, dist="heavy_tail", backend="replay", **base)
     if os.path.exists(LRB):
-        out["llmrouterbench"] = dict(n=20, K=15, dist="all", backend="routereval", backend_kwargs={"dataset": "llmrouterbench"}, **base)
+        out["llmrouterbench"] = dict(
+            n=20, K=15, dist="all", backend="routereval", backend_kwargs={"dataset": "llmrouterbench"}, **base
+        )
     if os.path.exists(MMLU):
-        out["mmlu10"] = dict(n=10, K=16, dist="strong_to_weak", backend="routereval", backend_kwargs={"dataset": "mmlu"}, **base)
+        out["mmlu10"] = dict(
+            n=10, K=16, dist="strong_to_weak", backend="routereval", backend_kwargs={"dataset": "mmlu"}, **base
+        )
     return out
 
 
@@ -72,7 +98,9 @@ def tmp(tmp_path_factory):
 
 
 # ------------------------------------------------------------------ defaults are bit-identical
-@pytest.mark.parametrize("name", ["bernoulli", "replay_fake", "bernoulli_cal", "replay_real", "llmrouterbench", "mmlu10"])
+@pytest.mark.parametrize(
+    "name", ["bernoulli", "replay_fake", "bernoulli_cal", "replay_real", "llmrouterbench", "mmlu10"]
+)
 def test_default_bit_identical(tmp, name):
     kw = worlds(tmp).get(name)
     if kw is None:
@@ -94,7 +122,10 @@ def test_options_change_the_fingerprint(tmp):
     assert fingerprint({**w["bernoulli"], "declared_source": "calibrated"}) != GOLDEN["bernoulli"]
     if "llmrouterbench" in w:
         kw = w["llmrouterbench"]
-        assert fingerprint({**kw, "backend_kwargs": {**kw["backend_kwargs"], "no_repeat": True}}) != GOLDEN["llmrouterbench"]
+        assert (
+            fingerprint({**kw, "backend_kwargs": {**kw["backend_kwargs"], "no_repeat": True}})
+            != GOLDEN["llmrouterbench"]
+        )
 
 
 # ------------------------------------------------------------------ FIX A: calibrated declarations
@@ -126,7 +157,9 @@ def test_calibrated_on_every_backend_and_lying_unchanged(tmp, name):
     assert np.array_equal(honest, calibrated_declared(w.S, w.seed))
     assert w.liars.sum() == round(0.5 * w.n)
     assert np.array_equal(w.D, apply_lying(honest, w.liars, "inflate"))
-    assert np.array_equal(w.D[w.liars], np.clip(honest[w.liars] + 0.4, 0, 1)) and np.array_equal(w.D[~w.liars], honest[~w.liars])
+    assert np.array_equal(w.D[w.liars], np.clip(honest[w.liars] + 0.4, 0, 1)) and np.array_equal(
+        w.D[~w.liars], honest[~w.liars]
+    )
     # the liar set is chosen on S, which the declared source does not touch
     assert np.array_equal(w.liars, World(**kw).liars)
 
@@ -136,8 +169,16 @@ def test_calibrated_on_every_backend_and_lying_unchanged(tmp, name):
 def test_replay_split_disjoint_rows(tmp, real):
     if real and not os.path.exists(REPLAY_NPZ):
         pytest.skip("real cells not present")
-    kw = dict(n=60, K=64 if real else 8, dist="specialist", beta=0.5, liar_select="low_skill_first", seed=3, backend="replay",
-              backend_kwargs={"split": True, **({} if real else {"cells_path": fake_cells(f"{tmp}/c.npz")})})
+    kw = dict(
+        n=60,
+        K=64 if real else 8,
+        dist="specialist",
+        beta=0.5,
+        liar_select="low_skill_first",
+        seed=3,
+        backend="replay",
+        backend_kwargs={"split": True, **({} if real else {"cells_path": fake_cells(f"{tmp}/c.npz")})},
+    )
     w = World(**kw)
     b = w.backend
     d = np.load(REPLAY_NPZ if real else kw["backend_kwargs"]["cells_path"])
@@ -201,7 +242,7 @@ def test_no_repeat_llmrouterbench():
         w.tasks(int(b.task_pool_sizes().sum()) + 1)
 
 
-# ------------------------------------------------------------------ probe index with repeated cells in one call (audit F4)
+# ------------------------------------------------------------ probe index with repeated cells in one call (audit F4)
 def test_probe_call_without_duplicates_unchanged(tmp):
     from rte.world import probe_seed
     w = World(**worlds(tmp)["bernoulli"])
@@ -221,20 +262,36 @@ def test_probe_call_with_duplicates_advances_like_sequential_calls(tmp):
     assert len({*inst[0], *inst[2]}) == 4                               # the repeated cell got fresh instances
     w.reset()
     seq = [w._probe(np.array([x]), np.array([y]), 2) for x, y in zip(a, f)]
-    assert np.array_equal(inst, np.concatenate([s[1] for s in seq])) and np.array_equal(out, np.concatenate([s[0] for s in seq]))
+    assert np.array_equal(inst, np.concatenate([s[1] for s in seq])) and np.array_equal(
+        out, np.concatenate([s[0] for s in seq])
+    )
 
 
-# ------------------------------------------------------------------ routereval shuffle: random agent order, so index tie-breaks are random
+# ------------------------------------------------------------ routereval shuffle: random agent order, so index
+# tie-breaks are random
 def test_shuffle_permutes_pool_deterministically():
     if not os.path.exists(LRB):
         pytest.skip("LLMRouterBench not present")
-    kw = dict(n=20, K=15, dist="all", beta=0.5, liar_select="low_skill_first", seed=3, backend="routereval", declared_source="calibrated")
+    kw = dict(
+        n=20,
+        K=15,
+        dist="all",
+        beta=0.5,
+        liar_select="low_skill_first",
+        seed=3,
+        backend="routereval",
+        declared_source="calibrated",
+    )
     base = World(**kw, backend_kwargs={"dataset": "llmrouterbench"}).backend
     a, b = (World(**kw, backend_kwargs={"dataset": "llmrouterbench", "shuffle": True}).backend for _ in range(2))
     assert a.model_names == b.model_names and np.array_equal(a._Yte, b._Yte)                  # deterministic per seed
     perm = [base.model_names.index(m) for m in a.model_names]
     assert sorted(perm) == list(range(20)) and perm != list(range(20))
-    assert np.array_equal(a._Ytr, base._Ytr[:, perm]) and np.array_equal(a._Yte, base._Yte[:, perm]) and np.allclose(a._S, base._S[perm])
+    assert (
+        np.array_equal(a._Ytr, base._Ytr[:, perm])
+        and np.array_equal(a._Yte, base._Yte[:, perm])
+        and np.allclose(a._S, base._S[perm])
+    )
     c = World(**{**kw, "seed": 4}, backend_kwargs={"dataset": "llmrouterbench", "shuffle": True}).backend
     assert c.model_names != a.model_names                                                    # a new order per seed
 
@@ -277,7 +334,8 @@ def test_probe_fast_path_matches_reference(tmp):
 
 
 # TrueSkill is the only arm that repeats a cell in one probe call, so the fix changes its rows (and only its rows).
-# (success, build_probes) at b = 1, 3, 5 on bernoulli n = 60 and LLMRouterBench, seed 3, cartel. Pre-fix: 9831034b2e2f39c6.
+# (success, build_probes) at b = 1, 3, 5 on bernoulli n = 60 and LLMRouterBench, seed 3, cartel.
+# Pre-fix: 9831034b2e2f39c6.
 TRUESKILL_FIXED = "0d559758b7279e32"
 
 

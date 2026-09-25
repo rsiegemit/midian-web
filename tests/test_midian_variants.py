@@ -45,7 +45,8 @@ def test_wo_defenses_spends_the_plain_budget():
 
 
 def test_audit_exclusion():
-    """MIDIAN w/o verification: a colluding liar caught lying twice by the audits is excluded; audits cost <= 5% extra probes."""
+    """MIDIAN w/o verification: a colluding liar caught lying twice by the audits is excluded; audits cost <= 5% extra
+    probes."""
     w, m, build, s = run(beta=0.5, verify=False)
     liars = w.liars
     assert m.excluded.any() and not m.excluded[~liars].any(), "audits excluded an honest reporter"
@@ -71,8 +72,8 @@ def test_online_audit_charges_reports():
 
 
 def test_full_method_costs_like_wo_audit():
-    """MIDIAN = MIDIAN w/o audits + audits: build probes within 1.05x of w/o audits on the same world; with verify (and its
-    cached root pick) a fetch charges 1 comparison + 2 messages."""
+    """MIDIAN = MIDIAN w/o audits + audits: build probes within 1.05x of w/o audits on the same world; with verify (and
+    its cached root pick) a fetch charges 1 comparison + 2 messages."""
     out = {}
     for tag, kw in (("wo_audit", dict(audit=False)), ("full", {})):
         w = World(n=200, K=8, dist="specialist", beta=0.25, seed=3, backend="bernoulli")
@@ -107,7 +108,8 @@ def test_keys_translate(old, params, new):
 
 
 def test_keys_old_verify_cached_is_wo_audit():
-    """midian{verify, cached} spelled MIDIAN w/o audits before the rename: it maps to w/o audits (whose legacy key is midian_v)."""
+    """midian{verify, cached} spelled MIDIAN w/o audits before the rename: it maps to w/o audits (whose legacy key is
+    midian_v)."""
     assert keys.to_new("midian", {"verify": True, "cached": True}) == ("midian", {"audit": False})
 
 
