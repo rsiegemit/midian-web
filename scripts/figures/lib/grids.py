@@ -1,6 +1,6 @@
-"""Every grid registry the figure and number scripts read, and the one place configs/grid.yaml is loaded.
+"""Every grid registry the figure and number scripts read, and the grid config every script in scripts/ and cluster/ uses.
 
-    config()          the grid config (switch to rte.run.load_config() here once lane A lands: one line)
+    config()          the grid config: rte.run.load_config() (configs/grids/)
     LIVE_GRIDS        live bars, per n (bar_figs, seed_tables b = 3)
     REF_GRIDS         where a shortlist condition's oracle / MIDIAN / random come from (shortlist_figs)
     H30_FW, H30_REF   erratum 30: RouterEval shortlists on the no-repeat + calibrated-claims reruns
@@ -17,16 +17,12 @@ average in the old instances while the bars do not.
 """
 from __future__ import annotations
 
-import os
-
-from scripts.figures.lib import ROOT
 
 
 def config():
-    """configs/grid.yaml, parsed. The only direct load in scripts/ and cluster/ (lane A: rte.run.load_config())."""
-    import yaml
-    with open(os.path.join(ROOT, "configs", "grid.yaml")) as f:
-        return yaml.safe_load(f)
+    """The grid config (rte.run.load_config: configs/grids/, named sets expanded)."""
+    from rte.run import load_config
+    return load_config()
 
 
 LIVE_GRIDS = {100: ["fw_live_n100", "learned_n100", "fw_live_n100_lowskill"],   # live_core_n100: pre-09-02 probe instances, dropped

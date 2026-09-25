@@ -6,9 +6,8 @@ setting they use, it calls FrameworkMethod._index -- the exact code build() runs
 --check forbids the embedder and the reranker, so it passes only if a routing unit would never touch a GPU."""
 from __future__ import annotations
 import argparse, os, sys, time
-import yaml
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-from rte.run import CELL, blocks, cells, jkey, method_specs, seeds
+from rte.run import CELL, blocks, cells, expand, jkey, load_config, method_specs, seeds
 from rte.world import World
 from rte.methods import load_method
 from rte.methods.frameworks import _common as C
@@ -19,8 +18,7 @@ assert os.environ.get("RTE_EMBED_CACHE_DIR"), "set RTE_EMBED_CACHE_DIR (the rout
 if a.check:
     def _no(*_a, **_k): raise RuntimeError("cache miss: the reranker would run in a routing unit")
     C.FrameworkMethod._rerank = _no
-from scripts.figures.lib.grids import config  # noqa: E402
-cfg = config()
+cfg = load_config()
 rr, t0, done = None, time.time(), 0
 units = []
 for g in a.grids:
@@ -34,7 +32,7 @@ sota = C.FrameworkMethod._sota_table
 for stage in (("embed", "rerank") if not a.check else ("check",)):
     C.FrameworkMethod._sota_table = (lambda self, view: None) if stage == "embed" else sota
     for g, cell, seed, specs in units:
-        world = World(**{k: cell[k] for k in CELL if k not in ("b", "Q")}, seed=seed, backend_kwargs=cell["backend_kwargs"] or None)
+        world = World(**{k: cell[k] for k in CELL if k not in ("b", "Q")}, seed=seed, backend_kwargs=expand(cell["backend_kwargs"]) or None)
         for s in specs:
             m = load_method(s["name"])(**s["params"]); m._rr = rr
             m._index(world.view(m.needs)); rr = m._rr or rr     # one reranker for the whole pass

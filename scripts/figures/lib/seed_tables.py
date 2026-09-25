@@ -3,7 +3,7 @@
 tables() -> {(family, group, n, regime): {b: DataFrame(index = seed, columns = arm label, values = success)}}
   live n        b = 3: grids.LIVE_GRIDS[n] (specialist, self-described channel, grids averaged per seed as bar_figs does)
                 b = 1 / 5: va_b_* + rivals_b_*;  tuned_wsb_* (n0 = 0.5) at whatever b it ran
-  every family  + pool_fill_* (the candidates a cell lacked at some b; configs/grid.yaml)
+  every family  + pool_fill_* (the candidates a cell lacked at some b; configs/grids/)
   RouterEval    the 5,000-LLM leaderboard pool: routereval_mmlu5k (b = 3) + va_b / rivals_b routereval5k
   LLMRouterBench  llmrouterbench_pool (b = 3) + va_b / rivals_b llmrouterbench
   bernoulli 1e7 bernoulli_scale_v5 (b = 1, 3) + va_b / rivals_b bernoulli_1e7 (b = 5)

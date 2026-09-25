@@ -55,7 +55,7 @@ CLAIM_KEY = {"bernoulli", "replay", "routereval", "llmrouterbench"}
 SW = set()                                             # families on the erratum-30 rows (seed_tables.switched): n0 = 5 counts there
 B_INVARIANT = {"declared_argmax", "random", "cluster_head_router", "disrouter_cascade"}   # never probe (needs has no probe / reports)
 NOT_RUNNABLE = lambda fam, n: ({"trueskill_per_family"} if n >= 10 ** 5 else set()) | ({"mlp_router"} if n >= 5000 else set()) \
-                              | ({"knn_router", "knn_router_online", "mlp_router"} if fam in ("bernoulli", "replay") else set())   # grid.yaml pool_fill_*
+                              | ({"knn_router", "knn_router_online", "mlp_router"} if fam in ("bernoulli", "replay") else set())   # configs/grids pool_fill_*
 BUDGETLESS = {"declared_argmax", "random"}
 BS = (1, 3, 5)
 PRIMARY = {"live": "specialist", "routereval": "strong_to_weak"}          # one population shape per family in A / B
