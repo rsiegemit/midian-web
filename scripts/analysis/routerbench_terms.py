@@ -10,7 +10,7 @@ argmax). AIQ here = mean over the cost range [cheapest model, dearest model] of 
 cost (step envelope of the router's lambda sweep), i.e. area under the non-decreasing quality-vs-cost curve, normalised.
 """
 
-import os, sys, json, numpy as np, pandas as pd
+import os, sys, numpy as np, pandas as pd
 from sklearn.model_selection import StratifiedShuffleSplit
 from sklearn.neighbors import KNeighborsRegressor, KNeighborsClassifier
 from sklearn.neural_network import MLPRegressor

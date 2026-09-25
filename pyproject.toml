@@ -30,6 +30,15 @@ include = ["rte*"]          # namespaces on: also picks up rte/methods/framework
 
 [tool.ruff]
 line-length = 120
+target-version = "py312"
+extend-exclude = ["cluster/archive"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+ignore = ["E731", "E402"]
+
+[tool.ruff.format]
+docstring-code-format = false
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -3,7 +3,7 @@
     python scripts/checks/equivalence.py after.json       # on the new code, then diff the two files (must be identical)
     """
 
-import argparse, hashlib, json, os
+import argparse, hashlib, json
 import numpy as np
 from rte.budget import Budget
 from rte.methods import load_method
