@@ -1,1 +1,0 @@
-../../cluster/archive/campaign_tick.sh

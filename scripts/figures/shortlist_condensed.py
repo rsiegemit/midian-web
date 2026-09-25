@@ -1,8 +1,9 @@
 """Figures 3 / 4 of the submission (F_shortlists_1e5, H_routereval_shortlists) and the appendix shortlist figures
 (E_shortlists_by_n, F_shortlists_1e5_appendix, G_shortlist_lift_1e5); style, names, colours and saving from
 scripts/figspec.py (docs/FIGURE_SPEC.md).
-    python scripts/shortlist_condensed.py   -> figures/condensed_sample/{E,F,G,H}_*.{png,pdf,csv}
-Reads figures/shortlist/{live,routereval}.csv (per framework x shortlist x cell: seed mean; written by shortlist_figs.py).
+    python scripts/figures/shortlist_condensed.py [--out DIR]   -> <out>/{E,F,G,H}_*.{png,pdf,csv}
+      (<out> = $RTE_FIG_OUT or figures/paper; --from-csv is accepted and changes nothing: these figures read CSVs only)
+Reads results/aggregates/shortlist/{live,routereval}.csv (per framework x shortlist x cell: seed mean; shortlist_figs.py).
   E  (appendix) live specialist, n = 10^2 .. 10^5: per n, one bar per shortlist (instruction variants apart) = the MEAN
      over frameworks (solid honest, hatched beta = 0.5 low-skill cartel); oracle and random dotted, MIDIAN with no
      framework solid, as lines over each group.
@@ -16,13 +17,19 @@ Reads figures/shortlist/{live,routereval}.csv (per framework x shortlist x cell:
 No titles and no incompleteness marks in the figures: a cell with too few full-seed frameworks is an empty slot, and the
 script prints INCOMPLETE for it; framework numbers with an erratum-28 rerun outstanding are flagged in the csv (star)."""
 from __future__ import annotations
-import os, sys, textwrap
-import numpy as np, pandas as pd
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import figspec as S
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-OUT = f"{ROOT}/figures/condensed_sample"; os.makedirs(OUT, exist_ok=True)
+import argparse
+import os
+import sys
+import textwrap
+
+import numpy as np
+import pandas as pd
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))))
+from scripts.figures.lib import AGG, fig_out                                                                   # noqa: E402
+from scripts.figures.lib import figspec as S                                                                   # noqa: E402
+
 REG = ("beta0", "cartel")
 MAIN = [k for k in S.SHORTLIST_ORDER if k not in ("bm25", "dense")]   # E: the shortlists run at every n; BM25 / plain dense are 10^3 only
 BODY_H = ["tfidf", "embed", "dense", "sota", "declared", "va_cohort"]    # H, in the spec's order
@@ -32,7 +39,7 @@ INCOMPLETE = [False]                                                    # set wh
 
 
 def load(family="live"):
-    d = pd.read_csv(f"{ROOT}/figures/shortlist/{family}.csv")
+    d = pd.read_csv(f"{AGG}/shortlist/{family}.csv")
     keep = (d.dist == "specialist") if family == "live" else ((d.dist == "strong_to_weak") | (d.n == 5000))   # RouterEval: the mixed pool; 5,000 = the leaderboard
     return d[keep & d.regime.isin(list(REG))]
 
@@ -86,15 +93,15 @@ def pair(ax, x, w, q, key, dots=False):
         if dots: ax.plot(xx, v["best"], "o", ms=3, color="black", zorder=8)
 
 
-def finish(fig, ax, name, data, keys=(), labels=None, ylabel=S.AXIS["success"], ylim=(0.2, 0.95), **kw):
+def finish(fig, ax, name, data, out, keys=(), labels=None, ylabel=S.AXIS["success"], ylim=(0.2, 0.95), **kw):
     S.finish(ax, ylabel=ylabel, ylim=ylim)
     if keys: S.legend(ax, list(keys), labels, **kw)
     if INCOMPLETE[0]: print(f"[{name}] INCOMPLETE: an empty slot or a framework rerun outstanding (see the csv)")
     INCOMPLETE[0] = False
-    S.save(fig, name, OUT); data.to_csv(f"{OUT}/{name}.csv", index=False)
+    S.save(fig, name, out); data.to_csv(f"{out}/{name}.csv", index=False)
 
 
-def by_n(s, ref, name, srcs, names, kind, var, ncol, ylim=(0.2, 0.95), lines_first=False):
+def by_n(s, ref, name, srcs, names, kind, var, ncol, out, ylim=(0.2, 0.95), lines_first=False):
     """x = n (E, H): fixed slots per n, one colour per shortlist; the reference lines over each group (first in the legend
     when `lines_first`)."""
     fig, ax = S.figure(kind); ns = sorted(s.n.unique()); w = 0.86 / (2 * len(srcs))
@@ -105,10 +112,10 @@ def by_n(s, ref, name, srcs, names, kind, var, ncol, ylim=(0.2, 0.95), lines_fir
     ax.set_xticks(range(len(ns))); ax.set_xticklabels(S.pow10_ticks(ns, var)); ax.set_xlim(-0.5, len(ns) - 0.5)
     keys, labels = list(srcs) + LINES, [names[k] for k in srcs] + [S.NAME[k] for k in LINES]
     if lines_first: keys, labels = keys[-len(LINES):] + keys[:-len(LINES)], labels[-len(LINES):] + labels[:-len(LINES)]
-    finish(fig, ax, name, s, keys, labels, ylim=ylim, ncol=ncol)
+    finish(fig, ax, name, s, out, keys, labels, ylim=ylim, ncol=ncol)
 
 
-def fig_F(s, ref, name, names, kind, n=100000, rotate=False):
+def fig_F(s, ref, name, names, kind, out, n=100000, rotate=False):
     """x = shortlist at one n, sorted by the honest mean; black dots = the best single framework."""
     q = s[s.n == n]; order = q[q.regime == "beta0"].sort_values("mean", ascending=False).shortlist.tolist()
     fig, ax = S.figure(kind); w = 0.38
@@ -117,10 +124,10 @@ def fig_F(s, ref, name, names, kind, n=100000, rotate=False):
     ax.set_xticks(range(len(order))); ax.set_xlim(-0.5, len(order) - 0.5)
     ax.set_xticklabels([names[x] if rotate else textwrap.fill(names[x], 14) for x in order],   # horizontal: long names on two lines
                        **(dict(rotation=30, ha="right", rotation_mode="anchor") if rotate else dict(linespacing=0.95)))
-    finish(fig, ax, name, q, LINES + ["best_fw_dot"])                    # one row above: inside, it meets the dots
+    finish(fig, ax, name, q, out, LINES + ["best_fw_dot"])                    # one row above: inside, it meets the dots
 
 
-def fig_G(d, n=100000):
+def fig_G(d, out, n=100000):
     fw = d[(d.shortlist != "-") & (d.n == n)]; fw = fw[fw.seeds == fw.groupby("shortlist").seeds.transform("max")]   # full-seed frameworks only, as in summarise
     base = fw[fw.shortlist == "tfidf"].set_index(["regime", "arm"])["mean"]
     rows = []
@@ -142,15 +149,23 @@ def fig_G(d, n=100000):
     ax.axhline(0, color="black", lw=0.6)
     ax.set_xticks(range(len(order))); ax.set_xticklabels([S.SHORTLIST_APPENDIX[x] for x in order], rotation=30, ha="right", rotation_mode="anchor")
     ax.set_xlim(-0.5, len(order) - 0.5)
-    finish(fig, ax, "G_shortlist_lift_1e5", t, ylabel=S.AXIS["lift"].replace(" over", "\nover"), ylim=None)   # two lines: fits the axis
+    finish(fig, ax, "G_shortlist_lift_1e5", t, out, ylabel=S.AXIS["lift"].replace(" over", "\nover"), ylim=None)   # two lines: fits the axis
+
+
+def main(argv=None):
+    p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    p.add_argument("--out", help="output directory (default: $RTE_FIG_OUT or figures/paper)")
+    p.add_argument("--from-csv", action="store_true", help="accepted for make_all; these figures always read CSVs only")
+    out = fig_out(p.parse_args(argv).out)
+    d = load(); s, ref = summarise(d)
+    by_n(s, ref, "E_shortlists_by_n", MAIN, S.SHORTLIST_APPENDIX, "appendix", "n", 3, out)
+    fig_F(body(s), ref, "F_shortlists_1e5", S.SHORTLIST_BODY, "body", out)
+    fig_F(s, ref, "F_shortlists_1e5_appendix", S.SHORTLIST_APPENDIX, "appendix", out, rotate=True)   # the instruction variants: horizontal ones touch
+    fig_G(d, out)
+    s, ref = summarise(load("routereval"))
+    by_n(body(s), ref, "H_routereval_shortlists", BODY_H, S.SHORTLIST_BODY, "body", "m", 5, out,
+         ylim=(0.4, 0.95), lines_first=True)                            # random is 0.527-0.544 on RouterEval: the floor at 0.4
 
 
 if __name__ == "__main__":
-    d = load(); s, ref = summarise(d)
-    by_n(s, ref, "E_shortlists_by_n", MAIN, S.SHORTLIST_APPENDIX, "appendix", "n", ncol=3)
-    fig_F(body(s), ref, "F_shortlists_1e5", S.SHORTLIST_BODY, "body")
-    fig_F(s, ref, "F_shortlists_1e5_appendix", S.SHORTLIST_APPENDIX, "appendix", rotate=True)   # the instruction variants: horizontal ones touch
-    fig_G(d)
-    s, ref = summarise(load("routereval"))
-    by_n(body(s), ref, "H_routereval_shortlists", BODY_H, S.SHORTLIST_BODY, "body", "m", ncol=5,
-         ylim=(0.4, 0.95), lines_first=True)                            # random is 0.527-0.544 on RouterEval: the floor at 0.4
+    main()

@@ -1,12 +1,9 @@
 #!/bin/bash
-#SBATCH -p test
-#SBATCH -A sompolinsky_lab
 #SBATCH -c 1 --mem=2G -t 00:20:00
 #SBATCH -J rte_campaign_tick
-#SBATCH -o /n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte/logs/campaign_tick.log
 #SBATCH --open-mode=append
 # Session-independent campaign driver (OPS_RULES H6). On `test`: a 20-min bookkeeping job must not queue behind the
-# campaign's own fairshare (it sat at (Priority) on sapphire). Runs for seconds, then re-submits itself 30 min later, so it never
+# campaign's own fairshare (it sat at (Priority) on the CPU partition). Runs for seconds, then re-submits itself 30 min later, so it never
 # dies with a conversation (nohup'd session helpers did, 2026-09-22) and never holds a CPU while waiting. Each tick:
 #   1. keeps the rerun submitter alive until every unit in quarantine_units.tsv is submitted
 #   2. alerts (logs/ALERT_fleet) if fewer than 2 supervisor replicas are serving (OPS_RULES F2)
@@ -14,8 +11,9 @@
 #   4. stage 2: once every rerun job (ablation included) has drained -> finalize_stage2, and stop ticking
 #   sbatch scripts/ops/campaign_tick.sh          # start (idempotent: a tick that finds another queued exits)
 set -u
-export RTE_DATA=/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte
-L=$RTE_DATA/logs; REPO=/n/home02/rsiegelmann/rte; PY=$RTE_DATA/env/rte/bin/python; cd $REPO
+. "$(dirname "$(readlink -f "$0")")/../env.sh"
+need RTE_DATA RTE_ACCOUNT
+L=$RTE_DATA/logs; REPO=$RTE_REPO; PY=$RTE_DATA/env/rte/bin/python; cd $REPO
 RTE_DATA=$RTE_DATA $PY scripts/ops/prune_endpoints.py >> $L/prune_endpoints.log 2>&1   # dead replicas fail framework calls (2026-09-23)
 say() { echo "$(date -Is) $*"; }
 ABL='fw_live_n(1000|100)(_lowskill)?_sota'
@@ -27,7 +25,7 @@ subd=$(wc -l < $L/rerun_quarantine.txt 2>/dev/null || echo 0)
 HB=$L/rerun_submitter.heartbeat                        # a live submitter (SLURM or login-node setsid) touches this
 fresh=$([ -e $HB ] && [ $(( $(date +%s) - $(stat -c %Y $HB) )) -lt 900 ] && echo 1 || echo 0)
 if [ "$subd" -lt "$plan" ] && [ "$fresh" = 0 ] && ! q | grep -q " rte_rerun_submitter "; then
-  sbatch -p test -A sompolinsky_lab -c 1 --mem=4G -t 11:00:00 -J rte_rerun_submitter \
+  sbatch -p "$RTE_TEST_PARTITION" -A "$RTE_ACCOUNT" -c 1 --mem=4G -t 11:00:00 -J rte_rerun_submitter \
     -o $L/rerun_submitter.log --open-mode=append --wrap="$REPO/scripts/ops/rerun_units.sh" >/dev/null && say "submitter (re)started: $subd/$plan submitted"
 fi
 
@@ -40,7 +38,7 @@ ids() { cat $L/rerun_quarantine.txt $L/launch_lietext_th.txt $L/resubmit_paralle
 live() { comm -12 <(ids "$1") <(squeue -u "$USER" -h -o "%i" | sort -u) | wc -l; }
 fin() {
   $PY scripts/ops/build_job_sizing.py
-  sbatch -p test -A sompolinsky_lab -c 8 --mem=96G -t 4:00:00 -J "finalize_$1" \
+  sbatch -p "$RTE_TEST_PARTITION" -A "$RTE_ACCOUNT" -c 8 --mem=96G -t 4:00:00 -J "finalize_$1" \
     -o $L/finalize_$1.log -e $L/finalize_$1.err $REPO/scripts/ops/finalize_refresh.sh >/dev/null && touch $L/DONE_$1 && say "finalize_$1 submitted"
 }
 if [ "$subd" -ge "$plan" ]; then

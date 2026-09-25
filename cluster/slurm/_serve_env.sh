@@ -26,7 +26,7 @@ export FLASHINFER_CACHE_DIR="$RTE_DATA/cache/flashinfer"
 export HOME="$RTE_DATA/home_shim"
 mkdir -p "$HOME" "$FLASHINFER_CACHE_DIR" "$OUTLINES_CACHE_DIR" "$XDG_CACHE_HOME" "$RTE_DATA/logs"
 
-# $ENV_PREFIX is a venv (scripts/00_build_env.sh), so activate it by PATH, not `conda activate`.
+# $ENV_PREFIX is a venv (scripts/setup/00_build_env.sh), so activate it by PATH, not `conda activate`.
 export PATH="$ENV_PREFIX/bin:$PATH"
 PY="$ENV_PREFIX/bin/python"
 
@@ -72,7 +72,7 @@ watch_health() {
   local model="$1" port="$2" host="$3" tries="${4:-90}"
   for _ in $(seq 1 "$tries"); do
     if curl -sf --max-time 5 "http://127.0.0.1:$port/health" >/dev/null 2>&1; then
-      "$PY" "$REPO/scripts/_register_endpoint.py" add "$model${RTE_AS_REPLICA:+#${SLURM_JOB_ID:-manual}}" "http://$host:$port/v1"   # RTE_AS_REPLICA=1: a 2nd fleet registers as replicas
+      "$PY" "$REPO/cluster/slurm/_register_endpoint.py" add "$model${RTE_AS_REPLICA:+#${SLURM_JOB_ID:-manual}}" "http://$host:$port/v1"   # RTE_AS_REPLICA=1: a 2nd fleet registers as replicas
       echo "[serve] HEALTHY $model -> http://$host:$port/v1"
       return 0
     fi

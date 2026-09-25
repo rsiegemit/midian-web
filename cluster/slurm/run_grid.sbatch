@@ -1,16 +1,17 @@
 #!/bin/bash
 #SBATCH --job-name=rte_grid
-#SBATCH --partition=sapphire
-#SBATCH --account=sompolinsky_lab
 #SBATCH --nodes=1 --ntasks=1 --cpus-per-task=16 --mem=64G --time=12:00:00
 #SBATCH --output=slurm-%x-%j.out
 #SBATCH --error=slurm-%x-%j.err
 # CPU grid runner (bernoulli / replay backends; the llm backend runs from the fleet job instead).
-#   sbatch scripts/run_grid.sbatch <grid> [rte.run args]
-#   sbatch -p bigmem -c 48 --mem 700G --export=ALL,RTE_WORKERS=4 scripts/run_grid.sbatch bernoulli_scale   # 1e6-1e7: memory-bound
-#   sbatch scripts/run_grid.sbatch live_core_n100 --methods midian --only beta=0,liar_select=random --seeds 1   # llm grids: one UNIT per job
+# Account / partition come from the caller (-A / -p, or SBATCH_ACCOUNT / SBATCH_PARTITION; cluster/cluster.env.example).
+# scripts/run_grid.sbatch is a symlink here (queued jobs and packs call that path).
+#   sbatch cluster/slurm/run_grid.sbatch <grid> [rte.run args]
+#   sbatch -p <bigmem> -c 48 --mem 700G --export=ALL,RTE_WORKERS=4 cluster/slurm/run_grid.sbatch bernoulli_scale   # 1e6-1e7: memory-bound
+#   sbatch cluster/slurm/run_grid.sbatch live_core_n100 --methods midian --only beta=0,liar_select=random --seeds 1   # llm grids: one UNIT per job
 set -euo pipefail
-export RTE_DATA="${RTE_DATA:-/scratch/rte}" HF_HUB_OFFLINE=1
+: "${RTE_DATA:?RTE_DATA is not set (cluster/cluster.env.example)}"
+export RTE_DATA HF_HUB_OFFLINE=1
 # Parallelism is over cells, not inside numpy -- EXCEPT when a job holds one cell (--only ... --seeds N), where there
 # is no cross-cell parallelism to protect and the learned routers embed n*K*b prompts through MiniLM on one thread.
 # Caller-provided values win, so `OMP_NUM_THREADS=8 sbatch -c 8 ...` is honoured; the default is unchanged.
@@ -24,5 +25,5 @@ PY="${RTE_PYTHON:-$RTE_DATA/env/rte/bin/python}"
 [ -x "$PY" ] || PY="$HOME/miniconda3/bin/python"
 echo "[$(date -Is)] $(hostname) grid=$1 workers=${RTE_WORKERS:-$SLURM_CPUS_PER_TASK}"
 "$PY" -m rte.run --grid "$@" --workers "${RTE_WORKERS:-$SLURM_CPUS_PER_TASK}"
-# RTE_CONSOLIDATE=0 for a big sweep: rows.csv then has ONE writer (scripts/progress.py --merge), not one per job.
+# RTE_CONSOLIDATE=0 for a big sweep: rows.csv then has ONE writer (cluster/ops/progress.py --merge), not one per job.
 [ "${RTE_CONSOLIDATE:-1}" = "0" ] || "$PY" -m rte.analyze --grid "$1"

@@ -1,7 +1,7 @@
 #!/bin/bash
 # Block until every model in configs/models.yaml actually answers /health, then exit 0.
 #
-#   scripts/await_fleet.sh [--timeout SECONDS] [--job JOBID] [--quiet]
+#   cluster/ops/await_fleet.sh [--timeout SECONDS] [--job JOBID] [--quiet]
 #
 # Why /health and not $RTE_DATA/endpoints.d: the registry is shared mutable state. A second fleet registers the SAME
 # bare keys, so cancelling either one runs its cleanup trap and deregisters models the other is still serving; and a
@@ -9,7 +9,9 @@
 # runs on 2026-09-06. The servers themselves are the only honest source of truth.
 # --job JOBID aborts early (exit 2) if that fleet job disappears while models are still missing.
 set -uo pipefail
-cd "${RTE_REPO:-$HOME/rte}"; export RTE_DATA="${RTE_DATA:-/scratch/rte}"
+. "$(dirname "$(readlink -f "$0")")/../env.sh"
+need RTE_DATA
+cd "$RTE_REPO"
 TIMEOUT=""; JOB=""; QUIET=""
 while [ $# -gt 0 ]; do case "$1" in
   --timeout) TIMEOUT="$2"; shift 2;; --job) JOB="$2"; shift 2;; --quiet) QUIET=1; shift;;

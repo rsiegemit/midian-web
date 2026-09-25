@@ -5,7 +5,7 @@ reconstructed on a bernoulli world carrying the population's exact measured S. S
 only; no method ever sees it."""
 import os, sys
 import numpy as np
-sys.path.insert(0, '/n/home02/rsiegelmann/rte')
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
 from rte.budget import Budget
 from rte.world import World, select_liars, apply_lying, DELTA_INFLATE
 from rte.methods.midian import Midian

@@ -1,8 +1,8 @@
 #!/bin/bash
 # Run a command once every SLURM job whose name starts with PREFIX has left the queue.
 #
-#   scripts/run_after.sh <job-name-prefix> <command...>
-#   scripts/run_after.sh n100k2_ sbatch scripts/run_grid.sbatch cohort_rte
+#   cluster/ops/run_after.sh <job-name-prefix> <command...>
+#   cluster/ops/run_after.sh n100k2_ sbatch cluster/slurm/run_grid.sbatch cohort_rte
 #
 # Generalises the several one-off "wait for stage N, then launch stage N+1" wrappers. Polls every 10 min, which is
 # cheap against squeue and fine for multi-hour stages. Requires the prefix to be non-empty so a typo cannot match all

@@ -3,7 +3,7 @@ and p95 MaxRSS over COMPLETED framework jobs. scripts/job_time.py reads it. Rebu
 unit runtime tracks supervisor latency, i.e. fleet load, not grid size.
     python scripts/ops/build_job_sizing.py [--since 2026-09-22T14:45]     # default: since the last fleet change
 Note: sacct silently returns NOTHING for some long windows on this cluster; keep --since within ~1 week."""
-import argparse, io, os, subprocess
+import argparse, io, os, subprocess, sys
 import pandas as pd
 
 ap = argparse.ArgumentParser(); ap.add_argument("--since", default="2026-09-22T14:45"); a = ap.parse_args()
@@ -20,7 +20,9 @@ g = j.groupby(["size", "method"]).agg(n=("sec", "size"), p50=("sec", lambda s: s
                                       p95=("sec", lambda s: s.quantile(.95) / 60), mx=("sec", lambda s: s.max() / 60),
                                       rss95=("rssM", lambda s: s.quantile(.95)))
 g = g[g.n >= 10].round(0)
-out = os.environ.get("RTE_DATA", "/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte") + "/results/job_sizing.csv"
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+from rte.config import RTE_DATA  # noqa: E402
+out = f"{RTE_DATA}/results/job_sizing.csv"
 if len(g) < 10:
     print(f"only {len(g)} (size, framework) cells with >= 10 completed jobs since {a.since}; keeping the existing table")
 else:

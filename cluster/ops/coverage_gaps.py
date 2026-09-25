@@ -1,19 +1,20 @@
 """Rows the condensed figures need that are neither written nor in flight -- the SILENTLY missing ones.
-    python scripts/ops/coverage_gaps.py [--plan-out gaps.tsv]
+    python cluster/ops/coverage_gaps.py [--plan-out gaps.tsv]
 For every grid behind A / B / E-H, restricted to the figure cells (specialist on live; beta 0 and the beta 0.5 low-skill
 cartel; RouterEval strong_to_weak + the 5,000 leaderboard), every expected row id (rte.run's own loader) is checked:
   done      its row is in rows.d / rows.csv
-  inflight  a live SLURM job holds a unit whose filter covers it (scripts/ops/inflight.py)
+  inflight  a live SLURM job holds a unit whose filter covers it (cluster/ops/inflight.py)
   planned   a line of the focus pack plan not yet handed to a pack covers it
   GAP       none of the above -> listed, and written as pack-plan lines (grid, method, only, seed) with --plan-out."""
 from __future__ import annotations
 import argparse, glob, os, re, sys
 from collections import defaultdict
 import pandas as pd, yaml
-ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.insert(0, ROOT); sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+sys.path.insert(0, ROOT)
 from rte.run import blocks, cells, method_specs, row_id, seeds, RTE_DATA
-from inflight import inflight, queue
+from cluster.ops.inflight import inflight, queue
+from scripts.figures.lib.grids import config
 
 L = f"{RTE_DATA}/logs"; R = f"{RTE_DATA}/results"
 FIG_ARMS = {"midian", "flat_probe_argmax", "declared_argmax", "random", "knn_router", "mlp_router", "flat_nsw_router",
@@ -58,7 +59,7 @@ def covers(flt, cell):
 
 def main():
     ap = argparse.ArgumentParser(); ap.add_argument("--plan-out"); a = ap.parse_args()
-    cfg = yaml.safe_load(open(f"{ROOT}/configs/grid.yaml"))
+    cfg = config()
     held = defaultdict(list)                                 # (grid, method, seed) -> [filter dicts]
     for (g, m, only, s) in inflight(queue()):
         held[(g, m, str(s))].append(dict(kv.split("=") for kv in only.split(",") if kv))

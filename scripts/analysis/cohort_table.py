@@ -1,7 +1,7 @@
 """Cross-pool table of the v4 cohort modes, each paired against the SAME base with cohort=random (MIDIAN's default).
 
-    python scripts/cohort_table.py                 # every pool, both regimes
-    python scripts/cohort_table.py --regime cartel # one regime
+    python scripts/analysis/cohort_table.py                 # every pool, both regimes
+    python scripts/analysis/cohort_table.py --regime cartel # one regime
 
 Deltas are paired per (shape, seed) cell and bootstrapped over seeds, the convention used everywhere else in the repo;
 `*` marks a 95% interval excluding zero. Regimes follow RESULTS_rte_v4: beta = 0 is liar-free, so its two
@@ -10,11 +10,10 @@ The n = 100,000 pool keeps its cohort arms in live_n100k_cohort and its cohort=r
 two grids are loaded together."""
 import argparse, json, os, sys
 import numpy as np
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 from rte.analyze import load
-from extra_figs import ci
-from seed_tables import label
+from scripts.figures.lib.rows import label
+from scripts.figures.lib.stats import ci
 
 POOLS = [("RouterEval m=1,000", ["cohort_routereval"]), ("RouterEval m=5,000", ["cohort_routereval5k"]),
          ("LLMRouterBench m=20", ["cohort_llmrouterbench"]), ("RTE n=1,000", ["cohort_rte"]),

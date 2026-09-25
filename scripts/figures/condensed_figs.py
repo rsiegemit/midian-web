@@ -1,7 +1,10 @@
 """Figures 1 / 2 of the submission (A_live_stacked, B_families_stacked) and their appendix versions (_allb); style, names,
 legend order and saving from scripts/figspec.py (docs/FIGURE_SPEC.md).
-    python scripts/condensed_figs.py      -> figures/condensed_sample/{A,B}_{allb,stacked}.{png,pdf,csv}
-b = 3 cells from figures/bars/<family>.csv; b = 1 / 5 from the va_b_* (MIDIAN) and rivals_b_* (budget-matched rivals)
+    python scripts/figures/condensed_figs.py [--out DIR] [--from-csv]
+      -> <out>/{A,B}_{allb,stacked}.{png,pdf,csv}; <out> = $RTE_FIG_OUT or figures/paper
+      + results/aggregates/figures/<name>.{csv,draw.csv}: the figure's CSV and its display list (every bar, whisker,
+        oracle segment, tick and legend key in drawing order); --from-csv redraws from those alone (no $RTE_DATA).
+b = 3 cells from results/aggregates/bars/<family>.csv; b = 1 / 5 from the va_b_* (MIDIAN) and rivals_b_* (budget-matched rivals)
 rows and, for bernoulli / replay b = 1, their scale matrices. b is NEVER pooled: every bar is one budget.
   A  live headline: n = 10^2..10^5 (specialist), solid = honest, hatched = beta = 0.5 low-skill cartel.
   B  every family at its largest population, success / oracle, same arms and style.
@@ -11,22 +14,34 @@ rows and, for bernoulli / replay b = 1, their scale matrices. b is NEVER pooled:
   declared argmax and random spend no probes: one bar (b does not apply). No markers on bars and no titles: a budget not in
   yet is an empty slot, and the script prints INCOMPLETE while any bar is missing or its pool is incomplete.
   A also carries "best framework, best text shortlist" (b = 3; add_best_framework), cross-fitted per seed like the pooled arms.
-  C / D (routing work vs n; energy per query) are scripts/efficiency_figs.py.
-"Best learned router" / "best bandit" are CROSS-FITTED (scripts/seed_tables.py): for each seed the arm is chosen on the
+  C / D (routing work vs n; energy per query) are efficiency_figs.py.
+"Best learned router" / "best bandit" are CROSS-FITTED (lib/stats.crossfit over lib/seed_tables): for each seed the arm is chosen on the
 OTHER seeds and scored on this one, so no bar is the maximum of noisy means over the seeds it reports (no winner's curse).
 The pool is the same at every b in a cell (POOL minus the arms that cannot run there, NOT_RUNNABLE); a bar whose pool is
-still missing a candidate (or a seed of one) at that b is reported as INCOMPLETE (scripts/ops/figure_status.py; figures carry no marks). The csv lists how often each arm was chosen. Frameworks are not drawn (figures/shortlist). The do-not-add list applies, and with it the
-TEMPORARY extra_figs.HIDE_HALVING switch."""
+still missing a candidate (or a seed of one) at that b is reported as INCOMPLETE (cluster/ops/figure_status.py; figures carry no marks). The csv lists how often each arm was chosen. Frameworks are not drawn (figures/shortlist). The do-not-add list applies, and with it the
+permanent halving exclusion (lib/exclusions.py). Rendered under
+figspec.LEGACY_RC (the rcParams these figures always inherited from the retired paper_figs.py), inside an rc_context."""
 from __future__ import annotations
-import os, re, sys
-import pandas as pd
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import figspec as S
-from extra_figs import excluded, se
-from seed_tables import tables, crossfit, label, switched
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-BARS, OUT = f"{ROOT}/figures/bars", f"{ROOT}/figures/condensed_sample"; os.makedirs(OUT, exist_ok=True)
+import argparse
+import os
+import re
+import shutil
+import sys
+
+import pandas as pd
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))))
+from scripts.figures.lib import AGG, fig_out                                                                   # noqa: E402
+from scripts.figures.lib import figspec as S                                                                   # noqa: E402
+from scripts.figures.lib.exclusions import excluded                                                            # noqa: E402
+from scripts.figures.lib.grids import BUDGET_GRIDS, MATRICES                                                   # noqa: E402
+from scripts.figures.lib.regimes import AB as REG, MATRIX_REGIME                                               # noqa: E402
+from scripts.figures.lib.stats import crossfit, se                                                             # noqa: E402
+
+import matplotlib.pyplot as plt                                                                                # noqa: E402
+
+BARS, DRAW = f"{AGG}/bars", f"{AGG}/figures"
 LEARNED = ["knn_router", "knn_router_online", "mlp_router", "flat_nsw_router", "cluster_head_router", "disrouter_cascade"]
 BANDIT = ["ucb_per_family", "thompson_per_family", "warm_start_bandit", "linucb_honest", "trueskill_per_family"]
 ARMS = [k for k in S.ORDER if k not in ("oracle", "best_framework")]      # the arms read from the rows, in legend order
@@ -45,7 +60,8 @@ BUDGETLESS = {"declared_argmax", "random"}
 BS = (1, 3, 5)
 PRIMARY = {"live": "specialist", "routereval": "strong_to_weak"}          # one population shape per family in A / B
 FAMILY = list(S.BACKEND)
-REG = {"beta0": "honest", "cartel": "β=0.5 cartel"}
+FIGS = {"A_live_allb": (False, False), "A_live_stacked": (False, True),          # name -> (norm, stacked)
+        "B_families_allb": (True, False), "B_families_stacked": (True, True)}
 
 
 def load():
@@ -89,12 +105,13 @@ def arms_at(cell):
 
 def budget_bars(C, groups, name, norm=False, stacked=False, skip=()):
     """One group per (x label, cell). _allb: a bar per (arm, regime, b) with whiskers. _stacked: one slot per (arm, regime)
-    at b = 3; MIDIAN's slot holds its b = 5, 3, 1 bars tallest-first (each level at its true height), no whiskers."""
+    at b = 3; MIDIAN's slot holds its b = 5, 3, 1 bars tallest-first (each level at its true height), no whiskers.
+    Returns (the figure CSV, the display list: one row per drawing call, in order)."""
     A = {(key, r): arms_at(C[key[:3] + (r,)]) for _, key in groups for r in REG if key[:3] + (r,) in C}
     arms = [k for k in S.ORDER if k not in skip and any(k in v for v in A.values())]
     one = lambda k: k in BUDGETLESS or k == "best_framework"            # a single bar: no probes, or frameworks (b = 3 only)
     slots = [(k, r, None) for k in arms for r in REG] if stacked else [(k, r, b) for k in arms for r in REG for b in ((3,) if one(k) else BS)]
-    fig, ax = S.figure("body" if stacked else "appendix"); w = 0.86 / len(slots); rec = []; incomplete = False
+    w = 0.86 / len(slots); rec, dl = [], []; incomplete = False
     for i, (xl, key) in enumerate(groups):
         o = C.get(key[:3] + ("beta0",), {}).get("oracle"); z = o[0] if (norm and o) else 1.0
         for j, (k, r, sb) in enumerate(slots):
@@ -105,31 +122,65 @@ def budget_bars(C, groups, name, norm=False, stacked=False, skip=()):
                     incomplete = True; continue
                 m, lo, hi, chosen = got[b]; m, lo, hi = m / z, lo / z, hi / z
                 incomplete |= "INCOMPLETE" in chosen
-                S.bar(ax, x, m, w * 0.95, k, cartel=r == "cartel", b=None if one(k) else b, z=2 + depth)
-                if not stacked: S.whisker(ax, x, m, lo, hi)
+                dl.append(dict(el="bar", x=x, y=m, w=w * 0.95, key=k, cartel=r == "cartel", b=None if one(k) else b, z=2 + depth))
+                if not stacked: dl.append(dict(el="whisker", x=x, y=m, lo=lo, hi=hi))
                 rec.append(dict(group=(S.BACKEND[key[0]] + " " if norm else "") + f"n = {key[2]:,}", regime=REG[r], arm=S.NAME[k], key=k,
                                 b=b if not one(k) else "-", chosen=chosen, value=m, ci_lo=lo, ci_hi=hi,
                                 b_invariant=k in B_INVARIANT or (k in POOLS and set(re.findall(r"([\w\[\]=.]+) x\d+", chosen.split("|")[0])) <= B_INVARIANT)))
-        if o: S.oracle(ax, i - 0.46, i + 0.46, 1.0 if norm else o[0])
-    ax.set_xticks(range(len(groups))); ax.set_xticklabels([xl for xl, _ in groups]); ax.set_xlim(-0.5, len(groups) - 0.5)
-    S.finish(ax, ylabel=S.AXIS["rel" if norm else "success"], ylim=(0.2, 1.05 if norm else 0.95))
-    keys = ["oracle"] + arms                                            # _allb: three rows, the budget swatches in the last column
-    S.legend(ax, keys, ncol=-(-len(keys) // 2) if stacked else -(-len(keys) // 3) + 1,                # _stacked: two rows
-             extra=None if stacked else S.budget_handles(-len(keys) % 3), **(dict(columnspacing=0.5, handlelength=1.0) if stacked else {}))
+        if o: dl.append(dict(el="oracle", x=i - 0.46, x1=i + 0.46, y=1.0 if norm else o[0]))
+    dl += [dict(el="tick", x=i, text=xl) for i, (xl, _) in enumerate(groups)] + [dict(el="legend", key=k) for k in ["oracle"] + arms]
     if incomplete: print(f"[{name}] INCOMPLETE: a bar is missing or its pool is incomplete (see the csv)")
-    S.save(fig, name, OUT); pd.DataFrame(rec).to_csv(f"{OUT}/{name}.csv", index=False)
+    return pd.DataFrame(rec), pd.DataFrame(dl)
 
 
-def fig_A(C):
+def render(dl, name, out):
+    """Draw one A / B figure from its display list (figspec.LEGACY_RC inside an rc_context) -> <out>/<name>.{pdf,png}."""
+    norm, stacked = FIGS[name]
+    num = lambda v: None if pd.isna(v) else v
+    with plt.rc_context(S.LEGACY_RC):
+        fig, ax = S.figure("body" if stacked else "appendix")
+        for d in dl.itertuples():
+            if d.el == "bar":
+                S.bar(ax, d.x, d.y, d.w, d.key, cartel=str(d.cartel) == "True", b=None if num(d.b) is None else int(d.b), z=d.z)
+            elif d.el == "whisker":
+                S.whisker(ax, d.x, d.y, d.lo, d.hi)
+            elif d.el == "oracle":
+                S.oracle(ax, d.x, d.x1, d.y)
+        ticks = dl[dl.el == "tick"]
+        ax.set_xticks(range(len(ticks))); ax.set_xticklabels(list(ticks.text)); ax.set_xlim(-0.5, len(ticks) - 0.5)
+        S.finish(ax, ylabel=S.AXIS["rel" if norm else "success"], ylim=(0.2, 1.05 if norm else 0.95))
+        keys = list(dl[dl.el == "legend"].key)                          # _allb: three rows, the budget swatches in the last column
+        S.legend(ax, keys, ncol=-(-len(keys) // 2) if stacked else -(-len(keys) // 3) + 1,                # _stacked: two rows
+                 extra=None if stacked else S.budget_handles(-len(keys) % 3), **(dict(columnspacing=0.5, handlelength=1.0) if stacked else {}))
+        S.save(fig, name, out)
+
+
+def publish(rec, dl, name, out):
+    """The figure CSV to <out> and to results/aggregates/figures (with the display list), then the figure itself."""
+    os.makedirs(DRAW, exist_ok=True)
+    rec.to_csv(f"{out}/{name}.csv", index=False); rec.to_csv(f"{DRAW}/{name}.csv", index=False)
+    dl.to_csv(f"{DRAW}/{name}.draw.csv", index=False)
+    render(dl, name, out)
+
+
+def from_csv(out):
+    """Redraw A / B from results/aggregates/figures alone."""
+    for name in FIGS:
+        render(pd.read_csv(f"{DRAW}/{name}.draw.csv"), name, out)
+        shutil.copyfile(f"{DRAW}/{name}.csv", f"{out}/{name}.csv")
+
+
+def fig_A(C, out):
     ns = sorted(n for (f, g, n, r) in C if f == "live" and g == "specialist" and r == "beta0")
     g = list(zip(S.pow10_ticks(ns, "n"), [("live", "specialist", n) for n in ns]))
-    budget_bars(C, g, "A_live_allb"); budget_bars(C, g, "A_live_stacked", stacked=True)
+    publish(*budget_bars(C, g, "A_live_allb"), "A_live_allb", out)
+    publish(*budget_bars(C, g, "A_live_stacked", stacked=True), "A_live_stacked", out)
 
 
 def primary(f, g): return g == PRIMARY.get(f, g)
 
 
-def fig_B(C):
+def fig_B(C, out):
     """Each family at its LARGEST population with both regimes, divided by that cell's oracle."""
     groups = []
     for f in FAMILY:
@@ -137,14 +188,14 @@ def fig_B(C):
         if not ns: continue
         n = max(ns); g = next(g for (ff, g, nn, r) in C if ff == f and nn == n and primary(f, g))
         groups.append((f"{S.BACKEND[f]}\n{S.pow10(n, 'n')}", (f, g, n)))
-    budget_bars(C, groups, "B_families_allb", norm=True, skip=("best_framework",))
-    budget_bars(C, groups, "B_families_stacked", norm=True, stacked=True, skip=("best_framework",))
+    publish(*budget_bars(C, groups, "B_families_allb", norm=True, skip=("best_framework",)), "B_families_allb", out)
+    publish(*budget_bars(C, groups, "B_families_stacked", norm=True, stacked=True, skip=("best_framework",)), "B_families_stacked", out)
 
 
 def add_best_framework(C):
     """Per live n and regime, the seed x (framework | text shortlist) success table of every pair with the full seed count
     at that cell (framework rows via shortlist_figs.collect: b = 3, specialist); arms_at cross-fits the best pair per seed."""
-    from shortlist_figs import collect
+    from scripts.figures.shortlist_figs import collect
     for (n, dist, reg), cell in collect("live").items():
         key = ("live", "specialist", n, reg)
         if dist != "specialist" or key not in C: continue
@@ -157,13 +208,9 @@ def add_budgets(C):
     """b = 1 / 5 for every arm: live / RouterEval / LLMRouterBench / bernoulli 10^7 / replay 10^6 from the va_b_* (MIDIAN)
     and rivals_b_* (budget-matched rivals) rows (per-seed means, whiskers set by narrow()); bernoulli / replay b = 1 from their
     scale matrices. A cell the runs have not reached simply has no bar (figure_status.py lists it)."""
-    sys.path.insert(0, ROOT)
-    from fw_variant_numbers import load as rows, regime
-    R = os.environ.get("RTE_DATA", "/scratch/rte") + "/results"
-    fams = [("live", "specialist", "n100"), ("live", "specialist", "n1000"), ("live", "specialist", "n10k"), ("live", "specialist", "n100k"),
-            ("routereval", "strong_to_weak", "routereval5k"), ("llmrouterbench", "20 models", "llmrouterbench"),
-            ("bernoulli", "specialist", "bernoulli_1e7"), ("replay", "all shapes pooled", "replay_1e6")]
-    for fam, grp, tag in fams:
+    from scripts.figures.lib.regimes import tag as regime
+    from scripts.figures.lib.rows import RESULTS as R, label, load_fw as rows
+    for fam, grp, tag in BUDGET_GRIDS:
         if fam in SW: continue                            # every b comes from the erratum-30 per-seed tables (from_tables)
         for g in (f"va_b_{tag}", f"rivals_b_{tag}"):
             df = rows(g)
@@ -180,8 +227,8 @@ def add_budgets(C):
                 else: per = q.groupby("seed").success.mean()
                 lo, hi = se(per.values)
                 C[key]["raw"].setdefault(int(b), {})[l] = (float(per.mean()), float(lo), float(hi))
-    names = {"beta=0 (no liars)": "beta0", "beta=0.5 CARTEL (low-skill-first)": "cartel"}
-    for fam, grp, g in (("bernoulli", "specialist", "bernoulli_scale_v5"), ("replay", "all shapes pooled", "replay_scale_v5")):
+    names = {MATRIX_REGIME[k]: k for k in ("beta0", "cartel")}
+    for fam, grp, g in (("bernoulli", "specialist", MATRICES["bernoulli"]), ("replay", "all shapes pooled", MATRICES["replay"])):
         if fam in SW: continue
         m = pd.read_csv(f"{R}/{g}/matrix_success.csv"); m = m[(m.b == 1) & (m.metric == "success") & m.regime.isin(list(names))]
         for r in m.itertuples():
@@ -216,9 +263,21 @@ def narrow(C, T):
         c["oracle"] = fix(c["oracle"], 3, "oracle")
 
 
-if __name__ == "__main__":
-    d = load(); C = cells(d); SW |= switched(); T = tables(); add_budgets(C); from_tables(C, T); narrow(C, T)
+def main(argv=None):
+    p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    p.add_argument("--out", help="output directory (default: $RTE_FIG_OUT or figures/paper)")
+    p.add_argument("--from-csv", action="store_true", help="redraw from results/aggregates/figures only")
+    a = p.parse_args(argv)
+    out = fig_out(a.out)
+    if a.from_csv:
+        return from_csv(out)
+    from scripts.figures.lib.seed_tables import switched, tables
+    d = load(); C = cells(d); SW.update(switched()); T = tables(); add_budgets(C); from_tables(C, T); narrow(C, T)
     for key, bb in T.items():                        # per-seed tables for the cross-fitted pooled arms
         if key in C: C[key]["seeds"] = bb
     add_best_framework(C)
-    fig_A(C); fig_B(C)                    # C / D: scripts/efficiency_figs.py
+    fig_A(C, out); fig_B(C, out)                    # C / D: efficiency_figs.py
+
+
+if __name__ == "__main__":
+    main()

@@ -1,5 +1,5 @@
 """Diagnostic ONLY: what each framework shortlist is worth, and how much of it the frameworks recover.
-    RTE_DATA=... python scripts/shortlist_recovery.py   -> paper/diagnostics/shortlist_recovery.{txt,csv}
+    RTE_DATA=... python scripts/analysis/diagnostics/shortlist_recovery.py   -> paper/diagnostics/shortlist_recovery.{txt,csv}
 Per (n, regime, shortlist source), live specialist populations, seeds 1-3, top-10 per family, averaged over families
 and seeds, from the MEASURED S (read for measurement only; no method ever sees it):
   list mean   S of a uniform pick from the list        best in list   the ceiling a competent consumer reaches
@@ -12,7 +12,7 @@ Recovery per framework = (framework success - list mean) / (best in list - list 
 figures/shortlist/live.csv (seed mean, same cell); 0 = a uniform pick from the list, 1 = the list's best agent."""
 import json, os, sys
 import numpy as np, pandas as pd
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__))); sys.path.insert(0, ROOT)
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))); sys.path.insert(0, ROOT)
 from rte.backends import families
 from rte.budget import Budget
 from rte.methods._learned import embed

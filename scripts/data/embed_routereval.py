@@ -7,7 +7,7 @@ setting they use, it calls FrameworkMethod._index -- the exact code build() runs
 from __future__ import annotations
 import argparse, os, sys, time
 import yaml
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 from rte.run import CELL, blocks, cells, jkey, method_specs, seeds
 from rte.world import World
 from rte.methods import load_method
@@ -19,7 +19,8 @@ assert os.environ.get("RTE_EMBED_CACHE_DIR"), "set RTE_EMBED_CACHE_DIR (the rout
 if a.check:
     def _no(*_a, **_k): raise RuntimeError("cache miss: the reranker would run in a routing unit")
     C.FrameworkMethod._rerank = _no
-cfg = yaml.safe_load(open(os.path.join(os.path.dirname(__file__), "..", "configs", "grid.yaml")))
+from scripts.figures.lib.grids import config  # noqa: E402
+cfg = config()
 rr, t0, done = None, time.time(), 0
 units = []
 for g in a.grids:

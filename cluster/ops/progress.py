@@ -14,7 +14,8 @@ so treat single samples as a floor and compare over long windows.
 """
 import glob, json, os, sqlite3, sys, time
 
-RTE_DATA = os.environ.get("RTE_DATA", "/scratch/rte")
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+from rte.config import RTE_DATA  # noqa: E402
 RESULTS = f"{RTE_DATA}/results"
 
 
@@ -61,7 +62,6 @@ def merge(grids: list[str], prune: bool, every: int = 0) -> None:
 
     A million-row sweep writes a million one-row files, which makes both consolidation and the resume scan slow. The
     CSV carries each row's `rid`, so a pruned row still counts as done -- see rte.run.consolidate / the resume set."""
-    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))   # repo root, as the other scripts do
     from rte.run import consolidate
     while True:
         for g in grids:

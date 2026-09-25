@@ -8,7 +8,9 @@ from __future__ import annotations
 import glob, os, re, subprocess, sys
 from collections import defaultdict
 
-L = os.environ.get("RTE_DATA", "/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte") + "/logs"
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+from rte.config import RTE_DATA  # noqa: E402
+L = f"{RTE_DATA}/logs"
 
 
 def queue():

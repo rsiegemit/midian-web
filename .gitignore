@@ -5,3 +5,6 @@ __pycache__/
 *.egg-info/
 slurm-*.out
 slurm-*.err
+cluster/cluster.env
+figures/bars/
+figures/shortlist/

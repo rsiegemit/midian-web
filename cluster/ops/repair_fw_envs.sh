@@ -3,8 +3,9 @@
 # targets did not -- and the extracted package cache lost the same files (hardlinked, same purge), so the only intact
 # source is the compressed .conda ARCHIVE. This extracts exactly the missing members from the owning package's archive:
 # byte-identical, no conda solve, no locks (conda's cache lock hangs on netscratch -- a --force-reinstall sat 6+ min).
-#   scripts/ops/repair_fw_envs.sh [env ...]        # default: every env under $RTE_DATA/env with dangling lib links
-export RTE_DATA="${RTE_DATA:-/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte}"
+#   cluster/ops/repair_fw_envs.sh [env ...]        # default: every env under $RTE_DATA/env with dangling lib links
+. "$(dirname "$(readlink -f "$0")")/../env.sh"
+need RTE_DATA
 PKGS="$RTE_DATA/conda_pkgs"; ZSTD=$(command -v zstd || echo "$HOME/miniconda3/bin/zstd")
 envs=("$@"); [ ${#envs[@]} -eq 0 ] && for e in "$RTE_DATA"/env/*/; do [ -d "$e/conda-meta" ] && envs+=("$(basename "$e")"); done
 for e in "${envs[@]}"; do

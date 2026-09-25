@@ -8,12 +8,13 @@ are skipped, and each file is written atomically so concurrent array tasks canno
 from __future__ import annotations
 import argparse, json, os, sys, time
 import numpy as np
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 from rte.backends import families
 from rte.methods._learned import embed, resolve
 from rte.methods.frameworks._common import _bm25, sota_cache_name, sota_shortlist
 
-RTE_DATA = os.environ.get("RTE_DATA", "/scratch/rte"); POP = f"{RTE_DATA}/populations"
+from rte.config import RTE_DATA  # noqa: E402
+POP = f"{RTE_DATA}/populations"
 
 
 def slug(model: str) -> str:

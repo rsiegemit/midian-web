@@ -1,18 +1,18 @@
 """The big matrix for a scale sweep: every arm x every n, one table per regime, mean success with a 95% seed-bootstrap CI.
 
-    python scripts/scale_matrix.py bernoulli_scale_v5            # markdown to stdout, CSV beside the grid
-    python scripts/scale_matrix.py replay_scale_v5 --metric comparisons_per_task
-    python scripts/scale_matrix.py replay_scale_v5 --dist specialist   # one shape (replay has three; default pools them)
+    python scripts/analysis/scale_matrix.py bernoulli_scale_v5            # markdown to stdout, CSV beside the grid
+    python scripts/analysis/scale_matrix.py replay_scale_v5 --metric comparisons_per_task
+    python scripts/analysis/scale_matrix.py replay_scale_v5 --dist specialist   # one shape (replay has three; default pools them)
 
 Reads rows.csv directly (NOT rte.analyze.load, whose consolidate is a no-op on a grid with a .merge_owner) and runs it
 through rte.analyze.prepare for the same labels/aliases as every other table. Regimes follow RESULTS_rte_v4: beta = 0
 once (liar-free, so liar-selection is degenerate) and each beta > 0 per liar-selection cell."""
 import argparse, os, sys
 import numpy as np, pandas as pd
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 from rte.analyze import RTE_DATA, prepare
-from extra_figs import ci
+from scripts.figures.lib.regimes import matrix_title
+from scripts.figures.lib.stats import ci
 
 
 def regimes(df):
@@ -20,7 +20,7 @@ def regimes(df):
         if np.isclose(beta, 0.0): yield "beta=0 (no liars)", beta, "random"
         else:
             for ls in sorted(df.liar_select.dropna().unique()):
-                yield f"beta={beta:g} {'CARTEL (low-skill-first)' if ls == 'low_skill_first' else 'random liars'}", beta, ls
+                yield matrix_title(beta, ls), beta, ls
 
 
 def main():

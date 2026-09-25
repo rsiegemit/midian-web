@@ -1,7 +1,5 @@
 #!/bin/bash
 #SBATCH --job-name=rte_serve_smoke
-#SBATCH --account=kempner_sompolinsky_lab
-#SBATCH --partition=kempner_h100
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --gres=gpu:1
@@ -20,14 +18,15 @@
 #   ValueError: invalid literal for int() with base 10: 'MIG-adfbd773-...'
 # (vllm/platforms/cuda.py via registry.py:951, smoke job 43857516). Any whole-GPU partition works.
 #
-#   sbatch scripts/serve_smoke.sbatch
-#   $RTE_DATA/env/rte/bin/python scripts/smoke_backend.py       # once endpoints.json lists it
+#   sbatch -A "$RTE_GPU_ACCOUNT" -p "$RTE_GPU_PARTITION" cluster/slurm/serve_smoke.sbatch
+#   $RTE_DATA/env/rte/bin/python scripts/checks/smoke_backend.py       # once endpoints.json lists it
 set -uo pipefail
 
-export RTE_DATA="${RTE_DATA:-/scratch/rte}"
+: "${RTE_DATA:?RTE_DATA is not set (cluster/cluster.env.example)}"
+export RTE_DATA
 REPO="${RTE_REPO:-$HOME/rte}"
 ENV_PREFIX="$RTE_DATA/env/rte"
-source "$REPO/scripts/_serve_env.sh"
+source "$REPO/cluster/slurm/_serve_env.sh"
 
 MODEL="${RTE_SMOKE_MODEL:-$("$PY" -c "
 import yaml
@@ -41,7 +40,7 @@ echo "[smoke] host=$HOSTNAME_FQ job=${SLURM_JOB_ID:-manual} model=$MODEL port=$P
 nvidia-smi --query-gpu=index,name,memory.total --format=csv
 
 cleanup() {
-  "$PY" "$REPO/scripts/_register_endpoint.py" remove "$MODEL" >/dev/null 2>&1 || true
+  "$PY" "$REPO/cluster/slurm/_register_endpoint.py" remove "$MODEL" >/dev/null 2>&1 || true
   [ -n "${VPID:-}" ] && kill "$VPID" 2>/dev/null
   sleep 3
   [ -n "${VPID:-}" ] && kill -9 "$VPID" 2>/dev/null

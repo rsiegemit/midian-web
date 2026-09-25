@@ -3,12 +3,15 @@ module that owns each figure). Every figure script imports its canvas, fonts, co
 helpers from here and nothing else: a figure carries data, axes and a legend; titles, letters, regime notes, file names
 and incompleteness marks belong in the caption.
 
-    import figspec as S
+    from scripts.figures.lib import figspec as S
     S.apply()                                  # rcParams: serif (Times / STIX), 8 / 9 / 8 pt, fonttype 42, spines, grid
     fig, ax = S.figure("body")                 # 5.5 x 1.9 in ("d" 5.5 x 1.8, "appendix" 5.5 x 2.4, "pair" 5.5 x 2.0)
     ... S.bar(ax, x, m, w, "midian", cartel=False) ... S.whisker(ax, x, m, lo, hi) ... S.oracle(ax, x0, x1, y)
     S.legend(ax, keys)                         # fixed order (ORDER), frameless, inside if room else one row above
     S.save(fig, name)                          # <OUT>/<name>.pdf (vector) + .png (300 dpi)
+
+Also here: the exploratory figures' names, palette and rcParams (figures/bars, figures/shortlist), the framework names,
+and LEGACY_RC, the rcParams the retired paper_figs.py set at import, which the A / B figures inherited (see LEGACY_RC).
 """
 from __future__ import annotations
 import matplotlib
@@ -16,6 +19,8 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 from matplotlib.patches import Patch
+
+cm = lambda x: x / 2.54                          # noqa: E731  (cm -> inches)
 
 # ---- canvas (inches) -------------------------------------------------------------------------------------------------
 CANVAS = {"body": (5.5, 1.9), "d": (5.5, 1.8), "appendix": (5.5, 2.4), "pair": (5.5, 2.0)}
@@ -48,6 +53,13 @@ SHORTLIST_COLOR = {"tfidf": "#b0b0b0", "bm25": "#17becf", "embed": "#1f77b4", "d
                    "va_cohort": "#117a3d"}
 BACKEND = {"live": "live", "bernoulli": "Bernoulli", "replay": "RouterBench replay", "routereval": "RouterEval",
            "llmrouterbench": "LLMRouterBench"}
+FWS = ["fw_autogen", "fw_camel_workforce", "fw_crewai", "fw_google_adk", "fw_langgraph", "fw_llamaindex", "fw_maf", "fw_magentic_one",
+       "fw_openai_agents", "fw_smolagents"]
+FW_NAME = {"fw_google_adk": "Google ADK", "fw_crewai": "CrewAI", "fw_magentic_one": "Magentic-One", "fw_openai_agents": "OpenAI Agents",
+           "fw_llamaindex": "LlamaIndex", "fw_langgraph": "LangGraph", "fw_autogen": "AutoGen", "fw_camel_workforce": "CAMEL", "fw_maf": "MAF",
+           "fw_smolagents": "smolagents"}
+ABBR = {"fw_autogen": "autogen", "fw_camel_workforce": "camel", "fw_crewai": "crewai", "fw_google_adk": "adk", "fw_langgraph": "langgraph",
+        "fw_llamaindex": "llama", "fw_maf": "maf", "fw_magentic_one": "magentic", "fw_openai_agents": "openai", "fw_smolagents": "smol"}
 AXIS = {"success": "task success", "rel": "success relative to oracle", "n": "population size n", "T": "queries served T",
         "work": "messages + comparisons per query", "energy": "energy per query (J)", "lift": "gain in task success over hashed TF-IDF"}
 
@@ -132,7 +144,7 @@ def budget_handles(pad: int = 0):
 
 def legend(ax, keys, labels=None, where: str = "above", ncol: int | None = None, extra=None, handles=None, **kw):
     """One frameless legend, entries in the given (fixed) order, never re-ranked (matplotlib's Legend is built directly, so
-    the value-ranking wrapper extra_figs installs on Axes.legend does not apply). where: "above" (rows over the axes) or a
+    the value-ranking wrapper of legend_rank.install() does not apply). where: "above" (rows over the axes) or a
     matplotlib loc inside the axes. handles: proxies in place of handle(key) (e.g. lines instead of patches)."""
     from matplotlib.legend import Legend
     hs = list(handles) if handles is not None else [handle(k) for k in keys]; ls = list(labels or [NAME.get(k, k) for k in keys])
@@ -159,3 +171,49 @@ def save(fig, name: str, out: str):
     """<out>/<name>.pdf (vector, text as text) + <out>/<name>.png (300 dpi)."""
     fig.savefig(f"{out}/{name}.pdf"); fig.savefig(f"{out}/{name}.png", dpi=DPI_PNG); plt.close(fig)
     print(f"[{name}] written")
+
+
+# ---- exploratory figures (figures/bars, figures/shortlist) and legacy rcParams --------------------------------------------
+LONG_NAME = {"oracle": "oracle", "sequential_halving_peer": "seq. halving (peer)", "sequential_halving": "seq. halving (trusted)",
+             "midian": "MIDIAN", "midian_wo_audit": "MIDIAN w/o audits", "midian_wo_verify": "MIDIAN w/o verification",
+             "midian_wo_defenses": "MIDIAN w/o defenses", "flat_probe_argmax_online": "flat probe argmax (online)",
+             "knn_router": "RouterBench KNN router", "mlp_router": "RouterBench MLP router", "declared_argmax": "declared argmax",
+             "warm_start_bandit": "warm-start bandit", "random": "random"}
+EXPLORE_COLOR = {"oracle": "#999999", "midian_wo_defenses": "#c0392b", "midian_wo_audit": "#e67e22", "midian_wo_audit_r5": "#f1c40f",
+                 "midian_wo_verify": "#7b241c", "midian": "#2ecc71", "flat_probe_argmax_frozen": "#7f8c8d",
+                 "flat_probe_argmax_online": "#3498db", "sequential_halving": "#2c3e50", "sequential_halving_peer": "#8e44ad",
+                 "sequential_halving[churn_mode=rebuild,peer_reported=True]": "#8e44ad",
+                 "sequential_halving[churn_mode=stale,peer_reported=True]": "#bb8fce", "warm_start_bandit": "#27ae60",
+                 "linucb_honest": "#16a085", "declared_argmax": "#5d6d7e", "llm_supervisor": "#34495e", "fw_autogen": "#2980b9",
+                 "fw_magentic_one": "#1f618d", "fw_magentic_one[supervisor=Qwen/Qwen2.5-14B-Instruct]": "#5dade2", "random": "#ccc"}
+FW_RAMP = ["#08306b", "#08519c", "#2171b5", "#4292c6", "#6baed6", "#9ecae1", "#c6dbef", "#3f007d", "#54278f", "#6a51a3", "#807dba", "#9e9ac8"]
+DECL_RAMP = ["#3b3b3b", "#5c5c5c", "#7f7f7f", "#a3a3a3", "#8c510a", "#bf812d", "#dfc27d", "#543005", "#c7c7c7", "#e0e0e0", "#4d4d4d"]
+EXPLORE_RC = {"pdf.fonttype": 42, "font.family": "DejaVu Sans", "font.size": 7, "axes.labelsize": 7, "axes.titlesize": 7.5,
+              "xtick.labelsize": 6.5, "ytick.labelsize": 6.5, "legend.fontsize": 6, "axes.linewidth": 0.6,
+              "figure.constrained_layout.use": True}
+# LEGACY_RC: set at import by the retired scripts/paper_figs.py. Every script that imported it (bar_figs, shortlist_figs,
+# and condensed_figs through them) drew under it, so A / B carried its tick widths, line defaults and layout pads under
+# apply(). Those scripts now set it explicitly, so their figures render as before; no other figure gets it.
+LEGACY_RC = {"pdf.fonttype": 42, "ps.fonttype": 42, "font.family": "DejaVu Sans", "font.size": 7, "axes.labelsize": 7, "axes.titlesize": 7,
+             "xtick.labelsize": 6.5, "ytick.labelsize": 6.5, "legend.fontsize": 6.5, "axes.linewidth": 0.6, "lines.linewidth": 1.0,
+             "lines.markersize": 3, "xtick.major.width": 0.5, "ytick.major.width": 0.5, "grid.linewidth": 0.4,
+             "figure.constrained_layout.use": True, "figure.constrained_layout.h_pad": 0.02, "figure.constrained_layout.w_pad": 0.02}
+
+
+def explore_colours(labels, decl):
+    """One colour per label, the same in every exploratory figure and every run: EXPLORE_COLOR for the arms it names, a
+    blue/purple ramp for frameworks, greys/browns for the declaration-channel arms (`decl`), tab20 ramps for the rest,
+    handed out in sorted-label order."""
+    import matplotlib.colors as mc
+    other = [mc.to_hex(plt.cm.tab20(i)) for i in range(20)] + [mc.to_hex(plt.cm.tab20b(i)) for i in range(20)] \
+        + [mc.to_hex(plt.cm.tab20c(i)) for i in range(20)]
+    out = {lab: mc.to_hex(EXPLORE_COLOR[lab]) for lab in labels if lab in EXPLORE_COLOR}
+    used = set(out.values())
+    ramps = {"fw": iter([c for c in FW_RAMP if c not in used]), "decl": iter([c for c in DECL_RAMP if c not in used]),
+             "other": iter([c for c in other if c not in used])}
+    for lab in sorted(labels):
+        if lab in out:
+            continue
+        kind = "fw" if lab.startswith("fw_") else "decl" if lab in decl else "other"
+        out[lab] = next(ramps[kind], None) or next(ramps["other"])
+    return out

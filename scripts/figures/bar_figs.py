@@ -1,38 +1,42 @@
 """Bar figures of success for EVERY arm, grouped by n, one figure per (experiment family, liar regime, grouping); the oracle
 is a dotted line across the top; error bars are the 95% seed bootstrap.
-    python scripts/bar_figs.py [live bernoulli replay routereval llmrouterbench]   -> figures/bars/<family>__<regime>__<group>.{png,pdf}
-                                                                                    + figures/bars/<family>.csv + figures/bars/INDEX.md
-One panel and one row per figure, always. No framework arms: they are drawn per shortlist in figures/shortlist (scripts/shortlist_figs.py).
+    python scripts/figures/bar_figs.py [live bernoulli replay routereval llmrouterbench]
+      -> results/aggregates/bars/<family>.csv (the input of the condensed A / B figures)
+         figures/bars/<family>__<regime>__<group>.{png,pdf} + figures/bars/INDEX.md (exploratory, not tracked)
+One panel and one row per figure, always. No framework arms: they are drawn per shortlist in figures/shortlist (shortlist_figs.py).
 Families: live (RTE live backend, 10^2-10^5, grouped by population shape; self-described channel),
 bernoulli (calibrated synthetic, 10..10^7, 1000 seeds, b = 3), replay (RouterBench outcomes, 10..10^6, shapes pooled),
 routereval (real LLM pools 10 / 100 / 1,000 per pool config and the 5,000-LLM leaderboard pool), llmrouterbench (20 models).
-Do-not-add list (extra_figs.excluded): MIDIAN with r != 10, the trusted-observer halving arm.
-route_to_k_majority executes THREE agents per task and majority-votes, so it can sit above the single-agent oracle: it is drawn hatched and named so."""
+The do-not-add list (lib/exclusions.py) applies.
+route_to_k_majority executes THREE agents per task and majority-votes, so it can sit above the single-agent oracle: it is drawn
+hatched and named so. Rendering: figspec.LEGACY_RC + EXPLORE_RC, legend_rank.install(), figspec.explore_colours."""
 from __future__ import annotations
-import os, sys
-import numpy as np, pandas as pd, matplotlib
-matplotlib.use("Agg"); import matplotlib.pyplot as plt
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__)))); sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from rte.analyze import RTE_DATA as _RD, load as _load, FLAT_ON
-from extra_figs import COLOR as _COLOR, HALP, ci as _ci, excluded
-from paper_figs import NAME as _NAME, ABBR, cm
 
-R = f"{_RD}/results"; OUT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "figures", "bars"); os.makedirs(OUT, exist_ok=True)
-plt.rcParams.update({"pdf.fonttype": 42, "font.family": "DejaVu Sans", "font.size": 7, "axes.labelsize": 7, "axes.titlesize": 7.5, "xtick.labelsize": 6.5,
-                     "ytick.labelsize": 6.5, "legend.fontsize": 6, "axes.linewidth": 0.6, "figure.constrained_layout.use": True})
-NEVER = {"oracle"}                                             # oracle is the dotted line; the do-not-add list (extra_figs.excluded) drops the rest
-REGIMES = [("beta0", 0.0, "random", "honest (β = 0)"), ("beta01_random", 0.1, "random", "β = 0.1, random liars"),
-           ("beta025_random", 0.25, "random", "β = 0.25, random liars"), ("beta025_cartel", 0.25, "low_skill_first", "β = 0.25, low-skill cartel"),
-           ("beta05_random", 0.5, "random", "β = 0.5, random liars"), ("cartel", 0.5, "low_skill_first", "β = 0.5, low-skill cartel")]
-MATRIX_REGIME = {"beta0": "beta=0 (no liars)", "beta025_random": "beta=0.25 random liars", "beta025_cartel": "beta=0.25 CARTEL (low-skill-first)",
-                 "beta05_random": "beta=0.5 random liars", "cartel": "beta=0.5 CARTEL (low-skill-first)"}
-LIVE_GRIDS = {100: ["fw_live_n100", "learned_n100", "fw_live_n100_lowskill"],   # live_core_n100: pre-09-02 probe instances, dropped
-              1000: ["fw_live_n1000", "live_f1_n1000", "variants_f1", "learned_f1", "fw_live_n1000_lowskill"],
-              10000: ["learned_n10k", "live_n10k_v2", "fw_live_n10k_cartel", "live_n10k_cartel_random"], 100000: ["live_n100k"]}
+import argparse
+import os
+import sys
+
+import numpy as np
+import pandas as pd
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))))
+from scripts.figures.lib import AGG, ROOT, legend_rank                                                         # noqa: E402
+from scripts.figures.lib import figspec as S                                                                   # noqa: E402
+from scripts.figures.lib.exclusions import excluded                                                            # noqa: E402
+from scripts.figures.lib.grids import LIVE_GRIDS, MATRICES                                                     # noqa: E402
+from scripts.figures.lib.regimes import MATRIX_REGIME, REGIMES                                                 # noqa: E402
+from scripts.figures.lib.rows import RESULTS as R                                                              # noqa: E402
+from scripts.figures.lib.stats import ci as _ci                                                                # noqa: E402
+
+import matplotlib.pyplot as plt                                                                                # noqa: E402
+
+CSV_OUT, OUT = os.path.join(AGG, "bars"), os.path.join(ROOT, "figures", "bars")
+NEVER = {"oracle"}                                             # oracle is the dotted line; the do-not-add list drops the rest
 _mem = {}; JOBS = []
 
 
 def rows(g):
+    from rte.analyze import load as _load
     if g not in _mem:
         try: _mem[g] = _load([g])
         except SystemExit: _mem[g] = pd.DataFrame()
@@ -44,31 +48,12 @@ MULTI = {"route_to_k_majority": "route-to-3 majority (3 executions per task)"}  
 
 def name(label):
     if label in MULTI: return MULTI[label]
-    if label in _NAME: return _NAME[label]
-    if label.startswith("fw_") and "[" not in label: return ABBR.get(label, label[3:])
+    if label in S.LONG_NAME: return S.LONG_NAME[label]
+    if label.startswith("fw_") and "[" not in label: return S.ABBR.get(label, label[3:])
     return label.replace("_", " ")
 
 
-COLOURS_JSON = f"{OUT}/COLOURS.json"; CMAP = {}
-FW_RAMP = ["#08306b", "#08519c", "#2171b5", "#4292c6", "#6baed6", "#9ecae1", "#c6dbef", "#3f007d", "#54278f", "#6a51a3", "#807dba", "#9e9ac8"]
-DECL_RAMP = ["#3b3b3b", "#5c5c5c", "#7f7f7f", "#a3a3a3", "#8c510a", "#bf812d", "#dfc27d", "#543005", "#c7c7c7", "#e0e0e0", "#4d4d4d"]
-OTHER_RAMP = [plt.cm.tab20(i) for i in range(20)] + [plt.cm.tab20b(i) for i in range(20)] + [plt.cm.tab20c(i) for i in range(20)]
-
-
-def assign_colours(all_labels):
-    """One colour per label, identical in every figure: the paper palette (figures/COLOURS.md) for the arms it names, a blue/purple
-    ramp for the ten frameworks, greys/browns for declaration-channel arms, tab20 ramps for the rest; persisted to COLOURS.json."""
-    import json, matplotlib.colors as mc
-    if os.path.exists(COLOURS_JSON): CMAP.update(json.load(open(COLOURS_JSON)))
-    used = set(CMAP.values()); ramps = {"fw": iter([c for c in FW_RAMP if c not in used]), "decl": iter([c for c in DECL_RAMP if c not in used]),
-                                        "other": iter([mc.to_hex(c) for c in OTHER_RAMP if mc.to_hex(c) not in used])}
-    for l in sorted(all_labels):
-        if l in CMAP: continue
-        if l in _COLOR: CMAP[l] = mc.to_hex(_COLOR[l]); continue
-        kind = "fw" if l.startswith("fw_") else "decl" if l in DECL else "other"
-        try: CMAP[l] = next(ramps[kind])
-        except StopIteration: CMAP[l] = next(ramps["other"])
-    json.dump(CMAP, open(COLOURS_JSON, "w"), indent=1, sort_keys=True)
+CMAP = {}
 
 
 def color(label, i=0):
@@ -105,7 +90,7 @@ def _panel(ax, labels, series, oracle, ns, ylim, legend=True):
     if pts:
         px, py = [], []
         for xj, y in pts: px += [xj - 0.42, xj + 0.42]; py += [y, y]
-        ax.plot(px, py, ls=":", color=_COLOR.get("oracle", "#7f8c8d"), lw=1.3, label="oracle", zorder=5)
+        ax.plot(px, py, ls=":", color=S.EXPLORE_COLOR["oracle"], lw=1.3, label="oracle", zorder=5)
     ax.set_xticks(x); ax.set_xticklabels([f"n = {n:,}" for n in ns]); ax.set_ylim(*ylim); ax.set_ylabel("success"); ax.grid(axis="y", alpha=.3, lw=0.4)
     h, l = ax.get_legend_handles_labels(); seen = {}; [seen.setdefault(b, a) for a, b in zip(h, l)]
     order = ["oracle"] + [name(x) for x in labels if name(x) in seen]                      # legend in bar order (best at n_max first)
@@ -119,7 +104,7 @@ def draw(series, oracle, title, fname, ns, ylim=(0.2, 1.0), _jobs=None):
     labels = [l for l in series if l not in NEVER and not excluded(l) and not l.startswith("fw_")]   # frameworks: figures/shortlist
     nmax = max(ns); labels.sort(key=lambda l: -series[l].get(nmax, series[l][max(series[l])])[0])
     nbars = sum(1 for l in labels for n in ns if n in series[l])
-    fig, ax = plt.subplots(figsize=(cm(max(14.0, 0.28 * nbars + 5)), cm(7.0)))
+    fig, ax = plt.subplots(figsize=(S.cm(max(14.0, 0.28 * nbars + 5)), S.cm(7.0)))
     _panel(ax, labels, series, oracle, ns, ylim); ax.set_title(title)
     fig.savefig(f"{OUT}/{fname}.png", dpi=300); fig.savefig(f"{OUT}/{fname}.pdf"); plt.close(fig); return fname
 
@@ -187,16 +172,35 @@ def family_llmrouterbench(index, recs):
         index.append(draw(series, {20: st["oracle"][0]} if "oracle" in st else {}, f"LLMRouterBench 20-model pool, {rtitle}", f"llmrouterbench__{reg}__20", [20], ylim=(0.3, 1.0), _jobs=JOBS))
 
 
-FAMILIES = {"live": family_live, "bernoulli": lambda i, r: family_matrix("bernoulli", "bernoulli_scale_v5", i, r, "specialist"),
-            "replay": lambda i, r: family_matrix("replay", "replay_scale_v5", i, r), "routereval": family_routereval, "llmrouterbench": family_llmrouterbench}
+FAMILIES = {"live": family_live, "bernoulli": lambda i, r: family_matrix("bernoulli", MATRICES["bernoulli"], i, r, "specialist"),
+            "replay": lambda i, r: family_matrix("replay", MATRICES["replay"], i, r), "routereval": family_routereval,
+            "llmrouterbench": family_llmrouterbench}
+
+def main(argv=None):
+    p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    p.add_argument("families", nargs="*", help=f"any of {', '.join(FAMILIES)} (default: all)")
+    fams = p.parse_args(argv).families or list(FAMILIES)
+    plt.rcParams.update({**S.LEGACY_RC, **S.EXPLORE_RC})
+    legend_rank.install()
+    os.makedirs(CSV_OUT, exist_ok=True)
+    os.makedirs(OUT, exist_ok=True)
+    index_all = []
+    for fam in fams:
+        index, recs = [], []
+        FAMILIES[fam](index, recs)
+        pd.DataFrame(recs).to_csv(f"{CSV_OUT}/{fam}.csv", index=False)
+        index_all += [(fam, f) for f in index]
+        print(f"[{fam}] {len(index)} figures, {len(recs)} bars")
+    CMAP.update(S.explore_colours({lab for series, *_ in JOBS for lab in series}, DECL))
+    for series, oracle, title, fname, ns, ylim in JOBS:
+        draw(series, oracle, title, fname, ns, ylim)
+    with open(f"{OUT}/INDEX.md", "a" if len(fams) < len(FAMILIES) else "w") as f:
+        if len(fams) == len(FAMILIES):
+            f.write("# Bar figures: every arm by n, one per (family, regime, grouping)\n\nOracle = dotted line; error bars = 95% seed "
+                    "bootstrap; the do-not-add arms are never drawn. Data: results/aggregates/bars/<family>.csv.\n\n")
+        for fam, fn in index_all:
+            f.write(f"- `{fn}.png` ({fam})\n")
+
 
 if __name__ == "__main__":
-    fams = sys.argv[1:] or list(FAMILIES); index_all = []
-    for fam in fams:
-        index, recs = [], []; FAMILIES[fam](index, recs)
-        pd.DataFrame(recs).to_csv(f"{OUT}/{fam}.csv", index=False); index_all += [(fam, f) for f in index]; print(f"[{fam}] {len(index)} figures, {len(recs)} bars")
-    assign_colours({l for series, *_ in JOBS for l in series})
-    for series, oracle, title, fname, ns, ylim in JOBS: draw(series, oracle, title, fname, ns, ylim)
-    with open(f"{OUT}/INDEX.md", "a" if len(fams) < len(FAMILIES) else "w") as f:
-        if len(fams) == len(FAMILIES): f.write("# Bar figures: every arm by n, one per (family, regime, grouping)\n\nOracle = dotted line; error bars = 95% seed bootstrap; the trusted-observer halving arm is never drawn (erratum 26). Data: `<family>.csv` beside each set.\n\n")
-        for fam, fn in index_all: f.write(f"- `{fn}.png` ({fam})\n")
+    main()

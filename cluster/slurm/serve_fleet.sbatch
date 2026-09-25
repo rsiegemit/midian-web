@@ -1,7 +1,5 @@
 #!/bin/bash
 #SBATCH --job-name=rte_serve_fleet
-#SBATCH --account=kempner_sompolinsky_lab
-#SBATCH --partition=kempner_h100
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --gres=gpu:4
@@ -16,14 +14,15 @@
 # WHICH models, WHICH gpu, WHICH port and HOW MUCH HBM are all in configs/models.yaml -- no model
 # id appears in this file.
 #
-#   sbatch scripts/serve_fleet.sbatch                              # kempner_h100, 80 GB/GPU
-#   sbatch --partition=kempner_h200 scripts/serve_fleet.sbatch     # 141 GB/GPU, more headroom
+# Account / partition from the caller (cluster/cluster.env.example); scripts/serve_fleet.sbatch is a symlink here.
+#   sbatch -A "$RTE_GPU_ACCOUNT" -p "$RTE_GPU_PARTITION" cluster/slurm/serve_fleet.sbatch   # 80 GB/GPU H100s: the placement in models.yaml
 set -uo pipefail
 
-export RTE_DATA="${RTE_DATA:-/scratch/rte}"
+: "${RTE_DATA:?RTE_DATA is not set (cluster/cluster.env.example)}"
+export RTE_DATA
 REPO="${RTE_REPO:-$HOME/rte}"
 ENV_PREFIX="$RTE_DATA/env/rte"
-source "$REPO/scripts/_serve_env.sh"
+source "$REPO/cluster/slurm/_serve_env.sh"
 
 HOSTNAME_FQ="$(hostname -s)"
 JOBLOG="$RTE_DATA/logs/serve_fleet_${SLURM_JOB_ID:-manual}"
@@ -32,11 +31,11 @@ echo "[fleet] host=$HOSTNAME_FQ job=${SLURM_JOB_ID:-manual} logs=$JOBLOG"
 nvidia-smi --query-gpu=index,name,memory.total --format=csv
 "$PY" -c 'import vllm, sys; print("vllm", vllm.__version__, "on python", sys.version.split()[0])'
 
-[ -z "${RTE_AS_REPLICA:-}" ] && [ -n "${RTE_CLEAR_REGISTRY:-}" ] && "$PY" "$REPO/scripts/_register_endpoint.py" clear   # never wipe other servers' entries by default
+[ -z "${RTE_AS_REPLICA:-}" ] && [ -n "${RTE_CLEAR_REGISTRY:-}" ] && "$PY" "$REPO/cluster/slurm/_register_endpoint.py" clear   # never wipe other servers' entries by default
 PIDS=()
 cleanup() {
   echo "[fleet] cleanup: deregistering endpoints and killing servers"
-  for k in "${KEYS[@]:-}"; do "$PY" "$REPO/scripts/_register_endpoint.py" remove "$k" >/dev/null 2>&1 || true; done   # only OUR keys, never a global clear
+  for k in "${KEYS[@]:-}"; do "$PY" "$REPO/cluster/slurm/_register_endpoint.py" remove "$k" >/dev/null 2>&1 || true; done   # only OUR keys, never a global clear
   for p in "${PIDS[@]}"; do kill "$p" 2>/dev/null; done
   sleep 5
   for p in "${PIDS[@]}"; do kill -9 "$p" 2>/dev/null; done
@@ -49,7 +48,7 @@ while read -r MODEL GPU PORT UTIL; do
   [ -z "$MODEL" ] && continue
   KEYS+=("$MODEL${RTE_AS_REPLICA:+#${SLURM_JOB_ID:-manual}}")
   if ! snapshot_ok "$MODEL"; then
-    echo "[fleet] SKIP $MODEL (no complete snapshot in \$HF_HOME; run scripts/01_download_weights.py)"
+    echo "[fleet] SKIP $MODEL (no complete snapshot in \$HF_HOME; run scripts/setup/01_download_weights.py)"
     continue
   fi
   echo "[fleet] launching $MODEL on GPU $GPU port $PORT util $UTIL"

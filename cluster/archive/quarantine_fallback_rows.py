@@ -8,7 +8,9 @@ results/quarantine_units.tsv for scripts/ops/rerun_units.sh. rte.run recomputes 
 import glob, json, os, sys
 import pandas as pd
 
-R = os.environ.get("RTE_DATA", "/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte") + "/results"
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+from rte.config import RTE_DATA  # noqa: E402
+R = f"{RTE_DATA}/results"
 BROKEN_ENV = {"fw_crewai", "fw_google_adk"}
 APPLY = "--apply" in sys.argv
 

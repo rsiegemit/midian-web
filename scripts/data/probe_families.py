@@ -13,7 +13,7 @@ from __future__ import annotations
 import argparse
 import sys
 
-sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parents[2]))
 
 from rte.backends import families   # noqa: E402
 

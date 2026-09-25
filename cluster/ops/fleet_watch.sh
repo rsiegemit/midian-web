@@ -2,7 +2,8 @@
 # Watch fleet health and EXIT on any material change, so the change surfaces as a task notification rather than
 # needing a poll. Material = supervisor replica count changes, or it hits zero (the 2026-09-19 outage: both fleets
 # hit their 2-day cap within hours of each other and 13 h of framework jobs failed before anyone noticed).
-export RTE_DATA=/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte
+. "$(dirname "$(readlink -f "$0")")/../env.sh"
+need RTE_DATA
 sup() { $RTE_DATA/env/rte/bin/python -c "
 import json,os
 p='$RTE_DATA/endpoints.json'

@@ -3,7 +3,7 @@ and every framework sees its top-ranked item first, so position-1 quality is the
 actually drives outcomes. S is read for MEASUREMENT only; no method ever sees it."""
 import json, os, sys
 import numpy as np
-sys.path.insert(0, '/n/home02/rsiegelmann/rte')
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
 from rte.backends import families
 from rte.methods.frameworks._common import _bm25, _hash_tfidf, _rrf
 from rte.methods._learned import embed

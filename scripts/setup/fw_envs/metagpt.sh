@@ -4,9 +4,7 @@
 source "$(dirname "${BASH_SOURCE[0]}")/_lib.sh"
 prefix="$RTE_DATA/env/fw_metagpt"
 if [ ! -x "$prefix/bin/python" ]; then
-  if [ -f /n/sw/Miniforge3-25.3.1-0/etc/profile.d/conda.sh ]; then
-    source /n/sw/Miniforge3-25.3.1-0/etc/profile.d/conda.sh
-  else source "$HOME/miniconda3/etc/profile.d/conda.sh"; fi
+  fw_conda
   conda create -y -p "$prefix" python=3.11
 fi
 fw_build metagpt

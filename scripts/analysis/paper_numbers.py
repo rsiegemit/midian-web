@@ -1,13 +1,16 @@
 """Every number the paper quotes, recomputed from the result grids -> paper/NUMBERS.json ({"value", "grid", "units", "ci"} per entry).
-    PAPER_CACHE=<dir of <grid>.pkl>  python scripts/paper_numbers.py        (without the cache every grid is read through rte.analyze.load)
+    PAPER_CACHE=<dir of <grid>.pkl>  python scripts/analysis/paper_numbers.py        (without the cache every grid is read through rte.analyze.load)
 Means are over (shape, β, liar-selection, seed) units; CIs are the 95% bootstrap over seeds (paired over seeds for differences)."""
 import json, os, re, sys
 import numpy as np, pandas as pd
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__)))); sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 from rte.analyze import RTE_DATA, load as _load, FLAT_ON, FLAT
-from extra_figs import HAL, HALP, MAG14, ci as _ci, stat
+from scripts.figures.lib import ROOT
+from scripts.figures.lib.rows import stat
+from scripts.figures.lib.stats import ci as _ci
+HAL, HALP, MAG14 = "sequential_halving", "sequential_halving_peer", "fw_magentic_one[supervisor=Qwen/Qwen2.5-14B-Instruct]"
 
-CACHE = os.environ.get("PAPER_CACHE"); R = f"{RTE_DATA}/results"; OUT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "paper", "NUMBERS.json")
+CACHE = os.environ.get("PAPER_CACHE"); R = f"{RTE_DATA}/results"; OUT = os.path.join(ROOT, "paper", "NUMBERS.json")
 FWS = ["fw_autogen", "fw_camel_workforce", "fw_crewai", "fw_google_adk", "fw_langgraph", "fw_llamaindex", "fw_maf", "fw_magentic_one", "fw_openai_agents", "fw_smolagents"]
 KEY = ["dist", "beta", "liar_select", "seed"]; N = {}; _mem = {}
 
@@ -89,7 +92,7 @@ S = f"{R}/llmrouterbench_terms/summary.md"
 if os.path.exists(S): put_v("a.llmrouterbench_terms_rows", [l for l in open(S).read().splitlines() if "|" in l][:24], "results/llmrouterbench_terms/summary.md", "their-protocol table verbatim (probe 0.704 / Avengers 0.709 / EmbedLLM 0.702; 9,000 / 161k labels)")
 
 # ------------------------------------------------------------------------------------------------ (b) cost
-import energy
+from scripts.analysis import energy
 t = pd.read_pickle(f"{CACHE}/energy_table.pkl") if CACHE and os.path.exists(f"{CACHE}/energy_table.pkl") else energy.table()
 put_v("b.autogen_J_per_task", round(float(t.loc["fw_autogen", "per_task_J"]), 2), "scripts/energy.py cost model × fw_live_n1000 ledger"); put_v("b.autogen_latency_s", round(float(t.loc["fw_autogen", "latency_s"]), 3), "fw_live_n1000 median supervisor wall-clock")
 put_v("b.midian_wo_defenses_build_probes", int(round(t.loc["midian_wo_defenses", "build_msgs"] * 0 + rows("variants_f1").query("label == 'midian_wo_defenses'").build_probes.mean())), "variants_f1 ledger"); put_v("b.midian_wo_defenses_build_gpu_s", round(float(t.loc["midian_wo_defenses", "build_gpu_s"]), 1), "energy.py (specialist)")
@@ -155,7 +158,7 @@ put_v("s4.phase1_targets_missed", "5 of 6 (T2 split) — TARGETS_rte.md / RESULT
 # Regimes follow RESULTS_rte_v4: β = 0 has NO liars, so its two liar-selection cells are bit-identical and only one is
 # kept; under the cartel the two cells are different worlds and are reported separately.
 V4_POOLS = {"m1000": "cohort_routereval", "m5000": "cohort_routereval5k", "lrb20": "cohort_llmrouterbench", "rte": "cohort_rte"}
-from cohort_table import BASES as V4_BASES, MODES as V4_MODES, arm       # MIDIAN base arms x cohort modes, labelled as rte.analyze does
+from scripts.analysis.cohort_table import BASES as V4_BASES, MODES as V4_MODES, arm       # MIDIAN base arms x cohort modes, labelled as rte.analyze does
 def v4_regimes(co):
     """(tag, β, liar-selection) per regime: β = 0 once (liar-free, so the liar-selection axis is degenerate), each β > 0 per cell."""
     for beta in sorted(co.beta.dropna().unique()):
@@ -205,7 +208,7 @@ def v5_sweeps():
 v5_sweeps()
 
 # ------------------------------------------------------------------------------------------------ (v6) framework shortlist variants + live halving
-from fw_variant_numbers import collect as _v6      # small grids, read directly from rows (scripts/fw_variant_numbers.py)
+from scripts.analysis.fw_variant_numbers import collect as _v6      # small grids, read directly from rows
 _v6(N)
 
 # ------------------------------------------------------------------------------------------------ appendix source tables

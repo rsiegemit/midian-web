@@ -5,7 +5,7 @@ selection the live run makes. S is read for MEASUREMENT only; no method ever see
 """
 import os, sys
 import numpy as np
-sys.path.insert(0, '/n/home02/rsiegelmann/rte')
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
 from rte.budget import Budget
 from rte.world import World
 from rte.methods.midian import Midian

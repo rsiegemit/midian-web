@@ -18,7 +18,7 @@ REAL_CELLS_PATH = os.path.join(
 
 def _make_fake_cells(path, K=8, M=4, prompts_per_cat=40, seed=0):
     """A small synthetic RouterBench-shaped cell table with the same on-disk
-    layout scripts/02_download_routerbench.py writes."""
+    layout scripts/data/02_download_routerbench.py writes."""
     rng = np.random.default_rng(seed)
     model_names = np.array([f"model{m}" for m in range(M)])
     category_names = np.array([f"cat{k}" for k in range(K)])

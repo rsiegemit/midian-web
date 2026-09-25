@@ -17,10 +17,10 @@ import sys
 import time
 from pathlib import Path
 
-RTE_DATA = Path(os.environ.get("RTE_DATA", "/scratch/rte"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from rte.config import RTE_DATA  # noqa: E402
 os.environ.setdefault("HF_HOME", str(RTE_DATA / "hf_cache"))
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from rte.backends.population import bands, ladder      # noqa: E402
 
 LADDER = bands(ladder())[0]                            # configs/models.yaml, the only model list

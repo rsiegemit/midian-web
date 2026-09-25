@@ -2,8 +2,8 @@
 # Build the RTE LLM env at $RTE_DATA/env/rte (python 3.12, vLLM + reasoning-gym + CPU deps).
 # Run on the LOGIN node (needs internet). Re-running re-pips into the same prefix.
 #
-# WHY venv AND NOT `conda create`: the Miniforge base interpreter at
-# /n/sw/Miniforge3-25.3.1-0 is already CPython 3.12.11, and `conda create` on this
+# WHY venv AND NOT `conda create`: the Miniforge base interpreter ($RTE_CONDA_SH's prefix) is
+# already CPython 3.12.11, and `conda create` on this
 # cluster serialises on an fcntl lock over the shared repodata cache -- with several
 # env builds running concurrently it died with
 # `BlockingIOError: [Errno 11] Resource temporarily unavailable` (build_env.log,
@@ -11,16 +11,16 @@
 # gives an identical `$RTE_DATA/env/rte/bin/python`. Set RTE_USE_CONDA=1 to force
 # the conda path instead.
 #
-# Pins come from the validated cu129 vLLM env at
-#   /scratch/vllm-env
+# Pins come from the validated cu129 vLLM env ($RTE_LLGUIDANCE_SRC's env)
 # (read-only reference; we do NOT reuse it -- it carries a patched vLLM scheduler overlay).
 # Set RTE_VLLM_FALLBACK=1 to `pip install vllm` from PyPI instead of the pinned wheel,
 # and record the resulting version in DEVIATIONS.md.
 set -euo pipefail
 
-export RTE_DATA="${RTE_DATA:-/scratch/rte}"
+: "${RTE_DATA:?RTE_DATA is not set}"
+export RTE_DATA
 ENV_PREFIX="$RTE_DATA/env/rte"
-CONDA_SH="${RTE_CONDA_SH:-/n/sw/Miniforge3-25.3.1-0/etc/profile.d/conda.sh}"
+CONDA_SH="${RTE_CONDA_SH:-$HOME/miniconda3/etc/profile.d/conda.sh}"
 [ -f "$CONDA_SH" ] || CONDA_SH="$HOME/miniconda3/etc/profile.d/conda.sh"
 BASE_PY="$(dirname "$(dirname "$CONDA_SH")")/../bin/python"     # <prefix>/etc/profile.d/.. -> <prefix>
 

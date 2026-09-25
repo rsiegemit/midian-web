@@ -1,67 +1,23 @@
 """v6.* entries: the framework shortlist variants (pre-registered TF-IDF, dedup, MiniLM embed, MIDIAN cohort) and the live
 10^5 peer-halving cells. Read straight from each grid's rows.csv / rows.d (<= 1,500 rows per grid; never through rte.analyze.load).
-    python scripts/fw_variant_numbers.py            # standalone: prints the entries
+    python scripts/analysis/fw_variant_numbers.py   # standalone: prints the entries
     from fw_variant_numbers import collect; collect(N)   # from paper_numbers.py
 Keys: v6.<variant>.n<n>.<dist>.<regime>.<framework|frameworks_mean|frameworks_best>  and  v6.halving_live.n100000.<regime>.seed<k>
 Regimes follow RESULTS: beta0 (liar-free, one cell), beta<x>_random, beta<x>_cartel (low_skill_first); the cartel at beta = 0.5 is 'cartel'."""
 from __future__ import annotations
-import glob, json, os
-import numpy as np, pandas as pd
+
+import os
 import sys
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from rte.methods import keys
 
-RTE_DATA = os.environ.get("RTE_DATA", "/scratch/rte"); R = f"{RTE_DATA}/results"
+import numpy as np
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+from scripts.figures.lib.grids import VARIANTS                                                                 # noqa: E402
+from scripts.figures.lib.regimes import tag as regime                                                          # noqa: E402
+from scripts.figures.lib.rows import load_fw as load, pending_reruns                                           # noqa: E402
+from scripts.figures.lib.stats import bootstrap_ci as ci                                                       # noqa: E402
+
 PENDING: set = set()
-VARIANTS = {                                   # variant -> [(grid, filter on params)]; the pre-registered arms are the tfidf rows of the source grids
-    "tfidf": [("fw_live_n100", "plain"), ("fw_live_n1000", "plain"), ("fw_live_n100_lowskill", "plain"), ("fw_live_n1000_lowskill", "plain"),
-              ("live_n10k_v2", "plain"), ("fw_live_n10k_cartel", "plain"), ("live_n100k", "plain")],
-    "dedup": [(g, "dedup") for g in ("fw_live_n100_dd", "fw_live_n1000_dd", "fw_live_n100_lowskill_dd", "fw_live_n1000_lowskill_dd", "fw_live_n10k_dd", "fw_live_n10k_cartel_dd", "fw_live_n100k_dd")],
-    "embed": [(g, "embed") for g in ("fw_live_n100_em", "fw_live_n1000_em", "fw_live_n100_lowskill_em", "fw_live_n1000_lowskill_em", "fw_live_n10k_em", "fw_live_n10k_cartel_em", "fw_live_n100k_em")],
-    "va_cohort": [(g, "midian") for g in ("fw_live_n100_verified_va", "fw_live_n100_verified_va_lowskill", "fw_live_n1000_verified_va", "fw_live_n1000_verified_va_lowskill",
-                                             "fw_live_n10k_verified_va", "fw_live_n10k_cartel_verified_va", "fw_live_n100k_verified_va")],
-    "v_cohort": [(g, "midian_wo_audit") for g in ("fw_live_n100_verified", "fw_live_n1000_verified")],
-}
-
-
-def load(grid):
-    rows = [{**json.load(open(f)), "rid": os.path.basename(f)[:-5]} for f in glob.glob(f"{R}/{grid}/rows.d/*.json")]   # the file name IS the rid
-    df = pd.DataFrame(rows) if rows else pd.DataFrame()
-    p = f"{R}/{grid}/rows.csv"
-    if os.path.exists(p): df = pd.concat([df, pd.read_csv(p, low_memory=False)], ignore_index=True)
-    if df.empty: return df
-    if "rid" in df: df = df.drop_duplicates("rid")
-    df["params"] = df.params.astype(str)
-    df = keys.normalize(df, f"{R}/{grid}")                              # old MIDIAN keys / cohort names -> current
-    return df.drop_duplicates([c for c in ("n", "b", "dist", "beta", "liar_select", "seed", "method", "params") if c in df])   # n, b: some grids hold several
-
-
-def pending_reruns():
-    """{(grid, framework, dist, regime)} whose erratum-28 rerun is still outstanding -- those numbers carry an asterisk.
-    Empty once finalize_stage2 has fired; the ablation grids stay pending between stage 1 and stage 2 (campaign_tick.sh)."""
-    p = f"{R}/quarantine_units.tsv"
-    if not os.path.exists(p) or os.path.exists(f"{RTE_DATA}/logs/DONE_stage2"): return set()
-    u = pd.read_csv(p, sep="\t")
-    if os.path.exists(f"{RTE_DATA}/logs/DONE_stage1"): u = u[u.grid.str.fullmatch(r"fw_live_n(1000|100)(_lowskill)?_sota")]
-    u = u[[not landed(*k) for k in zip(u.grid, u.method, u.dist, u.beta, u.liar_select, u.seed)]]   # a rerun on disk is not outstanding
-    return {(g, m, d, regime(b, l)) for g, m, d, b, l in zip(u.grid, u.method, u.dist, u.beta, u.liar_select)}
-
-
-def landed(grid, method, dist, beta, ls, seed, _c={}):
-    """True when every param variant of `method` in `grid` has a row for (dist, beta, liar_select, seed)."""
-    if grid not in _c:
-        import yaml, sys
-        sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-        from rte.run import blocks, method_specs
-        cfg = yaml.safe_load(open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "configs", "grid.yaml")))
-        want = {}
-        for blk in (blocks(cfg, grid) if grid in cfg["grids"] else []):
-            for sp in method_specs(blk): want.setdefault(sp["name"], set()).add(json.dumps(sp["params"], sort_keys=True, separators=(",", ":")))
-        df = load(grid)
-        have = df.groupby(["method", "dist", "beta", "liar_select", "seed"]).params.nunique().to_dict() if not df.empty else {}
-        _c[grid] = (want, have)
-    want, have = _c[grid]
-    return have.get((method, dist, float(beta), ls, int(seed)), 0) >= len(want.get(method, {None}))
 
 
 def select(df, kind):
@@ -71,19 +27,6 @@ def select(df, kind):
     if kind == "embed": return fw[fw.params.str.contains('"embed"')]
     if kind in ("midian", "midian_wo_audit"): return fw[fw.params.str.contains(f'"retrieval":"{kind}"') & fw.params.str.contains('"r":10')]   # a MIDIAN cohort
     raise ValueError(kind)
-
-
-def regime(beta, ls):
-    beta = float(beta)
-    if beta == 0: return "beta0"
-    tag = "cartel" if ls == "low_skill_first" else "random"
-    return "cartel" if (beta == 0.5 and tag == "cartel") else f"beta{beta:g}_{tag}".replace(".", "")
-
-
-def ci(x, B=2000, seed=0):
-    x = np.asarray(x, float); rng = np.random.default_rng(seed)
-    if len(x) < 2: return float(x.mean()), float(x.mean())
-    m = np.array([rng.choice(x, len(x)).mean() for _ in range(B)]); return float(np.percentile(m, 2.5)), float(np.percentile(m, 97.5))
 
 
 def entry(per_seed, grid, note=None):
@@ -100,7 +43,6 @@ def collect(N):
             fw = select(df, kind)
             if fw.empty: continue
             fw = fw.assign(regime=[regime(b, l) for b, l in zip(fw.beta, fw.liar_select)])
-            if variant == "tfidf" and grid == "live_n100k": pass
             for (n, dist, reg), q in fw.groupby(["n", "dist", "regime"]):
                 if reg == "beta0" and q.liar_select.nunique() > 1: q = q[q.liar_select == "random"]     # liar-free: one cell
                 base = f"v6.{variant}.n{int(n)}.{dist}.{reg}"

@@ -1,7 +1,8 @@
 #!/bin/bash
 # Cancel the 4-GPU fleets only once the 1-GPU replacements actually SERVE the supervisor, so there is never a window
 # with zero supervisor replicas (the 2026-09-19 outage). Polls endpoints.json; gives up after 12 h, leaving old ones up.
-export RTE_DATA=/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte
+. "$(dirname "$(readlink -f "$0")")/../env.sh"
+need RTE_DATA RTE_ACCOUNT
 NEW="47797868 47797875 47797886"; OLD="47315656 47315663 47626219"
 for i in $(seq 1 720); do
   up=$($RTE_DATA/env/rte/bin/python -c "

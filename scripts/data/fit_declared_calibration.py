@@ -1,5 +1,5 @@
 """Fit and validate the `calibrated` declared source (erratum 30): the live self-rating error pattern, for the non-live
-backends.   $RTE_DATA/env/rte/bin/python scripts/fit_declared_calibration.py
+backends.   $RTE_DATA/env/rte/bin/python scripts/data/fit_declared_calibration.py
 
 Model: D | S ~ the empirical distribution of the live self-rating D_self_described given S's decile (10 equal-width S bins
 x the 11 rating values the live models emit), i.i.d. per (agent, family). Fitted on the pooled live specialist n = 100 and
@@ -11,10 +11,11 @@ both are applied to the heavy_tail / bimodal populations as an out-of-sample tra
 import glob, os, sys
 import numpy as np
 from scipy import optimize, stats
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 from rte.backends import CAL_P, CAL_VALUES, cal_bin, calibrated_declared
 
-POP = os.path.join(os.environ["RTE_DATA"], "populations")
+from rte.config import RTE_DATA                                            # noqa: E402
+POP = os.path.join(RTE_DATA, "populations")
 
 
 def load(shape):

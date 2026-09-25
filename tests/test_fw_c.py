@@ -1,5 +1,5 @@
 """Frameworks-C rivals (smolagents, CAMEL, MetaGPT, AgentScope) driven through their own venvs against
-scripts/mock_openai_server.py: no GPU, no vLLM. A framework whose venv is missing is skipped, not failed."""
+scripts/checks/mock_openai_server.py: no GPU, no vLLM. A framework whose venv is missing is skipped, not failed."""
 from __future__ import annotations
 
 import os
@@ -37,7 +37,7 @@ def _build(method, **kw):
 @pytest.fixture(scope="module")
 def mock_url():
     port = next(p for p in range(8300, 8400) if socket.socket().connect_ex(("127.0.0.1", p)))
-    proc = subprocess.Popen([sys.executable, os.path.join(REPO, "scripts", "mock_openai_server.py"), str(port)],
+    proc = subprocess.Popen([sys.executable, os.path.join(REPO, "scripts", "checks", "mock_openai_server.py"), str(port)],
                             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     for _ in range(100):
         if socket.socket().connect_ex(("127.0.0.1", port)) == 0:
@@ -56,7 +56,7 @@ def test_picks_the_first_candidate(method, env, mock_url):
     """The mock always names the FIRST agent in the request. If the recipe really intercepts the
     framework's own selection, every route must land on cand[0] -- not merely somewhere in the top-k."""
     if not os.path.exists(os.path.join(RTE_DATA, "env", env, "bin", "python")):
-        pytest.skip(f"venv missing: $RTE_DATA/env/{env} (run scripts/fw_envs/{env[3:]}.sh)")
+        pytest.skip(f"venv missing: $RTE_DATA/env/{env} (run scripts/setup/fw_envs/{env[3:]}.sh)")
     M, w = _build(method, base_url=mock_url)
     try:
         for t in w.tasks(N_TASKS):

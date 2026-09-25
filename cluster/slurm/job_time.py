@@ -2,12 +2,13 @@
 results/job_sizing.csv (rebuilt from sacct). Rule (JDS, 2026-09-22): never a flat multi-day limit -- a flat 1-3 day
 limit on jobs whose median is minutes used 16 % of allocated time. p95s that sat at the old 24 h cap are censored, so
 those get 2 x p95. Floor 1 h, cap 3 days. Durations track FLEET LOAD, so rebuild the table when the fleet changes.
-    python scripts/job_time.py fw_live_n1000_sota fw_camel_workforce  ->  2-00:00:00"""
+    python cluster/slurm/job_time.py fw_live_n1000_sota fw_camel_workforce  ->  2-00:00:00"""
 import os, re, sys
 import pandas as pd
 
 def minutes(grid: str, method: str) -> int:
-    t = pd.read_csv(os.environ.get("RTE_DATA", "/scratch/rte") + "/results/job_sizing.csv")
+    from rte.config import RTE_DATA
+    t = pd.read_csv(f"{RTE_DATA}/results/job_sizing.csv")
     size = (re.search(r"fw_live_(n\d+k?)", grid) or [None, None])[1]
     row = t[(t["size"] == size) & (t["method"] == method)]
     if row.empty:                                        # unmeasured combination: the largest p95 seen for that size

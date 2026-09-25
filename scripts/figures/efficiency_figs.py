@@ -1,5 +1,6 @@
 """Efficiency figures C (appendix) and D (Figure 5); style, names and saving from scripts/figspec.py (docs/FIGURE_SPEC.md).
-    python scripts/efficiency_figs.py   -> figures/condensed_sample/{C_routing_work_vs_n,D_energy_per_query}.{png,pdf,csv}
+    python scripts/figures/efficiency_figs.py [--out DIR] [--refresh] [--from-csv]
+      -> <out>/{C_routing_work_vs_n,D_energy_per_query}.{png,pdf,csv}   (<out> = $RTE_FIG_OUT or figures/paper)
 Two figures, one panel each (they replace the old C paired-gap and D heatmap figures):
   C   routing work per query vs n (10^2..10^7, calibrated bernoulli, b = 3, honest; exact ledger counts: messages +
      comparisons per routed task): MIDIAN, MIDIAN w/o defenses, "any flat scan" (flat probe argmax, declared argmax and
@@ -7,55 +8,50 @@ Two figures, one panel each (they replace the old C paired-gap and D heatmap fig
      the log-log slope over n >= 10^3 (log n, n^s).
   D   energy per routed query vs queries served: (build J) / T + marginal J per query. MIDIAN at n = 10^3, 10^5, 10^7
      (its build probes from the same ledger); the frameworks' per-query supervisor energy (live n = 1,000 measurement,
-     scripts/energy.py) as a band. Energy model = scripts/energy.py (probe 4.04 J on specialist, 7B supervisor call
+     scripts/analysis/energy.py) as a band. Energy model = scripts/analysis/energy.py (probe 4.04 J on specialist, 7B supervisor call
      20.6 J, message 1e-3 J, comparison 1e-8 J; 700 W). The routed task's own execution is common to all and excluded.
-Costs come from bernoulli_scale_v5 rows, cached to figures/condensed_sample/cost_by_n.csv (delete it to re-read)."""
+Costs come from bernoulli_scale_v5 rows, cached to results/aggregates/cost_by_n.csv (--refresh re-reads the rows).
+--from-csv: C from that cache, D from results/aggregates/figures/D_energy_per_query.csv + refs.csv (no $RTE_DATA)."""
 from __future__ import annotations
-import os, sys
-import numpy as np, pandas as pd
+
+import argparse
+import os
+import shutil
+import sys
+
+import numpy as np
+import pandas as pd
 from matplotlib.lines import Line2D
 from matplotlib.patches import Patch
 from matplotlib.transforms import blended_transform_factory
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import figspec as S
-from seed_tables import label
-from rte.methods import keys
-from condensed_figs import BANDIT, LEARNED, NOT_RUNNABLE, OUT, POOLS
 
-R = os.environ.get("RTE_DATA", "/scratch/rte") + "/results"
-COST = f"{OUT}/cost_by_n.csv"
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))))
+from scripts.figures.condensed_figs import BANDIT, LEARNED, NOT_RUNNABLE, POOLS                               # noqa: E402
+from scripts.figures.lib import AGG, fig_out                                                                   # noqa: E402
+from scripts.figures.lib import figspec as S                                                                   # noqa: E402
+from scripts.figures.lib.grids import MATRICES, VA_GRIDS                                                       # noqa: E402
+from scripts.figures.lib.rows import label, read_rows                                                          # noqa: E402
+
+COST, DRAW = f"{AGG}/cost_by_n.csv", f"{AGG}/figures"
 COLS = ["n", "b", "beta", "method", "params", "messages_per_task", "comparisons_per_task", "build_probes", "build_messages"]
 FIXED = ["midian", "midian_wo_defenses", "flat_probe_argmax_online", "declared_argmax"]      # C: the lines; the pools as FLAT_SCAN / the band
 SHOW = set(FIXED) | set(LEARNED) | set(BANDIT)                                      # + every member of the two pools
 
 
-def costs():
-    if os.path.exists(COST): return pd.read_csv(COST)
-    parts = [c[((c.b == 3) | ((c.method == "midian") & (c.params == "{}"))) & (c.beta == 0)]   # MIDIAN at every b: D's build ledger
-             for c in (keys.normalize(c, f"{R}/bernoulli_scale_v5")
-                       for c in pd.read_csv(f"{R}/bernoulli_scale_v5/rows.csv", usecols=COLS, chunksize=500000, low_memory=False))]
-    d = pd.concat(parts, ignore_index=True)
+def costs(refresh=False):
+    if os.path.exists(COST) and not refresh: return pd.read_csv(COST)
+    keep = lambda c: c[((c.b == 3) | ((c.method == "midian") & (c.params == "{}"))) & (c.beta == 0)]   # MIDIAN at every b: D's build ledger
+    d = read_rows(MATRICES["bernoulli"], COLS, where=keep, rowsd=False).reset_index(drop=True)
     d["label"] = [label(m, str(p)) for m, p in zip(d.method, d.params)]
     d = d[d.label.isin(list(SHOW))].groupby(["label", "n", "b"])[COLS[5:]].median().reset_index()
     d.to_csv(COST, index=False); return d
-
-
-VA_GRIDS = ["va_b_bernoulli_1e7", "va_b_n1000", "va_b_n100k", "fw_live_n1000", "live_n100k"]   # exact MIDIAN build ledgers by (n, b)
 
 
 def va_build(d):
     """{(n, b): (build probes, source)} for MIDIAN at n = 10^3, 10^5, 10^7 and b = 1, 3, 5, from the exact ledger
     wherever that cell ran (the live / va_b grids first, then the bernoulli sweep); else the measured build / (n K b)
     ratio at that b (no cell needs it today)."""
-    import glob, json
-    fr = []
-    for g in VA_GRIDS:
-        fr += [keys.normalize(pd.DataFrame([{**json.load(open(f)), "rid": os.path.basename(f)[:-5]} for f in glob.glob(f"{R}/{g}/rows.d/*.json")]), f"{R}/{g}")]
-        if os.path.exists(f"{R}/{g}/rows.csv"):
-            head = pd.read_csv(f"{R}/{g}/rows.csv", nrows=0).columns
-            fr.append(keys.normalize(pd.read_csv(f"{R}/{g}/rows.csv", usecols=[c for c in ("rid", "n", "b", "method", "params", "build_probes") if c in head],
-                                                 low_memory=False), f"{R}/{g}"))
-    L = pd.concat([f for f in fr if not f.empty])
+    L = pd.concat([f for f in (read_rows(g, ("rid", "n", "b", "method", "params", "build_probes")) for g in VA_GRIDS) if not f.empty])
     L = L.drop_duplicates("rid")                                             # a row can sit in both rows.d and rows.csv
     L = L[(L.method == "midian") & (L.params.fillna("{}").astype(str) == "{}")].groupby(["n", "b"]).build_probes.median()   # the full method
     for (n, b), v in d[d.label == "midian"].set_index(["n", "b"]).build_probes.items(): L.loc[(n, b)] = L.get((n, b), v)
@@ -110,41 +106,74 @@ def draw_C(ax, d):
 N_SHADE = {1000: 1, 100000: 3, 10 ** 7: 5}                 # n = 10^3 light, 10^5 mid, 10^7 dark (figspec.shade levels)
 
 
-def draw_D(ax, d):
-    import energy
-    from doc_tables import NAMES
+def compute_D(d):
+    """D's table (one row per (n, b, framework edge)) and the names of the cheapest / costliest framework."""
+    from scripts.analysis import energy
     fw = energy.table(); fw = fw[fw.index.str.startswith("fw_") & ~fw.index.str.contains("supervisor")]
     fwJ = fw.per_task_J                                  # supervisor call energy + the framework's messages / comparisons
     PJ = energy.probe_cost["specialist"] * 700
-    T = np.logspace(2, 9, 200); rec = []
-    ax.fill_between(T, fwJ.min(), fwJ.max(), color=S.COLOR["fw_band"], lw=0, zorder=1)
-    edge = blended_transform_factory(ax.transAxes, ax.transData)
-    for v, m in ((fwJ.min(), fwJ.idxmin()), (fwJ.max(), fwJ.idxmax())):     # both edges drawn and named at the right margin
-        ax.axhline(v, color=S.COLOR["grey"], lw=0.6, zorder=2)
-        ax.text(1.01, v, f"{NAMES.get(m, m)}, {v:.3g} J", transform=edge, va="center", ha="left", fontsize=8)
+    rec = []
     va = d[(d.label == "midian") & (d.b == 3)].set_index("n"); VB = va_build(d)
-    for n, lvl in N_SHADE.items():
+    for n in N_SHADE:
         r = va.loc[n]; marg = r.messages_per_task * energy.J_MSG + r.comparisons_per_task * energy.J_CMP
-        for b, ls in S.B_LINESTYLE.items():
+        for b in S.B_LINESTYLE:
             probes, src = VB[(n, b)]
             build = probes * PJ + r.build_messages * energy.J_MSG          # build messages: the b = 3 ledger (a rounding term)
-            ax.plot(T, build / T + marg, ls, lw=1.2, color=S.shade(S.COLOR["midian"], lvl), zorder=3)
             for lo, hi in ((fwJ.min(), "cheapest"), (fwJ.max(), "costliest")):
-                t = build / (lo - marg); ax.plot(t, lo, "x", color="black", ms=3, zorder=5)
-                rec.append(dict(n=n, b=b, build_probes=probes, build_source=src, build_J=build, marginal_J=marg, vs=hi, fw_J=lo, break_even_queries=t))
+                rec.append(dict(n=n, b=b, build_probes=probes, build_source=src, build_J=build, marginal_J=marg, vs=hi, fw_J=lo,
+                                break_even_queries=build / (lo - marg)))
+    refs = pd.DataFrame([dict(figure="D_energy_per_query", key=k, value=v, text=S.FW_NAME.get(m, m))
+                         for k, v, m in (("cheapest", fwJ.min(), fwJ.idxmin()), ("costliest", fwJ.max(), fwJ.idxmax()))])
+    return pd.DataFrame(rec), refs
+
+
+def render_D(ax, rec, refs):
+    """The framework band with both edges named, MIDIAN's (build J) / T + marginal J per (n, b), break-evens as x."""
+    T = np.logspace(2, 9, 200)
+    e = refs.set_index("key")
+    ax.fill_between(T, e.value["cheapest"], e.value["costliest"], color=S.COLOR["fw_band"], lw=0, zorder=1)
+    edge = blended_transform_factory(ax.transAxes, ax.transData)
+    for k in ("cheapest", "costliest"):                  # both edges drawn and named at the right margin
+        v = e.value[k]
+        ax.axhline(v, color=S.COLOR["grey"], lw=0.6, zorder=2)
+        ax.text(1.01, v, f"{e.text[k]}, {v:.3g} J", transform=edge, va="center", ha="left", fontsize=8)
+    for i in range(0, len(rec), 2):                      # one curve per (n, b), then its two break-evens
+        r = rec.iloc[i]
+        ax.plot(T, r.build_J / T + r.marginal_J, S.B_LINESTYLE[int(r.b)], lw=1.2, color=S.shade(S.COLOR["midian"], N_SHADE[int(r.n)]), zorder=3)
+        for _, q in rec.iloc[i:i + 2].iterrows():
+            ax.plot(q.break_even_queries, q.fw_J, "x", color="black", ms=3, zorder=5)
     ax.set_xscale("log"); ax.set_yscale("log"); ax.set_xlim(T[0], T[-1])
     ax.set_ylim(1e-6, None)                              # room below the curves for the legend (bottom left)
     S.finish(ax, ylabel=S.AXIS["energy"], xlabel=S.AXIS["T"])
     hs = [Line2D([], [], color=S.shade(S.COLOR["midian"], lvl), lw=2.5) for lvl in N_SHADE.values()] + \
          [Line2D([], [], color="black", ls=ls, lw=1.2) for ls in S.B_LINESTYLE.values()]
     S.legend(ax, [], labels=[S.pow10(n, "n") for n in N_SHADE] + [f"b = {b}" for b in S.B_LINESTYLE], handles=hs, where="lower left", ncol=2, labelspacing=0.2, borderaxespad=0.2)
-    return pd.DataFrame(rec)
 
 
-def fig(draw, name, d, kind):
-    f, ax = S.figure(kind)
-    draw(ax, d).to_csv(f"{OUT}/{name}.csv", index=False); S.save(f, name, OUT)
+def main(argv=None):
+    p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    p.add_argument("--out", help="output directory (default: $RTE_FIG_OUT or figures/paper)")
+    p.add_argument("--refresh", action="store_true", help="re-read the bernoulli rows into results/aggregates/cost_by_n.csv")
+    p.add_argument("--from-csv", action="store_true", help="draw from results/aggregates only")
+    a = p.parse_args(argv)
+    out = fig_out(a.out)
+    d = costs(a.refresh and not a.from_csv)
+    f, ax = S.figure("appendix")
+    draw_C(ax, d).to_csv(f"{out}/C_routing_work_vs_n.csv", index=False); S.save(f, "C_routing_work_vs_n", out)
+    name, refs_csv = "D_energy_per_query", f"{DRAW}/refs.csv"
+    if a.from_csv:
+        rec, refs = pd.read_csv(f"{DRAW}/{name}.csv"), pd.read_csv(refs_csv)
+        refs = refs[refs.figure == name]
+        shutil.copyfile(f"{DRAW}/{name}.csv", f"{out}/{name}.csv")
+    else:
+        rec, refs = compute_D(d)
+        os.makedirs(DRAW, exist_ok=True)
+        rec.to_csv(f"{out}/{name}.csv", index=False); rec.to_csv(f"{DRAW}/{name}.csv", index=False)
+        old = pd.read_csv(refs_csv) if os.path.exists(refs_csv) else pd.DataFrame(columns=refs.columns)
+        pd.concat([old[old.figure != name], refs], ignore_index=True).to_csv(refs_csv, index=False)
+    f, ax = S.figure("d")
+    render_D(ax, rec, refs); S.save(f, name, out)
 
 
 if __name__ == "__main__":
-    d = costs(); fig(draw_C, "C_routing_work_vs_n", d, "appendix"); fig(draw_D, "D_energy_per_query", d, "d")
+    main()

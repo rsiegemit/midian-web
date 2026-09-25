@@ -1,8 +1,10 @@
 #!/bin/bash
 # Compute-node half of finalize: re-audit, and ONLY if clean, regenerate every reported artefact from the corrected rows.
 set -x
-export RTE_DATA=/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte PYTHONPATH=/n/home02/rsiegelmann/rte MPLBACKEND=Agg
-PY=$RTE_DATA/env/rte/bin/python; cd /n/home02/rsiegelmann/rte
+. "$(dirname "$(readlink -f "$0")")/../env.sh"
+need RTE_DATA RTE_ACCOUNT
+export PYTHONPATH="$RTE_REPO" MPLBACKEND=Agg
+PY=$RTE_DATA/env/rte/bin/python; cd "$RTE_REPO"
 $PY scripts/ops/quarantine_fallback_rows.py > $RTE_DATA/logs/final_audit.log 2>&1
 grep -q "WOULD QUARANTINE 0 rows" $RTE_DATA/logs/final_audit.log || { echo "CONTAMINATION RECURRED -- not regenerating"; cat $RTE_DATA/logs/final_audit.log; exit 3; }
 echo AUDIT_CLEAN

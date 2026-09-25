@@ -1,33 +1,31 @@
 """The framework-shortlist tables the write-ups quote, generated from the rows so the docs can be verified against them.
-    python scripts/doc_tables.py             # print every table (markdown)
-    python scripts/doc_tables.py --verify    # every generated table row must appear verbatim in RESULTS.md; exit 1 otherwise
-    python scripts/doc_tables.py --sync      # rewrite every <!-- doc_tables:NAME --> ... <!-- /doc_tables --> block in RESULTS.md
+    python scripts/analysis/doc_tables.py             # print every table (markdown)
+    python scripts/analysis/doc_tables.py --verify    # every generated table row must appear verbatim in RESULTS.md; exit 1 otherwise
+    python scripts/analysis/doc_tables.py --sync      # rewrite every <!-- doc_tables:NAME --> ... <!-- /doc_tables --> block in RESULTS.md
 Sources: the pre-registered TF-IDF rows (source grids), dedup (_dd), MiniLM (_em), MIDIAN w/o audits cohort (_verified), MIDIAN
 cohort (_verified_va*). Cells: frameworks pooled (mean of per-framework seed means) and the best single framework. Asterisks mark
-cells whose framework set is incomplete (a framework with fewer seeds than the cell has) or that still has an erratum-28 rerun outstanding."""
+cells whose framework set is incomplete (a framework with fewer seeds than the cell has) or that still has an erratum-28 rerun outstanding.
+Nothing is read at import; the grid registry is scripts/figures/lib/grids.py (SHORTLIST_SOURCES, NINE, DOC_REF*)."""
 from __future__ import annotations
-import os, re, sys
-import numpy as np, pandas as pd
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from fw_variant_numbers import load, select, regime, pending_reruns, RTE_DATA
 
-R = f"{RTE_DATA}/results"
-NAMES = {"fw_google_adk": "Google ADK", "fw_crewai": "CrewAI", "fw_magentic_one": "Magentic-One", "fw_openai_agents": "OpenAI Agents",
-         "fw_llamaindex": "LlamaIndex", "fw_langgraph": "LangGraph", "fw_autogen": "AutoGen", "fw_camel_workforce": "CAMEL", "fw_maf": "MAF", "fw_smolagents": "smolagents"}
-SOURCES = [("TF-IDF (pre-registered)", "plain", {100: "fw_live_n100", 1000: "fw_live_n1000", 10000: "live_n10k_v2", 100000: "live_n100k"},
-            {100: "fw_live_n100_lowskill", 1000: "fw_live_n1000_lowskill", 10000: "fw_live_n10k_cartel", 100000: "live_n100k"}),
-           ("dedup", "dedup", {100: "fw_live_n100_dd", 1000: "fw_live_n1000_dd", 10000: "fw_live_n10k_dd", 100000: "fw_live_n100k_dd"},
-            {100: "fw_live_n100_lowskill_dd", 1000: "fw_live_n1000_lowskill_dd", 10000: "fw_live_n10k_cartel_dd", 100000: "fw_live_n100k_dd"}),
-           ("MiniLM", "embed", {100: "fw_live_n100_em", 1000: "fw_live_n1000_em", 10000: "fw_live_n10k_em", 100000: "fw_live_n100k_em"},
-            {100: "fw_live_n100_lowskill_em", 1000: "fw_live_n1000_lowskill_em", 10000: "fw_live_n10k_cartel_em", 100000: "fw_live_n100k_em"}),
-           ("MIDIAN w/o audits cohort", "midian_wo_audit", {100: "fw_live_n100_verified", 1000: "fw_live_n1000_verified"}, {}),
-           ("MIDIAN cohort", "midian", {100: "fw_live_n100_verified_va", 1000: "fw_live_n1000_verified_va", 10000: "fw_live_n10k_verified_va", 100000: "fw_live_n100k_verified_va"},
-            {100: "fw_live_n100_verified_va_lowskill", 1000: "fw_live_n1000_verified_va_lowskill", 10000: "fw_live_n10k_cartel_verified_va", 100000: "fw_live_n100k_verified_va"})]
-NINE = {"fw_live_n10k_cartel", "fw_live_n10k_cartel_dd", "fw_live_n10k_cartel_em", "fw_live_n10k_cartel_verified_va"}   # Magentic-One excluded there by design
-REF = {100: "fw_live_n100", 1000: "fw_live_n1000", 10000: "live_n10k_v2", 100000: "live_n100k"}
-REF_CARTEL = {100: "fw_live_n100_lowskill", 1000: "fw_live_n1000_lowskill", 10000: "learned_n10k", 100000: "live_n100k"}
+import argparse
+import functools
+import os
+import re
+import sys
+
+import numpy as np
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+from scripts.analysis.fw_variant_numbers import load, pending_reruns, regime, select                          # noqa: E402
+from scripts.figures.lib import ROOT                                                                           # noqa: E402
+from scripts.figures.lib.figspec import FW_NAME as NAMES                                                       # noqa: E402
+from scripts.figures.lib.grids import DOC_REF as REF, DOC_REF_CARTEL as REF_CARTEL, NINE                       # noqa: E402
+from scripts.figures.lib.grids import SHORTLIST_SOURCES as SOURCES                                             # noqa: E402
+
+DOC = os.path.join(ROOT, "RESULTS.md")
 _cache = {}
-PENDING = pending_reruns()
+PENDING = functools.cache(pending_reruns)                   # read on first use, never at import
 
 
 def fw_rows(grid, kind):
@@ -41,7 +39,7 @@ def cell(fw, dist, reg, expected=10):
     if reg == "beta0" and q.liar_select.nunique() > 1: q = q[q.liar_select == "random"]   # liar-free: the random cell, once
     if q.empty: return None
     per = q.groupby(["method", "seed"]).success.mean().unstack(0)
-    pend = any((g, m, dist, reg) in PENDING for g, m in zip(q.grid, q.method))
+    pend = any((g, m, dist, reg) in PENDING() for g, m in zip(q.grid, q.method))
     star = "*" if per.isna().any().any() or per.shape[1] < expected or pend else ""
     return per.mean(axis=1).mean(), per.mean().max(), NAMES.get(per.mean().idxmax(), per.mean().idxmax()), star
 
@@ -82,7 +80,7 @@ def per_framework_table(n=100000, dist="specialist"):
             if reg == "honest" and q.liar_select.nunique() > 1: q = q[q.liar_select == "random"]
             if q.empty: continue
             r = "beta0" if reg == "honest" else "cartel"
-            cols.append((f"{name}, {reg}", q.groupby("method").success.mean(), q.groupby("method").seed.nunique(), {m for m in q.method.unique() if (g, m, dist, r) in PENDING}))
+            cols.append((f"{name}, {reg}", q.groupby("method").success.mean(), q.groupby("method").seed.nunique(), {m for m in q.method.unique() if (g, m, dist, r) in PENDING()}))
     frameworks = sorted({m for _, s, _, _ in cols for m in s.index}, key=lambda m: -cols[-1][1].get(m, 0))
     lines = ["| framework | " + " | ".join(c[0] for c in cols) + " |", "|---|" + "---|" * len(cols)]
     for m in frameworks:
@@ -115,8 +113,6 @@ TABLES = {"shortlist_specialist": lambda: shortlist_table("specialist"), "shortl
           "shortlist_bimodal": lambda: shortlist_table("bimodal"), "per_framework_1e5": lambda: per_framework_table(100000),
           "per_framework_1e3": lambda: per_framework_table(1000), "per_framework_1e2": lambda: per_framework_table(100), "halving_live": halving_table}
 
-DOC = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "RESULTS.md")
-
 
 def sync():
     doc = open(DOC).read(); n = 0
@@ -126,14 +122,28 @@ def sync():
     open(DOC, "w").write(doc); print(f"synced {n} table blocks in RESULTS.md")
 
 
-if __name__ == "__main__":
-    if "--sync" in sys.argv: sync(); sys.exit(0)
-    verify = "--verify" in sys.argv
-    doc = open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "RESULTS.md")).read() if verify else ""
+def main(argv=None):
+    p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    g = p.add_mutually_exclusive_group()
+    g.add_argument("--verify", action="store_true", help="every generated table row must appear verbatim in RESULTS.md")
+    g.add_argument("--sync", action="store_true", help="rewrite the doc_tables blocks in RESULTS.md")
+    a = p.parse_args(argv)
+    if a.sync:
+        return sync()
+    doc = open(DOC).read() if a.verify else ""
     bad = 0
     for name, fn in TABLES.items():
-        t = fn(); print(f"\n### {name}\n{t}")
-        if verify:
+        t = fn()
+        print(f"\n### {name}\n{t}")
+        if a.verify:
             for row in t.splitlines()[2:]:
-                if row not in doc: print(f"  MISSING IN RESULTS.md: {row[:90]}"); bad += 1
-    if verify: print(f"\n{'OK: every table row is in RESULTS.md' if not bad else f'{bad} rows differ from RESULTS.md'}"); sys.exit(1 if bad else 0)
+                if row not in doc:
+                    print(f"  MISSING IN RESULTS.md: {row[:90]}")
+                    bad += 1
+    if a.verify:
+        print(f"\n{'OK: every table row is in RESULTS.md' if not bad else f'{bad} rows differ from RESULTS.md'}")
+        sys.exit(1 if bad else 0)
+
+
+if __name__ == "__main__":
+    main()

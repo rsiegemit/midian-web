@@ -1,15 +1,23 @@
-"""Runtime/energy ESTIMATE (*) per method from LLM-call counts x measured per-call GPU cost.  python scripts/energy.py
+"""Runtime/energy ESTIMATE (*) per method from LLM-call counts x measured per-call GPU cost.
+    python scripts/analysis/energy.py      -> RESULTS_energy.md (tables and crossings; the H10 / H11 figures are retired)
 Wall-clock in the rows is not used for probe methods (memo hits). Model: GPU-seconds per call = params_b * (A*prompt_tok + B*gen_tok),
 B = 5A (decode is ~5x prefill per token on H100/vLLM), A calibrated so a 7B supervisor call (1,900 prompt + 65 gen tokens) costs
 1/34 GPU-s = the throughput measured on the saturated 1-GPU 7B replicas (2026-09-03, 4 samples, 32-36 req/s). Energy = GPU-s * W."""
-import glob, json, os, yaml, numpy as np, pandas as pd, matplotlib; matplotlib.use("Agg"); import matplotlib.pyplot as plt
-R = os.environ.get("RTE_DATA", "/scratch/rte") + "/results"
+import os
+import sys
+
+import numpy as np
+import pandas as pd
+import yaml
+
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, ROOT)
 REQ_PER_S_7B, SUP_TOK = 34.0, (1900, 65)                          # measured: saturated 1-GPU 7B replica; supervisor prompt/gen tokens
 A = (1 / REQ_PER_S_7B) / (7.0 * (SUP_TOK[0] + 5 * SUP_TOK[1])); B = 5 * A
 WATTS = {"700 W (H100 TDP)": 700, "400 W (typical draw)": 400}
 J_MSG, J_CMP, RTT, T_CMP, PROBE_LAT = 1e-3, 1e-8, 1e-3, 1e-8, 0.3    # J per message, J per comparison, s per hop, s per comparison, s per route-time probe call
 DEPTH = 3                                                             # MIDIAN tree depth at n=1000, r=10: the observe-time update sends 1 message per level, OFF the critical path
-LADDER = yaml.safe_load(open(os.path.dirname(__file__) + "/../configs/models.yaml"))["models"]; P = {m["id"]: m["params_b"] for m in LADDER}
+LADDER = yaml.safe_load(open(os.path.join(ROOT, "configs", "models.yaml")))["models"]; P = {m["id"]: m["params_b"] for m in LADDER}
 PROBE_TOK = {"Qwen/Qwen2.5-0.5B-Instruct": (96, 12), "Qwen/Qwen2.5-1.5B-Instruct": (101, 66), "google/gemma-2-2b-it": (115, 15),   # measured per-server lifetime means
              "Qwen/Qwen2.5-3B-Instruct": (294, 86), "Qwen/Qwen2.5-7B-Instruct": (294, 86), "google/gemma-2-9b-it": (158, 33), "Qwen/Qwen2.5-14B-Instruct": (294, 86)}  # 7B/14B: 3B proxy (tool-enabled)
 small, big = [m for m in P if P[m] <= 1.5], [m for m in P if P[m] >= 7.0]
@@ -91,43 +99,5 @@ if __name__ == "__main__":
            f"{a}: " + ", ".join(f"{b.replace('fw_', '')} {crossing(t, a, b, 'build_J', 'per_task_J'):,.0f}" for b in fws) for a in mids) + ".",
            "Under any sane weighting the LLM call dominates energy by 3-5 orders of magnitude (20.6 J per supervisor call vs 6e-3 J for the six messages of MIDIAN w/o defenses and 3e-7 J for its thirty comparisons per task), so the joule crossings equal the GPU-second crossings to the task; "
            "messages dominate the latency of MIDIAN w/o defenses (6 ms of fetch hops vs 0.6 us of comparisons) while the supervisor call dominates every framework's (0.5-19 s)."]
-    open(os.path.dirname(__file__) + "/../RESULTS_energy.md", "w").write("\n".join(md) + "\n")
-    T = np.logspace(2, 5, 300); fig, axes = plt.subplots(2, 2, figsize=(15, 11)); axes = axes.ravel()
-    show = ["midian_wo_defenses", "midian_wo_verify", "midian_wo_audit", 'sequential_halving{"peer_reported":true}', 'flat_probe_argmax{"online":true}', "linucb_honest", "verify_on_claim", "llm_supervisor"] + fws
-    from extra_figs import excluded; show = [l for l in show if not excluded(l)]
-    style = {"midian_wo_defenses": ("#c0392b", 3.0), "midian_wo_verify": ("#e74c3c", 2.2), "midian_wo_audit": ("#e67e22", 2.2), "fw_autogen": ("#2980b9", 2.0), "fw_magentic_one": ("#8e44ad", 2.0)}
-    panels = [("build_gpu_s", "per_task_gpu_s", 1.0, "cumulative LLM GPU-seconds"), ("build_gpu_s", "per_task_gpu_s", 700 / 3600, "cumulative Wh (700 W per H100)"),
-              ("build_msgs", "msgs_per_task", 1.0, "cumulative messages"), ("build_cmp", "cmp_per_task", 1.0, "cumulative comparisons")]
-    for ax, (bcol, scol, scale, yl) in zip(axes, panels):
-        for m in show:
-            r = t.loc[m]; col, lw = style.get(m, (None, 1.0)); y = (r[bcol] + T * r[scol]) * scale
-            if y.max() <= 0: continue                                                            # zero-cost arms are off a log axis
-            ax.plot(T, y, label=m, color=col, lw=lw, ls="-" if not m.startswith("fw_") or m in style else "--")
-        ax.set_xscale("log"); ax.set_yscale("log"); ax.set_xlabel("tasks routed so far (t)"); ax.set_ylabel(yl); ax.grid(alpha=.3, which="both")
-    for i, b in enumerate(("fw_magentic_one", "fw_crewai", "fw_langgraph", "fw_autogen")):           # MIDIAN w/o defenses' break-even points, LLM compute
-        x = crossing(t, "midian_wo_defenses", b); y = t.loc["midian_wo_defenses", "build_gpu_s"]
-        axes[0].plot([x], [y], "kx", ms=10, mew=2); axes[0].annotate(f"{b.replace('fw_', '')}: {x:,.0f} tasks", (x, y), textcoords="offset points", xytext=(4, -14 - 11 * i), fontsize=8)
-    for i, a_ in enumerate(("midian_wo_defenses", "midian_wo_audit")):                                                 # messages: MIDIAN w/o defenses vs a framework crosses almost at once
-        x = max(crossing(t, a_, "fw_autogen", "build_msgs", "msgs_per_task"), T[0]); y = t.loc[a_, "build_msgs"] + x * t.loc[a_, "msgs_per_task"]
-        axes[2].plot([x], [y], "kx", ms=10, mew=2); axes[2].annotate(f"{a_} vs any framework: t={crossing(t, a_, 'fw_autogen', 'build_msgs', 'msgs_per_task'):.0f}", (x, y), textcoords="offset points", xytext=(8, 14 + 16 * i), fontsize=8)
-    axes[0].set_title("LLM compute (x = the break-even of MIDIAN w/o defenses vs a framework)"); axes[1].set_title("energy"); axes[2].set_title("messages: frameworks 1,000+12t, MIDIAN w/o defenses 1,010+9t, MIDIAN w/o audits 1,010+5t\n(2 per level to fetch + 1 per level to update; flat, halving, LinUCB send none)", fontsize=10); axes[2].set_ylim(bottom=5e2); axes[3].set_title("comparisons per task: flat 1,000, MIDIAN w/o defenses 60 (30 descent + 30 update), MIDIAN w/o audits 31,\nframeworks 10, halving 1", fontsize=10)
-    h, l = axes[0].get_legend_handles_labels(); fig.legend(h, l, rank="asc", loc="center left", bbox_to_anchor=(1.0, 0.5), fontsize=7, title="dashed = frameworks;\nflat frozen, warm-start coincide with\nmidian_wo_defenses / midian_wo_verify", title_fontsize=7)
-    fig.suptitle("H10*  Cumulative cost vs tasks routed, n=1000 specialist, self-described channel. LLM compute is an estimate: GPU-s per call = params x (A*prompt + 5A*gen tokens),\n"
-                 "A from a saturated 7B replica (34 req/s); 700 W per H100; the routed task's own execution excluded. Messages and comparisons are exact ledger counts from the rows.", fontsize=9)
-    plt.tight_layout(); plt.savefig(os.path.dirname(__file__) + "/../figures/H10_runtime_energy.png", dpi=300, bbox_inches="tight")
+    open(os.path.join(ROOT, "RESULTS_energy.md"), "w").write("\n".join(md) + "\n")
     print(t.round(4).to_string()); print({a: {b: round(crossing(t, a, b)) for b in fws} for a in mids})
-    # ---- H11: combined currencies
-    fig2, ax2 = plt.subplots(1, 2, figsize=(15, 6))
-    for m in show:
-        r = t.loc[m]; col, lw = style.get(m, (None, 1.0)); ax2[0].plot(T, r.build_J + T * r.per_task_J, label=m, color=col, lw=lw, ls="-" if not m.startswith("fw_") or m in style else "--")
-    for i, b in enumerate(("fw_magentic_one", "fw_crewai", "fw_autogen")):
-        x = crossing(t, "midian_wo_defenses", b, "build_J", "per_task_J"); y = t.loc["midian_wo_defenses", "build_J"] + x * t.loc["midian_wo_defenses", "per_task_J"]
-        ax2[0].plot([x], [y], "kx", ms=10, mew=2); ax2[0].annotate(f"{b.replace('fw_', '')}: {x:,.0f}", (x, y), textcoords="offset points", xytext=(4, -14 - 11 * i), fontsize=8)
-    ax2[0].set_xscale("log"); ax2[0].set_yscale("log"); ax2[0].set_xlabel("tasks routed so far (t)"); ax2[0].set_ylabel("cumulative joules (LLM + messages + comparisons)"); ax2[0].grid(alpha=.3, which="both")
-    ax2[0].set_title("one energy currency: LLM call = GPU-s x 700 W, message 1e-3 J, comparison 1e-8 J")
-    lat = t.loc[show, "latency_s"].sort_values(); ax2[1].barh(range(len(lat)), lat.values, color=[style.get(m, ("#7f8c8d", 1))[0] or "#7f8c8d" for m in lat.index])
-    ax2[1].set_yticks(range(len(lat))); ax2[1].set_yticklabels(lat.index, fontsize=8); ax2[1].set_xscale("log"); ax2[1].set_xlabel("critical-path latency per task (s)"); ax2[1].grid(axis="x", alpha=.3, which="both")
-    ax2[1].set_title("latency: 1 ms per sequential hop, 10 ns per comparison, supervisor call at measured median")
-    h2, l2 = ax2[0].get_legend_handles_labels(); fig2.legend(h2, l2, rank="asc", loc="center left", bbox_to_anchor=(1.0, 0.5), fontsize=7)
-    fig2.suptitle("H11*  Combined currencies, n=1000 specialist: cumulative joules vs tasks routed (x = the break-even of MIDIAN w/o defenses) and per-task critical-path latency", fontsize=10)
-    plt.tight_layout(); fig2.savefig(os.path.dirname(__file__) + "/../figures/H11_joules_latency.png", dpi=300, bbox_inches="tight")

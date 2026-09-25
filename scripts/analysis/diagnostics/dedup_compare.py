@@ -6,7 +6,9 @@ bootstrap, and how many cells had every framework byte-identical (the clone sign
 from __future__ import annotations
 import glob, json, os, sys
 import numpy as np, pandas as pd
-R = os.environ.get("RTE_DATA", "/scratch/rte") + "/results"
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
+from rte.config import RTE_DATA  # noqa: E402
+R = f"{RTE_DATA}/results"
 SRC = {"fw_live_n1000_dd": "fw_live_n1000", "fw_live_n100_dd": "fw_live_n100", "fw_live_n1000_lowskill_dd": "fw_live_n1000_lowskill",
        "fw_live_n100_lowskill_dd": "fw_live_n100_lowskill", "fw_live_n10k_dd": "live_n10k_v2", "fw_live_n100k_dd": "live_n100k",
        "fw_live_n10k_cartel_dd": "fw_live_n10k_cartel", "fw_k_sensitivity_dd": "fw_k_sensitivity", "fw_appendix_dd": "fw_appendix",
