@@ -1,0 +1,6 @@
+# Left out of `git archive`, hence of the anonymous export (scripts/export_anonymous.sh).
+cluster export-ignore
+cluster/** export-ignore
+scripts/checks/anonymity_patterns.txt export-ignore
+.gitattributes export-ignore
+tests/golden/parity_baseline.json export-ignore

@@ -1,0 +1,15 @@
+cff-version: 1.2.0
+message: "If you use this benchmark or MIDIAN, please cite the paper below."
+title: "RTE / MIDIAN: a benchmark for routing tasks among agents that may misreport their skill"
+authors:
+  - name: "Anonymous Authors"
+license: MIT
+preferred-citation:
+  type: conference-paper
+  title: "Anonymous ICLR 2027 submission"
+  authors:
+    - name: "Anonymous Authors"
+  conference:
+    name: "International Conference on Learning Representations (ICLR)"
+  year: 2027
+  notes: "Under review. Title and authors are placeholders until de-anonymization."

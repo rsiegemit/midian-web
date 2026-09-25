@@ -4,7 +4,7 @@ Names: dated entries keep the method names of their day, with the 2026-09-24 nam
 each entry (CHANGES_AND_ERRATA §8g): plain MIDIAN is now MIDIAN w/o defenses, MIDIAN-V is MIDIAN w/o audits, MIDIAN-A is
 MIDIAN w/o verification, MIDIAN-VA is MIDIAN; MIDIAN-SH / SHA are withdrawn. The last entry records the rename.
 
-- 2026-09-02: cluster is NVIDIA/CUDA (FAS RC), not ROCm; `VLLM_ROCM_USE_AITER=0` is irrelevant here.
+- 2026-09-02: cluster is NVIDIA/CUDA (university HPC cluster), not ROCm; `VLLM_ROCM_USE_AITER=0` is irrelevant here.
 - 2026-09-02: declared-channel lie uses `clip(D_honest + 0.4)` (so it "inflates on top" of the self-described channel too);
   for `programmatic` D_honest = S + N(0,0.05) this is the spec's `clip(S + 0.4)` up to the declaration noise.
 - 2026-09-02: `skill_excess_ratio` (per-agent-mean variance / binomial floor) is structurally ~0 for `specialist`
@@ -189,9 +189,9 @@ MIDIAN w/o verification, MIDIAN-VA is MIDIAN; MIDIAN-SH / SHA are withdrawn. The
 - 2026-09-02 (runner): `bernoulli_scale` uses b=1 at n >= 1e6 (n*K*b at 1e7 x 64 x 3 is 1.9e9
   probe draws). `backend_kwargs.calibrate_from` falls back to sampling `dist` directly with a loud
   warning when the measured-S file is absent; those points must be labelled uncalibrated.
-- 2026-09-02 (runner): the sbatch scripts default to `--account=sompolinsky_lab`. On this cluster
-  `kempner_sompolinsky_lab` is the Kempner GPU account; the general CPU partitions used here
-  (`sapphire`, `shared`, `bigmem`) run under `sompolinsky_lab`.
+- 2026-09-02 (runner): the sbatch scripts default to `--account=<cpu-account>`. On this cluster
+  `<gpu-account>` is the GPU account; the general CPU partitions used here
+  (`<cpu-partition>`, `shared`, `bigmem`) run under `<cpu-account>`.
 - 2026-09-02 (tests): `tests/test_each_method.py` discovers one level into method subpackages
   (`rte/methods/frameworks/`), and skips classes flagged `requires_llm=True` or `runner_only=True`,
   plus anything whose optional dependency is missing at import/construction/build.
@@ -323,7 +323,7 @@ MIDIAN w/o verification, MIDIAN-VA is MIDIAN; MIDIAN-SH / SHA are withdrawn. The
 - 2026-09-02 (tests): `fw_echo` is the one `requires_llm=True` class the generic test still runs;
   it is the bridge protocol check and never reaches the endpoint, so it is built with a dummy
   `base_url`. It is excluded from every grid.
-- 2026-09-02 (cluster, affects every agent): `fcntl.flock` BLOCKS FOREVER on the /n/netscratch
+- 2026-09-02 (cluster, affects every agent): `fcntl.flock` BLOCKS FOREVER on the network-scratch
   mount that holds `$RTE_DATA`. Verified: an flock on a freshly created file under $RTE_DATA never
   returns, while the identical call on $HOME or /tmp returns instantly; sqlite is unaffected
   because it uses POSIX fcntl record locks, which do work there. Consequences: (a) any
@@ -376,7 +376,7 @@ MIDIAN w/o verification, MIDIAN-VA is MIDIAN; MIDIAN-SH / SHA are withdrawn. The
   `CUDA_VISIBLE_DEVICES` to a MIG UUID; vLLM 0.22.1 calls `int()` on it and dies with
   `ValueError: invalid literal for int() with base 10: 'MIG-adfbd773-...'`
   (vllm/platforms/cuda.py via registry.py:951, smoke job 43857516). `scripts/serve_smoke.sbatch`
-  therefore runs on `kempner_h100` with one whole GPU instead of the spec's `gpu_test`.
+  therefore runs on `<gpu-partition>` with one whole GPU instead of the spec's `gpu_test`.
 - 2026-09-02 (serving): vLLM 0.22.1's FlashInfer top-k/top-p sampler JIT-compiles with ninja on
   first use, inside the memory-profiling dummy run, and that build FAILS on these nodes -- taking
   the engine down after the weights have already loaded (smoke job 43858361,
@@ -389,7 +389,7 @@ MIDIAN w/o verification, MIDIAN-VA is MIDIAN; MIDIAN-SH / SHA are withdrawn. The
   there; without this flag the models on the ladder would be sampled under different rules, which
   is a confound in a benchmark that exists to compare them. Requests set temperature 0 and seed 0.
 - 2026-09-02 (llm client): the response memo opens its SQLite files with `nolock=1`. On this
-  cluster's netscratch mount, where `$RTE_DATA/cache` lives, a plain `sqlite3.connect` from the
+  cluster's network-scratch mount, where `$RTE_DATA/cache` lives, a plain `sqlite3.connect` from the
   rte env HANGS on the first write -- SQLite 3.50.3 (the env's build) selects a locking style that
   depends on the same broken `flock`; base Python's SQLite 3.51.0 happens not to. Skipping SQLite's
   file locking is sound because the memo has one writer process (the runner) whose threads are
@@ -894,7 +894,7 @@ MIDIAN w/o verification, MIDIAN-VA is MIDIAN; MIDIAN-SH / SHA are withdrawn. The
   combined with `dedup: true`. Test in `tests/test_fw_dedup.py`. Plain and dedup arms untouched (`5620ae5`).
 - **Grids.** `fw_live_n{100,1000}_em`, their `_lowskill_em`, `fw_live_n10k_em`, `fw_live_n10k_cartel_em`, `fw_live_n100k_em`:
   same cells, seeds, frameworks and Q as the `_dd` grids (3,267 units); the four small extras (k-sensitivity, appendix,
-  b = 10 shapes, churn) are not repeated. Submitted to sapphire directly (serial_requeue fairshare stalled the `_dd`
+  b = 10 shapes, churn) are not repeated. Submitted to <cpu-partition> directly (<requeue-partition> fairshare stalled the `_dd`
   campaign overnight at 2 running jobs), 32 G per 10^2-10^3 unit, 96 G at 10^5; `fwem_fold` waits on the `_em__` job
   names, `fwdd_fold` now waits only on `_dd__` (the first version's `rte_fw_` prefix would have waited on both).
 - **Reporting.** Three framework rows per cell, never pooled: pre-registered TF-IDF, dedup, embed. The comparison script
@@ -910,7 +910,7 @@ MIDIAN w/o verification, MIDIAN-VA is MIDIAN; MIDIAN-SH / SHA are withdrawn. The
   liars only. Four mirror grids fill the gaps on the existing cells and seeds: `fw_live_n1000_verified_va_lowskill`
   (300 units), `fw_live_n10k_verified_va` (60), `fw_live_n10k_cartel_verified_va` (27), `fw_live_n100k_verified_va` (180;
   each unit rebuilds VA at 10^5 on memoized probes, ~7 h, 22-24 GB). Params `retrieval: midian_va, r: 10` (now `retrieval: midian`) as in the 10^3
-  grid; sapphire, one unit per job; folds `fwva_fold` / `fwva_fold2`. Results in RESULTS II.2 (table) and II.4c.
+  grid; <cpu-partition>, one unit per job; folds `fwva_fold` / `fwva_fold2`. Results in RESULTS II.2 (table) and II.4c.
 - The VA build in a framework unit spends VA's 5% audit probes on top of the n·K·b budget (the "build spent 49380
   probes > budget 48000" warning): identical to the standalone VA arm's accounting, recorded, not corrected.
 - **Embed campaign complete (2026-09-16 16:00).** 10^3: specialist +0.14 (0.390 -> 0.530), heavy_tail +0.03, bimodal -0.02;
@@ -930,7 +930,7 @@ MIDIAN w/o verification, MIDIAN-VA is MIDIAN; MIDIAN-SH / SHA are withdrawn. The
 - Convention made explicit: the liar-free number is the β = 0 cell with the random liar set, once. The two β = 0 cells are
   the same world; the frameworks differ between them by their own run-to-run noise (≤ 0.01; Magentic-One ≤ 0.03), which
   is why a few 10^5 dedup values quoted on 2026-09-15 (pooled over both cells) moved by ≤ 0.014 in the generated tables.
-- Verification run (`verify_all`, sapphire): 285 tests pass, 90 skipped (framework venvs / live), 1 failed —
+- Verification run (`verify_all`, <cpu-partition>): 285 tests pass, 90 skipped (framework venvs / live), 1 failed —
   `test_schedule_spends_exactly_s_times_b[10-1]` expected the pre-guard behaviour (a cohort of 10 at b = 1 now raises,
   erratum 23); the test now asserts the guard. `check_methods.py` and the three selfchecks ran clean.
 - Still running at sync time, marked * in RESULTS: Magentic-One at 10^2 with the VA cohort (now MIDIAN cohort); the live 10^5 halving liar
@@ -950,7 +950,7 @@ MIDIAN w/o verification, MIDIAN-VA is MIDIAN; MIDIAN-SH / SHA are withdrawn. The
 - **Operational.** `rte.run --methods` takes ONE comma-separated value; the first launcher passed several names as separate
   arguments, so 269 queued multi-arm jobs would have died on start -- cancelled and resubmitted with commas
   (`logs/fill/launch_fixed_methods.txt`), one job that had already started failed and was resubmitted. Every job was
-  submitted to `sapphire,serial_requeue`: `kempner_requeue` and `kempner` refuse CPU-only work and `test` cannot join a
+  submitted to `<cpu-partition>,<requeue-partition>`: `<gpu-requeue-partition>` and `<gpu-partition>` refuse CPU-only work and `test` cannot join a
   multi-partition submission. The six new 10^4 populations (2 shapes × 3 seeds, ~480k generations each) were built by one
   warm-up job apiece before a gate released the other 966 units, so no two jobs raced to generate the same population.
 - **Result.** RESULTS II.4e carries the two findings; COVERAGE.md §9 carries the per-campaign state and the three * items.

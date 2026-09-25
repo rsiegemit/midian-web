@@ -1,7 +1,5 @@
 # TARGETS_rte_v4.md — non-random MIDIAN cohorts (pre-registered 2026-09-07, BEFORE any v4 run)
 
-> Names: this document predates the 2026-09-24 rename — MIDIAN-VA is now MIDIAN; MIDIAN is now MIDIAN w/o defenses; MIDIAN-V is MIDIAN w/o audits; MIDIAN-A is MIDIAN w/o verification; MIDIAN-SH/SHA are withdrawn (CHANGES_AND_ERRATA §8g).
-
 Plain MIDIAN is unchanged and its parameters are frozen as always. These are labeled variants selected by one new
 parameter, `cohort`, added to `Midian`:
 

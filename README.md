@@ -1,381 +1,196 @@
-# RTE — Routing To Experts: MIDIAN vs self-contained rivals and ten real agent frameworks
+# MIDIAN: routing tasks to the right agent when some agents lie
 
-> **Before launching anything, read [OPS_RULES.md](OPS_RULES.md)** -- mandatory operating rules (1-CPU units via
-> `scripts/launch_units.sh`, measured walltimes, 1-GPU fleet replicas, `scripts/check_envs.sh` gate, loud infra
-> errors). Every rule was paid for; see CHANGES_AND_ERRATA errata 27-28.
+Anonymous Authors
 
+[Paper (OpenReview)](https://openreview.net/forum?id=ANONYMOUS) · [BibTeX](#citation) · [Documentation](docs/) ·
+![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg) ![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue.svg)
 
-RTE is a clean-room benchmark for one question: **given n agents of unknown and possibly misreported skill, how do you
-route each incoming task to the right one, cheaply, when some agents lie?** It compares MIDIAN, a hierarchical
-peer-verified routing tree, against 18 self-contained rival mechanisms and the selection primitives of 10 popular
-agent frameworks (LangGraph, CrewAI, AutoGen, Magentic-One, Microsoft Agent Framework, OpenAI Agents SDK, Google ADK,
-LlamaIndex, smolagents, CAMEL), along three axes: population size n (10² to 10⁷), liar fraction β, and population
-skill structure. Every method is charged for every probe, report, message, hop and comparison it makes, so the
-comparison is success *and* cost.
+<p align="center">
+  <img src="figures/paper/A_live_stacked.png" width="85%" alt="Task success of MIDIAN and its rivals on the live LLM population, n = 10^2 to 10^5"> <!-- VERIFY-PATH -->
+</p>
+<p align="center"><sub>Task success on the live LLM population (specialist, n = 10<sup>2</sup> to 10<sup>5</sup>). Solid: honest
+population; hatched: β = 0.5 low-skill-first cartel. On MIDIAN the light / mid / dark bars are the probe budget b = 1 / 3 / 5.</sub></p>
 
-The headline result (live LLM population, n = 1000, 10 seeds, Q = 1000, paired cells, 95% CI; all grids complete):
-MIDIAN w/o defenses routes correctly 0.65 of the time, MIDIAN w/o audits 0.66 and MIDIAN 0.68, versus 0.52–0.55 for every one of the ten
-frameworks, 0.61 for a flat probe scan, 0.57 for a one-call LLM supervisor and 0.72 for the oracle. The average hides
-a split: on populations where skill is legible from a self-description (a minority of big tool-using models) the
-frameworks sit on the oracle, and on populations where skill is family-specific they collapse to 0.39 against MIDIAN w/o defenses'
-0.78. Under low-skill-first collusion MIDIAN holds 0.68 while every framework stays at 0.52–0.54 and MIDIAN w/o
-defenses falls to 0.57. MIDIAN does it with 5 messages, 32 comparisons and no LLM call per task; a framework spends 12
-messages, 10 comparisons and at least one supervisor LLM call. The consolidated dossier is [`RESULTS.md`](RESULTS.md);
-the per-grid write-ups are [`RESULTS_rte_v2.md`](RESULTS_rte_v2.md) (our benchmark) and
-[`RESULTS_rte_v3.md`](RESULTS_rte_v3.md) (external comparisons); [`RESULTS_rte.md`](RESULTS_rte.md) is the frozen
-phase-1 report with its six pre-registered targets.
+Given n agents of unknown skill that describe themselves, some of them dishonestly, how do you send each incoming task to
+an agent that can solve it, and what does that cost? This repository is the benchmark behind the paper: a world of n
+agents whose true skill is hidden from every method, four channels a method must declare and pay for (self-declarations,
+probes, peer reports, messages), and three backends (live LLM agents, recorded router-benchmark outcomes, calibrated
+synthetic populations) up to n = 10<sup>7</sup>. It compares **MIDIAN**, a hierarchical, peer-verified routing tree, with
+flat probing, bandits, learned routers, declaration readers and the selection primitives of ten agent frameworks, all
+paired on the same agents, liars and task streams and charged for every probe, report, message and comparison.
 
----
+On the live population at n = 1,000 (b = 3, 10 seeds), MIDIAN routes correctly 0.81 of the time in the honest population
+and 0.81 under a β = 0.5 low-skill cartel; the best of the ten frameworks on its best text shortlist reaches 0.63 / 0.56,
+declared argmax 0.62 / 0.52, a flat probe scan 0.79 / 0.79 and random 0.43. At n = 10<sup>5</sup> MIDIAN holds 0.84 / 0.83
+while its routing work grows from 36 to 58 messages plus comparisons per query (80 at 10<sup>7</sup>); any flat scan
+compares all n agents. Numbers are read from `figures/paper/A_live_stacked.csv` and `C_routing_work_vs_n.csv`.
+<!-- VERIFY-PATH -->
 
-## Contents
+## Installation
 
-1. [The problem and the world model](#1-the-problem-and-the-world-model)
-2. [Methods](#2-methods)
-3. [Accounting: what every method pays for](#3-accounting-what-every-method-pays-for)
-4. [Experimental design](#4-experimental-design)
-5. [Repository layout](#5-repository-layout)
-6. [Running it](#6-running-it)
-7. [Results and figures](#7-results-and-figures)
-8. [Design principles and how to extend](#8-design-principles-and-how-to-extend)
-9. [Documents](#9-documents)
-10. [Caveats](#10-caveats)
+Python 3.12 or newer. The core (the world, every non-LLM method, the analysis) needs only numpy, pandas, scipy and PyYAML;
+the rest is in extras.
 
----
+```bash
+git clone <this repository> midian && cd midian
+pip install -e ".[figures,test]"     # CPU quickstart, figures and tests
+pip install -e ".[all]"              # + learned routers (torch, sentence-transformers, ...) and the LLM client
+pip install -r requirements.txt -e . # the exact versions every reported number was produced with
+```
 
-## 1. The problem and the world model
-
-A **World** holds n agents and K task families. Each agent a has a true skill S[a, f] ∈ [0, 1] per family: the
-probability it solves a task of that family. S is never shown to any method; only the runner uses it, for the oracle
-line and for regret. Methods learn about agents through four **channels**, each of which a method must *declare* it
-needs (`needs = {"declared", "probe", "reports", "bus"}`), and a `View` raises `AccessError` on anything undeclared:
-
-| channel | what it gives | who can corrupt it |
+| extra | adds | needed for |
 |---|---|---|
-| `declared` | D[n, K], what agents *say* they can do | liars inflate their own row by +0.4 |
-| `probe(a, f)` | run agent a on a fresh instance of family f, get 0/1 | nobody: outcomes are real |
-| `reports` | ask peer j what it observed about agent a | a lying j reports 1 for fellow liars, 0 for the top-20% honest (collusion) |
-| `bus` | send a message from one agent to another | nobody, but every message is counted |
+| `learned` | torch, sentence-transformers, scikit-learn, hnswlib, trueskill | kNN / MLP / NSW routers, TrueSkill, dense shortlists |
+| `llm` | openai, reasoning-gym, requests, huggingface_hub | the live backend and the framework adapters (plus a served model fleet) |
+| `figures` | matplotlib | redrawing the figures |
+| `test`, `dev` | pytest; ruff | the test suite; linting (line length 120) |
 
-A fraction β of agents are **liars**, chosen at random or low-skill-first. Lying changes what agents *say*, never what
-they *do*, which is why probe-only methods are flat in β and declaration-based methods are not.
+Each agent framework runs in its own virtual environment, built from `requirements-frameworks/<framework>.txt`; see
+[docs/operations.md](docs/operations.md).
 
-Three **backends** implement the same six-member protocol (`true_skill`, `declared`, `execute`, `execute_many`,
-`stats`, plus n / K / families), so any method runs unchanged on all of them:
+## Data
 
-- **llm** (the headline): agents are real LLM calls against a vLLM fleet. Each agent is a (model, per-family handicap,
-  tool) *signature* drawn from a 7-model ladder (Qwen2.5 0.5B/1.5B/3B/7B/14B, Gemma-2 2B/9B, `configs/models.yaml`);
-  tasks are K = 16 Reasoning Gym families (`rte/backends/families.py`). S is *measured* per signature (200 probes) and
-  agents write their own self-descriptions, which the `self_described` declaration channel exposes.
-- **replay**: RouterBench's recorded outcomes of 11 real models on 64 real evaluation categories. No GPU; executing
-  an agent is a table lookup. Used for the 10⁴–10⁶ scale axis and as a twin of the live sweeps.
-- **bernoulli**: synthetic S with five population shapes, calibrated to the measured live S. Used for the 10²–10⁷
-  cost curves and as a CPU mirror of every live grid.
-
-Population shapes (`dist`): `specialist` (three strong families per agent), `heavy_tail` (one in ten is a big model),
-`bimodal` (20% big-with-tools, 80% small), `correlated` (group-level skill over 4 family groups), `iid_uniform`.
-
-## 2. Methods
-
-Every method is one file in `rte/methods/`, ≤150 lines, discovered by file name, with the interface
-
-```python
-class M(Method):
-    name = "..."; needs = frozenset({...})
-    def __init__(self, **params): ...
-    def build(self, view, budget): ...          # one-time setup; probes are capped at budget.total_probes(n, K) = n·K·b
-    def fetch(self, task) -> int: ...           # route one task (or a list of agents for route-to-many)
-    def observe(self, task, agent, outcome): ... # online update after the outcome is known
-```
-
-**MIDIAN** (`midian.py`) is one class with two defenses as parameters, both on by default: `audit` (report audits
-with reporter exclusion) and `verify` (verified promotion). The method the paper calls MIDIAN is `midian` with both on;
-its ablations switch them off. Names changed on 2026-09-24 (CHANGES_AND_ERRATA §8g): the old plain `midian` is now MIDIAN
-w/o defenses, `midian_v` is MIDIAN w/o audits, `midian_a` is MIDIAN w/o verification, `midian_va` is MIDIAN.
-
-**MIDIAN w/o defenses** (`midian{"audit": false, "verify": false}`, the pre-registered tree; every stored row reproduces
-bit for bit). Agents are grouped into random cohorts
-of r. At level 0 each member is probed b times per family and its cohort peers report what they saw; the cohort's
-estimate of each member is a trimmed mean over reporters (drop ⌊δ(r−1)⌋ from each end), so up to that many liars per
-cohort are absorbed. Each cohort's best member per family is its summary; cohorts are grouped again into cohorts of
-r, up a tree of depth ⌈log_r n⌉. Routing descends the tree from the root following the best child for the task's
-family: 2 messages per level, r comparisons per level. After each outcome the running estimate of the chosen agent is
-updated and its path recomputed. Build costs O(n) probes and reports and O(n) messages; a route costs O(log n).
-
-**MIDIAN w/o audits** (`midian{"audit": false}`, labeled post-hoc variant). Identical tree, but a promotion is
-*verified*: candidates promoted to a parent node are re-probed, budget-exactly (level 0 spends b−1 per cell and the
-saved probes go to the promoted candidates), by reporters drawn from sibling subtrees, and the verified value is
-written back. The root's pick per family is cached, so a route costs 1 comparison and 2 messages. `r=5` halves the
-reports again. Other knobs (`observers`, `b0`, `top`) are documented in the file; `stratify=True` (v2) draws cohorts
-stratified by declared family instead of at random.
-
-**MIDIAN w/o verification** (`midian{"verify": false}`, v2). MIDIAN w/o defenses plus audits: 5% of instances are
-re-probed by the auditor, a reporter whose report disagrees with the audit twice is excluded from every later estimate,
-and audits continue online. Costs 1.05× build probes, nothing per task. **MIDIAN** (`midian`, both defenses, v2) adds
-verified promotion and the cached root pick on top: the excluded reporters are also removed from the verification. The
-recommended order of adding the defenses is audits, then verification — see RESULTS_rte_v2.md §4. `stratify` and
-`linucb_honest.py` are the v2 negative controls (the successive-halving MIDIAN variants were withdrawn on 2026-09-24,
-CHANGES_AND_ERRATA §8g).
-
-**Self-contained rivals** (SPEC §6), grouped by what they read:
-
-| class | methods |
-|---|---|
-| floor / ceiling | `random`, oracle (runner) |
-| declared channel only | `declared_argmax`, `declared_softmax`, `cnp_self_bid` (contract-net bidding), `route_to_k_majority`, `cluster_head_router` (k-means heads), `disrouter_cascade` (cost-ordered cascade), `llm_supervisor` (one LLM call over the top-20 declarations) |
-| verified outcomes, centralized | `flat_probe_argmax` (frozen or `online=True`), `flat_nsw_router` (HNSW over probe vectors), `ucb_per_family`, `thompson_per_family`, `trueskill_per_family`, `warm_start_bandit` (declarations as prior, probes as updates), `verify_on_claim`, `sequential_halving` (adaptive: halve the candidate set per family each round) and `sequential_halving(peer_reported=True)`, the fair control that spends the same budget adaptively but learns only through MIDIAN's trimmed report channel |
-| verified outcomes, decentralized | `referral_network` (d-regular referral walk), `gossip_reputation_greedy` (EigenTrust-style gossip) |
-| MIDIAN family | `midian` (MIDIAN and its three ablations, via `audit` / `verify`), `midian_llm_descent` (an LLM chooses the child at each level) |
-
-**Frameworks** (SPEC §6A, `rte/methods/frameworks/`). Each `fw_*.py` is 6–11 lines: it hands a shortlist and the task
-to a worker running inside the framework's own virtual environment (`workers/*_worker.py`, JSON lines over
-`_bridge.py`) and returns the agent the framework's *own* selection primitive chose. The shared adapter
-(`_common.FrameworkMethod`) does what a practitioner would: hashed TF-IDF over the agents' self-descriptions picks the
-top k = 10, the framework's supervisor (Qwen2.5-7B) picks one, with declared-argmax over the shortlist as a counted
-fallback when the framework returns no valid name. Four labeled shortlist variants, each its own grid and never pooled
-with the pre-registered rows: `dedup=True` ranks distinct description texts (agents sharing a prompt share a memoized
-description and memoized answers, so above ~3,900 distinct prompts the plain top-10 is ten clones of one agent — erratum
-25); `retrieval="embed"` is MiniLM cosine over the deduped descriptions, the retriever a deployed stack would use;
-`retrieval="midian_wo_audit"` / `"midian"` hand the framework the probed leaf cohort of MIDIAN w/o audits / of MIDIAN. RESULTS II.2 has
-the five-source table at every n; `scripts/doc_tables.py` generates and verifies it. Interception notes per framework are in `NOTES_*.md`; MetaGPT has
-no selection primitive to intercept and AgentScope is an appendix.
-
-## 3. Accounting: what every method pays for
-
-The `Ledger` has one increment site per counter and the world charges the channels itself, so a method cannot
-under-report: **probes** (one per agent execution at build), **reports** (one per peer report), **messages** (a query
-and its reply are 2; declared methods pay n at build for reading n declarations), **hops** (one per tree level or
-graph step), **comparisons** (a flat scan over n candidates is n; a max over r children is r; a cached argmax is 1),
-**tasks** (executions at route time). Formulas per method are in `CONTRACT.md`; `scripts/check_methods.py` asserts
-them against the counters. Wall-clock is recorded too but mixes cache hits and misses, so cost claims use counts.
-
-Measured at n = 1000 (per task / at build): MIDIAN w/o defenses 6 messages, 30 comparisons / 48k probes, 432k reports,
-1k messages; MIDIAN w/o audits (r=5) 2 / 1 / 48k, 80k, 1k; flat probe argmax 0 / 1000 / 48k, 0, 0; a framework 12 / 10 + an LLM
-call / 0, 0, 1k. Across n = 10² … 10⁷, the per-task comparisons, messages and hops of MIDIAN w/o defenses scale as n^0.14 (2⌈log_r n⌉),
-those of MIDIAN w/o audits as n^0, flat and declared scans as n^1.0.
-
-## 4. Experimental design
-
-- **Cells and pairing.** A cell fixes (backend, n, K, shape, β, liar selection, collusion, declaration channel, lie
-  mode, demand, b, Q). Within a cell and seed, every method sees the same agents, the same liars and the same task
-  stream, and the k-th probe of any (agent, family) is the same instance for every method (index-seeded), so the
-  memoised LLM answers are shared and deltas are paired.
-- **Metrics per row.** success, success on the last quarter of the stream, regret vs oracle, misroute-to-liar rate,
-  the six counters at build and per task, wall-clock, and the method's own stats (e.g. framework fallbacks).
-- **Analysis** (`rte/analyze.py`): per-class tables with 95% percentile-bootstrap CIs over seeds, reference-vs-rival
-  paired deltas (reference = MIDIAN w/o defenses, `analyze.REF`) with sign tests and a `WITHIN_FLOOR` flag (delta inside
-  the reference's own seed envelope), log-log cost
-  exponent fits across n, the six pre-registered target checks, and figures F1–F7.
-- **Grids** (`configs/grid.yaml`): `live_core_n100`, `live_f1_n1000` (every rival), `live_extra_n1000` (two more
-  shapes), `live_n10k`, `budget_sweep` (b = 1, 3, 10), `midian_internals` (r × δ × verification), `fw_live_n100`,
-  `fw_live_n1000`, their `_verified` variants, `fw_k_sensitivity`, `fw_appendix`, `replay_scale`, `bernoulli_scale`,
-  and `replay_mirror_*` / `bernoulli_mirror_*` twins of every live grid. Seeds: 5 (algorithmic), 3 (frameworks).
-- **Pre-registration.** `TARGETS_rte.md` was committed before the first run. The parameters of MIDIAN w/o defenses (the
-  pre-registered plain tree) were never changed; every improvement is a labeled variant, and misses are reported as misses.
-
-## 5. Repository layout
-
-```
-rte/
-  world.py            World, View, channels, lying, paired task streams, index-seeded probes
-  ledger.py           the six counters (one increment site each)
-  budget.py           probes per (agent, family) -> total build budget
-  run.py              grid runner: cells x seeds x methods -> one JSON row per result, resumable, --only sharding
-  analyze.py          tables, CIs, paired deltas, exponents, targets, figures
-  llm_client.py       vLLM client: endpoints, replica choice, content-hash memo (sharded SQLite, live refresh)
-  measure.py          measure S per prompt signature on the fleet
-  stable_hash.py      the only seeding primitive
-  backends/           bernoulli.py, replay.py, llm.py (+ families.py, population.py, prompts.py, tools.py)
-  methods/            one file per method; _est.py (probe->estimate helpers, trimmed peer reports), _decl.py
-    frameworks/       _common.py (adapter), _bridge.py, fw_*.py, workers/, NOTES_*.md
-configs/              grid.yaml (every experiment), models.yaml (the model ladder)
-scripts/              env build (00-03), fleet + replica sbatch, launch_live.sh, run_grid.sbatch, measure.sbatch,
-                      check_methods.py, extra_figs.py, mock_openai_server.py, fw_envs/ (per-framework venvs)
-tests/                152 tests: every method (needs enforcement, budget, ledger), MIDIAN tree invariants,
-                      backends, framework adapters against a mock OpenAI server
-```
-
-Data, environments, model weights, the answer memo, logs and results all live under `$RTE_DATA` (not in the repo).
-
-## 6. Running it
-
-**Environment.** `scripts/00_build_env.sh` builds `$RTE_DATA/env/rte` (Python 3.12 venv, vLLM, reasoning-gym,
-numpy/pandas/scipy, hnswlib, trueskill); `01_download_weights.py` and `02_download_routerbench.py` fetch the model
-snapshots and RouterBench; `scripts/fw_envs/<framework>.sh` builds each framework's isolated venv from
-`requirements-frameworks/<framework>.txt`. Everything runs with `PYTHONPATH=~/rte` (or `pip install -e .`).
-
-**CPU-only (no GPU needed).**
-```bash
-python -m pytest tests -q                                  # 152 tests
-python scripts/check_methods.py                            # ledger formulas vs counters
-python -m rte.run --grid bernoulli_mirror_live_f1_n1000    # any bernoulli_* or replay_* grid, minutes to an hour
-python -m rte.analyze --grid bernoulli_mirror_live_f1_n1000
-```
-
-**Live LLM grids** (SLURM, FAS RC): start the fleet, then launch one job per (grid, method, shard):
-```bash
-sbatch scripts/serve_fleet.sbatch                          # 4 GPUs, all 7 models, registers endpoints in $RTE_DATA/endpoints.d
-RTE_REPLICA_MODEL=Qwen/Qwen2.5-7B-Instruct sbatch scripts/serve_replica.sbatch   # extra capacity for a hot model
-sbatch scripts/measure.sbatch                              # measure S per signature (once per model ladder)
-RTE_GRIDS="live_f1_n1000" RTE_SHARD=dist,beta RTE_SEED_SHARD=1 scripts/launch_live.sh   # ~60 shard jobs per method
-python -m rte.analyze --grid live_f1_n1000
-python -m rte.analyze --grid live_f1_n1000 --grids live_core_n100,live_f1_n1000,live_n10k,replay_scale,bernoulli_scale --out .../combined
-python scripts/extra_figs.py                               # the seven synthesis figures
-python -m rte.llm_client compact                           # merge memo shards between stages
-```
-`launch_live.sh` takes `RTE_GRIDS`, `RTE_ONLY` (methods), `RTE_SHARD` (cell axes to split on), `RTE_SEED_SHARD`,
-`RTE_RUN_ARGS` (e.g. `--seeds 4-5`). Rows are per-file and atomic, so any job can be killed and relaunched; the memo
-makes re-runs of finished units nearly free.
-
-## 7. Results and figures
-
-`RESULTS_rte.md` is the write-up: the framework headline with CIs and fallback rates, the frameworks given the
-leaf cohort of MIDIAN w/o audits, every rival by β and by population shape, the MIDIAN-vs-halving control, the internals ablation, budget
-and scale, cost exponents and break-even, the learning curve, target verdicts, replay, caveats and deviations.
-Per-grid machine summaries are `$RTE_DATA/results/<grid>/summary.md`. The figures are in [`figures/`](figures/) (regenerate with `scripts/extra_figs.py`; seed-bootstrap error bars within cells, 300 dpi):
-
-- **H1** headline by population shape, frameworks as a min–max band with fallback rates
-- **H2** legibility: Spearman(self-description, true skill) vs framework − MIDIAN w/o defenses
-- **H3** consistency vs robustness: success at β=0 vs β=0.5 with colluding low-skill liars
-- **H4** cost–quality Pareto with break-even Q
-- **H5** cost scaling 10² to 10⁷, plus supervisor latency
-- **H6** MIDIAN w/o defenses, MIDIAN w/o verification, MIDIAN w/o audits and MIDIAN vs peer-reported sequential halving by β and liar selection; replay twin below (no trusted-observer arm, erratum 26)
-- **H7** frameworks given the verified leaf cohort of MIDIAN w/o audits at 10^2 / 10^3; **M6** the five shortlist sources × n at 10^2-10^5 (RESULTS II.2)
-- `METHODS.md` describes every method (origin, what it is, what it does) and `COVERAGE.md` audits what exists per
-  family with justification verdicts and the campaign state.
-- Every figure script filters its arms through one do-not-add list (`extra_figs.excluded`): MIDIAN variants with r ≠ 10, the trusted-observer halving arm (the successive-halving MIDIAN variants are withdrawn, CHANGES_AND_ERRATA §8g). Extend it there, never per figure.
-- **bars/** (48 figures, `scripts/bar_figs.py`): every arm as bars grouped by n, one figure per experiment family × liar regime × grouping, oracle dotted on top, one colour per arm across all of them
-- **M1** success vs n with the live 10^2-10^5 points and the 1000-seed calibrated curve to 10^7; **M5** success vs probe budget b = 1..30 (RESULTS II.4e / II.4f)
-- **H8** budget sweep by declaration channel
-- **H9** churn: success and cumulative probes across churn events
-- **H10** runtime and energy estimate (GPU-seconds and Wh per 1,000 tasks)
-- appendix: internals, learning curve, k-sensitivity, replay mirror, fallback table, UCB/Thompson; the 2026-09-02 figures A–G are kept under `figures/v1/`
-- **X1–X5 (v3, external comparisons; RESULTS_rte_v3.md)**: X1 RouterBench on its own protocol (AIQ) vs its KNN/MLP
-  routers; X2 RouteLLM's released BERT router vs the probe table on their model pair with their metrics; X3 RouterBench's
-  KNN/MLP routers as methods inside our benchmark vs MIDIAN and its ablations at n = 100 / 1k / 10k; X4 RouterEval (pools of
-  10 / 100 / 1,000 real LLMs) on its own terms with its baselines, Avengers and EmbedLLM; X5 every arm with liars on
-  RouterEval's real pools (10 / 100 / 1,000 and all 5,000 leaderboard LLMs)
-
-In one paragraph: the frameworks' only signal is self-description, which overclaims by +0.27 and correlates 0.36 with
-true skill, so they sit at 0.5 regardless of β and fall to 0.4 on specialist populations. The retriever sets that
-number and the orchestrator caps it: the pre-registered TF-IDF top-10 has lower true skill than a random agent (0.31 vs
-0.43 at 10^5), a MiniLM retriever lifts the specialist frameworks from 0.39 to 0.54 at 10^3, a MIDIAN leaf cohort to
-0.57, and every framework then sits at its shortlist's mean, 0.19-0.26 below MIDIAN routing to its own pick, at every
-n from 10^2 to 10^5 (RESULTS II.2). Among mechanisms that verify, peer-reported sequential halving beats MIDIAN w/o audits by 0.04 at β ≤ 0.25 in every cell
-but collapses at β = 0.5 with low-skill liars (0.41) where MIDIAN w/o defenses holds 0.60: the tree's per-cohort trimming survives
-poisoned reports that early elimination does not. Adding audits (MIDIAN w/o verification) makes the tree flat in β at 5% more probes
-(+0.07 at β = 0.5, +0.10 with low-skill liars, nothing lost at β ≤ 0.25); adding verification on top (MIDIAN) loses
-nothing at any β and halves the per-task cost (31.6 comparisons and 5 messages instead of 60 and 9). Verification alone
-(MIDIAN w/o audits) is +0.02 at β ≤ 0.25 but the most exposed variant at β = 0.5 (−0.03 vs MIDIAN w/o defenses), which
-is why the order is audits, then verification. (RESULTS_rte_v2.md §4.)
-
-**v3 in one paragraph (RESULTS_rte_v3.md, pre-registered in TARGETS_rte_v3.md).** With truthful labels MIDIAN and
-every ablation is the probe-family table, and that table is competitive with published routers at a fraction of the labels
-(RouterBench: 0.707 vs their KNN's 0.713 AIQ with 7× fewer labels; RouterEval at 1,000 real LLMs: 0.615 with 13% of
-the labels vs their best linear router 0.661, EmbedLLM 0.658, best single model 0.629; RouteLLM's released BERT
-router scores below random on RouterBench outcomes for its own model pair). Inside our benchmark their KNN router is
-flat probe argmax exactly and their MLP router is +0.03–0.06 over it but below MIDIAN at every β and n. On
-RouterEval's real pools with liars, MIDIAN is the only arm besides MIDIAN w/o verification that holds its accuracy under low-skill
-collusion (0.61 at 1,000, 0.71 at 5,000 LLMs, flat in β) while the declaration reader, the warm-start bandit, MIDIAN w/o
-audits and peer halving lose 0.15–0.32; in the honest regime at 5,000 LLMs adaptive halving (0.88 ≈ oracle) and the honest
-declaration (0.86) beat it by 0.15, which is the trade MIDIAN makes.
-
-## 8. Design principles and how to extend
-
-The code follows a standing directive: minimum lines, zero duplication, everything swappable by configuration.
-
-- **Add a routing method:** one file in `rte/methods/` with the four-method interface and a `needs` set. It is
-  discovered by name, tested by `tests/test_each_method.py` (needs enforcement, budget, ledger) and runnable on all
-  three backends with no other change. Shared helpers: `_est.py` (probe-then-estimate, trimmed peer reports, bandits),
-  `_decl.py` (declared-channel argmax).
-- **Add a framework:** a `fw_<name>.py` of ~10 lines subclassing `FrameworkMethod`, a worker in `workers/` that
-  imports the framework and exposes its selection primitive, a `requirements-frameworks/<name>.txt`, and a
-  `scripts/fw_envs/<name>.sh`. The adapter, bridge, retrieval and accounting are shared.
-- **Swap a model:** edit `configs/models.yaml` (id, parameter count, GPU share, tool gating); nothing else names a
-  model except the supervisor constant in `frameworks/_common.py`.
-- **Add a task source:** one adapter with `generate(seed) -> entry`, `question(entry) -> str`, `score(answer, entry)
-  -> float` in `rte/backends/families.py`; Reasoning Gym is one such adapter.
-- **Add a backend:** the six-member protocol in `rte/backends/__init__.py`; `bernoulli.py` is the reference implementation.
-- **Add an experiment:** a block in `configs/grid.yaml` (`mirror_of` clones a grid onto another backend).
-
-Every departure from `SPEC.md` is a dated bullet in `DEVIATIONS.md`; the correctness and ledger formulas are in
-`CONTRACT.md`; the operational lessons from running ~1000 SLURM jobs against a shared vLLM fleet (locks that hang on
-NFS, replica herding, memo sharding, tool-run memoisation) are in `STATUS.md` and `DEVIATIONS.md`.
-
-## 9. Documents
-
-**Start with `RESULTS.md`** — the consolidated, ordered dossier of every result (phases 1–3), each table tagged
-FINAL (every grid complete as of 2026-09-04; the energy/latency figures are estimates under the stated cost model).
-`CHANGES_AND_ERRATA.md` lists what the earlier results had wrong or incomplete and what moved. The documents below are its sources.
-
-
-| file | what it is |
-|---|---|
-| `SPEC.md` | the study specification: world, MIDIAN, rivals, frameworks (§6A), figures, compute plan |
-| `TARGETS_rte.md` | the six phase-1 pre-registered expectations, committed before any run |
-| `TARGETS_rte_v2.md` | the eleven v2 expectations, committed before any v2 launch |
-| `TARGETS_rte_v3.md` | the twenty-four v3 expectations (external comparisons, scale, the full MIDIAN), committed before any v3 run |
-| `RESULTS.md` | the consolidated dossier: every result, ordered, each tagged with its status |
-| `RESULTS_rte_v2.md` / `RESULTS_rte_v3.md` | the per-grid write-ups for our benchmark and the external comparisons |
-| `CHANGES_AND_ERRATA.md` | what the earlier drafts had wrong or incomplete, and every number that moved |
-| `TARGETS_rte_v4.md` / `RESULTS_rte_v4.md` | v4: non-random MIDIAN cohorts (block / specialty / declared), pre-registered then measured |
-| `LICENSE` / `NOTICE` | MIT for this code; the third-party benchmark data keep their own licenses |
-| `CONTRACT.md` | frozen interfaces, accounting formulas, correctness checks, simplicity directive |
-| `DEVIATIONS.md` | every departure from the spec, dated, with the reason |
-| `STATUS.md` | run log and handoff: what exists, what ran, findings, how to finish |
-| `RESULTS_rte.md` | the results |
-| `rte/methods/frameworks/NOTES_*.md` | how each framework's selection primitive is intercepted, and what broke |
-
-## 9b. Reproducing the headline table
-
-Every result document is generated from the stored rows, not typed. One command regenerates Table 1, the framework
-headline at n = 1,000, together with its by-shape split and its fallback table:
+Everything the code reads or writes outside the repository lives under one directory, `$RTE_DATA` (results, the LLM
+answer memo, populations, downloaded datasets, model weights, environments). Set it before running anything:
 
 ```bash
-RTE_DATA=<data dir> PYTHONPATH=. python -m rte.analyze --grid fw_live_n1000
+export RTE_DATA=$PWD/rte_data
 ```
 
-The table is `$RTE_DATA/results/fw_live_n1000/summary.md`, section "HEADLINE: frameworks vs MIDIAN, by method class"
-(one row per arm, with the seed-bootstrap interval, the unit count and the paired delta against the reference, MIDIAN w/o
-defenses). Substitute
-`fw_live_n100`, `fw_live_n1000_verified`, `fw_live_n1000_verified_va` or `fw_live_n1000_lowskill` for the n = 100,
-shortlist-of-MIDIAN-w/o-audits, shortlist-of-MIDIAN and cartel tables; each grid keeps its own summary, and pooling them with `--grids`
-would average over different n.
-**Operating a run.** `scripts/await_fleet.sh` blocks until every model in `configs/models.yaml` answers `/health`
-(never trust `endpoints.d`: two fleets share bare keys, so cancelling one deregisters the other's models);
-`scripts/run_after.sh <job-prefix> <cmd>` chains a stage on the previous one draining (prefer a SLURM
-`--dependency=afterany:<ids>` when the ids are known: login-node pollers die with the session); `scripts/progress.py [grid...]`
-reports memo growth and per-grid row counts, and `scripts/progress.py --merge --prune [--every=N] <grids>` is the ONE
-process allowed to fold `rows.d` into `rows.csv` for a grid that holds `<results>/<grid>/.merge_owner` (every job runs
-with `RTE_CONSOLIDATE=0` there). Rules that each cost a day in September 2026 (details in DEVIATIONS): `run_grid.sbatch`
-defaults to the project env (`$RTE_DATA/env/rte`, the only one with torch/sentence-transformers); above n = 10^5 use
-`RTE_WORKERS=1` with one or two seeds per job (`Pool(fork)` deadlocks on long multi-wave jobs); anything that loads a
-million-row CSV runs as a SLURM job (the login node's memory cgroup kills it); `RTE_CONCURRENCY` raises in-flight
-requests for a warm-up job that has the fleet to itself; `RTE_TIME` sets `launch_live.sh`'s walltime; never run b = 1
-beside b = 3 in one table (verification is unfunded at b = 1); framework arms with `dedup: true` live in `*_dd` grids
-and are reported beside, never merged with, the pre-registered framework rows (erratum 25). Tables: `scripts/scale_matrix.py <grid>` (every arm x every
-(n, b), one table per liar regime, mean ± std and CI) and `scripts/cohort_table.py` (the v4 cohort modes across pools).
+The CPU quickstart and the bernoulli grids need no data. The other backends read third-party data that is not
+redistributed here (see [NOTICE](NOTICE)); download scripts are in `scripts/data/` <!-- VERIFY-PATH -->:
 
-`python scripts/paper_numbers.py` recomputes every number quoted in the write-ups into `paper/NUMBERS.json`
-(value, grid, units, CI per entry); `python scripts/paper_figs.py` redraws the paper figures with a CSV of every
-plotted value beside each one.
+| backend | source | location under `$RTE_DATA` |
+|---|---|---|
+| replay | RouterBench (Hu et al., 2024), 0-shot outcomes of 11 models | `data/routerbench_cells.npz` |
+| routereval | RouterEval (Huang et al., 2025) pools of 10 to 5,000 LLMs; LLMRouterBench (Li et al., 2026) | `data/routereval/router_dataset/` |
+| llm (live) | Reasoning Gym task families; Qwen2.5 0.5B-14B and Gemma-2 2B/9B weights | `hf_cache/`, `populations/` |
 
-## 10. Caveats
+The stored result rows behind the paper (4.5 M method rows over 197 grids) are not part of the repository; the figure
+inputs are, as aggregate CSVs (see [Reproducing the paper](#reproducing-the-paper)).
 
-- b = 3 probes give a 4-valued estimate, so at n = 1000 about 116 agents per family tie at 1.0 and any argmax over
-  raw probes picks among them blindly; this is what verification and adaptive halving fix.
-- True skill is measured once per prompt signature and shared across seeds; the seed CIs cover population and stream
-  variation, not the ±0.035 / ±0.065 binomial error of S itself.
-- Framework grids at 10^4-10^5 use 300 tasks and 3 seeds; CrewAI's and ADK's rows partly measure their fallback (declared
-  argmax over the shortlist), which is why the two are identical under every text retriever.
-- The live population has ~3,900 distinct prompt signatures (7 models × 560 specialty triples): agents sharing one are
-  clones (same memoized description, same memoized answers). Every method routes over the same clones; the text
-  retriever's top-10 is the only place it mattered (erratum 25). The two β = 0 cells (random and low-skill liar sets)
-  are the same world and differ only by the frameworks' run-to-run noise (≤ 0.01, Magentic-One ≤ 0.03).
-- MIDIAN w/o defenses charges one report per probe per peer as the spec reads; MIDIAN w/o audits and peer-reported halving charge one
-  per peer (its mean), so their report counts are ~3× lower for the same information.
-- Wall-clock columns mix cache hits and misses; use the counters for cost claims.
-- The benchmark supplies what probing needs and most deployments lack: a cheap probe whose outcome is checkable on the
-  task distribution. Flat probe argmax is an offline eval with a lookup table; MIDIAN's additions (log-cost routing, no
-  trusted observer, lying reporters) pay off only at scale with untrusted parties. RESULTS_rte_v2.md §11 spells this
-  out; TARGETS_rte_v3.md / RESULTS_rte_v3.md run our arms on RouterBench's own protocol and against RouteLLM's released
-  routers.
+## Quickstart
+
+On a laptop CPU, in about a minute (no data files, no GPU):
+
+```bash
+pytest -q                                          # ~400 tests, ~2 min (slow and fleet tests deselected)
+python -m rte.run --grid reviewer_bernoulli        # MIDIAN, its three ablations and four rivals, honest and cartel: 180 rows, ~15 s
+python -m rte.analyze --grid reviewer_bernoulli    # tables, paired deltas, cost exponents -> summary.md, ~15 s
+```
+
+`reviewer_bernoulli` runs MIDIAN, MIDIAN w/o verification, MIDIAN w/o audits, MIDIAN w/o defenses, declared argmax,
+flat probe argmax, the warm-start bandit and random on the synthetic backend at n = 10<sup>2</sup> and 10<sup>3</sup>,
+honest and under the β = 0.5 low-skill cartel, 5 seeds. Results land in `$RTE_DATA/results/reviewer_bernoulli/`
+(see [Outputs](#outputs)). Then, in increasing cost:
+
+<!-- VERIFY-PATH: scripts/figures/make_all.py (lane C) -->
+```bash
+python scripts/figures/make_all.py --from-csv                   # redraw every paper figure from the shipped CSVs
+python -m rte.run --grid smoke                                  # every method on a small synthetic world
+python -m rte.run --grid live_f1_n1000 --only dist=specialist   # a live grid: needs the model fleet (docs/operations.md)
+```
+
+A method is one file in `rte/methods/`, and [docs/architecture.md](docs/architecture.md) shows the interface.
+
+## Reproducing the paper
+
+[docs/reproducing.md](docs/reproducing.md) has the four tiers (redraw from CSVs; aggregates from rows; CPU grids; live
+LLM fleet). The figures and the commands that draw them:
+
+| paper figure | file in `figures/paper/` | command | input |
+|---|---|---|---|
+| Fig. 1 | `A_live_stacked` | `python scripts/figures/condensed_figs.py` | `results/aggregates/bars/*.csv`, rows of `va_b_*`, `rivals_b_*`, pool grids |
+| Fig. 2 | `B_families_stacked` | same | same, plus the erratum-30 grids of the four non-live families |
+| Fig. 3 | `F_shortlists_1e5` | `python scripts/figures/shortlist_condensed.py` | `results/aggregates/shortlist/live.csv` |
+| Fig. 4 | `H_routereval_shortlists` | same | `results/aggregates/shortlist/routereval.csv` |
+| Fig. 5 | `D_energy_per_query` | `python scripts/figures/efficiency_figs.py` | `cost_by_n.csv` (ledger of `bernoulli_scale_v5`), the energy model |
+| App. | `A_live_allb`, `B_families_allb` | `condensed_figs.py` | as Figs. 1-2 |
+| App. | `C_routing_work_vs_n` | `efficiency_figs.py` | as Fig. 5 |
+| App. | `E_shortlists_by_n`, `F_shortlists_1e5_appendix`, `G_shortlist_lift_1e5` | `shortlist_condensed.py` | as Fig. 3 |
+| App. | `I_max_lie` | `python scripts/figures/lie_max_fig.py` | rows of `lie_max_*`, `lie_max_fw_*` |
+
+<!-- VERIFY-PATH: script locations under scripts/figures/ and the aggregates under results/aggregates/ -->
+`python scripts/figures/make_all.py` runs all of them; with `--from-csv` it redraws from the CSV written beside each figure
+and needs no result rows. Every plotted value, its grids, cells, seeds and aggregation are traced in
+[docs/figure_provenance.md](docs/figure_provenance.md); [docs/figures.md](docs/figures.md) has the style rules and the
+figure-to-grid table.
+
+## Repository structure
+
+<!-- VERIFY-PATH: tree follows the refactor plan's target layout -->
+```
+rte/                    the benchmark package
+  world.py              World and View: hidden skill S, declarations D, liars, channels, paired task streams
+  ledger.py             the six cost counters, one increment site each
+  budget.py             the probe budget: b probes per (agent, family)
+  run.py                grid runner: cells x seeds x methods -> one row per result; resumable, shardable
+  config.py             $RTE_DATA and every RTE_* switch, in one place
+  analysis/             tables, bootstrap CIs, paired deltas, cost exponents (python -m rte.analyze)
+  llm_client.py         client for the served models: endpoint choice, content-hash memo
+  backends/             bernoulli (synthetic), replay (RouterBench), routereval (RouterEval, LLMRouterBench), llm (live)
+  methods/              one file per method (MIDIAN, rivals, bandits, learned routers); discovered by file name
+    frameworks/         the shared framework adapter, the subprocess bridge, fw_*.py, workers/ (one per framework)
+configs/
+  grids/*.yaml          every experiment as a named grid (python -m rte.run --grid <name>)
+  models.yaml           the live model ladder
+scripts/
+  setup/                environment and framework-venv builds
+  data/                 dataset and model downloads, population embedding
+  figures/              one script per paper figure, the shared style (figspec.py), make_all.py
+  analysis/             tables and diagnostics over stored rows
+  checks/               invariants: grid fingerprints, row ids, parity, anonymity
+results/aggregates/     the CSV inputs of the figures (bars/, shortlist/)
+figures/paper/          the paper figures: .pdf, .png and the .csv of every plotted value
+tests/                  530 tests: method contracts, ledger, view enforcement, backends, framework adapters
+docs/                   architecture, methods, design, reproducing, figures, operations, errata; archive/
+paper/                  NUMBERS.json (every quoted number with grid, units, CI) and shortlist diagnostics
+cluster/                SLURM job scripts and campaign tooling for one HPC cluster (not part of the anonymous export)
+requirements-frameworks/  pinned requirements of each framework's virtual environment
+```
+
+## Outputs
+
+`python -m rte.run --grid G` writes to `$RTE_DATA/results/G/`: one JSON file per result in `rows.d/` (atomic, so any job
+can be killed and rerun; finished rows are skipped by id), folded into `rows.csv`. A row is one (cell, seed, method):
+success, success on the last quarter of the stream, regret against the oracle, the misroute-to-liar rate, the six
+ledger counters at build and per task, wall-clock, and the method's own statistics. `python -m rte.analyze --grid G`
+adds `summary.md`, `aggregate.csv`, `paired_vs_midian.csv` (paired deltas against MIDIAN w/o defenses) and
+`cost_exponents.csv` beside them. The row schema is in [docs/experimental_design.md](docs/experimental_design.md).
+
+## Compute requirements
+
+| tier | hardware | time |
+|---|---|---|
+| tests, quickstart, redrawing figures from CSVs | any CPU | minutes |
+| bernoulli, replay, RouterEval grids | CPU, 1-16 cores per job | minutes per grid at n <= 10<sup>4</sup>; the 10<sup>6</sup>-10<sup>7</sup> scale grids are sharded over many jobs |
+| live grids | a vLLM fleet serving the 7-model ladder (H100 / H200 GPUs) | a cold MIDIAN build at n = 10<sup>5</sup>, b = 3 took 16.6 h of the whole fleet |
+| framework grids | the fleet plus supervisor replicas (Qwen2.5-7B) | one supervisor call per routed task; minutes to a day per unit, depending on the framework |
+
+The campaign behind the paper used on the order of 10<sup>5</sup> CPU-hours on a shared SLURM cluster besides the GPU
+fleet. Every model answer is memoised by content hash, so rerunning a stored live cell costs almost no GPU time.
+
+## License
+
+MIT for the code, the analysis scripts and the documents in this repository ([LICENSE](LICENSE)). Third-party data,
+models and frameworks keep their own licenses ([NOTICE](NOTICE)).
+
+## Acknowledgements
+
+The live backend's tasks are [Reasoning Gym](https://github.com/open-thought/reasoning-gym) families, its agents are
+Qwen2.5 and Gemma-2 models served with [vLLM](https://github.com/vllm-project/vllm). Recorded outcomes come from
+RouterBench, RouterEval and LLMRouterBench. The framework arms run the selection primitives of LangGraph, CrewAI,
+AutoGen, Magentic-One, Microsoft Agent Framework, OpenAI Agents SDK, Google ADK, LlamaIndex, smolagents and CAMEL, each
+unmodified in its own environment. Dense shortlists use all-MiniLM-L6-v2, Qwen3-Embedding-8B and Qwen3-Reranker-4B.
+
+## Citation
+
+```bibtex
+@inproceedings{anonymous2027midian,
+  title     = {Anonymous ICLR 2027 submission},
+  author    = {Anonymous Authors},
+  booktitle = {Submitted to the International Conference on Learning Representations (ICLR)},
+  year      = {2027},
+  note      = {Under review}
+}
+```

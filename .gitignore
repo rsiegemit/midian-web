@@ -8,3 +8,10 @@ slurm-*.err
 cluster/cluster.env
 figures/bars/
 figures/shortlist/
+.claude/
+context_files/
+*.log
+slurm-*
+.ruff_cache/
+build/
+dist/

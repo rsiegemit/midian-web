@@ -6,7 +6,7 @@
 # mapping _sets[NAME] under the grid's own keys. `blocks:` = several axis blocks in one grid. The runner always adds
 # an `oracle` row per (cell, seed). YAML anchors/aliases are not used: they cannot cross files.
 # Every grid carries one header line: [tags] purpose; read by: scripts. Tags: FIG:<letters> = drawn in condensed
-# figure(s) A-I (docs/FIGURE_DATA_GUIDE.md); NUM = feeds numbers/tables but no figure; HIST = historical, read by no
+# figure(s) A-I (docs/figure_provenance.md); NUM = feeds numbers/tables but no figure; HIST = historical, read by no
 # current script; SUPERSEDED-BY:<grid> = a later grid replaces it in the figures; PENDING = defined, rows outstanding;
 # SMOKE = quick check. Grids are never deleted: a name is its results directory and part of every row id.
 defaults:

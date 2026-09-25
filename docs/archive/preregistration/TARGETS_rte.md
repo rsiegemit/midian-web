@@ -1,7 +1,5 @@
 # TARGETS_rte.md — pre-registered expectations (committed before any run)
 
-> Names: this document predates the 2026-09-24 rename — here "MIDIAN" is the plain tree, now **MIDIAN w/o defenses**; the full method MIDIAN (formerly MIDIAN-VA) came later (CHANGES_AND_ERRATA §8g).
-
 1. All declared-channel methods lose ≥0.25 success from β=0 → 0.5 under `inflate`; MIDIAN and all probe-only methods move ≤0.03.
 2. MIDIAN's success equals `flat_probe_argmax` within 0.02 at β=0 (it is a max-tree over the same estimates) and its per-task comparisons scale as r·log_r n while flat scans scale as n (fit exponents; report).
 3. With `collude=True`, MIDIAN degrades once expected liars per cohort exceeds 3 (β·r > ⌊δ(r−1)⌋ ⇒ β > 0.3); trimming vs no trimming (δ=0) separates *only* in that regime. If it doesn't, say so.
