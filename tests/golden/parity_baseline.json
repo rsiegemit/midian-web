@@ -21,7 +21,8 @@
    "replay",
    "routereval"
   ],
-  "exempt": "fw_* methods and the llm backend (no offline-reproducible LLM responses)"
+  "exempt": "fw_* methods and the llm backend (no offline-reproducible LLM responses)",
+  "note": "D1-dir rows remapped to unexpanded  ids (2026-09-25)"
  },
  "rows": [
   {
@@ -406,7 +407,7 @@
   },
   {
    "dir": "bernoulli_scale",
-   "rid": "0c54d18f07f21e09103c081e9aee3d5c",
+   "rid": "264d4983cf495725593694588b3940d2",
    "line": 9,
    "source": "rows.d",
    "backend": "bernoulli",
@@ -458,7 +459,7 @@
     "demand": "uniform",
     "b": 3,
     "Q": 1000,
-    "backend_kwargs": "{\"calibrate_from\":\"/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte/populations/specialist_n1000_K16_seed1/S.npy\"}",
+    "backend_kwargs": "{\"calibrate_from\":\"$RTE_DATA/populations/specialist_n1000_K16_seed1/S.npy\"}",
     "seed": 3,
     "grid": "bernoulli_scale",
     "n_agents": 100,
@@ -503,7 +504,8 @@
     "total_comm_per_task": 1.0,
     "method_stats": "{}",
     "oracle_success": 0.855,
-    "regret": 0.137
+    "regret": 0.137,
+    "rid": "264d4983cf495725593694588b3940d2"
    },
    "baseline_status": "equal",
    "baseline_diffs": []
@@ -798,7 +800,7 @@
   },
   {
    "dir": "bernoulli_scale_v5",
-   "rid": "001316529e4d52f5c67b9efff714f490",
+   "rid": "b291726dc3654b9bb51c4a208d2bd644",
    "line": 9538,
    "source": "rows.csv",
    "backend": "bernoulli",
@@ -824,7 +826,7 @@
     "demand": "uniform",
     "b": 3,
     "Q": 1000,
-    "backend_kwargs": "{\"calibrate_from\":\"/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte/populations/specialist_n1000_K16_seed1/S.npy\"}",
+    "backend_kwargs": "{\"calibrate_from\":\"$RTE_DATA/populations/specialist_n1000_K16_seed1/S.npy\"}",
     "seed": 538,
     "grid": "bernoulli_scale_v5",
     "n_agents": 10,
@@ -869,7 +871,8 @@
     "total_comm_per_task": 1.0,
     "method_stats": "{}",
     "oracle_success": 0.775,
-    "regret": 0.03400000000000003
+    "regret": 0.03400000000000003,
+    "rid": "b291726dc3654b9bb51c4a208d2bd644"
    },
    "baseline_status": "equal",
    "baseline_diffs": []
@@ -1920,7 +1923,7 @@
   },
   {
    "dir": "bernoulli_scale",
-   "rid": "8adb71827441efd5d1b17e2a094ae453",
+   "rid": "65240613777e9ee2aedf0b4b4978d58c",
    "line": 13,
    "source": "rows.d",
    "backend": "bernoulli",
@@ -1992,7 +1995,7 @@
     "demand": "uniform",
     "b": 3,
     "Q": 1000,
-    "backend_kwargs": "{\"calibrate_from\":\"/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte/populations/specialist_n1000_K16_seed1/S.npy\"}",
+    "backend_kwargs": "{\"calibrate_from\":\"$RTE_DATA/populations/specialist_n1000_K16_seed1/S.npy\"}",
     "seed": 1,
     "grid": "bernoulli_scale",
     "n_agents": 100,
@@ -2037,14 +2040,15 @@
     "total_comm_per_task": 10.0,
     "method_stats": "{\"observe_charged\":1}",
     "oracle_success": 0.843,
-    "regret": 0.08199999999999996
+    "regret": 0.08199999999999996,
+    "rid": "65240613777e9ee2aedf0b4b4978d58c"
    },
    "baseline_status": "equal",
    "baseline_diffs": []
   },
   {
    "dir": "bernoulli_scale",
-   "rid": "6ada26cd25c6cf777e488233fc283ec1",
+   "rid": "250bc173d70e552888f122ef2e0cf5fc",
    "line": 17,
    "source": "rows.d",
    "backend": "bernoulli",
@@ -2126,7 +2130,7 @@
     "demand": "uniform",
     "b": 3,
     "Q": 1000,
-    "backend_kwargs": "{\"calibrate_from\":\"/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte/populations/specialist_n1000_K16_seed1/S.npy\"}",
+    "backend_kwargs": "{\"calibrate_from\":\"$RTE_DATA/populations/specialist_n1000_K16_seed1/S.npy\"}",
     "seed": 2,
     "grid": "bernoulli_scale",
     "n_agents": 100,
@@ -2171,7 +2175,8 @@
     "total_comm_per_task": 6.0,
     "method_stats": "{\"observe_charged\":1}",
     "oracle_success": 0.848,
-    "regret": 0.10399999999999998
+    "regret": 0.10399999999999998,
+    "rid": "250bc173d70e552888f122ef2e0cf5fc"
    },
    "baseline_status": "equal",
    "baseline_diffs": []
@@ -2294,7 +2299,7 @@
   },
   {
    "dir": "bernoulli_scale",
-   "rid": "280d63069c69084fd1aca118c898b5ed",
+   "rid": "2326d80eeaae49097b58408aa2db9ee3",
    "line": 24,
    "source": "rows.d",
    "backend": "bernoulli",
@@ -2376,7 +2381,7 @@
     "demand": "uniform",
     "b": 3,
     "Q": 1000,
-    "backend_kwargs": "{\"calibrate_from\":\"/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte/populations/specialist_n1000_K16_seed1/S.npy\"}",
+    "backend_kwargs": "{\"calibrate_from\":\"$RTE_DATA/populations/specialist_n1000_K16_seed1/S.npy\"}",
     "seed": 3,
     "grid": "bernoulli_scale",
     "n_agents": 100,
@@ -2421,14 +2426,15 @@
     "total_comm_per_task": 5.0,
     "method_stats": "{\"observe_charged\":1}",
     "oracle_success": 0.855,
-    "regret": 0.06699999999999995
+    "regret": 0.06699999999999995,
+    "rid": "2326d80eeaae49097b58408aa2db9ee3"
    },
    "baseline_status": "equal",
    "baseline_diffs": []
   },
   {
    "dir": "bernoulli_scale",
-   "rid": "18d54e491b356ce843d8782138af7dc9",
+   "rid": "ce98be6077cf5389d47c6359e7ee7e06",
    "line": 27,
    "source": "rows.d",
    "backend": "bernoulli",
@@ -2454,7 +2460,7 @@
     "demand": "uniform",
     "b": 3,
     "Q": 1000,
-    "backend_kwargs": "{\"calibrate_from\":\"/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte/populations/specialist_n1000_K16_seed1/S.npy\"}",
+    "backend_kwargs": "{\"calibrate_from\":\"$RTE_DATA/populations/specialist_n1000_K16_seed1/S.npy\"}",
     "seed": 3,
     "grid": "bernoulli_scale",
     "n_agents": 100,
@@ -2499,14 +2505,15 @@
     "total_comm_per_task": 7.504,
     "method_stats": "{\"observe_charged\":1}",
     "oracle_success": 0.855,
-    "regret": 0.10399999999999998
+    "regret": 0.10399999999999998,
+    "rid": "ce98be6077cf5389d47c6359e7ee7e06"
    },
    "baseline_status": "equal",
    "baseline_diffs": []
   },
   {
    "dir": "bernoulli_scale",
-   "rid": "5578943a9c5554a18206d4cd5e0b50b0",
+   "rid": "61856ee95f8b9091d1e443a88e8279fa",
    "line": 30,
    "source": "rows.d",
    "backend": "bernoulli",
@@ -2532,7 +2539,7 @@
     "demand": "uniform",
     "b": 3,
     "Q": 1000,
-    "backend_kwargs": "{\"calibrate_from\":\"/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte/populations/specialist_n1000_K16_seed1/S.npy\"}",
+    "backend_kwargs": "{\"calibrate_from\":\"$RTE_DATA/populations/specialist_n1000_K16_seed1/S.npy\"}",
     "seed": 3,
     "grid": "bernoulli_scale",
     "n_agents": 100,
@@ -2577,7 +2584,8 @@
     "total_comm_per_task": 5.55,
     "method_stats": "{\"observe_charged\":1}",
     "oracle_success": 0.855,
-    "regret": 0.06299999999999994
+    "regret": 0.06299999999999994,
+    "rid": "61856ee95f8b9091d1e443a88e8279fa"
    },
    "baseline_status": "equal",
    "baseline_diffs": []
@@ -2827,7 +2835,7 @@
   },
   {
    "dir": "bernoulli_scale_v5",
-   "rid": "00207969334737506a3282b2e5cee2eb",
+   "rid": "28843f30aca8e444b00ce51b9e0b0ee0",
    "line": 20845,
    "source": "rows.csv",
    "backend": "bernoulli",
@@ -2853,7 +2861,7 @@
     "demand": "uniform",
     "b": 3,
     "Q": 1000,
-    "backend_kwargs": "{\"calibrate_from\":\"/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte/populations/specialist_n1000_K16_seed1/S.npy\"}",
+    "backend_kwargs": "{\"calibrate_from\":\"$RTE_DATA/populations/specialist_n1000_K16_seed1/S.npy\"}",
     "seed": 845,
     "grid": "bernoulli_scale_v5",
     "n_agents": 10,
@@ -2898,7 +2906,8 @@
     "total_comm_per_task": 1.0,
     "method_stats": "{}",
     "oracle_success": 0.784,
-    "regret": 0.11099999999999999
+    "regret": 0.11099999999999999,
+    "rid": "28843f30aca8e444b00ce51b9e0b0ee0"
    },
    "baseline_status": "equal",
    "baseline_diffs": []
@@ -9700,7 +9709,7 @@
   },
   {
    "dir": "bernoulli_scale",
-   "rid": "18895724112a7dd6bbc43c9bfc99f42b",
+   "rid": "4b411e2f111cc02d416fc2871564c6f8",
    "line": 1,
    "source": "rows.d",
    "backend": "bernoulli",
@@ -9732,7 +9741,7 @@
     "demand": "uniform",
     "b": 3,
     "Q": 1000,
-    "backend_kwargs": "{\"calibrate_from\":\"/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte/populations/specialist_n1000_K16_seed1/S.npy\"}",
+    "backend_kwargs": "{\"calibrate_from\":\"$RTE_DATA/populations/specialist_n1000_K16_seed1/S.npy\"}",
     "seed": 1,
     "grid": "bernoulli_scale",
     "n_agents": 100,
@@ -9777,14 +9786,15 @@
     "total_comm_per_task": 201.0,
     "method_stats": "{}",
     "oracle_success": 0.843,
-    "regret": 0.08499999999999996
+    "regret": 0.08499999999999996,
+    "rid": "4b411e2f111cc02d416fc2871564c6f8"
    },
    "baseline_status": "equal",
    "baseline_diffs": []
   },
   {
    "dir": "bernoulli_scale",
-   "rid": "8381bbbde4e7e5a47707d166ac6fa544",
+   "rid": "271221e9f3c551f22b4defa44e44158e",
    "line": 4,
    "source": "rows.d",
    "backend": "bernoulli",
@@ -9816,7 +9826,7 @@
     "demand": "uniform",
     "b": 3,
     "Q": 1000,
-    "backend_kwargs": "{\"calibrate_from\":\"/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte/populations/specialist_n1000_K16_seed1/S.npy\"}",
+    "backend_kwargs": "{\"calibrate_from\":\"$RTE_DATA/populations/specialist_n1000_K16_seed1/S.npy\"}",
     "seed": 1,
     "grid": "bernoulli_scale",
     "n_agents": 100,
@@ -9861,7 +9871,8 @@
     "total_comm_per_task": 1.0,
     "method_stats": "{}",
     "oracle_success": 0.843,
-    "regret": 0.07199999999999995
+    "regret": 0.07199999999999995,
+    "rid": "271221e9f3c551f22b4defa44e44158e"
    },
    "baseline_status": "equal",
    "baseline_diffs": []
@@ -10147,7 +10158,7 @@
   },
   {
    "dir": "scale_100k",
-   "rid": "014a055e5eb2a1c496b3f3ef13fff54a",
+   "rid": "81526fab7f50c6da58a53f0994f242f3",
    "line": 45,
    "source": "rows.d",
    "backend": "bernoulli",
@@ -10173,7 +10184,7 @@
     "demand": "uniform",
     "b": 3,
     "Q": 1000,
-    "backend_kwargs": "{\"calibrate_from\":\"/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte/populations/specialist_n1000_K16_seed1/S.npy\"}",
+    "backend_kwargs": "{\"calibrate_from\":\"$RTE_DATA/populations/specialist_n1000_K16_seed1/S.npy\"}",
     "seed": 3,
     "grid": "scale_100k",
     "n_agents": 10000,
@@ -10218,14 +10229,15 @@
     "total_comm_per_task": 1.0,
     "method_stats": "{}",
     "oracle_success": 0.838,
-    "regret": 0.06799999999999995
+    "regret": 0.06799999999999995,
+    "rid": "81526fab7f50c6da58a53f0994f242f3"
    },
    "baseline_status": "equal",
    "baseline_diffs": []
   },
   {
    "dir": "bernoulli_scale",
-   "rid": "45e589ac5ec19faa371f2c1943788e54",
+   "rid": "f8755d640f4c3d852a1ecaf8fc1302c4",
    "line": 10,
    "source": "rows.d",
    "backend": "bernoulli",
@@ -10277,7 +10289,7 @@
     "demand": "uniform",
     "b": 3,
     "Q": 1000,
-    "backend_kwargs": "{\"calibrate_from\":\"/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte/populations/specialist_n1000_K16_seed1/S.npy\"}",
+    "backend_kwargs": "{\"calibrate_from\":\"$RTE_DATA/populations/specialist_n1000_K16_seed1/S.npy\"}",
     "seed": 1,
     "grid": "bernoulli_scale",
     "n_agents": 100,
@@ -10322,7 +10334,8 @@
     "total_comm_per_task": 1.0,
     "method_stats": "{}",
     "oracle_success": 0.843,
-    "regret": 0.11199999999999999
+    "regret": 0.11199999999999999,
+    "rid": "f8755d640f4c3d852a1ecaf8fc1302c4"
    },
    "baseline_status": "equal",
    "baseline_diffs": []
@@ -10448,7 +10461,7 @@
   },
   {
    "dir": "bernoulli_b_sweep",
-   "rid": "0001aff866fd038a63502f5d79374511",
+   "rid": "7a364e2d0c0789171f9d62c19beac1db",
    "line": 873858,
    "source": "rows.csv",
    "backend": "bernoulli",
@@ -10474,7 +10487,7 @@
     "demand": "uniform",
     "b": 10,
     "Q": 1000,
-    "backend_kwargs": "{\"calibrate_from\":\"/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte/populations/specialist_n1000_K16_seed1/S.npy\"}",
+    "backend_kwargs": "{\"calibrate_from\":\"$RTE_DATA/populations/specialist_n1000_K16_seed1/S.npy\"}",
     "seed": 858,
     "grid": "bernoulli_b_sweep",
     "n_agents": 1000,
@@ -10519,7 +10532,8 @@
     "total_comm_per_task": 1.0,
     "method_stats": "{}",
     "oracle_success": 0.867,
-    "regret": 0.05300000000000005
+    "regret": 0.05300000000000005,
+    "rid": "7a364e2d0c0789171f9d62c19beac1db"
    },
    "baseline_status": "equal",
    "baseline_diffs": []
@@ -11861,7 +11875,7 @@
   },
   {
    "dir": "bernoulli_scale",
-   "rid": "80b584ef43bb824f576a6215dd2709e5",
+   "rid": "63e9efad6bde49ad20fc9b726e7a8bf1",
    "line": 19,
    "source": "rows.d",
    "backend": "bernoulli",
@@ -11933,7 +11947,7 @@
     "demand": "uniform",
     "b": 3,
     "Q": 1000,
-    "backend_kwargs": "{\"calibrate_from\":\"/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte/populations/specialist_n1000_K16_seed1/S.npy\"}",
+    "backend_kwargs": "{\"calibrate_from\":\"$RTE_DATA/populations/specialist_n1000_K16_seed1/S.npy\"}",
     "seed": 1,
     "grid": "bernoulli_scale",
     "n_agents": 100,
@@ -11978,7 +11992,8 @@
     "total_comm_per_task": 7.0,
     "method_stats": "{\"observe_charged\":1}",
     "oracle_success": 0.843,
-    "regret": 0.06999999999999995
+    "regret": 0.06999999999999995,
+    "rid": "63e9efad6bde49ad20fc9b726e7a8bf1"
    },
    "baseline_status": "equal",
    "baseline_diffs": []
@@ -12119,7 +12134,7 @@
   },
   {
    "dir": "bernoulli_b_sweep",
-   "rid": "0003b5eda533e0e6576526bf9caa1d7e",
+   "rid": "1e976252656df17507500c57f7a271f4",
    "line": 905012,
    "source": "rows.csv",
    "backend": "bernoulli",
@@ -12145,7 +12160,7 @@
     "demand": "uniform",
     "b": 20,
     "Q": 1000,
-    "backend_kwargs": "{\"calibrate_from\":\"/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte/populations/specialist_n1000_K16_seed1/S.npy\"}",
+    "backend_kwargs": "{\"calibrate_from\":\"$RTE_DATA/populations/specialist_n1000_K16_seed1/S.npy\"}",
     "seed": 12,
     "grid": "bernoulli_b_sweep",
     "n_agents": 1000,
@@ -12190,14 +12205,15 @@
     "total_comm_per_task": 10.306,
     "method_stats": "{\"observe_charged\":1}",
     "oracle_success": 0.85,
-    "regret": 0.029000000000000026
+    "regret": 0.029000000000000026,
+    "rid": "1e976252656df17507500c57f7a271f4"
    },
    "baseline_status": "equal",
    "baseline_diffs": []
   },
   {
    "dir": "bernoulli_b_sweep",
-   "rid": "00035a25e4da474131900030c90e5451",
+   "rid": "e3df09b2e3432b3521d3b4841c761fe1",
    "line": 906798,
    "source": "rows.csv",
    "backend": "bernoulli",
@@ -12223,7 +12239,7 @@
     "demand": "uniform",
     "b": 20,
     "Q": 1000,
-    "backend_kwargs": "{\"calibrate_from\":\"/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte/populations/specialist_n1000_K16_seed1/S.npy\"}",
+    "backend_kwargs": "{\"calibrate_from\":\"$RTE_DATA/populations/specialist_n1000_K16_seed1/S.npy\"}",
     "seed": 798,
     "grid": "bernoulli_b_sweep",
     "n_agents": 1000,
@@ -12268,14 +12284,15 @@
     "total_comm_per_task": 6.549,
     "method_stats": "{\"observe_charged\":1}",
     "oracle_success": 0.86,
-    "regret": 0.020000000000000018
+    "regret": 0.020000000000000018,
+    "rid": "e3df09b2e3432b3521d3b4841c761fe1"
    },
    "baseline_status": "equal",
    "baseline_diffs": []
   },
   {
    "dir": "bernoulli_scale",
-   "rid": "cff183f9c7b2a44b9cfde0738014e615",
+   "rid": "da70f9feb02629f20f5442496cf753b4",
    "line": 35,
    "source": "rows.d",
    "backend": "bernoulli",
@@ -12307,7 +12324,7 @@
     "demand": "uniform",
     "b": 3,
     "Q": 1000,
-    "backend_kwargs": "{\"calibrate_from\":\"/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte/populations/specialist_n1000_K16_seed1/S.npy\"}",
+    "backend_kwargs": "{\"calibrate_from\":\"$RTE_DATA/populations/specialist_n1000_K16_seed1/S.npy\"}",
     "seed": 2,
     "grid": "bernoulli_scale",
     "n_agents": 100,
@@ -12352,7 +12369,8 @@
     "total_comm_per_task": 1.0,
     "method_stats": "{}",
     "oracle_success": 0.848,
-    "regret": 0.44999999999999996
+    "regret": 0.44999999999999996,
+    "rid": "da70f9feb02629f20f5442496cf753b4"
    },
    "baseline_status": "equal",
    "baseline_diffs": []
@@ -12562,7 +12580,7 @@
   },
   {
    "dir": "bernoulli_b_sweep",
-   "rid": "000924d0ffffc889793735b00f55dde6",
+   "rid": "c5cc200793212ee1885d1f8d21a32de2",
    "line": 641465,
    "source": "rows.csv",
    "backend": "bernoulli",
@@ -12588,7 +12606,7 @@
     "demand": "uniform",
     "b": 3,
     "Q": 1000,
-    "backend_kwargs": "{\"calibrate_from\":\"/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte/populations/specialist_n1000_K16_seed1/S.npy\"}",
+    "backend_kwargs": "{\"calibrate_from\":\"$RTE_DATA/populations/specialist_n1000_K16_seed1/S.npy\"}",
     "seed": 465,
     "grid": "bernoulli_b_sweep",
     "n_agents": 1000,
@@ -12633,7 +12651,8 @@
     "total_comm_per_task": 1.0,
     "method_stats": "{}",
     "oracle_success": 0.835,
-    "regret": 0.21099999999999997
+    "regret": 0.21099999999999997,
+    "rid": "c5cc200793212ee1885d1f8d21a32de2"
    },
    "baseline_status": "equal",
    "baseline_diffs": []
@@ -12987,7 +13006,7 @@
   },
   {
    "dir": "bernoulli_scale",
-   "rid": "62fa606fb86caeb00c03c43e9d50931d",
+   "rid": "d7366934838a159618cb522d0f1dc18f",
    "line": 38,
    "source": "rows.d",
    "backend": "bernoulli",
@@ -13039,7 +13058,7 @@
     "demand": "uniform",
     "b": 3,
     "Q": 1000,
-    "backend_kwargs": "{\"calibrate_from\":\"/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte/populations/specialist_n1000_K16_seed1/S.npy\"}",
+    "backend_kwargs": "{\"calibrate_from\":\"$RTE_DATA/populations/specialist_n1000_K16_seed1/S.npy\"}",
     "seed": 2,
     "grid": "bernoulli_scale",
     "n_agents": 100,
@@ -13084,7 +13103,8 @@
     "total_comm_per_task": 1.0,
     "method_stats": "{}",
     "oracle_success": 0.848,
-    "regret": 0.247
+    "regret": 0.247,
+    "rid": "d7366934838a159618cb522d0f1dc18f"
    },
    "baseline_status": "equal",
    "baseline_diffs": []
@@ -13220,7 +13240,7 @@
   },
   {
    "dir": "scale_100k",
-   "rid": "012b2da37a326cf398b5e48c3e3ee9d9",
+   "rid": "ece39707fc932215083b58ea63287114",
    "line": 154,
    "source": "rows.d",
    "backend": "bernoulli",
@@ -13246,7 +13266,7 @@
     "demand": "uniform",
     "b": 3,
     "Q": 1000,
-    "backend_kwargs": "{\"calibrate_from\":\"/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte/populations/specialist_n1000_K16_seed1/S.npy\"}",
+    "backend_kwargs": "{\"calibrate_from\":\"$RTE_DATA/populations/specialist_n1000_K16_seed1/S.npy\"}",
     "seed": 1,
     "grid": "scale_100k",
     "n_agents": 10000,
@@ -13291,7 +13311,8 @@
     "total_comm_per_task": 1.0,
     "method_stats": "{}",
     "oracle_success": 0.853,
-    "regret": 0.026000000000000023
+    "regret": 0.026000000000000023,
+    "rid": "ece39707fc932215083b58ea63287114"
    },
    "baseline_status": "equal",
    "baseline_diffs": []
@@ -19742,7 +19763,7 @@
   },
   {
    "dir": "scale_100k",
-   "rid": "013fed6e514b75b64e0f520295ffa19d",
+   "rid": "cff97e6e8a6b8b17e15aad158e486c51",
    "line": 314,
    "source": "rows.d",
    "backend": "bernoulli",
@@ -19768,7 +19789,7 @@
     "demand": "uniform",
     "b": 3,
     "Q": 1000,
-    "backend_kwargs": "{\"calibrate_from\":\"/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte/populations/specialist_n1000_K16_seed1/S.npy\"}",
+    "backend_kwargs": "{\"calibrate_from\":\"$RTE_DATA/populations/specialist_n1000_K16_seed1/S.npy\"}",
     "seed": 2,
     "grid": "scale_100k",
     "n_agents": 10000,
@@ -19813,7 +19834,8 @@
     "total_comm_per_task": 1.0,
     "method_stats": "{}",
     "oracle_success": 0.845,
-    "regret": 0.123
+    "regret": 0.123,
+    "rid": "cff97e6e8a6b8b17e15aad158e486c51"
    },
    "baseline_status": "equal",
    "baseline_diffs": []
@@ -20241,7 +20263,7 @@
   },
   {
    "dir": "scale_100k",
-   "rid": "055196e949ea31b30751756632f02747",
+   "rid": "10289bd3e1eb044b6ed00dbfdc849ec7",
    "line": 593,
    "source": "rows.d",
    "backend": "bernoulli",
@@ -20267,7 +20289,7 @@
     "demand": "uniform",
     "b": 3,
     "Q": 1000,
-    "backend_kwargs": "{\"calibrate_from\":\"/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte/populations/specialist_n1000_K16_seed1/S.npy\"}",
+    "backend_kwargs": "{\"calibrate_from\":\"$RTE_DATA/populations/specialist_n1000_K16_seed1/S.npy\"}",
     "seed": 2,
     "grid": "scale_100k",
     "n_agents": 10000,
@@ -20312,7 +20334,8 @@
     "total_comm_per_task": 1.0,
     "method_stats": "{}",
     "oracle_success": 0.847,
-    "regret": 0.14
+    "regret": 0.14,
+    "rid": "10289bd3e1eb044b6ed00dbfdc849ec7"
    },
    "baseline_status": "equal",
    "baseline_diffs": []
@@ -20438,7 +20461,7 @@
   },
   {
    "dir": "scale_100k",
-   "rid": "0a65fff90ecaa4f54346038849f5cd11",
+   "rid": "8f3fa01edb3356117267aa79253190d6",
    "line": 205,
    "source": "rows.d",
    "backend": "bernoulli",
@@ -20464,7 +20487,7 @@
     "demand": "uniform",
     "b": 3,
     "Q": 1000,
-    "backend_kwargs": "{\"calibrate_from\":\"/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte/populations/specialist_n1000_K16_seed1/S.npy\"}",
+    "backend_kwargs": "{\"calibrate_from\":\"$RTE_DATA/populations/specialist_n1000_K16_seed1/S.npy\"}",
     "seed": 1,
     "grid": "scale_100k",
     "n_agents": 10000,
@@ -20509,7 +20532,8 @@
     "total_comm_per_task": 1.0,
     "method_stats": "{}",
     "oracle_success": 0.853,
-    "regret": 0.18899999999999995
+    "regret": 0.18899999999999995,
+    "rid": "8f3fa01edb3356117267aa79253190d6"
    },
    "baseline_status": "equal",
    "baseline_diffs": []
@@ -21856,7 +21880,7 @@
   },
   {
    "dir": "scale_100k",
-   "rid": "067e92c52af1ed661515b3c1e4e4ad5c",
+   "rid": "beccb74a93a28ac941b2d771af861f99",
    "line": 132,
    "source": "rows.d",
    "backend": "bernoulli",
@@ -21882,7 +21906,7 @@
     "demand": "uniform",
     "b": 3,
     "Q": 1000,
-    "backend_kwargs": "{\"calibrate_from\":\"/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte/populations/specialist_n1000_K16_seed1/S.npy\"}",
+    "backend_kwargs": "{\"calibrate_from\":\"$RTE_DATA/populations/specialist_n1000_K16_seed1/S.npy\"}",
     "seed": 3,
     "grid": "scale_100k",
     "n_agents": 10000,
@@ -21927,14 +21951,15 @@
     "total_comm_per_task": 13.0,
     "method_stats": "{\"observe_charged\":1}",
     "oracle_success": 0.838,
-    "regret": 0.07399999999999995
+    "regret": 0.07399999999999995,
+    "rid": "beccb74a93a28ac941b2d771af861f99"
    },
    "baseline_status": "equal",
    "baseline_diffs": []
   },
   {
    "dir": "scale_100k",
-   "rid": "037673a473eaae24938f91b46f89282c",
+   "rid": "2514e008899614cede66e63700618c58",
    "line": 94,
    "source": "rows.d",
    "backend": "bernoulli",
@@ -21960,7 +21985,7 @@
     "demand": "uniform",
     "b": 3,
     "Q": 1000,
-    "backend_kwargs": "{\"calibrate_from\":\"/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte/populations/specialist_n1000_K16_seed1/S.npy\"}",
+    "backend_kwargs": "{\"calibrate_from\":\"$RTE_DATA/populations/specialist_n1000_K16_seed1/S.npy\"}",
     "seed": 1,
     "grid": "scale_100k",
     "n_agents": 10000,
@@ -22005,14 +22030,15 @@
     "total_comm_per_task": 7.0,
     "method_stats": "{\"observe_charged\":1}",
     "oracle_success": 0.853,
-    "regret": 0.06399999999999995
+    "regret": 0.06399999999999995,
+    "rid": "2514e008899614cede66e63700618c58"
    },
    "baseline_status": "equal",
    "baseline_diffs": []
   },
   {
    "dir": "scale_100k",
-   "rid": "0224e6a5420733782e9c471e8dd369b8",
+   "rid": "cfbf284ef62ebb988e555a6151d7d076",
    "line": 449,
    "source": "rows.d",
    "backend": "bernoulli",
@@ -22038,7 +22064,7 @@
     "demand": "uniform",
     "b": 3,
     "Q": 1000,
-    "backend_kwargs": "{\"calibrate_from\":\"/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte/populations/specialist_n1000_K16_seed1/S.npy\"}",
+    "backend_kwargs": "{\"calibrate_from\":\"$RTE_DATA/populations/specialist_n1000_K16_seed1/S.npy\"}",
     "seed": 2,
     "grid": "scale_100k",
     "n_agents": 10000,
@@ -22083,14 +22109,15 @@
     "total_comm_per_task": 13.505,
     "method_stats": "{\"observe_charged\":1}",
     "oracle_success": 0.845,
-    "regret": 0.09099999999999997
+    "regret": 0.09099999999999997,
+    "rid": "cfbf284ef62ebb988e555a6151d7d076"
    },
    "baseline_status": "equal",
    "baseline_diffs": []
   },
   {
    "dir": "scale_100k",
-   "rid": "003f1c40eba7d3528936d2acbc2876ad",
+   "rid": "92a8fed4af7147330e73c86232eee949",
    "line": 453,
    "source": "rows.d",
    "backend": "bernoulli",
@@ -22116,7 +22143,7 @@
     "demand": "uniform",
     "b": 3,
     "Q": 1000,
-    "backend_kwargs": "{\"calibrate_from\":\"/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte/populations/specialist_n1000_K16_seed1/S.npy\"}",
+    "backend_kwargs": "{\"calibrate_from\":\"$RTE_DATA/populations/specialist_n1000_K16_seed1/S.npy\"}",
     "seed": 3,
     "grid": "scale_100k",
     "n_agents": 10000,
@@ -22161,14 +22188,15 @@
     "total_comm_per_task": 7.632,
     "method_stats": "{\"observe_charged\":1}",
     "oracle_success": 0.834,
-    "regret": 0.04999999999999993
+    "regret": 0.04999999999999993,
+    "rid": "92a8fed4af7147330e73c86232eee949"
    },
    "baseline_status": "equal",
    "baseline_diffs": []
   },
   {
    "dir": "scale_100k",
-   "rid": "134c8741a14c19efd7684ea871e80cc5",
+   "rid": "49e90d940051beb5192722afb7717220",
    "line": 225,
    "source": "rows.d",
    "backend": "bernoulli",
@@ -22194,7 +22222,7 @@
     "demand": "uniform",
     "b": 3,
     "Q": 1000,
-    "backend_kwargs": "{\"calibrate_from\":\"/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte/populations/specialist_n1000_K16_seed1/S.npy\"}",
+    "backend_kwargs": "{\"calibrate_from\":\"$RTE_DATA/populations/specialist_n1000_K16_seed1/S.npy\"}",
     "seed": 3,
     "grid": "scale_100k",
     "n_agents": 10000,
@@ -22239,7 +22267,8 @@
     "total_comm_per_task": 1.0,
     "method_stats": "{}",
     "oracle_success": 0.838,
-    "regret": 0.429
+    "regret": 0.429,
+    "rid": "49e90d940051beb5192722afb7717220"
    },
    "baseline_status": "equal",
    "baseline_diffs": []
@@ -22454,7 +22483,7 @@
   },
   {
    "dir": "scale_100k",
-   "rid": "00da08a0c2c78fe48f5afcc8a4eea629",
+   "rid": "f80f8eb7e341d99ef4714fddc5945100",
    "line": 539,
    "source": "rows.d",
    "backend": "bernoulli",
@@ -22480,7 +22509,7 @@
     "demand": "uniform",
     "b": 3,
     "Q": 1000,
-    "backend_kwargs": "{\"calibrate_from\":\"/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte/populations/specialist_n1000_K16_seed1/S.npy\"}",
+    "backend_kwargs": "{\"calibrate_from\":\"$RTE_DATA/populations/specialist_n1000_K16_seed1/S.npy\"}",
     "seed": 2,
     "grid": "scale_100k",
     "n_agents": 10000,
@@ -22525,14 +22554,15 @@
     "total_comm_per_task": 1.0,
     "method_stats": "{}",
     "oracle_success": 0.847,
-    "regret": -0.0020000000000000018
+    "regret": -0.0020000000000000018,
+    "rid": "f80f8eb7e341d99ef4714fddc5945100"
    },
    "baseline_status": "equal",
    "baseline_diffs": []
   },
   {
    "dir": "scale_100k",
-   "rid": "1120433f34f782dcecd6063156103502",
+   "rid": "85d47dd0b41caa170ca016c0c77355e1",
    "line": 268,
    "source": "rows.d",
    "backend": "bernoulli",
@@ -22558,7 +22588,7 @@
     "demand": "uniform",
     "b": 3,
     "Q": 1000,
-    "backend_kwargs": "{\"calibrate_from\":\"/n/netscratch/sompolinsky_lab/Lab/rsiegelmann/rte/populations/specialist_n1000_K16_seed1/S.npy\"}",
+    "backend_kwargs": "{\"calibrate_from\":\"$RTE_DATA/populations/specialist_n1000_K16_seed1/S.npy\"}",
     "seed": 1,
     "grid": "scale_100k",
     "n_agents": 10000,
@@ -22603,7 +22633,8 @@
     "total_comm_per_task": 1.0,
     "method_stats": "{}",
     "oracle_success": 0.845,
-    "regret": 0.0050000000000000044
+    "regret": 0.0050000000000000044,
+    "rid": "85d47dd0b41caa170ca016c0c77355e1"
    },
    "baseline_status": "equal",
    "baseline_diffs": []
