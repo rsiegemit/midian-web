@@ -10,5 +10,5 @@
 | [figure_provenance.md](figure_provenance.md) | where every plotted number comes from, down to grids, cells, seeds and code |
 | [operations.md](operations.md) | running a campaign: environments, the model fleet, the answer memo, sharding, operating rules |
 | [errata.md](errata.md) | the current errata (25-30), the 2026-09-24 MIDIAN rename, what did not move, row-id changes |
-| [frameworks/](frameworks/) | how each agent framework's selection primitive is intercepted |
+| [frameworks/](frameworks/) | how each agent framework's selection primitive is intercepted | <!-- VERIFY-PATH: docs/frameworks/ (lane B) -->
 | [archive/](archive/README.md) | the dated records, verbatim: specification, pre-registrations as registered, deviations, errata log, results write-ups |
