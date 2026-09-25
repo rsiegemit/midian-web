@@ -88,9 +88,9 @@ OLD = [("midian_va", {}, ("midian", {})),
 
 
 @pytest.mark.parametrize("old,params,new", OLD)
-def test_keys_round_trip(old, params, new):
+def test_keys_translate(old, params, new):
     got = keys.to_new(old, params)
-    assert got == new and keys.legacy(*got) == (old, params)
+    assert got == new
 
 
 def test_keys_old_verify_cached_is_wo_audit():

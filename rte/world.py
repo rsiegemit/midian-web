@@ -392,10 +392,9 @@ class World:
         self.ledger.probe(a.size); self.seen_epoch[a] = self.epoch[a]
         return self.backend.execute_many(a, f, probe_seed(self._probe_salt, a, f, k))
 
-    def reset(self, tag=None) -> None:
+    def reset(self) -> None:
         """Start a method: zero the ledger, reset the probe index so a method's build never depends on which methods ran
-        before it (pairing is through the task stream + deterministic execute), and undo churn. `tag` is ignored (a
-        caller's old argument, accepted until every caller drops it)."""
+        before it (pairing is through the task stream + deterministic execute), and undo churn."""
         self.ledger.reset()
         self._probe_idx[:] = 0                      # every method starts at probe index 0 of every cell
         if self.churn_events:                       # undo churn: same initial population for every method

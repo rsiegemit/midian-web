@@ -10,9 +10,8 @@ Framework shortlists named after a MIDIAN cohort follow: retrieval "midian_va" -
 retrieval "midian" (the verified, unaudited cohort) -> "midian_wo_audit". midian_sh / midian_sha are withdrawn (no key).
 
 to_new(method, params) translates a stored or configured key; it is applied on every read, so rows written before the
-rename and after it load identically. legacy(method, params) is its inverse on the new keys. No random stream depends on
-the method key (a View's rng is seeded by the world seed and the method's `needs`), so a rerun of any cell under the new
-keys reproduces the rows stored under the old ones.
+rename and after it load identically. No random stream depends on the method key (a View's rng is seeded by the world
+seed and the method's `needs`), so a rerun of any cell under the new keys reproduces the rows stored under the old ones.
 A results directory whose rows were rewritten carries SENTINEL; assert_v2 checks that it holds no old key."""
 from __future__ import annotations
 
@@ -20,7 +19,6 @@ SENTINEL = ".method_keys_v2"
 OLD = frozenset({"midian_va", "midian_a", "midian_v", "midian_sh", "midian_sha"})
 WITHDRAWN = frozenset({"midian_sh", "midian_sha"})
 RETRIEVAL = {"midian_va": "midian", "midian": "midian_wo_audit"}
-RETRIEVAL_LEGACY = {v: k for k, v in RETRIEVAL.items()}
 
 
 def _canon(p: dict) -> dict:
@@ -51,23 +49,6 @@ def to_new(method: str, params: dict | None) -> tuple[str, dict] | None:
     if method.startswith("fw_") and p.get("retrieval") in RETRIEVAL:
         return method, {**p, "retrieval": RETRIEVAL[p["retrieval"]]}
     return method, p
-
-
-def legacy(method: str, params: dict | None) -> tuple[str, dict]:
-    """The pre-rename key of a CURRENT key. Inverse of to_new on its image."""
-    p = dict(params or {})
-    if method.startswith("fw_") and p.get("retrieval") in RETRIEVAL_LEGACY:
-        return method, {**p, "retrieval": RETRIEVAL_LEGACY[p["retrieval"]]}
-    if method != "midian": return method, p
-    audit, verify = p.pop("audit", True), bool(p.pop("verify", True))
-    cached = bool(p.pop("cached", verify))
-    if audit is not False and verify:                                        # the full method
-        return "midian_va", ({**p, "audit": audit} if audit not in (True, 0.05) else p) | ({} if cached else {"cached": False})
-    if audit is not False:                                                   # w/o verification
-        return "midian_a", ({**p, "audit": audit} if audit not in (True, 0.05) else p) | ({"cached": True} if cached else {})
-    if verify:                                                               # w/o audits
-        return "midian_v", p if cached else {**p, "cached": False}
-    return "midian", {**p, "cached": True} if cached else p                  # w/o defenses
 
 
 def assert_v2(method: str, params: dict | None, where: str = "") -> None:
