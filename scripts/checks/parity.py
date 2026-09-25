@@ -25,7 +25,9 @@ Exempt, and why:
   * the llm backend: every probe/execute is an LLM call; parity there needs the production memo and live endpoints.
   * cells with n >= --max-n (default 10^6): the 10^6..10^7 scale units take minutes to hours and GBs each.
 kNN/MLP rows of EMBED_BATCH_GRIDS were produced with RTE_EMBED_BATCH=1 (one batched MiniLM encode; per-prompt encodes
-differ at float level), so the harness sets it for exactly those rows.
+differ at float level), so the harness sets it for exactly those rows. Where the backend ships no prompt vectors these
+routers MiniLM-encode n*K*b probe prompts on CPU (tens of minutes at n = 5000), so they are restricted to cells with
+n <= --max-n-embed (default 1000; raise it to cover those grids).
 
 Rows are re-run round-robin (first sample of every arm, then the second, ...) until --max-seconds is spent, so a
 budgeted run still covers every arm once. Report: JSON with per-row status vs the stored row (equal | diff | error |
@@ -72,11 +74,11 @@ def load_index(results, backends):
     return df[(df.method != "oracle") & df.backend.isin(backends) & df.rid.notna()]
 
 
-def pick(index, per, max_n):
+def pick(index, per, max_n, max_n_embed):
     """{(backend, method, params): [index rows]}, up to `per` each, in the preference order of the module docstring."""
     out, index = {}, index.assign(big=index.n > 10 ** 4, age=-index.mtime)
     for key, g in index.sort_values(["big", "age", "n", "rid"]).groupby(["backend", "method", "params"], sort=True):
-        g = g[g.n < max_n]
+        g = g[g.n < max_n] if key[1] not in EMBED_METHODS else g[g.n <= max_n_embed]
         first = g.drop_duplicates("dir")
         chosen = pd.concat([first, g.drop(first.index)]).head(per)
         out[key] = [r for _, r in chosen.iterrows()]
@@ -185,6 +187,7 @@ def main(argv=None):
     p.add_argument("--per", type=int, default=3, help="stored rows re-run per (backend, method, params)")
     p.add_argument("--max-seconds", type=float, default=float("inf"), help="stop starting new reruns after this")
     p.add_argument("--max-n", type=int, default=10 ** 6, help="skip cells with n >= this")
+    p.add_argument("--max-n-embed", type=int, default=1000, help="skip knn/mlp_router cells with n > this")
     p.add_argument("--only-backend", help="comma-separated subset of " + ",".join(BACKENDS))
     p.add_argument("--only-method", help="comma-separated method names")
     p.add_argument("--baseline", help="re-run exactly this report's rows and compare with its fresh rows")
@@ -204,7 +207,7 @@ def main(argv=None):
         index = index[~index.method.str.startswith("fw_")]
     if a.only_method:
         index = index[index.method.isin(a.only_method.split(","))]
-    picks = pick(index, len(index) if a.baseline else a.per, a.max_n)
+    picks = pick(index, len(index) if a.baseline else a.per, a.max_n, a.max_n_embed)
     print(f"[parity] index {len(index):,} rows, {len(picks)} arms, {time.perf_counter() - t0:.0f}s", file=sys.stderr)
     depth = max(map(len, picks.values()), default=0)
     order = [(k, i) for i in range(depth) for k in picks if i < len(picks[k])]     # round-robin over arms
@@ -226,10 +229,11 @@ def main(argv=None):
     vs_base = pd.Series([e.get("baseline_status", "-") for e in report]).value_counts().to_dict()
     uncovered = sorted(" ".join(k) for k, v in picks.items() if not v)
     summary = {"arms": len(picks), "arms_rerun": len({(e["backend"], e["method"], e["params"]) for e in report
-                                                      if e["status"] in ("equal", "diff")}),
+                                                      if e["status"] in ("equal", "new_cols", "diff")}),
                "rows": len(report), "status": status, "baseline_status": vs_base,
                "seconds": round(time.perf_counter() - t0, 1),
-               "uncovered_arms_n_ge_max_n": uncovered, "max_n": a.max_n, "per": a.per, "backends": list(backends),
+               "uncovered_arms": uncovered, "max_n": a.max_n, "max_n_embed": a.max_n_embed, "per": a.per,
+               "backends": list(backends),
                "exempt": "fw_* methods and the llm backend (no offline-reproducible LLM responses)"}
     with open(a.out, "w") as fh:
         json.dump({"summary": summary, "rows": report}, fh, indent=1, default=str)
