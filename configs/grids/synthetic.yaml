@@ -2,7 +2,7 @@
 grids:
   # ---- replay twins of the live F1 sweep (RouterBench real outcomes, K=64 real categories): every algorithmic rival,
   # CPU only
-  # [NUM] replay twin (RouterBench outcomes, K = 64) on live_f1_n1000; read by: extra_figs
+  # [NUM] replay twin (RouterBench outcomes, K = 64) on live_f1_n1000; read by: none (historical)
   replay_mirror_live_f1_n1000:
     mirror_of: live_f1_n1000
     backend: replay
@@ -47,7 +47,7 @@ grids:
   # switching on at b=2 and every probe arm improving with b while declaration arms stay flat.
   # 20, 30 added 2026-09-14 (same cells/seeds; MIDIAN was still climbing at b=10)
   # fill_arms added 2026-09-17 (docs/archive/COVERAGE.md §7)
-  # [NUM] probe-budget axis b = 1..30 at n = 10^3..10^5; read by: paper_figs, paper_numbers
+  # [NUM] probe-budget axis b = 1..30 at n = 10^3..10^5; read by: paper_numbers
   bernoulli_b_sweep:
     K: [16]
     dist: [specialist]
@@ -114,7 +114,7 @@ grids:
         exclude: [trueskill_per_family, referral_network, gossip_reputation_greedy]
 
   # b = [1, 3] at 10^6 (2026-09-11), same reason as bernoulli_scale_v5: b=1 gives verification zero probes.
-  # [NUM] many-seed replay n = 10..10^6, five liar regimes; read by: bar_figs, condensed_figs, paired_gaps +3
+  # [NUM] many-seed replay n = 10..10^6, five liar regimes; read by: bar_figs, condensed_figs
   replay_scale_v5:
     backend: replay
     K: [64]
@@ -137,7 +137,7 @@ grids:
         liar_select: [random, low_skill_first]
         exclude: [trueskill_per_family]
 
-  # [NUM] calibrated bernoulli n = 10^2..10^7 (published cost exponents); read by: extra_figs, paper_numbers
+  # [NUM] calibrated bernoulli n = 10^2..10^7 (published cost exponents); read by: paper_numbers
   bernoulli_scale:                         # K=16: it is calibrated to the MEASURED live S, which has 16 families
     K: [16]
     dist: [specialist]
@@ -149,7 +149,7 @@ grids:
 
   # every MIDIAN variant + self-contained rivals at n = 10k and 100k on the calibrated bernoulli backend (no LLM calls;
   # frameworks n/a)
-  # [NUM] MIDIAN variants + rivals on calibrated bernoulli n = 10^4 / 10^5; read by: paper_numbers, v3_figs
+  # [NUM] MIDIAN variants + rivals on calibrated bernoulli n = 10^4 / 10^5; read by: paper_numbers
   scale_100k:
     backend: bernoulli
     backend_kwargs: {calibrate_from: "$RTE_DATA/populations/specialist_n1000_K16_seed1/S.npy"}
