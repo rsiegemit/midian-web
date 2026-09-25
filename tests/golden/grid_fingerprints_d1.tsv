@@ -1,0 +1,13 @@
+grid	units	method_rows	sha256_16	rte_data_dep
+bernoulli_1e7_cal	600	2600	879f84c14f3cacef	1
+rivals5_bernoulli_1e7_cal	200	1000	718156a1e4620a90	1
+reviewer_bernoulli	20	160	b1b8659ff584924d	0
+bernoulli_b_probe	12	252	eaaa800160b1b7ce	1
+bernoulli_b_sweep	77000	1995000	50306084c43528c4	1
+bernoulli_scale_v5	25500	655500	4c6590de444bc164	1
+bernoulli_scale	16	192	60ceb1651072a1d9	1
+scale_100k	108	1296	5f5829b823e00f7b	1
+va_b_bernoulli_1e7	200	200	63442a62fea9ebda	1
+rivals_b_bernoulli_1e7	200	1800	214f515daea0b660	1
+pool_fill_bernoulli_1e7	600	1000	4e705e76b1f5a55c	1
+linucb_fix_bernoulli_1e7	600	600	23fd669c38c2e2dd	1

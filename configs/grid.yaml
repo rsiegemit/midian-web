@@ -1,5 +1,5 @@
-# GENERATED from configs/grids/ by configs/export_grid_yaml.py -- do not edit. Shared method lists appear as
-# YAML anchors (&idNNN) / aliases (*idNNN). Kept only for scripts that still read one file.
+# GENERATED from configs/grids/ by configs/export_grid_yaml.py -- do not edit. Shared method lists
+# appear as YAML anchors (&idNNN) / aliases (*idNNN). Kept only for scripts that still read one file.
 defaults:
   backend: bernoulli
   K: [16]

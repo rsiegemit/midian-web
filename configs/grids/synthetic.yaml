@@ -148,9 +148,9 @@ grids:
     backend_kwargs: {calibrate_from: $RTE_DATA/populations/specialist_n1000_K16_seed1/S.npy}
     blocks: [{n: [100, 1000, 10000, 100000]}, {n: [1000000], b: [1]}, {n: [10000000], b: [1], seeds: 1}]
 
-  # [NUM] MIDIAN variants + rivals on calibrated bernoulli n = 10^4 / 10^5; read by: paper_numbers, v3_figs
   # every MIDIAN variant + self-contained rivals at n = 10k and 100k on the calibrated bernoulli backend (no LLM calls;
   # frameworks n/a)
+  # [NUM] MIDIAN variants + rivals on calibrated bernoulli n = 10^4 / 10^5; read by: paper_numbers, v3_figs
   scale_100k:
     backend: bernoulli
     backend_kwargs: {calibrate_from: "$RTE_DATA/populations/specialist_n1000_K16_seed1/S.npy"}

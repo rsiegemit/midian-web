@@ -202,8 +202,8 @@ grids:
       - {name: sequential_halving, params: {peer_reported: true}}
       - {name: flat_probe_argmax, params: {online: true}}
 
-  # [FIG:A,E] RouterBench learned routers on the variants_f1 cells; read by: bar_figs, paper_figs, paper_numbers +2
   # RouterBench's predictive routers on our terms (TARGETS_rte_v3 part C): variants_f1 cells
+  # [FIG:A,E] RouterBench learned routers on the variants_f1 cells; read by: bar_figs, paper_figs, paper_numbers +2
   learned_f1:
     mirror_of: variants_f1
     methods:
@@ -211,9 +211,9 @@ grids:
       - {name: knn_router, params: {online: true}}
       - mlp_router
 
-  # [FIG:A,E] live n = 100: MIDIAN variants, rivals, learned routers; read by: bar_figs, paper_figs, paper_numbers +2
   # same cells at n=100, every MIDIAN variant + top self-contained rivals + the learned routers (frameworks:
   # fw_live_n100)
+  # [FIG:A,E] live n = 100: MIDIAN variants, rivals, learned routers; read by: bar_figs, paper_figs, paper_numbers +2
   learned_n100:
     mirror_of: variants_f1
     n: [100]
@@ -232,9 +232,9 @@ grids:
       - {name: knn_router, params: {online: true}}
       - mlp_router
 
-  # [FIG:A,E] live n = 10^4: MIDIAN variants, rivals, learned routers; read by: bar_figs, doc_tables, paper_figs +3
   # n=10k (specialist, b=3, Q=300 as live_n10k_v2), both liar selections; mlp_router excluded (agent one-hot x 480k
   # probes)
+  # [FIG:A,E] live n = 10^4: MIDIAN variants, rivals, learned routers; read by: bar_figs, doc_tables, paper_figs +3
   learned_n10k:
     backend: llm
     n: [10000]
@@ -410,8 +410,8 @@ grids:
   # [HIST] beta = 0.1 cells of live_n100k_fill; read by: none
   live_n100k_fill_beta01:   {mirror_of: live_n100k_fill,   beta: [0.1]}
 
-  # [HIST] heavy_tail / bimodal cells of learned_n10k; read by: none
   # stage 1 warms each (shape, seed) population with flat_probe_argmax
+  # [HIST] heavy_tail / bimodal cells of learned_n10k; read by: none
   learned_n10k_shapes:      {mirror_of: learned_n10k,      dist: [heavy_tail, bimodal]}
 
   # [HIST] heavy_tail / bimodal cells of learned_n10k_fill; read by: none

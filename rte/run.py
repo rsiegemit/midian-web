@@ -244,7 +244,8 @@ def run_method(world, stream, spec, b, churn=None):
 
 
 def run_unit(cell, seed, specs, rows_dir, grid):
-    world = World(**{k: cell[k] for k in CELL if k not in ("b", "Q")}, seed=seed, backend_kwargs=expand(cell["backend_kwargs"]) or None)
+    world = World(**{k: cell[k] for k in CELL if k not in ("b", "Q")}, seed=seed,
+                  backend_kwargs=expand(cell["backend_kwargs"]) or None)
     stream = world.tasks(cell["Q"]); st = world.stats()
     base = {**{f: cell[f] for f in CELL}, "backend_kwargs": jkey(cell["backend_kwargs"]), "seed": seed, "grid": grid,
             "n_agents": world.n, "n_liars": st.pop("n_liars"),

@@ -1,7 +1,7 @@
 # RouterEval and LLMRouterBench recorded-score pools (no fleet needed)
 grids:
-  # [NUM | SUPERSEDED-BY:routereval_mmlu_norep_cal] RouterEval MMLU pools m = 10..10^3, every arm; read by: bar_figs +5
   # TARGETS_rte_v3 D2: every arm + liars on RouterEval's REAL LLM pools (dist axis = pool config)
+  # [NUM | SUPERSEDED-BY:routereval_mmlu_norep_cal] RouterEval MMLU pools m = 10..10^3, every arm; read by: bar_figs +5
   routereval_mmlu:
     backend: routereval
     backend_kwargs: {dataset: mmlu}
@@ -45,8 +45,8 @@ grids:
       - gossip_reputation_greedy
       - trueskill_per_family
 
-  # [NUM | SUPERSEDED-BY:routereval5k_norep_cal] RouterEval 5,000-LLM leaderboard pool, every arm; read by: bar_figs +6
   # TARGETS_rte_v3 D2 at scale: ALL 5,000 leaderboard LLMs on MMLU (16 largest subjects), liars, no embeddings shipped
+  # [NUM | SUPERSEDED-BY:routereval5k_norep_cal] RouterEval 5,000-LLM leaderboard pool, every arm; read by: bar_figs +6
   routereval_mmlu5k:
     backend: routereval
     backend_kwargs: {dataset: leaderboard_mmlu}
@@ -112,8 +112,8 @@ grids:
     b: [3, 10]
     methods: [{set: cohort_arms}, random]
 
-  # [NUM] v4 cohort modes on LLMRouterBench (expected null); read by: cohort_table, paper_numbers
   # TARGETS_rte_v4 on LLMRouterBench's 20-model pool. NOTE n = 20 with r = 10 gives two
+  # [NUM] v4 cohort modes on LLMRouterBench (expected null); read by: cohort_table, paper_numbers
   cohort_llmrouterbench:
                                     # cohorts and a depth-1 tree, so cohort STRUCTURE has almost nothing to act on here;
                                     # included for completeness and expected to be null.
@@ -122,8 +122,8 @@ grids:
     b: [3, 10]
     methods: [{set: cohort_arms}, random]
 
-  # [NUM | SUPERSEDED-BY:fw_routereval_1k_norep_cal] frameworks on RouterEval m = 10^3 (post hoc); read by: bar_figs +1
   # POST-HOC (2026-09-05): same post-hoc arm as fw_routereval_5k, on RouterEval's m = 1,000
+  # [NUM | SUPERSEDED-BY:fw_routereval_1k_norep_cal] frameworks on RouterEval m = 10^3 (post hoc); read by: bar_figs +1
   fw_routereval_1k:
                                     # real-LLM pools. Those pools DO ship real model names, but the adapter reads the
                                     # same
@@ -140,8 +140,8 @@ grids:
     methods: [fw_langgraph, fw_crewai, fw_autogen, fw_maf, fw_openai_agents, fw_google_adk,
               fw_llamaindex, fw_smolagents, fw_camel_workforce]
 
-  # [NUM | SUPERSEDED-BY:fw_routereval_5k_norep_cal] frameworks on RouterEval 5k (post hoc); read by: bar_figs +1
   # POST-HOC (2026-09-05, not pre-registered): the deployed frameworks on RouterEval's 5,000-LLM
+  # [NUM | SUPERSEDED-BY:fw_routereval_5k_norep_cal] frameworks on RouterEval 5k (post hoc); read by: bar_figs +1
   fw_routereval_5k:
                                     # leaderboard pool. That pool's model names are synthetic (llm0..llm4999), so the
                                     # adapter's
@@ -162,8 +162,8 @@ grids:
     methods: [fw_langgraph, fw_crewai, fw_autogen, fw_maf, fw_openai_agents, fw_google_adk,
               fw_llamaindex, fw_smolagents, fw_camel_workforce]
 
-  # [NUM | SUPERSEDED-BY:llmrouterbench_norep_cal] LLMRouterBench 20 models x 15 datasets; read by: bar_figs +4
   # TARGETS_rte_v3 F: every arm + liars on LLMRouterBench's 20 real models × 15 datasets (family = dataset)
+  # [NUM | SUPERSEDED-BY:llmrouterbench_norep_cal] LLMRouterBench 20 models x 15 datasets; read by: bar_figs +4
   llmrouterbench_pool:
     backend: routereval
     backend_kwargs: {dataset: llmrouterbench}
@@ -211,8 +211,8 @@ grids:
   # the
   # source cells, seeds and Q; only the arm lists differ. Live units execute their routed tasks live, so they wait on
   # fleet health like every live grid.
-  # [NUM | SUPERSEDED-BY:fw_routereval_small_norep_cal] frameworks on RouterEval m = 10 / 100; read by: shortlist_figs
   # the nine frameworks on RouterEval's m = 10 and 100 pools
+  # [NUM | SUPERSEDED-BY:fw_routereval_small_norep_cal] frameworks on RouterEval m = 10 / 100; read by: shortlist_figs
   fw_routereval_small: {mirror_of: fw_routereval_1k, n: [10, 100]}
 
   # [NUM | SUPERSEDED-BY:fw_routereval_1k_em_norep_cal] MiniLM shortlist of fw_routereval_1k; read by: shortlist_figs

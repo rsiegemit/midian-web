@@ -13,13 +13,14 @@ import yaml
 from rte.run import load_config
 
 OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "grid.yaml")
-HEADER = ("# GENERATED from configs/grids/ by configs/export_grid_yaml.py -- do not edit. Shared method lists appear as\n"
-          "# YAML anchors (&idNNN) / aliases (*idNNN). Kept only for scripts that still read one file.\n")
+HEADER = ("# GENERATED from configs/grids/ by configs/export_grid_yaml.py -- do not edit. Shared method lists\n"
+          "# appear as YAML anchors (&idNNN) / aliases (*idNNN). Kept only for scripts that still read one file.\n")
 
 
 def main():
     cfg = load_config()
-    body = yaml.safe_dump({"defaults": cfg["defaults"], "grids": cfg["grids"]}, sort_keys=False, width=120, default_flow_style=None)
+    body = yaml.safe_dump({"defaults": cfg["defaults"], "grids": cfg["grids"]}, sort_keys=False, width=120,
+                          default_flow_style=None)
     with open(OUT, "w") as fh:
         fh.write(HEADER + body)
 
