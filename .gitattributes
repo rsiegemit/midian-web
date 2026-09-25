@@ -4,3 +4,13 @@ cluster/** export-ignore
 scripts/checks/anonymity_patterns.txt export-ignore
 .gitattributes export-ignore
 tests/golden/parity_baseline.json export-ignore
+scripts/_register_endpoint.py export-ignore
+scripts/_serve_env.sh export-ignore
+scripts/embed_populations.py export-ignore
+scripts/embed_routereval.py export-ignore
+scripts/job_time.py export-ignore
+scripts/launch_units.sh export-ignore
+scripts/ops/figure_status.py export-ignore
+scripts/ops/pack_driver.sh export-ignore
+scripts/run_grid.sbatch export-ignore
+scripts/serve_fleet.sbatch export-ignore

@@ -86,7 +86,7 @@ Population shapes (`dist`): `specialist` (three strong families per agent), `hea
   the whole algorithm on one screen.
 - **Shared logic lives once.** Probe-then-estimate and trimmed peer reports: `rte/methods/_est.py`; declared-channel
   helpers: `rte/methods/_decl.py`; framework plumbing: `rte/methods/frameworks/_common.py`; LLM calls:
-  `rte/llm_client.py`. <!-- VERIFY-PATH: helper modules after the rte/ refactor -->
+  `rte/llm_client.py`.
 - **Swappable by configuration.** Models are a list in `configs/models.yaml`; methods are files discovered by name; a
   task source is one adapter `{generate(instance_seed) -> entry, question(entry) -> str, score(answer, entry) -> float}`
   in `rte/backends/families.py`; backends are the six-member protocol.
@@ -129,12 +129,12 @@ so every cost claim uses the counters.
 Measured per routed query at b = 3 on the calibrated bernoulli backend (`figures/paper/C_routing_work_vs_n.csv`),
 MIDIAN's messages plus comparisons are 25, 36, 47, 58, 69 and 80 at n = 10<sup>2</sup> to 10<sup>7</sup>, MIDIAN w/o
 defenses' 46 to 161, and any flat scan's exactly n. A fitted exponent depends on the range of n it is fitted over, so
-every quoted exponent names its range. <!-- VERIFY-PATH -->
+every quoted exponent names its range.
 
 ## Correctness checks
 
 Every method passes, on the bernoulli world at n = 100 and n = 1,000 (`tests/test_each_method.py`, which discovers every
-file in `rte/methods/`, and `scripts/checks/check_methods.py` <!-- VERIFY-PATH -->):
+file in `rte/methods/`, and `scripts/checks/check_methods.py`):
 
 1. **View enforcement.** Touching a channel outside `needs` raises; the test also removes a declared need to prove the
    enforcement is real.
@@ -165,4 +165,3 @@ counted in `fallback_rate` and scored 0 under `success_strict`. An infrastructur
 retried once, counted as `infra_errors`, and past max(3, 2% of calls) fails the unit so that no row is written; a supervisor's
 own invalid action (a tool that does not exist, a non-candidate name) is a non-pick, not an infrastructure error. How
 each framework's primitive is intercepted is documented per framework in [frameworks/](frameworks/).
-<!-- VERIFY-PATH: docs/frameworks/ is filled by the rte/ refactor -->

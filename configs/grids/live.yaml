@@ -4,13 +4,13 @@ grids:
   # [FIG:E] live n = 100, core arms (pre-09-02 probe instances); read by: bar_figs, shortlist_figs
   live_core_n100:   {use: live, n: [100], methods: {set: core4}}
 
-  # [FIG:A,E] live n = 10^3 F1 sweep, every algorithmic method; read by: analyze, bar_figs, energy, extra_figs +4
+  # [FIG:A,E] live n = 10^3 F1 sweep, every algorithmic method; read by: analyze, bar_figs, energy
   live_f1_n1000:    {use: live, methods: {set: all_arms}}
 
   # [HIST] live n = 10^3 on correlated / iid_uniform shapes; read by: none
   live_extra_n1000: {use: live, dist: [correlated, iid_uniform], methods: {set: all_arms}}
 
-  # [NUM] live probe budget b in {1, 3, 10}; read by: extra_figs, paper_numbers
+  # [NUM] live probe budget b in {1, 3, 10}; read by: paper_numbers
   budget_sweep:
     backend: llm
     n: [1000]
@@ -45,7 +45,7 @@ grids:
       - {name: midian, params: {r: 20}}
 
   # 1.5
-  # [NUM] v2 1.5: stratified cohorts; read by: analyze, cohort_table, equivalence, extra_figs
+  # [NUM] v2 1.5: stratified cohorts; read by: analyze, cohort_table, equivalence
   stratify:
     backend: llm
     n: [1000]
@@ -97,7 +97,7 @@ grids:
       - {name: sequential_halving, params: {peer_reported: true}}
 
   # 2.4
-  # [NUM] v2 2.4: b = 10 on bimodal / heavy_tail; read by: analyze, dedup_compare, extra_figs
+  # [NUM] v2 2.4: b = 10 on bimodal / heavy_tail; read by: analyze, dedup_compare
   budget_b10_shapes:
     backend: llm
     n: [1000]
@@ -120,7 +120,7 @@ grids:
       - midian
 
   # 2.5
-  # [NUM] v2 2.5: r / delta internals with and without audits; read by: analyze, extra_figs
+  # [NUM] v2 2.5: r / delta internals with and without audits; read by: analyze
   internals_v2:
     backend: llm
     n: [1000]
@@ -145,7 +145,7 @@ grids:
       - flat_probe_argmax
 
   # headline arms of live_f1_n1000 on 5 more seeds (variance); merge with --grids
-  # [NUM] headline arms of live_f1_n1000 on seeds 6-10; read by: v3_figs
+  # [NUM] headline arms of live_f1_n1000 on seeds 6-10; read by: none (historical)
   live_f1_core_s6_10:
     use: live
     seeds: 6-10
@@ -165,7 +165,7 @@ grids:
       - llm_supervisor
 
   # 2.1 (V2-6)
-  # [NUM] v2 2.1: agent churn (10 % / 30 % every 200 tasks); read by: analyze, dedup_compare, extra_figs, paper_numbers
+  # [NUM] v2 2.1: agent churn (10 % / 30 % every 200 tasks); read by: analyze, dedup_compare, paper_numbers
   churn_n1000:
     backend: llm
     n: [1000]
@@ -189,7 +189,7 @@ grids:
       - midian
 
   # Phase 1 variants on the F1 cells (V2-1..3, V2-5)
-  # [FIG:A,E] MIDIAN variants on the F1 cells, self-described; read by: analyze, bar_figs, energy, extra_figs +4
+  # [FIG:A,E] MIDIAN variants on the F1 cells, self-described; read by: analyze, bar_figs, energy
   variants_f1:
     use: live
     declared_source: [self_described]
@@ -204,7 +204,7 @@ grids:
       - {name: flat_probe_argmax, params: {online: true}}
 
   # RouterBench's predictive routers on our terms (TARGETS_rte_v3 part C): variants_f1 cells
-  # [FIG:A,E] RouterBench learned routers on the variants_f1 cells; read by: bar_figs, paper_figs, paper_numbers +2
+  # [FIG:A,E] RouterBench learned routers on the variants_f1 cells; read by: bar_figs, paper_numbers +2
   learned_f1:
     mirror_of: variants_f1
     methods:
@@ -214,7 +214,7 @@ grids:
 
   # same cells at n=100, every MIDIAN variant + top self-contained rivals + the learned routers (frameworks:
   # fw_live_n100)
-  # [FIG:A,E] live n = 100: MIDIAN variants, rivals, learned routers; read by: bar_figs, paper_figs, paper_numbers +2
+  # [FIG:A,E] live n = 100: MIDIAN variants, rivals, learned routers; read by: bar_figs, paper_numbers +2
   learned_n100:
     mirror_of: variants_f1
     n: [100]
@@ -235,7 +235,7 @@ grids:
 
   # n=10k (specialist, b=3, Q=300 as live_n10k_v2), both liar selections; mlp_router excluded (agent one-hot x 480k
   # probes)
-  # [FIG:A,E] live n = 10^4: MIDIAN variants, rivals, learned routers; read by: bar_figs, doc_tables, paper_figs +3
+  # [FIG:A,E] live n = 10^4: MIDIAN variants, rivals, learned routers; read by: bar_figs, doc_tables
   learned_n10k:
     backend: llm
     n: [10000]

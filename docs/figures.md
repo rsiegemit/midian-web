@@ -6,8 +6,9 @@ specification every figure follows (§1-§4). Every plotted value is traced to i
 
 ## Figures and their grids
 
-All figures are written to `figures/paper/` as vector PDF, a 300 dpi PNG and a CSV of every plotted value.
-<!-- VERIFY-PATH: figure scripts under scripts/figures/, aggregates under results/aggregates/ -->
+All figures are written to `figures/paper/` as vector PDF, a 300 dpi PNG and a CSV of every plotted value. The
+scripts are in `scripts/figures/`, their shared code in `scripts/figures/lib/`, and the aggregate CSVs they draw from
+in `results/aggregates/`.
 
 | paper | file | script | inputs | grids |
 |---|---|---|---|---|
@@ -15,22 +16,23 @@ All figures are written to `figures/paper/` as vector PDF, a 300 dpi PNG and a C
 | Fig. 2 | `B_families_stacked` | `condensed_figs.py` | as Fig. 1 for live 10<sup>5</sup>; per-seed tables for the other families | live: as Fig. 1; bernoulli 10<sup>7</sup>: `bernoulli_scale_v5`, `va_b_` / `rivals_b_` / `pool_fill_` / `linucb_fix_bernoulli_1e7`, `bernoulli_1e7_cal`, `rivals5_bernoulli_1e7_cal`; replay 10<sup>6</sup>: `replay_1e6_split_cal`, `rivals5_replay_1e6_split_cal`; RouterEval 5,000: `routereval5k_norep_cal`, `rivals5_routereval5k_norep_cal`; LLMRouterBench: `llmrouterbench_norep_cal`, `rivals5_llmrouterbench_norep_cal` |
 | Fig. 3 | `F_shortlists_1e5` | `shortlist_condensed.py` | `results/aggregates/shortlist/live.csv` | `fw_live_n100k_*` (dd, em, sota, dense / sota instruction probes, declared, verified_va), the live MIDIAN grids at 10<sup>5</sup> (reference lines) |
 | Fig. 4 | `H_routereval_shortlists` | `shortlist_condensed.py` | `results/aggregates/shortlist/routereval.csv` | `fw_routereval_{small,1k,5k}{,_em,_va}_norep_cal`, `re_sl_{declared,embed}_{small,1k,5k}_norep_cal`, `routereval_mmlu_norep_cal`, `routereval5k_norep_cal` (reference lines) |
-| Fig. 5 | `D_energy_per_query` | `efficiency_figs.py` | `cost_by_n.csv` (ledger cache), `energy.py` (energy model, live supervisor measurement) | `bernoulli_scale_v5` |
+| Fig. 5 | `D_energy_per_query` | `efficiency_figs.py` | `results/aggregates/cost_by_n.csv` (ledger cache), `scripts/analysis/energy.py` (energy model, live supervisor measurement) | `bernoulli_scale_v5` |
 | App. | `A_live_allb`, `B_families_allb` | `condensed_figs.py` | as Figs. 1-2 | as Figs. 1-2 |
-| App. | `C_routing_work_vs_n` | `efficiency_figs.py` | `cost_by_n.csv` | `bernoulli_scale_v5` |
+| App. | `C_routing_work_vs_n` | `efficiency_figs.py` | `results/aggregates/cost_by_n.csv` | `bernoulli_scale_v5` |
 | App. | `E_shortlists_by_n` | `shortlist_condensed.py` | `results/aggregates/shortlist/live.csv` | the live framework shortlist grids at 10<sup>2</sup>-10<sup>5</sup> |
 | App. | `F_shortlists_1e5_appendix`, `G_shortlist_lift_1e5` | `shortlist_condensed.py` | as Fig. 3 | as Fig. 3 |
-| App. | `I_max_lie` | `lie_max_fig.py` | rows; `A_live_allb.csv`; `results/aggregates/shortlist/live.csv` | `lie_max_n{1000,10k,100k}`, `lie_max_fw_n{1000,10k,100k}` |
+| App. | `I_max_lie` | `lie_max_fig.py` | rows; `A_live_allb.csv`; `results/aggregates/shortlist/live.csv` (redrawn from `results/aggregates/figures/I_max_lie.csv` and `refs.csv`) | `lie_max_n{1000,10k,100k}`, `lie_max_fw_n{1000,10k,100k}` |
 
 `results/aggregates/bars/*.csv` are written from the rows by `bar_figs.py` and `results/aggregates/shortlist/*.csv` by
-`shortlist_figs.py`; `make_all.py` runs the whole chain, and `make_all.py --from-csv` redraws every figure from the CSV
-beside it without reading any row ([reproducing.md](reproducing.md)).
+`shortlist_figs.py`; `make_all.py` runs the whole chain, and `make_all.py --from-csv` redraws every figure from
+`results/aggregates/` alone, without reading any row ([reproducing.md](reproducing.md)). The arms no figure draws are one
+predicate, `excluded()` in `scripts/figures/lib/exclusions.py` ([methods.md](methods.md) §6).
 
 ## Style specification
 
-Implemented in `figspec.py` (canvas, fonts, colours, names, legend order, drawing helpers); every figure script
-draws through it. The rule throughout: **a figure carries data, axes, and a legend; everything else goes in the caption
-or the text.** No in-figure titles, no letters, no file names, no draft annotations.
+Implemented in `scripts/figures/lib/figspec.py` (canvas, fonts, colours, names, legend order, drawing helpers); every
+figure script draws through it. The rule throughout: **a figure carries data, axes, and a legend; everything else goes
+in the caption or the text.** No in-figure titles, no letters, no file names, no draft annotations.
 
 ### 1. Global rules (all figures)
 

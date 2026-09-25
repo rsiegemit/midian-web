@@ -81,7 +81,7 @@ where the data root is mounted ([errata.md](errata.md#row-ids-of-grids-that-name
 
 ## Aggregation
 
-`python -m rte.analyze --grid G` (package `rte/analysis/`) <!-- VERIFY-PATH --> writes, per grid:
+`python -m rte.analyze --grid G` (package `rte/analysis/`) writes, per grid:
 
 - per-arm tables by cell and by method class, with **95% percentile-bootstrap intervals over seeds**;
 - **paired deltas** of every arm against the reference arm, MIDIAN w/o defenses (the pre-registered tree), with sign

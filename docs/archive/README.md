@@ -2,7 +2,7 @@
 
 These files are kept **verbatim** as the record of what was specified, pre-registered, measured and corrected, and
 when. They are not maintained. The current documentation is in [`docs/`](..) and the current numbers are the figure
-CSVs in `figures/paper/` <!-- VERIFY-PATH -->. The only edits made when these files were archived replace cluster account,
+CSVs in `figures/paper/`. The only edits made when these files were archived replace cluster account,
 partition and host names and absolute user paths with placeholders (`<cpu-partition>`, `<gpu-account>`, `$RTE_DATA`, ...);
 nothing else was changed (the pre-registration files needed no such edit). Apart from those, each file is the copy at tag
 `submission-2026-09-24`, including the one-line names note it received on that date.

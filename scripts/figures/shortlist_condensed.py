@@ -1,6 +1,6 @@
 """Figures 3 / 4 of the submission (F_shortlists_1e5, H_routereval_shortlists) and the appendix shortlist figures
 (E_shortlists_by_n, F_shortlists_1e5_appendix, G_shortlist_lift_1e5); style, names, colours and saving from
-scripts/figures/lib/figspec.py (docs/FIGURE_SPEC.md).
+scripts/figures/lib/figspec.py (docs/figures.md).
     python scripts/figures/shortlist_condensed.py [--out DIR]   -> <out>/{E,F,G,H}_*.{png,pdf,csv}
       (<out> = $RTE_FIG_OUT or figures/paper; --from-csv is accepted and changes nothing: these figures read CSVs only)
 Reads results/aggregates/shortlist/{live,routereval}.csv (per framework x shortlist x cell: seed mean;

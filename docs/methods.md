@@ -8,7 +8,7 @@ never drawn (the do-not-add list, §6); *never reported* = withdrawn from every 
 (the specification, pre-registered 2026-09-02), v2 / v3 / v4 = the later pre-registrations (labeled variants; external
 routers; cohort modes), post-hoc = a dated entry in the deviations log. All of these are in [archive/](archive/README.md);
 the architecture and accounting rules are in [architecture.md](architecture.md), and how each framework's selection
-primitive is intercepted is in [frameworks/](frameworks/). <!-- VERIFY-PATH: docs/frameworks/ -->
+primitive is intercepted is in [frameworks/](frameworks/).
 
 ## 1. Floors and ceiling
 
@@ -126,7 +126,7 @@ so a top-10 is put in front of them). Each source is its own grid and is never p
 | `retrieval="declared"` | post-hoc 2026-09-18 | top-k by the declared claim: no text retrieval at all, the cheap baseline every text arm should be measured against | reported beside (Figures E, F, H) |
 | `shuffle=True` | post-hoc 2026-09-18 | position CONTROL: permutes a midian cohort deterministically so the pick is not first. Same members, ordering only | **control -- never a rival, never pooled with the MIDIAN-cohort rows** |
 
-### 5b. What the shortlist diagnostics measure (`shortlist_skill.py`, `cohort_skill.py`, `position1_skill.py` in `scripts/analysis/`; outputs in `paper/diagnostics/`) <!-- VERIFY-PATH -->
+### 5b. What the shortlist diagnostics measure (`shortlist_skill.py`, `cohort_skill.py`, `position1_skill.py` in `scripts/analysis/diagnostics/`; outputs in `paper/diagnostics/`)
 
 Three statistics of a shortlist, all computed from the measured S matrix OFFLINE -- S is read for MEASUREMENT only and
 is never visible to any method:
@@ -142,8 +142,8 @@ random-within-list than to competent, which is why mean and position-1 both matt
 
 ## 6. The do-not-add list, applied to every figure
 
-One predicate, `excluded()` in the figure library (`scripts/figures/`), filters the arms of every figure; extend it
-there, never per figure. <!-- VERIFY-PATH -->
+One predicate, `excluded()` in `scripts/figures/lib/exclusions.py`, filters the arms of every figure; extend it there,
+never per figure.
 
 
 `midian` with r ≠ 10 (`midian[r=5]`, `midian_wo_audit_r5`, `midian[r=20,…]`, …), `midian_llm_descent`, the online-off
