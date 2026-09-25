@@ -1,5 +1,5 @@
 """Efficiency figures C (appendix) and D (Figure 5); style, names and saving from scripts/figures/lib/figspec.py
-(docs/FIGURE_SPEC.md).
+(docs/figures.md).
     python scripts/figures/efficiency_figs.py [--out DIR] [--refresh] [--from-csv]
       -> <out>/{C_routing_work_vs_n,D_energy_per_query}.{png,pdf,csv}   (<out> = $RTE_FIG_OUT or figures/paper)
 Two figures, one panel each (they replace the old C paired-gap and D heatmap figures):
