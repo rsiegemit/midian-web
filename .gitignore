@@ -5,3 +5,10 @@ __pycache__/
 *.egg-info/
 slurm-*.out
 slurm-*.err
+.claude/
+context_files/
+*.log
+slurm-*
+.ruff_cache/
+build/
+dist/

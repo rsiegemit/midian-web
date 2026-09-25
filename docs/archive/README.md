@@ -7,7 +7,7 @@ partition and host names and absolute user paths with placeholders (`<cpu-partit
 nothing else was changed. Apart from the pre-registration files (below), each file is the copy at tag
 `submission-2026-09-24`, including the one-line names note it received on that date.
 
-> **Names.** Every file here predates the 2026-09-24 rename. In them, **MIDIAN-VA** is today's **MIDIAN**; plain
+> **Names.** Nearly every file here predates the 2026-09-24 rename. In them, **MIDIAN-VA** is today's **MIDIAN**; plain
 > **MIDIAN** (the pre-registered tree) is **MIDIAN w/o defenses**; **MIDIAN-V** is **MIDIAN w/o audits**; **MIDIAN-A** is
 > **MIDIAN w/o verification**; **MIDIAN-SH / MIDIAN-SHA** are withdrawn. See [`../errata.md`](../errata.md). File paths
 > and section cross-references inside these files are those of their date (e.g. `configs/grid.yaml`, `RESULTS II.2`).
