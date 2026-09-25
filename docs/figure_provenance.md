@@ -605,46 +605,46 @@ variants. `methods: all` = every method file except LLM-only ones off the llm ba
 
 All rows: `K = 16` unless noted, `collude = true`, `lie_mode = inflate`, `demand = uniform`, no churn.
 
-| grid (yaml line) | backend | n | dist / pool | β | liar_select | decl. source | b | Q | seeds |
+| grid | backend | n | dist / pool | β | liar_select | decl. source | b | Q | seeds |
 |---|---|---|---|---|---|---|---|---|---|
-| `live_core_n100` (105) | llm | 100 | spec, heavy, bimodal | 0, .1, .25, .5 | random, lsf | prog, self | 3 | 1000 | 1–5 |
-| `live_f1_n1000` (106) | llm | 1000 | spec, heavy, bimodal | 0, .1, .25, .5 | random, lsf | prog, self | 3 | 1000 | 1–5 |
-| `fw_live_n100` / `fw_live_n1000` (112/109) | llm | 100 / 1000 | spec, heavy, bimodal | 0, .1, .25, .5 | random | self | 3 | 1000 | 1–10 |
-| `fw_live_n100_lowskill` / `_n1000_lowskill` (146/145) | llm | 100 / 1000 | spec, heavy, bimodal | .5 | lsf | self | 3 | 1000 | 1–10 |
-| `learned_n100` (272), `variants_f1` (152), `learned_f1` (265) | llm | 100 / 1000 / 1000 | spec, heavy, bimodal | 0, .1, .25, .5 | random, lsf | self | 3 | 1000 | 1–10 |
-| `learned_n10k` (291) | llm | 10^4 | spec | 0, .25, .5 | random, lsf | self | 3 | 300 | 1–3 |
-| `live_n10k_v2` (130) | llm | 10^4 | spec | 0, .25 | random | self | 3 | 300 | 1–3 |
-| `fw_live_n10k_cartel` (515), `live_n10k_cartel_random` (1027) | llm | 10^4 | spec | .5 | lsf | self | 3 | 300 | 1–3 |
-| `learned_n10k_beta01` (986) | llm | 10^4 | spec | .1 | random, lsf | self | 3 | 300 | 1–3 |
-| `live_n100k` (460), `live_n100k_fill` (979) | llm | 10^5 | spec | 0, .25, .5 | random, lsf | self | 3 | 300 | 1–3 |
-| `live_n100k_beta01` (989) | llm | 10^5 | spec | .1 | random, lsf | self | 3 | 300 | 1–3 |
-| `va_b_n100` / `va_b_n1000` (1047-8) | llm | 100 / 1000 | spec | 0, .5 | lsf | self | **1, 5** | 1000 | 1–10 |
-| `va_b_n10k` / `va_b_n100k` (1049-50) | llm | 10^4 / 10^5 | spec | 0, .5 | lsf | self | **1, 5** | 300 | 1–3 |
-| `rivals_b_n100/n1000/n10k/n100k` (1068-71) | as their `va_b_*` twin | | | | | | 1, 5 | | |
-| `routereval_mmlu` (316) | routereval, `mmlu` | 10, 100, 1000 | s2w, all_strong, all_weak | 0, .25, .5 | random, lsf | prog | 3 | 1000 | 1–5 |
-| `routereval_mmlu5k` (359) | routereval, `leaderboard_mmlu` | 5000 | all | 0, .25, .5 | random, lsf | prog | 3 | 300 | 1–3 |
-| `va_b_routereval5k`, `rivals_b_routereval5k` (1051/1072) | routereval, `leaderboard_mmlu` | 5000 | all | 0, .5 | lsf | prog | 1, 5 | 300 | 1–3 |
-| `llmrouterbench_pool` (584) | routereval, `llmrouterbench` | 20 | all | 0, .25, .5 | random, lsf | prog | 3 | 1000 | 1–5 (K = 15) |
-| `va_b_llmrouterbench`, `rivals_b_llmrouterbench` (1052/1073) | same | 20 | all | 0, .5 | lsf | prog | 1, 5 | 1000 | 1–5 (K = 15) |
-| `bernoulli_scale_v5` (217) | bernoulli, calibrated | 10, 100, 1000, 10^4 / 10^5 / 10^6 / 10^7 | spec (label) | 0; .25, .5 | random; random, lsf | prog | 3 / 3 / 1, 3 / 1, 3 | 1000 | 1–1000 / 1–500 / 1–200 / 1–100 |
-| `va_b_bernoulli_1e7`, `rivals_b_bernoulli_1e7` (1053/1074) | bernoulli, calibrated | 10^7 | spec | 0, .5 | lsf | prog | **5** | 1000 | 1–100 |
-| `replay_scale_v5` (240) | replay | 10–10^4 / 10^5 / 10^6 | spec, heavy, bimodal | 0; .25, .5 | random; random, lsf | prog | 3 / 3 / 1, 3 | 1000 | 1–1000 / 1–200 / 1–100 (K = 64) |
-| `va_b_replay_1e6`, `rivals_b_replay_1e6` (1055/1075) | replay | 10^6 | spec, heavy, bimodal | 0, .5 | lsf | prog | **5** | 1000 | 1–100 (K = 64) |
-| `fw_routereval_small` / `_1k` / `_5k` (970/503/528) | routereval | 10, 100 / 1000 / 5000 | 3 configs / 3 configs / all | 0, .5 | random, lsf | prog | 3 | 1000 / 1000 / 300 | 1–5 / 1–5 / 1–3 |
-| `tuned_wsb_n100/n1000/n10k/n100k` (1060-3) | as their `va_b_*` twin | | | 0, .5 | lsf | self | 3 | | |
-| `pool_fill_n100` / `_n10k` / `_n100k` (1105-8) | llm | 100 / 10^4 / 10^5 | spec | 0, .5 | lsf | self | 1, 3, 5 | 1000 / 300 / 300 | 1–10 / 1–3 / 1–3 |
-| `pool_fill_routereval5k`, `pool_fill_llmrouterbench` (1109/1112) | as their `va_b_*` twin | 5000 / 20 | all | 0, .5 | lsf | prog | 1, 3, 5 | 300 / 1000 | 1–3 / 1–5 |
-| `pool_fill_bernoulli_1e7`, `pool_fill_replay_1e6` (1115/1119) | bernoulli / replay | 10^7 / 10^6 | spec / 3 shapes | 0, .5 | lsf | prog | 1, 3, 5 | 1000 | 1–100 |
-| `pool_seeds_n1000` (1125) | llm | 1000 | spec | 0, .5 | lsf | self | 3 | 1000 | **6–10** |
-| `linucb_fix_n100/n1000/n10k/n100k`, `_routereval5k`, `_llmrouterbench` (1134-1139) | as their `va_b_*` twin | | | 0, .5 | lsf | | 1, 3, 5 | | |
-| `linucb_fix_bernoulli_1e7` (1145-1146) | bernoulli, calibrated | 10^7 | spec | 0, .5 | lsf | prog | 1, 3, 5 | 1000 | 1–100 |
-| `trueskill_fix_n100/n1000/n10k` (1142-1144) | as their `va_b_*` twin | | | 0, .5 | lsf | self | 1, 3, 5 | | |
-| `bernoulli_1e7_cal` (1162) | bernoulli, calibrated | 10^7 | spec | 0, .5 | lsf | **calibrated** | 1, 3, 5 | 1000 | 1–100 (claim readers only) |
-| `replay_1e6_split_cal` (1170) | replay, `split: true` | 10^6 | spec, heavy, bimodal | 0, .5 | lsf | **calibrated** | 1, 3, 5 | 1000 | 1–30 |
-| `routereval5k_norep_cal` (1181) | routereval, `leaderboard_mmlu`, `no_repeat`, `shuffle` | 5000 | all | 0, .5 | lsf | **calibrated** | 1, 3, 5 | 300 | 1–3 |
-| `llmrouterbench_norep_cal` (1190) | routereval, `llmrouterbench`, `no_repeat`, `shuffle` | 20 | all | 0, .5 | lsf | **calibrated** | 1, 3, 5 | 300 | 1–5 (K = 15) |
-| `routereval_mmlu_norep_cal` (1199) | routereval, `mmlu`, `no_repeat`, `shuffle` | 10, 100, 1000 | s2w | 0, .5 | lsf | **calibrated** | 3 | 300 | 1–5 (MIDIAN, random + oracle: H's reference lines; random added 2026-09-24) |
-| `fw_routereval_{small,1k,5k}{,_em,_va}_norep_cal`, `re_sl_{declared,embed}_{small,1k,5k}_norep_cal` (1203-1217) | routereval, `mmlu` / `leaderboard_mmlu`, `no_repeat`, `shuffle` | 10, 100 / 1000 / 5000 | s2w / s2w / all | 0, .5 | lsf | **calibrated** | 3 | 300 | 1–5 / 1–5 / 1–3 (H's framework bars) |
+| `live_core_n100` | llm | 100 | spec, heavy, bimodal | 0, .1, .25, .5 | random, lsf | prog, self | 3 | 1000 | 1–5 |
+| `live_f1_n1000` | llm | 1000 | spec, heavy, bimodal | 0, .1, .25, .5 | random, lsf | prog, self | 3 | 1000 | 1–5 |
+| `fw_live_n100` / `fw_live_n1000` | llm | 100 / 1000 | spec, heavy, bimodal | 0, .1, .25, .5 | random | self | 3 | 1000 | 1–10 |
+| `fw_live_n100_lowskill` / `_n1000_lowskill` | llm | 100 / 1000 | spec, heavy, bimodal | .5 | lsf | self | 3 | 1000 | 1–10 |
+| `learned_n100`, `variants_f1`, `learned_f1` | llm | 100 / 1000 / 1000 | spec, heavy, bimodal | 0, .1, .25, .5 | random, lsf | self | 3 | 1000 | 1–10 |
+| `learned_n10k` | llm | 10^4 | spec | 0, .25, .5 | random, lsf | self | 3 | 300 | 1–3 |
+| `live_n10k_v2` | llm | 10^4 | spec | 0, .25 | random | self | 3 | 300 | 1–3 |
+| `fw_live_n10k_cartel`, `live_n10k_cartel_random` | llm | 10^4 | spec | .5 | lsf | self | 3 | 300 | 1–3 |
+| `learned_n10k_beta01` | llm | 10^4 | spec | .1 | random, lsf | self | 3 | 300 | 1–3 |
+| `live_n100k`, `live_n100k_fill` | llm | 10^5 | spec | 0, .25, .5 | random, lsf | self | 3 | 300 | 1–3 |
+| `live_n100k_beta01` | llm | 10^5 | spec | .1 | random, lsf | self | 3 | 300 | 1–3 |
+| `va_b_n100` / `va_b_n1000` | llm | 100 / 1000 | spec | 0, .5 | lsf | self | **1, 5** | 1000 | 1–10 |
+| `va_b_n10k` / `va_b_n100k` | llm | 10^4 / 10^5 | spec | 0, .5 | lsf | self | **1, 5** | 300 | 1–3 |
+| `rivals_b_n100/n1000/n10k/n100k` | as their `va_b_*` twin | | | | | | 1, 5 | | |
+| `routereval_mmlu` | routereval, `mmlu` | 10, 100, 1000 | s2w, all_strong, all_weak | 0, .25, .5 | random, lsf | prog | 3 | 1000 | 1–5 |
+| `routereval_mmlu5k` | routereval, `leaderboard_mmlu` | 5000 | all | 0, .25, .5 | random, lsf | prog | 3 | 300 | 1–3 |
+| `va_b_routereval5k`, `rivals_b_routereval5k` | routereval, `leaderboard_mmlu` | 5000 | all | 0, .5 | lsf | prog | 1, 5 | 300 | 1–3 |
+| `llmrouterbench_pool` | routereval, `llmrouterbench` | 20 | all | 0, .25, .5 | random, lsf | prog | 3 | 1000 | 1–5 (K = 15) |
+| `va_b_llmrouterbench`, `rivals_b_llmrouterbench` | same | 20 | all | 0, .5 | lsf | prog | 1, 5 | 1000 | 1–5 (K = 15) |
+| `bernoulli_scale_v5` | bernoulli, calibrated | 10, 100, 1000, 10^4 / 10^5 / 10^6 / 10^7 | spec (label) | 0; .25, .5 | random; random, lsf | prog | 3 / 3 / 1, 3 / 1, 3 | 1000 | 1–1000 / 1–500 / 1–200 / 1–100 |
+| `va_b_bernoulli_1e7`, `rivals_b_bernoulli_1e7` | bernoulli, calibrated | 10^7 | spec | 0, .5 | lsf | prog | **5** | 1000 | 1–100 |
+| `replay_scale_v5` | replay | 10–10^4 / 10^5 / 10^6 | spec, heavy, bimodal | 0; .25, .5 | random; random, lsf | prog | 3 / 3 / 1, 3 | 1000 | 1–1000 / 1–200 / 1–100 (K = 64) |
+| `va_b_replay_1e6`, `rivals_b_replay_1e6` | replay | 10^6 | spec, heavy, bimodal | 0, .5 | lsf | prog | **5** | 1000 | 1–100 (K = 64) |
+| `fw_routereval_small` / `_1k` / `_5k` | routereval | 10, 100 / 1000 / 5000 | 3 configs / 3 configs / all | 0, .5 | random, lsf | prog | 3 | 1000 / 1000 / 300 | 1–5 / 1–5 / 1–3 |
+| `tuned_wsb_n100/n1000/n10k/n100k` | as their `va_b_*` twin | | | 0, .5 | lsf | self | 3 | | |
+| `pool_fill_n100` / `_n10k` / `_n100k` | llm | 100 / 10^4 / 10^5 | spec | 0, .5 | lsf | self | 1, 3, 5 | 1000 / 300 / 300 | 1–10 / 1–3 / 1–3 |
+| `pool_fill_routereval5k`, `pool_fill_llmrouterbench` | as their `va_b_*` twin | 5000 / 20 | all | 0, .5 | lsf | prog | 1, 3, 5 | 300 / 1000 | 1–3 / 1–5 |
+| `pool_fill_bernoulli_1e7`, `pool_fill_replay_1e6` | bernoulli / replay | 10^7 / 10^6 | spec / 3 shapes | 0, .5 | lsf | prog | 1, 3, 5 | 1000 | 1–100 |
+| `pool_seeds_n1000` | llm | 1000 | spec | 0, .5 | lsf | self | 3 | 1000 | **6–10** |
+| `linucb_fix_n100/n1000/n10k/n100k`, `_routereval5k`, `_llmrouterbench` | as their `va_b_*` twin | | | 0, .5 | lsf | | 1, 3, 5 | | |
+| `linucb_fix_bernoulli_1e7` | bernoulli, calibrated | 10^7 | spec | 0, .5 | lsf | prog | 1, 3, 5 | 1000 | 1–100 |
+| `trueskill_fix_n100/n1000/n10k` | as their `va_b_*` twin | | | 0, .5 | lsf | self | 1, 3, 5 | | |
+| `bernoulli_1e7_cal` | bernoulli, calibrated | 10^7 | spec | 0, .5 | lsf | **calibrated** | 1, 3, 5 | 1000 | 1–100 (claim readers only) |
+| `replay_1e6_split_cal` | replay, `split: true` | 10^6 | spec, heavy, bimodal | 0, .5 | lsf | **calibrated** | 1, 3, 5 | 1000 | 1–30 |
+| `routereval5k_norep_cal` | routereval, `leaderboard_mmlu`, `no_repeat`, `shuffle` | 5000 | all | 0, .5 | lsf | **calibrated** | 1, 3, 5 | 300 | 1–3 |
+| `llmrouterbench_norep_cal` | routereval, `llmrouterbench`, `no_repeat`, `shuffle` | 20 | all | 0, .5 | lsf | **calibrated** | 1, 3, 5 | 300 | 1–5 (K = 15) |
+| `routereval_mmlu_norep_cal` | routereval, `mmlu`, `no_repeat`, `shuffle` | 10, 100, 1000 | s2w | 0, .5 | lsf | **calibrated** | 3 | 300 | 1–5 (MIDIAN, random + oracle: H's reference lines; random added 2026-09-24) |
+| `fw_routereval_{small,1k,5k}{,_em,_va}_norep_cal`, `re_sl_{declared,embed}_{small,1k,5k}_norep_cal` | routereval, `mmlu` / `leaderboard_mmlu`, `no_repeat`, `shuffle` | 10, 100 / 1000 / 5000 | s2w / s2w / all | 0, .5 | lsf | **calibrated** | 3 | 300 | 1–5 / 1–5 / 1–3 (H's framework bars) |
 
 (lsf = low_skill_first; spec = specialist; prog = programmatic; self = self_described.) The live framework-shortlist
 grids (`fw_live_n*_{dd,em,sota,verified_va,…}`) mirror their source grid cell for cell (same n, β, liar_select,
@@ -739,7 +739,7 @@ The oracle row has zero build/run communication except `tasks_per_task = 1`.
   requires ≥ 2 shared units.
 - **Figure filters**: `extra_figs.excluded` (`scripts/extra_figs.py`) drops MIDIAN variants with r ≠ 10 or
   δ ≠ 1/3, trusted-observer `sequential_halving`, `route_to_k_majority`, the LLM-descent ablation,
-  online-off and cohort/churn variants, and — while `HIDE_HALVING = True` (line 130, "TEMPORARY 2026-09-22") — every
+  online-off and cohort/churn variants, and — while `HIDE_HALVING = True` (a temporary switch added 2026-09-22) — every
   label containing "halving", including peer-reported halving.
 
 ---
