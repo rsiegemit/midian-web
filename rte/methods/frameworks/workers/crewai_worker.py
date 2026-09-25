@@ -7,7 +7,6 @@ import contextlib
 import os
 import re
 import sys
-
 import tempfile
 
 os.environ.setdefault("OPENAI_API_KEY", "EMPTY")
@@ -21,7 +20,6 @@ _HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path[:0] = [_HERE, os.path.dirname(_HERE)]
 from _bridge import serve_worker  # noqa: E402
 from _wk import openai_kwargs  # noqa: E402
-
 from crewai import LLM, Agent, Crew, Process, Task  # noqa: E402
 from crewai.events.event_context import restore_event_scope  # noqa: E402
 from crewai.tools.agent_tools.base_agent_tools import BaseAgentTool  # noqa: E402

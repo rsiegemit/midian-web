@@ -6,9 +6,10 @@ argmax computed at build).
 Ledger: build = n messages; fetch = n comparisons (cached: 1); observe = 0.
 Params: cached=False."""
 import numpy as np
-from .base import Method
+
 from ._decl import declared, scan
 from ._est import lookup
+from .base import Method
 
 
 class DeclaredArgmax(Method):

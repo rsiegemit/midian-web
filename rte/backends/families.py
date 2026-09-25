@@ -62,7 +62,10 @@ def _rg_speedup():
     """Opt-in (RTE_RG_CACHE=1), identical problems: letter_counting / word_sequence_reversal re-read and regex-scan a
     word corpus in every dataset __init__; cache the file read and the scan (a fresh list per call), ~27x per
     problem."""
-    import functools, importlib, re as _re
+    import functools
+    import importlib
+    import re as _re
+
     import reasoning_gym.data as rgd
     rgd.read_data_file = functools.lru_cache(maxsize=None)(rgd.read_data_file)
     scan = functools.lru_cache(maxsize=64)(lambda p, s, fl=0: tuple(_re.findall(p, s, fl)))

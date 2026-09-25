@@ -45,7 +45,7 @@ class AccessError(RuntimeError):
 # --------------------------------------------------------------------------- skill distributions (bernoulli)
 def sample_skill(dist: str, n: int, K: int, rng: np.random.Generator) -> np.ndarray:
     """S[n,K] in [0,1] for the bernoulli backend. Same shapes the llm backend realizes via profiles."""
-    from .backends._profiles import pick_k_per_agent, group_of
+    from .backends._profiles import group_of, pick_k_per_agent
     if dist == "specialist":
         good = pick_k_per_agent(n, K, 3, rng)
         return np.where(good, rng.uniform(0.70, 0.95, size=(n, K)), rng.uniform(0.05, 0.30, size=(n, K)))

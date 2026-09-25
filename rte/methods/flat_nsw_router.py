@@ -7,9 +7,11 @@ count, so a query is charged ceil(log2 n) hops and ef comparisons (see docs/arch
 Ledger: build = n*K*b probes; fetch = ceil(log2 n) hops + ef comparisons; observe = 0.
 Params: M=16, ef=50, ef_construction=200."""
 import math
+
 import numpy as np
+
+from ._est import CHUNK, probe_means
 from .base import Method
-from ._est import probe_means, CHUNK
 
 
 class FlatNSWRouter(Method):

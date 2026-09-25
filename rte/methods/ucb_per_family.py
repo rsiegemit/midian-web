@@ -6,8 +6,9 @@ Mechanism: b probes per arm give the initial means; fetch takes argmax_a mean[a,
 Ledger: build = n*K*b probes; fetch = n comparisons; observe = 0.
 Params: c=sqrt(2)."""
 import numpy as np
-from .base import Method
+
 from ._est import probe_means, running_mean, scan_argmax
+from .base import Method
 
 
 class UcbPerFamily(Method):

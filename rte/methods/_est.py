@@ -1,6 +1,8 @@
 """Shared estimation helpers. Every probing method spends the same build budget through here."""
 from __future__ import annotations
+
 import numpy as np
+
 from .base import Method
 
 CHUNK = 1_000_000

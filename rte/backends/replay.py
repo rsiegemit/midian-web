@@ -22,7 +22,7 @@ import numpy as np
 
 from ..config import RTE_DATA
 from . import declared_for
-from ._profiles import pick_k_per_agent, group_mask
+from ._profiles import group_mask, pick_k_per_agent
 
 DEFAULT_CELLS_PATH = os.path.join(RTE_DATA, "data", "routerbench_cells.npz")
 

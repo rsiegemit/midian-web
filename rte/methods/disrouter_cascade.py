@@ -7,8 +7,9 @@ highest declarer does rather than the last agent (see docs/archive/DEVIATIONS.md
 Ledger: build = n messages; fetch = p messages + p hops (p = position of the taker, n - 1 if none); observe = 0.
 Params: tau=0.7."""
 import numpy as np
-from .base import Method
+
 from ._decl import declared
+from .base import Method
 
 TAU = 0.7
 

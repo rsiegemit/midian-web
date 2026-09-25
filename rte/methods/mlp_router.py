@@ -8,9 +8,10 @@ Ledger: build = n*K*b probes; fetch = n comparisons; observe = 0.
 Params: hidden=128, epochs=30."""
 import numpy as np
 from sklearn.neural_network import MLPRegressor
-from .base import Method
+
 from ._est import scan_argmax
 from ._learned import probe_set, task_vec
+from .base import Method
 
 
 class MLPRouter(Method):

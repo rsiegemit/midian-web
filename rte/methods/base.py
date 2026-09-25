@@ -12,6 +12,7 @@
             stale picks until observe() corrects them).
 """
 from __future__ import annotations
+
 from typing import Any
 
 from ..budget import Budget

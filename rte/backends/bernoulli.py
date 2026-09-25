@@ -8,7 +8,7 @@ from __future__ import annotations
 import numpy as np
 
 from ..stable_hash import stable_seed_32
-from ..world import sample_skill, Task
+from ..world import Task, sample_skill
 from . import declared_for
 
 CHUNK = 1_000_000

@@ -29,8 +29,16 @@ Params: r=10, delta=1/3, online=True, audit=True, verify=True, cached=verify, ob
 stratify=False, cohort="random"."""
 import numpy as np
 
-from ._est import (REPORT_ELEMS, cohort_blocks, others, peer_estimate, peer_reported_estimates, probe_outcomes, trim_k,
-                   trimmed_by_reporter)
+from ._est import (
+    REPORT_ELEMS,
+    cohort_blocks,
+    others,
+    peer_estimate,
+    peer_reported_estimates,
+    probe_outcomes,
+    trim_k,
+    trimmed_by_reporter,
+)
 from .base import Method
 
 NEG = np.float32(-np.inf)

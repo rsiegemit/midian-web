@@ -10,7 +10,6 @@ sys.path[:0] = [_HERE, os.path.dirname(_HERE)]
 sys.path[:] = [p for p in sys.path if "/.local/lib/" not in p]   # ~/.local shadows this venv's deps
 from _bridge import serve_worker  # noqa: E402
 from _wk import openai_kwargs, run_async, sanitize  # noqa: E402
-
 from llama_index.core.agent.workflow import AgentWorkflow, FunctionAgent  # noqa: E402
 from llama_index.core.agent.workflow.workflow_events import ToolCall  # noqa: E402
 from llama_index.core.selectors import LLMSingleSelector  # noqa: E402

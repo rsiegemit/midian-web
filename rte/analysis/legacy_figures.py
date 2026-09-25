@@ -1,7 +1,10 @@
 """The analyzer's own diagnostic figures F1-F7 (+F3b), written next to each grid's summary. The paper figures are
 drawn by scripts/, not here."""
-import json, os
+import json
+import os
+
 import numpy as np
+
 from .load import BUILD, COST, PLAIN, log
 from .stats import boot, exponents
 

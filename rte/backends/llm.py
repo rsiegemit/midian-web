@@ -36,7 +36,7 @@ class LLMBackend:
                  measure_probes_large: int = 60, max_tokens: int = 512,
                  handicap_max_tokens: int | None = None, declared_noise: float = 0.05,
                  population_dir: str | None = None, concurrency: int | None = None, **_):
-        from . import families as fam                  # the module; `families` is the kwarg here
+        from . import families as fam  # the module; `families` is the kwarg here
         self.n, self.K, self.seed, self.dist = int(n), int(K), int(seed), dist
         self.cfg = ladder()
         self._large = bands(self.cfg)[3]

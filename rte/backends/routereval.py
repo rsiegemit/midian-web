@@ -15,10 +15,16 @@ tie-breaks are random.
 Data: $RTE_DATA/data/routereval/router_dataset/<dataset>_router_dataset.pkl (built by the data scripts, see
 docs/reproducing.md)."""
 from __future__ import annotations
-import os, re, pickle, numpy as np
+
+import os
+import pickle
+import re
+
+import numpy as np
+
 from ..config import RTE_DATA
-from . import declared_for
 from ..stable_hash import stable_seed_32
+from . import declared_for
 
 DATA = os.path.join(RTE_DATA, "data", "routereval", "router_dataset")
 SUBJECT = re.compile(r"questions \(with answers\) about (.+?)\.")

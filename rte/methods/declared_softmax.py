@@ -6,8 +6,9 @@ Mechanism: collect the declarations once at build; fetch scans the family's colu
 Ledger: build = n messages; fetch = n comparisons; observe = 0.
 Params: tau=0.1."""
 import numpy as np
-from .base import Method
+
 from ._decl import declared, scan
+from .base import Method
 
 TAU = 0.1
 

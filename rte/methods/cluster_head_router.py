@@ -8,9 +8,11 @@ docs/archive/DEVIATIONS.md); fetch still searches the global set of ~n/r cluster
 Ledger: build = n messages; fetch = (#clusters + cluster size) comparisons, 2 hops, 4 messages; observe = 0.
 Params: r=10, iters=5, bucket=20000."""
 import math
+
 import numpy as np
-from .base import Method
+
 from ._decl import declared
+from .base import Method
 
 R, ITERS, BUCKET, CHUNK = 10, 5, 20_000, 4096
 

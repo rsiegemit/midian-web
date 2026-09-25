@@ -9,8 +9,9 @@ Ledger: build = n*K*b probes + n*K*b reports + nnz(R) messages per power iterati
 fetch = depth hops, c*depth comparisons, 2*c*depth messages; observe = 0.
 Params: c=10, depth=6, iters=50, rounds=3."""
 import numpy as np
+
+from ._est import greedy_walk, observed_reports
 from .base import Method
-from ._est import observed_reports, greedy_walk
 
 
 def eigentrust(R, iters):

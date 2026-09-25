@@ -6,8 +6,9 @@ Mechanism: collect the declarations once at build; per task a broadcast and n re
 Ledger: build = n messages; fetch = 2n messages + n comparisons; observe = 0.
 Params: noise=0.02."""
 import numpy as np
-from .base import Method
+
 from ._decl import declared
+from .base import Method
 
 NOISE = 0.02
 

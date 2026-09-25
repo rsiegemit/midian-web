@@ -2,7 +2,10 @@
 PASS/HIT, MISS, WITHIN_FLOOR, REPORTED or NO DATA with its numbers. Never a fix. See docs/archive/preregistration for
 the target texts."""
 import json
-import numpy as np, pandas as pd
+
+import numpy as np
+import pandas as pd
+
 from .load import FLAT, FLAT_ON, FLOOR, PLAIN, REF, fmt
 from .stats import delta, envelope, pair
 

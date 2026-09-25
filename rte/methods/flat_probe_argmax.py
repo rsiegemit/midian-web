@@ -7,8 +7,9 @@ Ledger: build = n*K*b probes; fetch = n comparisons (cached: 1); observe = 0.
 Churn: |arrived|*K*b probes (the replaced agents are re-probed).
 Params: cached=False, online=False."""
 import numpy as np
-from .base import Method
+
 from ._est import lookup, probe_means, reprobe, running_mean, scan_argmax
+from .base import Method
 
 
 class FlatProbeArgmax(Method):

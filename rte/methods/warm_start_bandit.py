@@ -7,6 +7,7 @@ Ledger: build = n*K*b probes + n messages; fetch = n comparisons; observe = 0.
 Churn: |arrived| messages + |arrived|*K*b probes (fresh prior and warm-up for the arrivals).
 Params: n0=5.0."""
 import numpy as np
+
 from ._est import BetaBandit, reprobe
 
 

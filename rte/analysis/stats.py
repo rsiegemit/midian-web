@@ -1,5 +1,7 @@
 """Paired statistics: bootstrap CIs, sign tests, paired-by-seed deltas against the reference arm, cost exponents."""
-import numpy as np, pandas as pd
+import numpy as np
+import pandas as pd
+
 from .load import FLOOR, REF, cells
 
 B_BOOT = 2000

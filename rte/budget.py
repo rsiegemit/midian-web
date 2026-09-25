@@ -3,6 +3,7 @@
 The runner warns when a method's build spends more than `total_probes(n, K)`; a method may spend less.
 """
 from __future__ import annotations
+
 from dataclasses import dataclass
 
 

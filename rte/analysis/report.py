@@ -1,6 +1,10 @@
 """summary.md for a grid (tables, targets, figures list) and the `python -m rte.analyze` entry point."""
-import argparse, os, warnings
+import argparse
+import os
+import warnings
+
 import pandas as pd
+
 from .legacy_figures import figures
 from .legacy_targets import targets, targets_v2
 from .load import BUILD, COST, FLOOR, REF, RTE_DATA, STATS, cells, load, log, reads_declared

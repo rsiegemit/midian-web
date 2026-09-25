@@ -4,8 +4,8 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from _bridge import serve_worker      # noqa: E402
-from _wk import openai_kwargs, sanitize   # noqa: E402
+from _bridge import serve_worker  # noqa: E402
+from _wk import openai_kwargs, sanitize  # noqa: E402
 
 
 def select(req):

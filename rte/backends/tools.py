@@ -6,7 +6,8 @@ is not hardened against a determined escape (the author is a 0.5-14B model doing
 """
 from __future__ import annotations
 
-import ast, hashlib
+import ast
+import hashlib
 import operator as op
 import subprocess
 import sys

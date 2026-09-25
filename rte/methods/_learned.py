@@ -6,7 +6,10 @@ agent on the incoming task's text. Embeddings are all-MiniLM-L6-v2 on CPU (the e
 routers were run on this benchmark); the embedding arithmetic is not in the ledger, like the frameworks' TF-IDF
 shortlist.
 `embed(texts, model=...)` also serves the frameworks' SOTA retrieval stack, which passes a strong Qwen3 embedder."""
-import os, numpy as np
+import os
+
+import numpy as np
+
 from ..config import RTE_DATA, count, flag
 from ._est import CHUNK
 

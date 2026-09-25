@@ -11,11 +11,14 @@ sys.path[:0] = [_HERE, os.path.dirname(_HERE)]
 sys.path[:] = [p for p in sys.path if "/.local/lib/" not in p]   # ~/.local shadows this venv's deps
 from _bridge import serve_worker  # noqa: E402
 from _wk import openai_kwargs, run_async, sanitize  # noqa: E402
-
 from agent_framework import Agent  # noqa: E402
 from agent_framework.openai import OpenAIChatCompletionClient  # noqa: E402
-from agent_framework.orchestrations import (GroupChatBuilder, GroupChatRequestSentEvent,  # noqa: E402
-                                            HandoffBuilder, HandoffSentEvent)
+from agent_framework.orchestrations import (  # noqa: E402
+    GroupChatBuilder,
+    GroupChatRequestSentEvent,
+    HandoffBuilder,
+    HandoffSentEvent,
+)
 
 for _log in ("opentelemetry", "asyncio", "agent_framework", "agent_framework_orchestrations"):
     logging.getLogger(_log).setLevel(logging.CRITICAL)   # abandoning the run at the pick is noisy by design

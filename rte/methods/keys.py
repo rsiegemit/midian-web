@@ -78,7 +78,8 @@ def _jkey(d):
 def normalize(df, results_dir: str):
     """Rows read from `results_dir` under the current keys. A migrated directory (SENTINEL) is checked, never coerced;
     an unmigrated one is translated on read and loses its withdrawn-variant rows. params are stored as compact JSON."""
-    import json, os
+    import json
+    import os
     if df is None or len(df) == 0 or "method" not in df:
         return df
     params = df["params"].fillna("{}").astype(str) if "params" in df else ["{}"] * len(df)

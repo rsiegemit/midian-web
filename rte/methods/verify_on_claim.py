@@ -8,6 +8,7 @@ Ledger: build = n messages; fetch = n comparisons on a family's first task (1 af
 observe = 0.
 Params: k=3, max_tries=5, margin=0.15."""
 import numpy as np
+
 from .base import Method
 
 

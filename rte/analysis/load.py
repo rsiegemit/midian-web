@@ -4,9 +4,15 @@
 (rte.methods.keys) and hands the frame to `prepare`, which adds the arm label (method + params, ALIAS'd to one name per
 arm), the method group (from the method's `needs`), the framework accountings and the total-communication columns.
 """
-import json, os, sys
-import numpy as np, pandas as pd
-from .. import config, run as _run
+import json
+import os
+import sys
+
+import numpy as np
+import pandas as pd
+
+from .. import config
+from .. import run as _run
 from ..methods import keys
 
 RTE_DATA, consolidate = str(config.RTE_DATA), _run.consolidate   # str: scripts concatenate it

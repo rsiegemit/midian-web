@@ -9,9 +9,11 @@ Ledger: build <= n*K*b probes (+ r-1 reports per probe when peer_reported); fetc
 Churn: churn_mode="rebuild" reruns the whole build (charged); "stale" keeps the old picks.
 Params: peer_reported=False, r=10, delta=1/3, churn_mode="stale"."""
 import math
+
 import numpy as np
-from .base import Method
+
 from ._est import CHUNK, lookup, trimmed_by_reporter
+from .base import Method
 
 
 def halving(view, f, budget, peers=0, delta=1 / 3):

@@ -27,7 +27,7 @@ class MidianLLMDescent(Midian):
         self.stats = {"calls": 0, "fallbacks": 0}
 
     def _choose(self, l, node, f):
-        from ..llm_client import complete            # lazy: importing this file must not need an endpoint
+        from ..llm_client import complete  # lazy: importing this file must not need an endpoint
         v = self._values(l, node, f)
         ok = np.flatnonzero(np.isfinite(v))
         if ok.size < 2:

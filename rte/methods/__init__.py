@@ -1,8 +1,10 @@
 """Method discovery: `load_method("midian")` imports `rte.methods.midian` and
 returns its single Method subclass. Each method file is self-contained."""
 from __future__ import annotations
+
 import importlib
 import inspect
+
 from .base import Method
 
 

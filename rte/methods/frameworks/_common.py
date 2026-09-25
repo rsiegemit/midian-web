@@ -20,7 +20,8 @@ import numpy as np
 
 from ...config import count
 from ...stable_hash import stable_seed_32
-from .._learned import MINILM, resolve as _resolve
+from .._learned import MINILM
+from .._learned import resolve as _resolve
 from ..base import Method
 from ._bridge import Bridge
 
@@ -294,7 +295,7 @@ class FrameworkMethod(Method):
             if E is not None and E.shape[0] == rows:
                 return E
             if self.embed_model != MINILM:                   # a strong embedder on a CPU routing node is a 100x stall,
-                import torch                                 # not a slow path worth taking silently
+                import torch  # not a slow path worth taking silently
                 if not torch.cuda.is_available():
                     raise RuntimeError(f"{self.embed_model} has no cached block for {d} and no GPU is visible; "
                                        f"run: python scripts/data/embed_populations.py --model {self.embed_model}")

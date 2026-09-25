@@ -6,8 +6,9 @@ the runner executes in full (k tasks charged) and scores by majority vote (ties 
 Ledger: build = n messages; fetch = n comparisons + k executions; observe = 0.
 Params: k=3."""
 import numpy as np
-from .base import Method
+
 from ._decl import declared, scan
+from .base import Method
 
 K_ROUTE = 3
 

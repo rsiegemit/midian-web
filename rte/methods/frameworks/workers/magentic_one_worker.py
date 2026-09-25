@@ -15,11 +15,11 @@ _HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path[:0] = [_HERE, os.path.dirname(_HERE)]
 from _bridge import serve_worker  # noqa: E402
 from _wk import run_async  # noqa: E402
-from autogen_worker import first_speaker, team_parts  # noqa: E402
-
 from autogen_agentchat.teams import MagenticOneGroupChat  # noqa: E402
 from autogen_agentchat.teams._group_chat._magentic_one._magentic_one_orchestrator import (  # noqa: E402
-    MagenticOneOrchestrator)
+    MagenticOneOrchestrator,
+)
+from autogen_worker import first_speaker, team_parts  # noqa: E402
 
 MARK = "Next Speaker: "
 RETRY = ("Failed to parse ledger information", "Invalid ledger format")

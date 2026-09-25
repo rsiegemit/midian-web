@@ -8,9 +8,10 @@ Ledger: build = n*K*b probes; fetch = n comparisons; observe = 0.
 Churn: |arrived|*K*b probes (the replaced agents' stores are rebuilt).
 Params: online=False, k=None (= b)."""
 import numpy as np
-from .base import Method
+
 from ._est import scan_argmax
-from ._learned import vec, probe_set, task_vec
+from ._learned import probe_set, task_vec, vec
+from .base import Method
 
 
 class KNNRouter(Method):

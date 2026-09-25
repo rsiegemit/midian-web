@@ -8,8 +8,9 @@ Ledger: build = n*K*b probes + n*K*b reports + n*d messages; fetch = depth hops,
 messages; observe = 0.
 Params: d=10 (rounded up to even), depth=4."""
 import numpy as np
+
+from ._est import greedy_walk, observed_reports
 from .base import Method
-from ._est import observed_reports, greedy_walk
 
 
 def regular_graph(n, d, rng):
