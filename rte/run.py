@@ -8,12 +8,13 @@ from itertools import product
 from multiprocessing import get_context
 import numpy as np, yaml
 from .budget import Budget
+from .config import RTE_DATA as _DATA
 from .methods import load_method
 from .world import World
 import rte.methods
 from rte.methods import keys
 
-RTE_DATA = os.environ.get("RTE_DATA", "/scratch/rte")
+RTE_DATA = str(_DATA)                        # str: expanded into backend_kwargs strings and paths
 CELL = ("backend", "n", "K", "dist", "beta", "liar_select", "collude", "declared_source", "lie_mode", "demand", "b", "Q")
 log = lambda m: print(m, file=sys.stderr, flush=True)
 jkey = lambda d: json.dumps(d, sort_keys=True, separators=(",", ":"), default=str)
