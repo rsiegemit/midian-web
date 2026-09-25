@@ -420,6 +420,9 @@ _sets:
     - {name: warm_start_bandit, params: {n0: 0.5}}
     - {name: knn_router, params: {online: true}}
     - random
+  vc_arms:
+    - verbal_confidence
+    - {name: verbal_confidence, params: {shortlist: embed}}
   cal_arms:
     - cluster_head_router
     - disrouter_cascade

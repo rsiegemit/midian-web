@@ -104,10 +104,13 @@ def seeds(spec):
     return out
 
 
+NOT_IN_ALL = ("base", "keys", "verbal_confidence")    # not methods, or rivals added after the `all` grids ran (listed explicitly)
+
+
 def all_methods(backend):
     """Every algorithmic method file (frameworks are listed explicitly in their own grids: one supervisor call per task);
     LLM-only classes only on the llm backend."""
-    names = [m.name for m in pkgutil.iter_modules(rte.methods.__path__) if not m.ispkg and not m.name.startswith("_") and m.name not in ("base", "keys")]
+    names = [m.name for m in pkgutil.iter_modules(rte.methods.__path__) if not m.ispkg and not m.name.startswith("_") and m.name not in NOT_IN_ALL]
     return [n for n in names if backend == "llm" or not getattr(load_method(n), "requires_llm", False)]
 
 
@@ -356,7 +359,8 @@ def main(argv=None):
         for c, seed, todo, *_ in units[:50]: log(f"  {' '.join(f'{f}={c[f]}' for f in CELL)} seed={seed} methods={[s['name'] for s in todo]}")
         return
     if not os.path.isdir(out):                   # a new directory holds current keys only: mark it (keys.SENTINEL)
-        os.makedirs(out); open(f"{out}/{keys.SENTINEL}", "w").write('{"created": "new"}')
+        os.makedirs(out, exist_ok=True)          # exist_ok: units of a new grid may start at the same moment
+        open(f"{out}/{keys.SENTINEL}", "w").write('{"created": "new"}')
     os.makedirs(rows_dir, exist_ok=True); t0 = time.perf_counter(); fails = []
     if workers > 1:
         with get_context("fork").Pool(workers) as pool:

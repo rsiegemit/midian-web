@@ -583,6 +583,25 @@ grids:
     lie_mode: [max]
     methods: {set: lie_max_arms}
 
+  # ---- 2026-09-24 VERBALIZED CONFIDENCE (Tian et al. 2023 style): ask the k = 10 shortlisted agents (declared top-k,
+  # or MiniLM over self-descriptions) how confident they are on THIS task, route to the most confident; a reply without
+  # a rating is asked once more. Liars claim the top of the scale in every lie mode (World.confidence). Cells of
+  # fw_live_n1000 (honest), fw_live_n1000_lowskill (cartel) and lie_max_n1000, so every build is already cached.
+  # [NUM] verbal_confidence, honest + cartel at live n = 10^3; read by: none
+  vc_live_n1000:
+    mirror_of: fw_live_n1000
+    dist: [specialist]
+    seeds: 1-3
+    methods: {set: vc_arms}
+    blocks:
+      - {beta: [0]}
+      - {beta: [0.5], liar_select: [low_skill_first]}
+
+  # [NUM] verbal_confidence under lie_mode max; read by: none
+  vc_lie_max_n1000:
+    mirror_of: lie_max_n1000
+    methods: {set: vc_arms}
+
   # ---- 2026-09-23 POOL FILL for condensed A / B: "best learned router" / "best bandit" are chosen from the SAME
   # candidate set at every b in a cell (the user: no arm may change between b values because a candidate did not run).
   # Each cell's pool = LEARNED + BANDIT + warm_start_bandit[n0=0.5] (scripts/figures/condensed_figs.py) minus the arms

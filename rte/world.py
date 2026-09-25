@@ -239,6 +239,14 @@ class View:
         self._require("reports")
         return self._w.report_many(np.asarray(reporters), np.asarray(agents), np.asarray(outcomes))
 
+    def ask_confidence(self, agents, task, again: bool = False) -> list[str]:
+        """Ask each agent how confident it is that it solves `task`: a query and a reply each (2 messages per agent),
+        charged here like any bus message. Returns the agents' raw verbal replies; a liar's is inflated (World).
+        `again` asks once more, in the same conversation, for a rating the first reply did not give (charged the same)."""
+        self._require("bus")
+        self.ledger.message(2 * len(agents))
+        return self._w.confidence(np.asarray(agents, np.int64), task, again)
+
     def __getattr__(self, item):            # any other attribute is a bug
         raise AccessError(f"View has no attribute {item!r} (S and liars are never exposed)")
 
@@ -431,6 +439,20 @@ class World:
         self.ledger.probe(a.size)
         self.seen_epoch[a] = self.epoch[a]
         return self.backend.execute_many(a, f, probe_seed(self._probe_salt, a, f, k))
+
+    def confidence(self, agents: np.ndarray, task: Task, again: bool = False) -> list[str]:
+        """Verbal confidence (verbal_confidence rival). Honest agents answer from their own model (backend.confidence);
+        a liar claims the top of the scale in EVERY lie mode, the verbal counterpart of its declared lie (a verbal claim
+        has no per-family budget to squat or inflate by). Liars are not asked, so they cost no generation."""
+        if not hasattr(self.backend, "confidence"):
+            raise NotImplementedError(
+                f"verbal confidence needs an LLM backend; {self.backend_name!r} has no agent to ask")
+        from .backends.prompts import CONF_MAX
+        honest = agents[~self.liars[agents]]
+        replies = self.backend.confidence(honest, task.family, task.instance, again) if honest.size else []
+        said = dict(zip(honest.tolist(), replies))
+        self.seen_epoch[agents] = self.epoch[agents]                     # the reply came from the current occupant
+        return [said.get(int(a), CONF_MAX) for a in agents]
 
     def reset(self) -> None:
         """Start a method: zero the ledger, reset the probe index so a method's build never depends on which methods ran
