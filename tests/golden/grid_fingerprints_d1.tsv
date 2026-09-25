@@ -13,3 +13,8 @@ pool_fill_bernoulli_1e7	600	1000	4e705e76b1f5a55c	1
 linucb_fix_bernoulli_1e7	600	600	23fd669c38c2e2dd	1
 vc_live_n1000	6	12	f2a40d83652da025	0
 vc_lie_max_n1000	3	6	873d6d03d4bb1c67	0
+lie_max_fw_n100k_va	3	30	b598ad3f6e9504c1	0
+lie_max_fw_n100k_tfidf	3	30	41723639720e4386	0
+lie_max_fw_n100k_em	3	30	b51c568db7cd0811	0
+lie_max_fw_n100k_dense_ic	3	30	d2655a291edbf030	0
+lie_max_fw_n100k_sota_ic	3	30	77b1a6a8f7b59f0b	0
