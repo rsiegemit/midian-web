@@ -5,11 +5,9 @@ match the shipped figure CSVs, aggregates recomputed from rows must match the sh
 match the stored rows. All commands run from the repository root with `$RTE_DATA` set
 ([README](../README.md#data)).
 
-<!-- VERIFY-PATH: script locations follow the refactor layout (scripts/figures, scripts/analysis, scripts/checks) -->
-
 | tier | needs | time | reproduces |
 |---|---|---|---|
-| 1. Redraw | `pip install -e ".[figures]"` | minutes | every figure, from the CSV beside it |
+| 1. Redraw | `pip install -e ".[figures]"` | minutes | every figure, from the shipped aggregates in `results/aggregates/` |
 | 2. Aggregate | the stored result rows | hours | the figure CSVs and `paper/NUMBERS.json`, from rows |
 | 3. CPU grids | `[learned]` extra, the downloaded datasets | minutes to CPU-days | every non-live row: bernoulli, replay, RouterEval, LLMRouterBench |
 | 4. Live | a GPU fleet, the model weights, the framework environments | GPU-weeks | the live rows, from the model answers |
@@ -21,9 +19,11 @@ python scripts/figures/make_all.py --from-csv
 ```
 
 Each script in `scripts/figures/` writes a figure and the CSV of every value it plots (`figures/paper/<name>.csv`).
-With `--from-csv`, `make_all.py` skips the computation and draws each figure from its CSV, so the output depends only on
-the shipped CSVs and the style module. Compare with the shipped PDFs, or regenerate into another directory
-(`RTE_FIG_OUT=<dir>`) and diff.
+With `--from-csv`, `make_all.py` skips the computation and draws each figure from `results/aggregates/` alone:
+`bars/` and `shortlist/` for A, B and E-H, `cost_by_n.csv` for C, and `figures/` for the drawn values of A, B, D and I
+(Figure I from `figures/I_max_lie.csv` and its oracle lines in `figures/refs.csv`). The output depends only on the
+shipped aggregates and the style module (`scripts/figures/lib/figspec.py`); no result row and no `$RTE_DATA` is read.
+Compare with the shipped PDFs, or draw into another directory (`--out DIR`, or `RTE_FIG_OUT=DIR`) and diff.
 
 ## Tier 2: figure CSVs and quoted numbers from the stored rows
 
@@ -32,13 +32,14 @@ The stored rows (4.5 M method rows under `$RTE_DATA/results/<grid>/`) are not in
 ```bash
 python scripts/figures/bar_figs.py            # rows -> results/aggregates/bars/*.csv (b = 3 bars of every family)
 python scripts/figures/shortlist_figs.py      # rows -> results/aggregates/shortlist/{live,routereval}.csv
-python scripts/figures/make_all.py            # aggregates + per-seed tables from rows -> figures/paper/*
+python scripts/figures/make_all.py --out new  # the whole chain (the two above included) -> new/*
 python scripts/analysis/paper_numbers.py      # every quoted number -> paper/NUMBERS.json (value, grid, units, CI)
-python scripts/checks/figure_csvs.py <shipped figures dir> figures/   # value-identical (atol 1e-12)?
+python scripts/checks/figure_csvs.py figures/paper new   # value-identical to the shipped figure CSVs (atol 1e-12)?
 ```
 
 Scripts that read millions of rows need a machine with enough memory (the largest grids hold over a million rows).
-`C` and `D` cache the ledger of `bernoulli_scale_v5` in `cost_by_n.csv`; delete it to re-read the rows. Figure A's
+`C` and `D` read the ledger of `bernoulli_scale_v5` from `results/aggregates/cost_by_n.csv`; the full `make_all.py`
+run re-reads it from the rows (`efficiency_figs.py --refresh`). Figure A's
 per-seed tables and cross-fitted pools are built from the rows of every grid listed in
 [figures.md](figures.md#figures-and-their-grids).
 
@@ -75,7 +76,7 @@ replicas, memo, sharding, and the rules for running a campaign) is [operations.m
 
 ```bash
 bash scripts/setup/00_build_env.sh                  # vLLM + reasoning-gym environment under $RTE_DATA/env/rte
-python scripts/data/01_download_weights.py          # the model ladder (internet access needed)
+python scripts/setup/01_download_weights.py         # the model ladder (internet access needed)
 bash scripts/setup/fw_envs/<framework>.sh           # one isolated venv per framework
 # serve the fleet (docs/operations.md), then:
 python -m rte.measure --dist specialist --n 1000 --K 16 --seed 1   # build a population and measure its S

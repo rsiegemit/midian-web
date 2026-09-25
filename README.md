@@ -6,7 +6,7 @@ Anonymous Authors
 ![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg) ![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue.svg)
 
 <p align="center">
-  <img src="figures/paper/A_live_stacked.png" width="85%" alt="Task success of MIDIAN and its rivals on the live LLM population, n = 10^2 to 10^5"> <!-- VERIFY-PATH -->
+  <img src="figures/paper/A_live_stacked.png" width="85%" alt="Task success of MIDIAN and its rivals on the live LLM population, n = 10^2 to 10^5">
 </p>
 <p align="center"><sub>Task success on the live LLM population (specialist, n = 10<sup>2</sup> to 10<sup>5</sup>). Solid: honest
 population; hatched: β = 0.5 low-skill-first cartel. On MIDIAN the light / mid / dark bars are the probe budget b = 1 / 3 / 5.</sub></p>
@@ -24,7 +24,6 @@ and 0.81 under a β = 0.5 low-skill cartel; the best of the ten frameworks on it
 declared argmax 0.62 / 0.52, a flat probe scan 0.79 / 0.79 and random 0.43. At n = 10<sup>5</sup> MIDIAN holds 0.84 / 0.83
 while its routing work grows from 36 to 58 messages plus comparisons per query (80 at 10<sup>7</sup>); any flat scan
 compares all n agents. Numbers are read from `figures/paper/A_live_stacked.csv` and `C_routing_work_vs_n.csv`.
-<!-- VERIFY-PATH -->
 
 ## Installation
 
@@ -58,7 +57,8 @@ export RTE_DATA=$PWD/rte_data
 ```
 
 The CPU quickstart and the bernoulli grids need no data. The other backends read third-party data that is not
-redistributed here (see [NOTICE](NOTICE)); download scripts are in `scripts/data/` <!-- VERIFY-PATH -->:
+redistributed here (see [NOTICE](NOTICE)); download scripts are in `scripts/data/` (model weights:
+`scripts/setup/01_download_weights.py`):
 
 | backend | source | location under `$RTE_DATA` |
 |---|---|---|
@@ -84,9 +84,8 @@ flat probe argmax, the warm-start bandit and random on the synthetic backend at 
 honest and under the β = 0.5 low-skill cartel, 5 seeds. Results land in `$RTE_DATA/results/reviewer_bernoulli/`
 (see [Outputs](#outputs)). Then, in increasing cost:
 
-<!-- VERIFY-PATH: scripts/figures/make_all.py (lane C) -->
 ```bash
-python scripts/figures/make_all.py --from-csv                   # redraw every paper figure from the shipped CSVs
+python scripts/figures/make_all.py --from-csv                   # redraw every paper figure from results/aggregates/
 python -m rte.run --grid smoke                                  # every method on a small synthetic world
 python -m rte.run --grid live_f1_n1000 --only dist=specialist   # a live grid: needs the model fleet (docs/operations.md)
 ```
@@ -104,48 +103,52 @@ LLM fleet). The figures and the commands that draw them:
 | Fig. 2 | `B_families_stacked` | same | same, plus the erratum-30 grids of the four non-live families |
 | Fig. 3 | `F_shortlists_1e5` | `python scripts/figures/shortlist_condensed.py` | `results/aggregates/shortlist/live.csv` |
 | Fig. 4 | `H_routereval_shortlists` | same | `results/aggregates/shortlist/routereval.csv` |
-| Fig. 5 | `D_energy_per_query` | `python scripts/figures/efficiency_figs.py` | `cost_by_n.csv` (ledger of `bernoulli_scale_v5`), the energy model |
+| Fig. 5 | `D_energy_per_query` | `python scripts/figures/efficiency_figs.py` | `results/aggregates/cost_by_n.csv` (ledger of `bernoulli_scale_v5`), the energy model |
 | App. | `A_live_allb`, `B_families_allb` | `condensed_figs.py` | as Figs. 1-2 |
 | App. | `C_routing_work_vs_n` | `efficiency_figs.py` | as Fig. 5 |
 | App. | `E_shortlists_by_n`, `F_shortlists_1e5_appendix`, `G_shortlist_lift_1e5` | `shortlist_condensed.py` | as Fig. 3 |
-| App. | `I_max_lie` | `python scripts/figures/lie_max_fig.py` | rows of `lie_max_*`, `lie_max_fw_*` |
+| App. | `I_max_lie` | `python scripts/figures/lie_max_fig.py` | rows of `lie_max_*`, `lie_max_fw_*`; `results/aggregates/figures/I_max_lie.csv` |
 
-<!-- VERIFY-PATH: script locations under scripts/figures/ and the aggregates under results/aggregates/ -->
-`python scripts/figures/make_all.py` runs all of them; with `--from-csv` it redraws from the CSV written beside each figure
-and needs no result rows. Every plotted value, its grids, cells, seeds and aggregation are traced in
+`python scripts/figures/make_all.py [--out DIR]` runs all of them, from rows to aggregates to figures; with `--from-csv`
+it redraws every figure from the aggregates in `results/aggregates/` and needs neither result rows nor `$RTE_DATA`.
+Every plotted value, its grids, cells, seeds and aggregation are traced in
 [docs/figure_provenance.md](docs/figure_provenance.md); [docs/figures.md](docs/figures.md) has the style rules and the
 figure-to-grid table.
 
 ## Repository structure
 
-<!-- VERIFY-PATH: tree follows the refactor plan's target layout -->
 ```
-rte/                    the benchmark package
-  world.py              World and View: hidden skill S, declarations D, liars, channels, paired task streams
-  ledger.py             the six cost counters, one increment site each
-  budget.py             the probe budget: b probes per (agent, family)
-  run.py                grid runner: cells x seeds x methods -> one row per result; resumable, shardable
-  config.py             $RTE_DATA and every RTE_* switch, in one place
-  analysis/             tables, bootstrap CIs, paired deltas, cost exponents (python -m rte.analyze)
-  llm_client.py         client for the served models: endpoint choice, content-hash memo
-  backends/             bernoulli (synthetic), replay (RouterBench), routereval (RouterEval, LLMRouterBench), llm (live)
-  methods/              one file per method (MIDIAN, rivals, bandits, learned routers); discovered by file name
-    frameworks/         the shared framework adapter, the subprocess bridge, fw_*.py, workers/ (one per framework)
+rte/                      the benchmark package
+  world.py                World and View: hidden skill S, declarations D, liars, channels, paired task streams
+  ledger.py               the six cost counters, one increment site each
+  budget.py               the probe budget: b probes per (agent, family)
+  run.py                  grid runner: cells x seeds x methods -> one row per result; resumable, shardable
+  config.py               $RTE_DATA and every RTE_* switch, in one place
+  analysis/               tables, bootstrap CIs, paired deltas, cost exponents (python -m rte.analyze)
+  llm_client.py           client for the served models: endpoint choice, content-hash memo
+  backends/               synthetic bernoulli, replay (RouterBench), routereval (RouterEval, LLMRouterBench), live llm
+  methods/                one file per method (MIDIAN, rivals, bandits, learned routers); discovered by file name
+    frameworks/           the shared framework adapter, the subprocess bridge, fw_*.py, workers/ (one per framework)
 configs/
-  grids/*.yaml          every experiment as a named grid (python -m rte.run --grid <name>)
-  models.yaml           the live model ladder
+  grids/*.yaml            every experiment as a named grid (python -m rte.run --grid <name>)
+  models.yaml             the live model ladder; fleet_*.yaml: the fleet layouts
 scripts/
-  setup/                environment and framework-venv builds
-  data/                 dataset and model downloads, population embedding
-  figures/              one script per paper figure, the shared style (figspec.py), make_all.py
-  analysis/             tables and diagnostics over stored rows
-  checks/               invariants: grid fingerprints, row ids, parity, anonymity
-results/aggregates/     the CSV inputs of the figures (bars/, shortlist/)
-figures/paper/          the paper figures: .pdf, .png and the .csv of every plotted value
-tests/                  530 tests: method contracts, ledger, view enforcement, backends, framework adapters
-docs/                   architecture, methods, design, reproducing, figures, operations, errata; archive/
-paper/                  NUMBERS.json (every quoted number with grid, units, CI) and shortlist diagnostics
-cluster/                SLURM job scripts and campaign tooling for one HPC cluster (not part of the anonymous export)
+  setup/                  base environment, model weights, one venv per framework (fw_envs/<framework>.sh)
+  data/                   dataset downloads, declaration calibration, population and pool embeddings
+  figures/                one script per paper figure, make_all.py; lib/: style (figspec.py), do-not-add list, stats
+  analysis/               quoted numbers (paper_numbers.py), tables, energy model; diagnostics/: shortlist diagnostics
+  checks/                 invariants: grid fingerprints, row ids, parity, figure CSVs, method contracts, anonymity
+cluster/                  one SLURM cluster's tooling, not needed to use the benchmark (not in the anonymous export)
+  slurm/                  job files and launchers (run_grid.sbatch, serve_fleet.sbatch, launch_units.sh)
+  ops/                    campaign tools: progress and row merging, fleet watch, environment checks, reruns
+  archive/                one-off drivers of past campaigns, kept for the record
+figures/paper/            the paper figures: .pdf, .png and the .csv of every plotted value
+results/aggregates/       the inputs of the figures: bars/, shortlist/, cost_by_n.csv, figures/ (drawn values)
+paper/                    NUMBERS.json (every quoted number with grid, units, CI) and diagnostics/
+docs/                     architecture, methods, design, reproducing, figures, operations, errata
+  frameworks/             how each framework's selection primitive is intercepted
+  archive/                the dated records, verbatim: specification, pre-registrations, deviations, results
+tests/                    method contracts, ledger, view enforcement, backends, framework adapters; golden/
 requirements-frameworks/  pinned requirements of each framework's virtual environment
 ```
 

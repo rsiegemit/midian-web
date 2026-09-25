@@ -2,8 +2,9 @@
 
 How the benchmark is run at scale: environments, the model fleet, the answer memo, sharding, merging, and the operating
 rules learned from running tens of thousands of jobs against a shared GPU fleet. Nothing here changes a result; it is
-about getting rows written correctly and cheaply. The scripts for one particular SLURM cluster (job files, launchers,
-campaign drivers) are in `cluster/` and are not needed to use the benchmark. <!-- VERIFY-PATH -->
+about getting rows written correctly and cheaply. The scripts for one particular SLURM cluster are in `cluster/`
+(`slurm/`: job files and launchers; `ops/`: campaign tools; `archive/`: one-off campaign drivers) and are not needed
+to use the benchmark.
 
 ## The data root
 
@@ -23,14 +24,14 @@ $RTE_DATA/
 
 ## Environments
 
-- The base environment holds the package, vLLM and the task generator. Build scripts are in `scripts/setup/`
-  <!-- VERIFY-PATH -->; `requirements.txt` pins the versions of the reported runs.
+- The base environment holds the package, vLLM and the task generator. Build scripts are in `scripts/setup/`;
+  `requirements.txt` pins the versions of the reported runs.
 - **Each framework runs in its own virtual environment**, built from `requirements-frameworks/<framework>.txt` by
   `scripts/setup/fw_envs/<framework>.sh`, because the frameworks' dependencies conflict with each other. The adapter
   talks to a worker inside that environment over JSON lines, so no framework is imported into the benchmark process.
 - Build with the user site-packages disabled (`PYTHONNOUSERSITE=1`); a user site on `sys.path` silently shadows a
   venv's own packages.
-- **Check every environment before a campaign** (`check_envs.sh`, which must print `ALL ENVS OK`). Damaged environments
+- **Check every environment before a campaign** (`cluster/ops/check_envs.sh`, which must print `ALL ENVS OK`). Damaged environments
   (for example dangling shared-library links after a cache cleanup) fail only on some nodes, which reads as framework
   behaviour. Repair byte-identically (force-reinstall the same package builds from the local cache), never by
   rebuilding: a rebuild can pull newer framework versions and silently change behaviour relative to rows already
@@ -75,7 +76,7 @@ $RTE_DATA/
   the runner about which units are done.
 - **One merger per grid.** Folding `rows.d/` into `rows.csv` is done by exactly one process per grid; while a
   `.merge_owner` file is present in the results directory, workers run with `RTE_CONSOLIDATE=0` and leave the fold to
-  it. <!-- VERIFY-PATH: merge tool under scripts/analysis or cluster/ops -->
+  it (`python cluster/ops/progress.py --merge [--prune] [--every=S] <grid>...`).
 - **Live units: one process per seed.** The runner forces one worker on the live backend, so pack seeds as separate
   processes. Non-LLM backends parallelise within a job with `RTE_WORKERS=N`; above n = 10<sup>5</sup> use one worker and
   one or two seeds per job (forked pools have deadlocked on long multi-wave jobs).
