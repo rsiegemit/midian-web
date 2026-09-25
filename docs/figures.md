@@ -1,11 +1,38 @@
-# Figure specification for the ICLR 2027 submission
+# Figures
 
-Implemented in `scripts/figspec.py` (canvas, fonts, colours, names, legend order, drawing helpers); every figure script
-draws on it. Applies to every figure drawn by `scripts/condensed_figs.py`, `scripts/efficiency_figs.py`, and the
-shortlist scripts. The rule throughout: **a figure carries data, axes, and a legend; everything else goes in the caption
+The paper's figures, the scripts that draw them, their inputs and the grids behind them (below), and the style
+specification every figure follows (§1-§4). Every plotted value is traced to its rows in
+[figure_provenance.md](figure_provenance.md).
+
+## Figures and their grids
+
+All figures are written to `figures/paper/` as vector PDF, a 300 dpi PNG and a CSV of every plotted value.
+<!-- VERIFY-PATH: figure scripts under scripts/figures/, aggregates under results/aggregates/ -->
+
+| paper | file | script | inputs | grids |
+|---|---|---|---|---|
+| Fig. 1 | `A_live_stacked` | `condensed_figs.py` | `results/aggregates/bars/live*.csv` (b = 3); per-seed tables from rows (b = 1, 5; cross-fitted pools); `results/aggregates/shortlist/live.csv` (best framework) | `live_core_n100`, `live_f1_n1000`, `learned_n100`, `learned_f1`, `variants_f1`, `learned_n10k*`, `live_n10k_v2`, `live_n10k_cartel_random`, `fw_live_n10k_cartel`, `live_n100k*`, `va_b_n*`, `rivals_b_n*`, `pool_fill_n*`, `pool_seeds_n1000`, `tuned_wsb_n*`, `linucb_fix_n*`, `trueskill_fix_n*`; the live framework shortlist grids |
+| Fig. 2 | `B_families_stacked` | `condensed_figs.py` | as Fig. 1 for live 10<sup>5</sup>; per-seed tables for the other families | live: as Fig. 1; bernoulli 10<sup>7</sup>: `bernoulli_scale_v5`, `va_b_` / `rivals_b_` / `pool_fill_` / `linucb_fix_bernoulli_1e7`, `bernoulli_1e7_cal`, `rivals5_bernoulli_1e7_cal`; replay 10<sup>6</sup>: `replay_1e6_split_cal`, `rivals5_replay_1e6_split_cal`; RouterEval 5,000: `routereval5k_norep_cal`, `rivals5_routereval5k_norep_cal`; LLMRouterBench: `llmrouterbench_norep_cal`, `rivals5_llmrouterbench_norep_cal` |
+| Fig. 3 | `F_shortlists_1e5` | `shortlist_condensed.py` | `results/aggregates/shortlist/live.csv` | `fw_live_n100k_*` (dd, em, sota, dense / sota instruction probes, declared, verified_va), the live MIDIAN grids at 10<sup>5</sup> (reference lines) |
+| Fig. 4 | `H_routereval_shortlists` | `shortlist_condensed.py` | `results/aggregates/shortlist/routereval.csv` | `fw_routereval_{small,1k,5k}{,_em,_va}_norep_cal`, `re_sl_{declared,embed}_{small,1k,5k}_norep_cal`, `routereval_mmlu_norep_cal`, `routereval5k_norep_cal` (reference lines) |
+| Fig. 5 | `D_energy_per_query` | `efficiency_figs.py` | `cost_by_n.csv` (ledger cache), `energy.py` (energy model, live supervisor measurement) | `bernoulli_scale_v5` |
+| App. | `A_live_allb`, `B_families_allb` | `condensed_figs.py` | as Figs. 1-2 | as Figs. 1-2 |
+| App. | `C_routing_work_vs_n` | `efficiency_figs.py` | `cost_by_n.csv` | `bernoulli_scale_v5` |
+| App. | `E_shortlists_by_n` | `shortlist_condensed.py` | `results/aggregates/shortlist/live.csv` | the live framework shortlist grids at 10<sup>2</sup>-10<sup>5</sup> |
+| App. | `F_shortlists_1e5_appendix`, `G_shortlist_lift_1e5` | `shortlist_condensed.py` | as Fig. 3 | as Fig. 3 |
+| App. | `I_max_lie` | `lie_max_fig.py` | rows; `A_live_allb.csv`; `results/aggregates/shortlist/live.csv` | `lie_max_n{1000,10k,100k}`, `lie_max_fw_n{1000,10k,100k}` |
+
+`results/aggregates/bars/*.csv` are written from the rows by `bar_figs.py` and `results/aggregates/shortlist/*.csv` by
+`shortlist_figs.py`; `make_all.py` runs the whole chain, and `make_all.py --from-csv` redraws every figure from the CSV
+beside it without reading any row ([reproducing.md](reproducing.md)).
+
+## Style specification
+
+Implemented in `figspec.py` (canvas, fonts, colours, names, legend order, drawing helpers); every figure script
+draws through it. The rule throughout: **a figure carries data, axes, and a legend; everything else goes in the caption
 or the text.** No in-figure titles, no letters, no file names, no draft annotations.
 
-## 1. Global rules (all figures)
+### 1. Global rules (all figures)
 
 **Canvas.** Body figures 5.5 × 1.9 in (D: 5.5 × 1.8 in), saved as vector PDF (`fonttype 42`, so text stays text) plus a 300 dpi PNG for previews. Placed at `width=\linewidth`; anything taller than 1.9 in pushes the conclusion onto page 10. Appendix figures may be 5.5 × 2.4 in.
 
@@ -33,7 +60,7 @@ or the text.** No in-figure titles, no letters, no file names, no draft annotati
 
 **Numbers.** Two decimals on value axes. Axis floor at 0.2 for success (as now) is fine; state "axes start at 0.2" in captions where bars are truncated.
 
-## 2. Names (legend strings and tick labels)
+### 2. Names (legend strings and tick labels)
 
 After the rename (MIDIAN = full method), use exactly these strings everywhere:
 
@@ -58,40 +85,42 @@ After the rename (MIDIAN = full method), use exactly these strings everywhere:
 
 Backend tick labels in B: `live`, `Bernoulli`, `RouterBench replay`, `RouterEval`, `LLMRouterBench` on one line, with the population on a second line as $n = 10^5$ etc.
 
-## 3. Per-figure specification
+### 3. Per-figure specification
 
-### Figure 1 (body): `A_live_stacked`
+#### Figure 1 (body): `A_live_stacked`
 - Arms, in this legend order: oracle, MIDIAN, MIDIAN w/o defenses, flat probe argmax, best learned/declared router, best bandit, declared argmax, random.
 - Every arm at b = 3. Budget overlay (b = 1 light in front, b = 3 mid, b = 5 dark behind) on MIDIAN only; the other arms as single b = 3 bars. This removes the shade legend and every empty slot. If you keep overlays on all arms, add one small inset legend "b = 1 / 3 / 5" (three swatches, grey) at the right of the main legend.
 - x ticks: $n = 10^2$, $10^3$, $10^4$, $10^5$. y: "task success", 0.2–0.95.
 - Optional eighth arm, cross-fitted per seed like the pooled arms: `best framework, best text shortlist`. Recommended: it puts claim (i) on the same axes as claims (ii)–(iii).
 
-### Figure 2 (body): `B_families_stacked`
+#### Figure 2 (body): `B_families_stacked`
 - Same arms, same order, same overlay rule as Figure 1. y: "success relative to oracle", 0.2–1.05, oracle line at 1.
 - x ticks: the five backends with $n$ on the second line.
 
-### Figure 3 (body): `F_shortlists_1e5`
+#### Figure 3 (body): `F_shortlists_1e5`
 - Seven shortlists, sorted by honest mean: declared top-k, MIDIAN cohort, dense (Qwen3-8B), MiniLM, fusion + reranker, BM25 (if it has rows at $10^5$; otherwise omit), hashed TF-IDF. The instruction variants go to the appendix version.
 - Add a dotted grey `random` line at 0.44 (live $10^5$ random) alongside the oracle line; both in the legend.
 - Best-framework dots stay (black, 3 pt), legend entry "best framework".
 - x tick labels horizontal if they fit at seven bars; otherwise 30°.
 
-### Figure 4 (body): `H_routereval_shortlists`
+#### Figure 4 (body): `H_routereval_shortlists`
 - Shortlists: hashed TF-IDF, MiniLM, dense (best instruction), fusion + reranker (best instruction), declared top-k, MIDIAN cohort. Instruction variants to the appendix.
 - x ticks: $m = 10$, $10^2$, $10^3$, $5{,}000$. Reference lines as in Figure 3.
 
-### Figure 5 (body): `D_energy_per_query`
+#### Figure 5 (body): `D_energy_per_query`
 - MIDIAN only. Nine lines as now (n = $10^3$, $10^5$, $10^7$ light to dark; b = 1 dotted, 3 solid, 5 dashed). Legend inside the axes, bottom-left, two columns: three colour swatches labelled $n = 10^3$ / $10^5$ / $10^7$ and three line styles labelled b = 1 / 3 / 5, instead of nine separate entries.
 - Band: light grey, both edges drawn and labelled at the right margin (AutoGen 20.6 J; Magentic-One 220 J). Break-even crosses stay (black ×, 3 pt).
 - y: "energy per query (J)", log; x: "queries served T", log. The word "estimated" goes to the caption.
 - Move the legend fully inside the axes so it no longer overlaps the y label.
 
-### Appendix figures
+#### Appendix figures
 - `A_live_allb`, `B_families_allb`: every arm at every budget as separate bars with ±1 s.e. whiskers; keep the light/mid/dark encoding and add the three-swatch budget legend. Same names and order as Figures 1–2.
 - `E_shortlists_by_n`: all shortlists, one legend row above the axes, names from Section 2 (appendix forms with the instruction variants). x ticks as $n = 10^2 \dots 10^5$.
 - `G_shortlist_lift_1e5`: y "gain in task success over hashed TF-IDF"; whiskers ±1 s.e. across frameworks; no title.
 - `C_routing_work_vs_n`: arms MIDIAN, MIDIAN w/o defenses, `any flat scan` (one line replacing flat probe argmax / declared argmax / best bandit, which coincide at exactly n), learned band; legend entries carry the fitted growth in parentheses as now. y "messages + comparisons per query", x "population size n", both log.
+- `I_max_lie`: the Figure 1 arms without the oracle bar, all hatched (cartel), ±1 s.e.; the oracle as the dotted line; a
+  short black tick on each bar for the same arm under the standard lie, with a "standard lie" legend entry.
 - If C and D are to share the body: one figure 5.5 × 2.0 in, two panels side by side labelled (a) and (b) in the bottom-left corner of each panel (8 pt, bold), one legend each inside the panel.
 
-## 4. What the captions already carry (do not duplicate in figures)
+### 4. What the captions already carry (do not duplicate in figures)
 Backend, population sizes and seed counts; regime encoding; the budget overlay rule; what pooled arms are; what a whisker is; that energy is estimated; that hashed TF-IDF returns clones at $10^5$; which frameworks are averaged.
