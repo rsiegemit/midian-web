@@ -11,7 +11,7 @@ redistributed here — the download scripts under `scripts/` fetch them from the
 - The open-weight models served by the live backend (Qwen2.5 0.5B-14B, Gemma-2 2B/9B) and the retrieval models
   (all-MiniLM-L6-v2, Qwen3-Embedding-8B, Qwen3-Reranker-4B) keep their own model licenses.
 - The ten agent frameworks (LangGraph, CrewAI, AutoGen / Magentic-One, Microsoft Agent Framework, OpenAI Agents SDK,
-  Google ADK, LlamaIndex, smolagents, CAMEL; AgentScope and MetaGPT in the appendix) are installed unmodified from their
+  Google ADK, LlamaIndex, smolagents, CAMEL; AgentScope in the appendix) are installed unmodified from their
   own package indexes into separate environments (`requirements-frameworks/`) and are not redistributed.
 
 Users of this repository are responsible for complying with the licenses and terms of each of

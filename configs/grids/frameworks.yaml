@@ -44,7 +44,6 @@ grids:
       - {name: fw_autogen, params: {k: 10}}
       - {name: fw_autogen, params: {k: 20}}
 
-  # fw_metagpt: NotImplemented, see NOTES_metagpt.md
   # [NUM] AgentScope appendix framework; read by: dedup_compare
   fw_appendix:
     backend: llm

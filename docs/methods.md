@@ -106,7 +106,6 @@ Magentic-One also has a 14B-orchestrator arm.
 | `fw_smolagents` | managed agents listed in the system prompt and as tools; the called tool |
 | `fw_camel_workforce` | Workforce task assignment over the worker roster |
 | `fw_agentscope` | appendix only: the library has no multi-agent selection primitive; the worker uses its model API for a direct pick |
-| `fw_metagpt` | not implemented: nothing in MetaGPT answers "which agent" |
 | `fw_echo` | protocol check, not a rival: echoes the first candidate |
 
 **Shortlist sources** (the "common scaling adapter"; the frameworks read the whole roster and top out at tens of agents,

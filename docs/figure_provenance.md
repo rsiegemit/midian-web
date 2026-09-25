@@ -1897,10 +1897,9 @@ and has the same n :
 
 ## 3.3 The frameworks
 
-The code lists 13 `fw_*` classes (`rte/methods/frameworks/fw_*.py`).
+The code lists 12 `fw_*` classes (`rte/methods/frameworks/fw_*.py`).
 - The **ten grid frameworks** are the YAML set `frameworks` (`configs/grids/`): LangGraph, CrewAI, AutoGen, Magentic-One, MAF, OpenAI Agents SDK, Google ADK, LlamaIndex, smolagents and CAMEL Workforce.
 - **AgentScope** appears only in the appendix grids `fw_appendix` and `fw_appendix_dd` (n = 100, specialist, beta ∈ {0, 0.25}, seeds 1-3, Q = 300; `configs/grids/`).
-- **MetaGPT** is `NotImplementedError` (`fw_metagpt.py`).
 - **Echo** is a protocol check that picks the first candidate (`fw_echo.py`, `workers/echo_worker.py`) and is never in a grid.
 
 Versions are the pins in `requirements-frameworks/<fw>.txt`. I confirmed each against the installed `*.dist-info` in `$RTE_DATA/env/<env>/lib/python3.12/site-packages`, and they match.
