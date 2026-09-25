@@ -27,7 +27,8 @@ from .methods import load_method
 from .world import World
 
 RTE_DATA = str(_DATA)                        # str: expanded into backend_kwargs strings and paths
-CELL = ("backend", "n", "K", "dist", "beta", "liar_select", "collude", "declared_source", "lie_mode", "demand", "b", "Q")
+CELL = ("backend", "n", "K", "dist", "beta", "liar_select", "collude", "declared_source", "lie_mode", "demand",
+        "b", "Q")
 log = lambda m: print(m, file=sys.stderr, flush=True)
 jkey = lambda d: json.dumps(d, sort_keys=True, separators=(",", ":"), default=str)
 
@@ -118,30 +119,37 @@ def seeds(spec):
     return out
 
 
-NOT_IN_ALL = ("base", "keys", "verbal_confidence")    # not methods, or rivals added after the `all` grids ran (listed explicitly)
+# not methods, or rivals added after the `all` grids ran (listed explicitly)
+NOT_IN_ALL = ("base", "keys", "verbal_confidence")
 
 
 def all_methods(backend):
-    """Every algorithmic method file (frameworks are listed explicitly in their own grids: one supervisor call per task);
-    LLM-only classes only on the llm backend."""
-    names = [m.name for m in pkgutil.iter_modules(rte.methods.__path__) if not m.ispkg and not m.name.startswith("_") and m.name not in NOT_IN_ALL]
+    """Every algorithmic method file (frameworks are listed explicitly in their own grids: one supervisor call per
+    task); LLM-only classes only on the llm backend."""
+    names = [m.name for m in pkgutil.iter_modules(rte.methods.__path__)
+             if not m.ispkg and not m.name.startswith("_") and m.name not in NOT_IN_ALL]
     return [n for n in names if backend == "llm" or not getattr(load_method(n), "requires_llm", False)]
 
 
-MIDIAN_ABLATIONS = [{"name": "midian", "params": p} for p in ({"verify": False}, {"audit": False}, {"audit": False, "verify": False})]
+MIDIAN_ABLATIONS = [{"name": "midian", "params": p}
+                    for p in ({"verify": False}, {"audit": False}, {"audit": False, "verify": False})]
 
 
 def method_specs(block):
     ms = block["methods"]
     ms = (all_methods(block["backend"]) + MIDIAN_ABLATIONS + list(block.get("extra") or []) if ms == "all"
           else [x for m in ms for x in (m if isinstance(m, list) else [m])])
-    ms = [{"name": m, "params": {}} if isinstance(m, str) else {"name": m["name"], "params": m.get("params") or {}} for m in ms]
-    ms = list({m["name"] + jkey(m["params"]): m for m in ms}.values())   # one spec per arm ("all" + extra can repeat one)
-    drop = set(block.get("exclude") or [])           # LLM-only methods are dropped off the llm backend too, so a
-    llm = block["backend"] == "llm" or bool(block.get("allow_llm_methods"))   # bernoulli mirror of a framework grid skips
-                                                     # them, not fails them; `allow_llm_methods: true` opts a non-llm grid
-                                                     # back in (the frameworks need a supervisor endpoint, not an llm world)
-    return [m for m in ms if m["name"] not in drop and (llm or not getattr(load_method(m["name"]), "requires_llm", False))]
+    ms = [{"name": m, "params": {}} if isinstance(m, str) else {"name": m["name"], "params": m.get("params") or {}}
+          for m in ms]
+    # one spec per arm ("all" + extra can repeat one)
+    ms = list({m["name"] + jkey(m["params"]): m for m in ms}.values())
+    # LLM-only methods are dropped off the llm backend too, so a bernoulli mirror of a framework grid skips them, not
+    # fails them; `allow_llm_methods: true` opts a non-llm grid back in (the frameworks need a supervisor endpoint, not
+    # an llm world)
+    drop = set(block.get("exclude") or [])
+    llm = block["backend"] == "llm" or bool(block.get("allow_llm_methods"))
+    return [m for m in ms
+            if m["name"] not in drop and (llm or not getattr(load_method(m["name"]), "requires_llm", False))]
 
 
 def blocks(cfg, grid):
@@ -166,7 +174,8 @@ def cells(blk):
         c["backend_kwargs"] = dict(blk.get("backend_kwargs") or {})   # as written: "$RTE_DATA/..." unexpanded (D1)
         c["churn"] = blk.get("churn")                                   # optional {frac, every}; absent -> None
         cal = expand(c["backend_kwargs"]).get("calibrate_from")
-        assert not cal or os.path.exists(cal), f"calibrate_from={cal} missing: measure the live S first (bernoulli_scale must be calibrated)"
+        assert not cal or os.path.exists(cal), \
+            f"calibrate_from={cal} missing: measure the live S first (bernoulli_scale must be calibrated)"
         yield c
 
 
@@ -180,9 +189,9 @@ def expand(backend_kwargs) -> dict:
 
 
 def row_id(cell, method, params, seed):
-    churn = f"|churn={jkey(cell['churn'])}" if cell.get("churn") else ""       # only churn cells carry it: old ids unchanged
-    return hashlib.blake2b(f"{jkey({f: cell[f] for f in CELL})}|{jkey(cell['backend_kwargs'])}|{method}|{jkey(params)}|{seed}{churn}".encode(),
-                           digest_size=16).hexdigest()
+    churn = f"|churn={jkey(cell['churn'])}" if cell.get("churn") else ""  # only churn cells carry it: old ids unchanged
+    key = f"{jkey({f: cell[f] for f in CELL})}|{jkey(cell['backend_kwargs'])}|{method}|{jkey(params)}|{seed}{churn}"
+    return hashlib.blake2b(key.encode(), digest_size=16).hexdigest()
 
 
 def rid_of_row(r) -> str:
@@ -222,7 +231,8 @@ def metrics(outcomes, liar, build, run, Q, wall_build, wall_route, wall_total):
             "build_total_comm": sum(build[k] for k in COMM),
             **{f"{k}_per_task": v / Q for k, v in run.items()},
             "total_comm_per_task": sum(run[k] for k in COMM) / Q,
-            "wall_clock_build": wall_build, "wall_clock_per_task": wall_route / Q, "wall_clock_per_task_total": wall_total / Q}
+            "wall_clock_build": wall_build, "wall_clock_per_task": wall_route / Q,
+            "wall_clock_per_task_total": wall_total / Q}
 
 
 def execute(world, task, ret):
@@ -259,9 +269,10 @@ def run_method(world, stream, spec, b, churn=None):
     build = world.ledger.snapshot()
     world.ledger.reset()
     if build["probes"] > Budget(b).total_probes(world.n, world.K):
-        log(f"  [WARNING] {spec['name']}: build spent {build['probes']} probes > budget {Budget(b).total_probes(world.n, world.K)}")
+        log(f"  [WARNING] {spec['name']}: build spent {build['probes']} probes"
+            f" > budget {Budget(b).total_probes(world.n, world.K)}")
     outcomes, liar, route, t_run, repair, events = [], [], 0.0, time.perf_counter(), dict.fromkeys(build, 0), 0
-    if not churn and hasattr(m, "prefetch"):                          # concurrent framework requests (FrameworkMethod.prefetch)
+    if not churn and hasattr(m, "prefetch"):  # concurrent framework requests (FrameworkMethod.prefetch)
         t = time.perf_counter()
         m.prefetch(stream)
         route += time.perf_counter() - t
@@ -283,9 +294,10 @@ def run_method(world, stream, spec, b, churn=None):
         route += time.perf_counter() - t
         outcomes.append(o)
         liar.append(world.liars[agents[0]])
-    return {**metrics(outcomes, liar, build, world.ledger.snapshot(), len(stream), wall_build, route, time.perf_counter() - t_run),
+    return {**metrics(outcomes, liar, build, world.ledger.snapshot(), len(stream), wall_build, route,
+                      time.perf_counter() - t_run),
             **({f"repair_{k}_per_event": v / events for k, v in repair.items() if k != "tasks"} if events else {}),
-            "method_stats": jkey(getattr(m, "stats", {}))}          # e.g. framework picks/fallbacks, LLM-descent parse failures
+            "method_stats": jkey(getattr(m, "stats", {}))}  # e.g. framework picks/fallbacks, LLM-descent parse failures
 
 
 def run_unit(cell, seed, specs, rows_dir, grid):
@@ -295,15 +307,18 @@ def run_unit(cell, seed, specs, rows_dir, grid):
     st = world.stats()
     base = {**{f: cell[f] for f in CELL}, "backend_kwargs": jkey(cell["backend_kwargs"]), "seed": seed, "grid": grid,
             "n_agents": world.n, "n_liars": st.pop("n_liars"),
-            **{("" if k.startswith("skill_") else "skill_") + k: v for k, v in st.items() if k not in ("n", "K", "dist", "beta", "backend")}}
+            **{("" if k.startswith("skill_") else "skill_") + k: v
+               for k, v in st.items() if k not in ("n", "K", "dist", "beta", "backend")}}
     base["churn"] = jkey(cell["churn"]) if cell.get("churn") else ""
     oracle, liar = oracle_line(world, stream, cell.get("churn"))
     zero = dict.fromkeys(world.ledger.snapshot(), 0)
-    rows = {"oracle": {"method": "oracle", "params": "{}", **metrics(oracle, liar, zero, {**zero, "tasks": len(stream)}, len(stream), 0, 0, 0)}}
+    rows = {"oracle": {"method": "oracle", "params": "{}",
+                       **metrics(oracle, liar, zero, {**zero, "tasks": len(stream)}, len(stream), 0, 0, 0)}}
     failed = []
     for s in specs:
         try:
-            rows[s["name"] + jkey(s["params"])] = {"method": s["name"], "params": jkey(s["params"]), **run_method(world, stream, s, cell["b"], cell.get("churn"))}
+            rows[s["name"] + jkey(s["params"])] = {"method": s["name"], "params": jkey(s["params"]),
+                                                   **run_method(world, stream, s, cell["b"], cell.get("churn"))}
         except Exception as e:                       # one bad method must not kill the unit
             failed.append(f"{s['name']}: {type(e).__name__}: {e}")
             log(traceback.format_exc())
@@ -347,7 +362,7 @@ def consolidate(out, prune: bool = False, force: bool = False):
                 with open(f"{out}/rows.d/{f}") as fh:
                     return {**json.load(fh), "rid": f[:-5]}
             except (FileNotFoundError, json.JSONDecodeError):
-                return None                      # gone, or caught mid-write: it is in the CSV already or will be next pass
+                return None  # gone, or caught mid-write: it is in the CSV already or will be next pass
         from concurrent.futures import ThreadPoolExecutor  # NFS small-file reads are latency-bound: fan out
         with ThreadPoolExecutor(max_workers=32) as ex:
             got = [r for r in ex.map(_read, names, chunksize=256) if r is not None]
@@ -431,8 +446,10 @@ def main(argv=None):
     else:
         for i, u in enumerate(units, 1):
             fails += run_unit(*u)
-            log(f"[{i}/{len(units)}] {u[0]['dist']} n={u[0]['n']} beta={u[0]['beta']} seed={u[1]}  {time.perf_counter()-t0:.0f}s")
-    log(f"[rte.run] {consolidate(out)} rows -> {out}/rows.csv in {time.perf_counter()-t0:.0f}s" + (f"; FAILED: {sorted(set(fails))}" if fails else ""))
+            log(f"[{i}/{len(units)}] {u[0]['dist']} n={u[0]['n']} beta={u[0]['beta']} seed={u[1]}"
+                f"  {time.perf_counter()-t0:.0f}s")
+    log(f"[rte.run] {consolidate(out)} rows -> {out}/rows.csv in {time.perf_counter()-t0:.0f}s"
+        + (f"; FAILED: {sorted(set(fails))}" if fails else ""))
 
 
 if __name__ == "__main__":

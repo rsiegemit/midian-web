@@ -242,7 +242,8 @@ class View:
     def ask_confidence(self, agents, task, again: bool = False) -> list[str]:
         """Ask each agent how confident it is that it solves `task`: a query and a reply each (2 messages per agent),
         charged here like any bus message. Returns the agents' raw verbal replies; a liar's is inflated (World).
-        `again` asks once more, in the same conversation, for a rating the first reply did not give (charged the same)."""
+        `again` asks once more, in the same conversation, for a rating the first reply did not give (charged the
+        same)."""
         self._require("bus")
         self.ledger.message(2 * len(agents))
         return self._w.confidence(np.asarray(agents, np.int64), task, again)

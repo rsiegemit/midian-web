@@ -25,7 +25,8 @@ def parse_confidence(text):
     """A verbal confidence in [0, 1], or None when nothing parseable (or out of range) is said. The number read is the
     first inside the first <answer> tag that parses (gemma-9b emits "<answer>-1</answer><answer>10</answer>" and the
     reverse), else the LAST in the reply ("on a scale of 0 to 10, I'd say 8" -> 0.8). x/y and "x out of y" -> x/y;
-    x% -> x/100; a decimal <= 1 (0.7, 1.0) is already a fraction; any other x <= 10 is on the asked 0-10 scale (x/10); 10 < x <= 100 reads as a percentage (a bare "85" -> 0.85); anything else -> None."""
+    x% -> x/100; a decimal <= 1 (0.7, 1.0) is already a fraction; any other x <= 10 is on the asked 0-10 scale (x/10);
+    10 < x <= 100 reads as a percentage (a bare "85" -> 0.85); anything else -> None."""
     tags = ANSWER_RE.findall(text or "")
     if tags:
         return next((v for v in map(_rating, tags) if v is not None), None)
@@ -52,7 +53,7 @@ class VerbalConfidence(Method):
     needs = frozenset({"declared", "bus"})
     requires_llm = True
 
-    def __init__(self, k=10, shortlist="declared"):              # no **params: a typo must not enter the row id silently
+    def __init__(self, k=10, shortlist="declared"):  # no **params: a typo must not enter the row id silently
         if shortlist not in ("declared", "embed"):
             raise ValueError(f"shortlist must be declared|embed, got {shortlist!r}")
         super().__init__(k=k, shortlist=shortlist)
