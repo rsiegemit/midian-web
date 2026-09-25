@@ -40,4 +40,5 @@ class FlatProbeArgmax(Method):
         """Re-probe the replaced agents b times per family (len(arrived)*K*b probes), then re-argmax."""
         ids = np.asarray(arrived)
         self.est[ids] = reprobe(self.view, ids, self.b).mean(-1)
-        self.cnt[ids] = self.b; self.best = np.argmax(self.est, axis=0)
+        self.cnt[ids] = self.b
+        self.best = np.argmax(self.est, axis=0)

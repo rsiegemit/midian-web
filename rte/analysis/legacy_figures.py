@@ -9,17 +9,22 @@ MARK = {"llm": "o", "replay": "s", "bernoulli": "^"}       # marker shape = back
 
 
 def _plt():
-    import matplotlib; matplotlib.use("Agg")
+    import matplotlib
+    matplotlib.use("Agg")
     import matplotlib.pyplot as plt
     return plt
 def _write(fig, path):
-    fig.savefig(path, dpi=150, bbox_inches="tight"); _plt().close(fig); log(f"  wrote {path}"); return path
+    fig.savefig(path, dpi=150, bbox_inches="tight")
+    _plt().close(fig)
+    log(f"  wrote {path}")
+    return path
 def panel_plot(df, x, y, hue, panel, title, path, logx=False, logy=False, marker_by="backend",
                ylabel=None, err=True):
     """The only line-figure function: y vs x, one line per `hue`, one axes per `panel` value, error
     bars = 95% bootstrap over seeds, marker shape = `marker_by`. Returns the path, or None."""
     df = df.dropna(subset=[x, y])
-    if df.empty or df[x].nunique() < 2: return None
+    if df.empty or df[x].nunique() < 2:
+        return None
     plt = _plt()
     vals = sorted(df[panel].dropna().unique()) if panel else [None]
     fig, axes = plt.subplots(1, len(vals), figsize=(4.8 * len(vals) + 2, 4.2), sharey=True, squeeze=False)
@@ -35,9 +40,13 @@ def panel_plot(df, x, y, hue, panel, title, path, logx=False, logy=False, marker
             for be, gg in g.groupby(marker_by):             # marker shape says which backend
                 b = gg.groupby(x)[y].mean().reset_index().sort_values(x)
                 ax.plot(b[x], b[y], MARK.get(be, "d"), color=col[h], ms=5)
-        if logx: ax.set_xscale("log")
-        if logy: ax.set_yscale("log")
-        ax.set_xlabel(x); ax.grid(alpha=.3, which="both"); ax.set_title("" if pv is None else str(pv))
+        if logx:
+            ax.set_xscale("log")
+        if logy:
+            ax.set_yscale("log")
+        ax.set_xlabel(x)
+        ax.grid(alpha=.3, which="both")
+        ax.set_title("" if pv is None else str(pv))
     axes[0][0].set_ylabel(ylabel or y)
     axes[0][-1].legend(fontsize=6, ncol=2, loc="center left", bbox_to_anchor=(1.02, .5))
     axes[0][0].legend(handles=[plt.Line2D([], [], marker=m, ls="", color="k", label=b)
@@ -47,7 +56,8 @@ def panel_plot(df, x, y, hue, panel, title, path, logx=False, logy=False, marker
     return _write(fig, path)
 def heat(piv, path, title):
     """F5 is the one figure that is not a line plot: method x distribution, annotated."""
-    if piv.empty or piv.shape[1] < 2: return None
+    if piv.empty or piv.shape[1] < 2:
+        return None
     plt = _plt()
     piv = piv.reindex(piv.mean(axis=1).sort_values(ascending=False).index)
     fig, ax = plt.subplots(figsize=(1.7 * piv.shape[1] + 3.5, .34 * piv.shape[0] + 2))
@@ -55,9 +65,10 @@ def heat(piv, path, title):
     ax.set_xticks(range(piv.shape[1]), piv.columns, rotation=30, ha="right")
     ax.set_yticks(range(piv.shape[0]), piv.index, fontsize=7)
     for (i, j), v in np.ndenumerate(piv.to_numpy()):
-        if np.isfinite(v): ax.text(j, i, f"{v:.2f}", ha="center", va="center", fontsize=6,
-                                   color="w" if v < .6 else "k")
-    fig.colorbar(im, ax=ax, label="success"); ax.set_title(title)
+        if np.isfinite(v):
+            ax.text(j, i, f"{v:.2f}", ha="center", va="center", fontsize=6, color="w" if v < .6 else "k")
+    fig.colorbar(im, ax=ax, label="success")
+    ax.set_title(title)
     return _write(fig, path)
 def at_n(df, want=1000):
     ns = sorted(df.n.dropna().unique())

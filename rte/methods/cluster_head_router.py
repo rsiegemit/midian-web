@@ -61,16 +61,22 @@ class ClusterHeadRouter(Method):
             for i, lo2 in enumerate(s):
                 hi2 = s[i + 1] if i + 1 < len(s) else order.size
                 heads.append(order[lo2 + int(np.argmax(rowmean[lo2:hi2]))])
-            orders.append(order); starts.append(s + base); base += order.size
+            orders.append(order)
+            starts.append(s + base)
+            base += order.size
         self.order = np.concatenate(orders)
         self.heads = np.array(heads, dtype=np.int64)
         self.offsets = np.concatenate(starts + [[self.order.size]])
 
     def fetch(self, task):
         v, D, f = self.view, self.view.declared, task.family
-        v.ledger.compare(self.heads.size); v.ledger.hop(1); v.ledger.message(2)
+        v.ledger.compare(self.heads.size)
+        v.ledger.hop(1)
+        v.ledger.message(2)
         c = int(np.argmax(D[self.heads, f]))
         lo, hi = self.offsets[c], self.offsets[c + 1]
         members = self.order[lo:hi]
-        v.ledger.compare(members.size); v.ledger.hop(1); v.ledger.message(2)
+        v.ledger.compare(members.size)
+        v.ledger.hop(1)
+        v.ledger.message(2)
         return int(members[int(np.argmax(D[members, f]))])

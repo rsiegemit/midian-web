@@ -10,13 +10,13 @@ verified_decentral | floor | ceiling) comes from its declared `needs` and the fw
 
 The code lives in rte.analysis.{load,stats,legacy_figures,legacy_targets,report}; this module re-exports it.
 """
-from .analysis.load import (ALIAS, BUILD, CELL_COLS, COST, FLAT, FLAT_ON, FLOOR, PLAIN, REF, RTE_DATA, STATS,  # noqa: F401
+# ruff: noqa: F401  -- every name below is re-exported
+from .analysis.load import (ALIAS, BUILD, CELL_COLS, COST, FLAT, FLAT_ON, FLOOR, PLAIN, REF, RTE_DATA, STATS,
                             cells, consolidate, fmt, group_of, load, log, prepare, reads_declared)
-from .analysis.stats import (B_BOOT, aggregate, boot, delta, envelope, exponents, fit, pair, paired,  # noqa: F401
-                             sign_test)
-from .analysis.legacy_figures import MARK, at_n, figures, heat, panel_plot  # noqa: F401
-from .analysis.legacy_targets import targets, targets_v2  # noqa: F401
-from .analysis.report import UPPER, by_channel, by_method, latency, main, md, roll_up, sec, strict, summary  # noqa: F401
+from .analysis.stats import B_BOOT, aggregate, boot, delta, envelope, exponents, fit, pair, paired, sign_test
+from .analysis.legacy_figures import MARK, at_n, figures, heat, panel_plot
+from .analysis.legacy_targets import targets, targets_v2
+from .analysis.report import UPPER, by_channel, by_method, latency, main, md, roll_up, sec, strict, summary
 
 if __name__ == "__main__":
     main()

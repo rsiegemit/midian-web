@@ -24,7 +24,8 @@ class MLPRouter(Method):
     def build(self, view, budget):
         self.view = view
         E, Y, _ = probe_set(view, budget.b)                                # (n, m, d), (n, m)
-        n, m, d = E.shape; self.eye = np.eye(n, dtype=np.float32)
+        n, m, d = E.shape
+        self.eye = np.eye(n, dtype=np.float32)
         X = np.concatenate([np.repeat(self.eye, m, 0), E.reshape(n * m, d)], 1)
         self.model = MLPRegressor(hidden_layer_sizes=(self.hidden,), max_iter=self.epochs, random_state=0).fit(X, Y.reshape(-1))
 

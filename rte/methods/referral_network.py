@@ -16,7 +16,9 @@ def regular_graph(n, d, rng):
     """Exactly d-regular (d even): union of d/2 random permutations; slot s of i pairs with slot s^1 of nbr[i, s]."""
     nbr = np.empty((n, d), np.int32)
     for k in range(d // 2):
-        sigma = rng.permutation(n); nbr[:, 2 * k] = sigma; nbr[sigma, 2 * k + 1] = np.arange(n)
+        sigma = rng.permutation(n)
+        nbr[:, 2 * k] = sigma
+        nbr[sigma, 2 * k + 1] = np.arange(n)
     return nbr
 
 
@@ -30,7 +32,8 @@ class ReferralNetwork(Method):
 
     def build(self, view, budget):
         self.view, n, d = view, view.n, self.d
-        self.nbr = regular_graph(n, d, view.rng); view.bus.send_many(n * d)
+        self.nbr = regular_graph(n, d, view.rng)
+        view.bus.send_many(n * d)
         self.belief = np.zeros((n, d, view.K), np.float16)          # belief[j, slot, f]; 0 = no evidence
 
         def observers(ag, b):                                         # b distinct neighbour slots per agent
@@ -40,7 +43,8 @@ class ReferralNetwork(Method):
             s, c = np.zeros(n * d), np.zeros(n * d)
             for ag, obs, got in observed_reports(view, f, budget.b, observers):
                 flat = (obs * d + (self.slots ^ 1)).ravel()          # (observer, its slot holding ag)
-                s += np.bincount(flat, got.ravel(), n * d); c += np.bincount(flat, minlength=n * d)
+                s += np.bincount(flat, got.ravel(), n * d)
+                c += np.bincount(flat, minlength=n * d)
             self.belief[:, :, f] = (s / np.maximum(c, 1)).reshape(n, d)
 
     def fetch(self, task):

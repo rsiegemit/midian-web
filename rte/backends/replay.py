@@ -72,7 +72,8 @@ class ReplayBackend:
         self.K = len(sel)
         self.families = [cat_names[i] for i in sel]
         self._row_start, self._n_prompts = offsets[sel], n_prompts_full[sel]
-        self._p_out, self._p_start, self._p_n = self._outcomes, self._row_start, self._n_prompts   # probe pool = task pool
+        # probe pool = task pool
+        self._p_out, self._p_start, self._p_n = self._outcomes, self._row_start, self._n_prompts
         if split:
             self._split()
 
@@ -91,7 +92,8 @@ class ReplayBackend:
         rng0 = np.random.default_rng(0)
         perm = [s + rng0.permutation(c) for s, c in zip(self._row_start, self._n_prompts)]
         cut = [int(probe_frac * c) for c in self._n_prompts]
-        self.probe_rows, self.task_rows = [p[:k] for p, k in zip(perm, cut)], [p[k:] for p, k in zip(perm, cut)]   # table row ids
+        # table row ids
+        self.probe_rows, self.task_rows = [p[:k] for p, k in zip(perm, cut)], [p[k:] for p, k in zip(perm, cut)]
         pack = lambda parts: (self._outcomes[np.concatenate(parts)], np.cumsum([0] + [len(x) for x in parts[:-1]]),
                               np.array([len(x) for x in parts], np.int64))
         self._p_out, self._p_start, self._p_n = pack(self.probe_rows)
@@ -103,8 +105,11 @@ class ReplayBackend:
         return np.where(mask, weak, own).astype(np.float32)
 
     # ---- churn
-    def snapshot(self): return (self.model_id.copy(), self.mask.copy())
-    def restore(self, snap): self.model_id, self.mask = (x.copy() for x in snap); self._S = self._skill(self.model_id, self.mask)
+    def snapshot(self):
+        return (self.model_id.copy(), self.mask.copy())
+    def restore(self, snap):
+        self.model_id, self.mask = (x.copy() for x in snap)
+        self._S = self._skill(self.model_id, self.mask)
     def redraw(self, ids, rng):
         self.model_id[ids], self.mask[ids] = _draw_profiles(self.dist, len(ids), self.K, self._model_rank, rng)
         self._S = self._skill(self.model_id, self.mask)
@@ -113,7 +118,8 @@ class ReplayBackend:
         return self._S
 
     def declared(self, source: str = "programmatic") -> np.ndarray:
-        return declared_for(self._S, self.seed, source)                     # no LLM here: programmatic / self_described are the honest control
+        # no LLM here: programmatic / self_described are the honest control
+        return declared_for(self._S, self.seed, source)
 
     def execute(self, a: int, task) -> int:
         f = task.family

@@ -62,9 +62,13 @@ class Midian(Method):
             raise ValueError(f"unknown cohort mode {self.cohort!r}")
         if self.cohort == "declared":
             self.needs = frozenset(self.needs | {"declared"})
-        self.observers = int(observers) if observers else self.r - 1          # peers observing each verification probe (V)
-        self.b0, self.cached, self.top = b0, bool(cached), int(top)          # V: level-0 probes per cell; cached root pick; forwarded per family
-        self.cnt = {}; self.stats = {"observe_charged": 1}                  # older rows lack observe-time charges (the analyzer adds them)
+        # peers observing each verification probe (V)
+        self.observers = int(observers) if observers else self.r - 1
+        # V: level-0 probes per cell; cached root pick; forwarded per family
+        self.b0, self.cached, self.top = b0, bool(cached), int(top)
+        # older rows lack observe-time charges (the analyzer adds them)
+        self.cnt = {}
+        self.stats = {"observe_charged": 1}
 
     def _cohort_key(self, view, out):
         """Grouping signal per cohort mode; None means random. `out` is outcomes[n, K, b] when the mode needs probes."""
@@ -84,16 +88,20 @@ class Midian(Method):
             c[:view.n] = view.rng.permutation(view.n)
             return c.reshape(-1, self.r)
         key = np.asarray(key)
-        if key.ndim == 2:                                            # category grouping: sort by best family, random within
+        if key.ndim == 2:
+            # category grouping: sort by best family, random within
             c[:view.n] = np.lexsort((view.rng.random(view.n), key.argmax(1)))
             return c.reshape(-1, self.r)
         if self.cohort == "block":                                   # homogeneous: sort by ability, random within ties
             c[:view.n] = np.lexsort((view.rng.random(view.n), key))
             return c.reshape(-1, self.r)
-        m = len(c) // self.r; q = view.n - (m - 1) * self.r; perm = view.rng.permutation(view.n)
+        m = len(c) // self.r
+        q = view.n - (m - 1) * self.r
+        perm = view.rng.permutation(view.n)
         band = perm[q:][np.argsort(key[perm[q:]], kind="stable")].reshape(self.r, m - 1)      # stratum j = row j
         band = np.take_along_axis(band, np.argsort(view.rng.random(band.shape), 1), 1)          # random within stratum
-        c[:(m - 1) * self.r] = band.T.ravel(); c[(m - 1) * self.r:(m - 1) * self.r + q] = perm[:q]
+        c[:(m - 1) * self.r] = band.T.ravel()
+        c[(m - 1) * self.r:(m - 1) * self.r + q] = perm[:q]
         return c.reshape(-1, self.r)
 
     def _structure(self, view, key=None):
@@ -102,18 +110,25 @@ class Midian(Method):
         self.children, self.parent, m = [self.leaves], [], len(self.leaves)
         while m > 1:
             perm = view.rng.permutation(m).astype(np.int32)              # regroup nodes at random
-            par = np.empty(m, np.int32); par[perm] = np.arange(m, dtype=np.int32) // self.r
-            nxt = np.full(-(-m // self.r) * self.r, -1, np.int32); nxt[:m] = perm
-            self.parent.append(par); self.children.append(nxt.reshape(-1, self.r)); m = len(self.children[-1])
+            par = np.empty(m, np.int32)
+            par[perm] = np.arange(m, dtype=np.int32) // self.r
+            nxt = np.full(-(-m // self.r) * self.r, -1, np.int32)
+            nxt[:m] = perm
+            self.parent.append(par)
+            self.children.append(nxt.reshape(-1, self.r))
+            m = len(self.children[-1])
         self.depth = len(self.children)
 
     def _verify(self, view, ch, cand, lead, e, slot_child):
         """Re-probe every forwarded candidate (cand int32[M,r*top,K], -1 empty) e times, reported by the r-1 OTHER
         children's representatives lead[M,r] (trimmed by reporter), folded into its running estimate."""
         r, k = self.r, min(self.observers, self.r - 1)
-        node, slot, fam = np.nonzero(cand >= 0); child = slot_child[slot]                # valid candidates, their child
+        # valid candidates, their child
+        node, slot, fam = np.nonzero(cand >= 0)
+        child = slot_child[slot]
         peers = others(r)
-        rep_of = np.where(ch >= 0, lead, -1)[node[:, None], peers[child]]                # (V, r-1) OTHER children's reps
+        # (V, r-1) OTHER children's reps
+        rep_of = np.where(ch >= 0, lead, -1)[node[:, None], peers[child]]
         if (bad := rep_of < 0).any():                                                    # short (padded) node: cycle
             rep_of = np.where(bad, np.where(ch >= 0, lead, lead[:, :1])[node][:, :1].repeat(r - 1, 1), rep_of)
         if k < r - 1:                                                                    # a random k of the r-1 peers
@@ -123,9 +138,11 @@ class Midian(Method):
             a, f = agents[lo:lo + step], fam[lo:lo + step]
             ex = getattr(self, "excluded", None)                    # audits on: mask the reporters caught lying
             if ex is not None:
-                ex = ex[rep_of[lo:lo + step]]; ex &= ~ex.all(-1, keepdims=True)
+                ex = ex[rep_of[lo:lo + step]]
+                ex &= ~ex.all(-1, keepdims=True)
             m_new, _ = peer_estimate(view, a, f, e, rep_of[lo:lo + step], self.delta, exclude=ex)
-            self.est[a, f] = (self.est[a, f] * self.k[a, f] + m_new * e) / (self.k[a, f] + e); self.k[a, f] += e
+            self.est[a, f] = (self.est[a, f] * self.k[a, f] + m_new * e) / (self.k[a, f] + e)
+            self.k[a, f] += e
 
     def _level0(self, view, cohorts, b, outcomes=None):
         """Level-0 estimates est[n, K]: b probes per cell, reported by the cohort peers, trimmed (audited engine when audit)."""
@@ -161,7 +178,8 @@ class Midian(Method):
                 _, per = peer_estimate(view, mem.ravel(), f.ravel(), b, rep, self.delta)
             self._audit(view, mem.ravel(), f.ravel(), np.zeros(mem.size, np.int32), rep, per)   # claims per[V, s-1, b]
             per = per.reshape(C, K, s, s - 1, b)
-            np.add.at(self.rsum[:, :, :s - 1], (mem, f), per.sum(-1)); np.add.at(self.rcnt[:, :, :s - 1], (mem, f), b)
+            np.add.at(self.rsum[:, :, :s - 1], (mem, f), per.sum(-1))
+            np.add.at(self.rcnt[:, :, :s - 1], (mem, f), b)
             self.est[ag.ravel()] = self._estimates(ag[:, :, None], fam.reshape(1, 1, K), s).reshape(-1, K)
         return self.est
 
@@ -184,23 +202,32 @@ class Midian(Method):
 
     def _audit(self, view, agents, fams, k, reporters, claims):
         """Re-run a uniform `rate` of the (probe v, pull j) instances; compare every peer's claim with the truth."""
-        v, j = np.nonzero(view.rng.random(claims[:, 0].shape) < self.rate)             # claims[V, s-1, p] -> (V, p) draws
+        # claims[V, s-1, p] -> (V, p) draws
+        v, j = np.nonzero(view.rng.random(claims[:, 0].shape) < self.rate)
         if v.size:
-            truth = view.probe_at(agents[v], fams[v], k[v] + j)                            # same instance, charged as probes
+            # same instance, charged as probes
+            truth = view.probe_at(agents[v], fams[v], k[v] + j)
             self._strike(reporters[v], claims[v, :, j], truth[:, None])
 
     def build(self, view, budget):
         self.view, r, b, K = view, self.r, budget.b, view.K
-        self.b = b0 = (max(1, min(b, self.b0 or b - 1))) if self.verify else b   # level 0 keeps b0 (default b-1); the rest buys promotions
-        pre = self.cohort in ("stratify", "block", "specialty")              # these keys are read off probes taken up front
-        out = probe_outcomes(view, b0) if pre else None                      # reused by _level0, so the budget is unchanged
+        # level 0 keeps b0 (default b-1); the rest buys promotions
+        self.b = b0 = (max(1, min(b, self.b0 or b - 1))) if self.verify else b
+        # these keys are read off probes taken up front
+        pre = self.cohort in ("stratify", "block", "specialty")
+        # reused by _level0, so the budget is unchanged
+        out = probe_outcomes(view, b0) if pre else None
         self._structure(view, self._cohort_key(view, out))
-        ok = self.leaves >= 0; self.leaf_of = np.empty(view.n, np.int32)
+        ok = self.leaves >= 0
+        self.leaf_of = np.empty(view.n, np.int32)
         self.leaf_of[self.leaves[ok]] = np.repeat(np.arange(len(self.leaves), dtype=np.int32), r)[ok.ravel()]
-        C = self.top * sum((c >= 0).sum() for c in self.children[1:])      # V: candidates re-verified over all upper levels,
+        # V: candidates re-verified over all upper levels,
+        C = self.top * sum((c >= 0).sum() for c in self.children[1:])
         e = int((b - b0) * view.n // C) if self.verify and C else 0        # e probes each (exact budget)
         self.est = self._level0(view, self.leaves, b0, out)
-        self.k = np.full((view.n, K), float(b0), np.float32); self.w0 = max(1, (r - 1) * b - 2 * trim_k(self.delta, r, b))   # probes / reports behind a build estimate
+        # probes / reports behind a build estimate
+        self.k = np.full((view.n, K), float(b0), np.float32)
+        self.w0 = max(1, (r - 1) * b - 2 * trim_k(self.delta, r, b))
         self.summary, self.best, self.cand, self.topc, self.lead, self.rep = [], [], [], [], [], []
         cand = self.leaves[:, :, None].repeat(K, 2)                        # level 0: candidates = the members
         for l, ch in enumerate(self.children):
@@ -211,19 +238,23 @@ class Midian(Method):
                 slot_child = np.repeat(np.arange(self.r), self.top)       # which child each slot came from
                 if e:                                                    # reporters: RANDOM members of the sibling
                     self._verify(view, ch, cand, self.rep[-1][ch], e, slot_child)
-                    valid = self.cand[-1] >= 0                                                     # children's summaries now
+                    # children's summaries now
+                    valid = self.cand[-1] >= 0
                     self.summary[-1] = np.where(valid, self.est[np.where(valid, self.cand[-1], 0), np.arange(K)], NEG)
             v = np.where(cand >= 0, self.est[np.where(cand >= 0, cand, 0), np.arange(K)], NEG)
             order = np.argsort(-v, axis=1, kind="stable")
             best = (order[:, 0] if l == 0 else slot_child[order[:, 0]]).astype(np.int32)         # best CHILD per family
-            self.summary.append(np.take_along_axis(v, order[:, :1], 1)[:, 0]); self.best.append(best)
+            self.summary.append(np.take_along_axis(v, order[:, :1], 1)[:, 0])
+            self.best.append(best)
             self.cand.append(np.take_along_axis(cand, order[:, :1], 1)[:, 0])                     # (M,K) summary holder
             self.topc.append(np.take_along_axis(cand, order[:, :self.top], 1))                    # (M,top,K) forwarded
             mc = (v if l == 0 else v.reshape(len(ch), self.r, self.top, K).mean(2)).mean(2)      # per-child mean est
             self.lead.append((self.leaves if l == 0 else lead)[np.arange(len(ch)), np.where(ch >= 0, mc, NEG).argmax(1)])
-            pick = (view.rng.random(len(ch)) * (ch >= 0).sum(1)).astype(int)                  # one random subtree member per node
+            # one random subtree member per node
+            pick = (view.rng.random(len(ch)) * (ch >= 0).sum(1)).astype(int)
             self.rep.append((self.leaves if l == 0 else self.rep[-1][ch])[np.arange(len(ch)), pick])
-        view.ledger.message(view.n - len(self.leaves) + sum(len(s) for s in self.summary) - 1)   # member->leader, node->parent
+        # member->leader, node->parent
+        view.ledger.message(view.n - len(self.leaves) + sum(len(s) for s in self.summary) - 1)
 
     def _values(self, l, node, f):
         """The r children's summaries at one node for family f (int or int array); -inf where the slot is empty."""
@@ -237,19 +268,29 @@ class Midian(Method):
 
     def fetch(self, task):
         if self.cached:                                                  # the root remembers its pick per family:
-            self.view.ledger.compare(1); self.view.ledger.message(2); return int(self.cand[-1][0, task.family])
+            self.view.ledger.compare(1)
+            self.view.ledger.message(2)
+            return int(self.cand[-1][0, task.family])
         f, node = int(task.family), 0
         for l in range(self.depth - 1, -1, -1):
-            self.view.ledger.hop(1); self.view.ledger.compare(self.r); self.view.ledger.message(2)   # request down, answer up
+            # request down, answer up
+            self.view.ledger.hop(1)
+            self.view.ledger.compare(self.r)
+            self.view.ledger.message(2)
             node = int(self.children[l][node, self._choose(l, node, f)])
         return node
 
     def _recompute(self, node, f):
         """Recompute best/summary (and cached candidates) for families `f` (int array) on the path from leaf `node` up."""
-        for l in range(self.depth):                                     # observe-time cost: r comparisons + 1 message (child->parent update) per level per family
-            self.view.ledger.compare(self.r * len(f)); self.view.ledger.message(len(f))
-            v = self._values(l, node, f); s = v.argmax(0)                                            # (r, |f|)
-            self.best[l][node, f] = s; self.summary[l][node, f] = v[s, np.arange(len(f))]
+        for l in range(self.depth):
+            # observe-time cost: r comparisons + 1 message (child->parent update) per level per family
+            self.view.ledger.compare(self.r * len(f))
+            self.view.ledger.message(len(f))
+            # (r, |f|)
+            v = self._values(l, node, f)
+            s = v.argmax(0)
+            self.best[l][node, f] = s
+            self.summary[l][node, f] = v[s, np.arange(len(f))]
             if self.cached:
                 self.cand[l][node, f] = self.children[l][node][s] if l == 0 else self.cand[l - 1][self.children[l][node][s], f]
             node = int(self.parent[l][node]) if l + 1 < self.depth else node
@@ -258,16 +299,21 @@ class Midian(Method):
         """Running mean on est[a,f], then recompute f's summary up a's path (log_r n nodes); with audits, a `rate` of
         outcomes is put to the agent's cohort peers and a newly excluded reporter's cohort is re-aggregated."""
         if self.online:
-            f, a = int(task.family), int(agent); k = self.cnt[a, f] = self.cnt.get((a, f), self.w0) + 1
-            self.est[a, f] += (outcome - self.est[a, f]) / k; self._recompute(int(self.leaf_of[a]), np.array([f]))
+            f, a = int(task.family), int(agent)
+            k = self.cnt[a, f] = self.cnt.get((a, f), self.w0) + 1
+            self.est[a, f] += (outcome - self.est[a, f]) / k
+            self._recompute(int(self.leaf_of[a]), np.array([f]))
         if not self.audit or self.view.rng.random() >= self.rate:
             return
-        peers = self.peer_of[agent]; peers = peers[peers >= 0]
+        peers = self.peer_of[agent]
+        peers = peers[peers >= 0]
         if not peers.size:
             return
         claims = self.view.report_many(peers, np.full(peers.shape, agent), np.full(peers.shape, outcome))
         for j in self._strike(peers, claims, outcome):                                  # newly excluded reporter j:
-            members = self.leaves[self.leaf_of[j]]; members = members[members >= 0]     # re-aggregate its cohort
+            # re-aggregate its cohort
+            members = self.leaves[self.leaf_of[j]]
+            members = members[members >= 0]
             K = self.view.K
             self.est[members] = self._estimates(members[:, None], np.arange(K)[None, :], len(members))
             self._recompute(int(self.leaf_of[members[0]]), np.arange(K))                  # one path: the cohort's own
@@ -278,8 +324,12 @@ class Midian(Method):
         view, K = self.view, self.view.K
         self.est[np.setdiff1d(departed, arrived)] = NEG
         for a in np.asarray(arrived, dtype=int):
-            leaf = int(self.leaf_of[a]); peers = self.leaves[leaf]; peers = peers[(peers >= 0) & (peers != a)]
+            leaf = int(self.leaf_of[a])
+            peers = self.leaves[leaf]
+            peers = peers[(peers >= 0) & (peers != a)]
             self.est[a] = (peer_estimate(view, np.full(K, a), np.arange(K), self.b, np.broadcast_to(peers, (K, len(peers))), self.delta)[0]
                            if len(peers) else view.probe_many(a, np.arange(K), self.b).mean(-1))
-            self.k[a] = self.b; self.cnt = {kf: c for kf, c in self.cnt.items() if kf[0] != a}
-            view.ledger.message(len(peers) + self.depth); self._recompute(leaf, np.arange(K))
+            self.k[a] = self.b
+            self.cnt = {kf: c for kf, c in self.cnt.items() if kf[0] != a}
+            view.ledger.message(len(peers) + self.depth)
+            self._recompute(leaf, np.arange(K))

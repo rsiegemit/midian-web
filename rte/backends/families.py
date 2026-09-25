@@ -67,18 +67,23 @@ def _rg_speedup():
     scan = functools.lru_cache(maxsize=64)(lambda p, s, fl=0: tuple(_re.findall(p, s, fl)))
 
     class _Re:
-        def __getattr__(self, k): return getattr(_re, k)
+        def __getattr__(self, k):
+            return getattr(_re, k)
         @staticmethod
-        def findall(p, s, flags=0): return list(scan(p, s, flags))
+        def findall(p, s, flags=0):
+            return list(scan(p, s, flags))
     for m in ("letter_counting", "word_sequence_reversal"):
-        mod = importlib.import_module(f"reasoning_gym.algorithmic.{m}"); mod.re = _Re()
-        if hasattr(mod, "read_data_file"): mod.read_data_file = rgd.read_data_file
+        mod = importlib.import_module(f"reasoning_gym.algorithmic.{m}")
+        mod.re = _Re()
+        if hasattr(mod, "read_data_file"):
+            mod.read_data_file = rgd.read_data_file
     _RG_PATCHED.append(True)
 
 
 @lru_cache(maxsize=8192)
 def _rg_dataset(name: str, seed: int, params: tuple = ()):
-    if flag("RTE_RG_CACHE") and not _RG_PATCHED: _rg_speedup()
+    if flag("RTE_RG_CACHE") and not _RG_PATCHED:
+        _rg_speedup()
     from reasoning_gym.factory import create_dataset
     return create_dataset(name, size=1, seed=seed, **dict(params))
 

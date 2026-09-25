@@ -60,7 +60,9 @@ async def _select(req):
     LAST["robust"], orig = req.get("params", {}).get("robust", True), mc.create
 
     async def create(*a, **k):                      # remember the raw reply for by-mention extraction
-        r = await orig(*a, **k); LAST["content"] = str(r.content); return r
+        r = await orig(*a, **k)
+        LAST["content"] = str(r.content)
+        return r
     mc.create = create
     team = MagenticOneGroupChat(agents, model_client=mc, max_turns=1, emit_team_events=True)
     try:

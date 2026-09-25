@@ -64,12 +64,15 @@ class LLMBackend:
 
     # ---- churn: fresh profiles for `ids`; S / self-ratings / descriptions are recomputed lazily under a per-event
     # population dir (every signature is already measured, so only the new agents' descriptions cost generations)
-    def snapshot(self): return ([dict(p) for p in self.profiles], self.dir, self._S, self._desc)
-    def restore(self, snap): self.profiles, self.dir, self._S, self._desc = [dict(p) for p in snap[0]], snap[1], snap[2], snap[3]
+    def snapshot(self):
+        return ([dict(p) for p in self.profiles], self.dir, self._S, self._desc)
+    def restore(self, snap):
+        self.profiles, self.dir, self._S, self._desc = [dict(p) for p in snap[0]], snap[1], snap[2], snap[3]
     def redraw(self, ids, rng):
         tag = int(rng.integers(2 ** 31))
         new = draw_profiles(len(ids), self.K, self.dist, tag, self.cfg)
-        for i, prof in zip(ids, new): self.profiles[int(i)] = {**prof, "id": int(i)}
+        for i, prof in zip(ids, new):
+            self.profiles[int(i)] = {**prof, "id": int(i)}
         self.dir, self._S, self._desc = self._dir0 / f"churn_{tag}", None, None
 
     def _ask(self, jobs: dict, prompt, max_tokens: int) -> dict:
@@ -140,14 +143,18 @@ class LLMBackend:
 
     def _outcomes(self, items) -> np.ndarray:
         if flag("RTE_OUTCOME_CACHE"):          # opt-in, exact: an (agent, family, instance) outcome is fixed
-            pop = str(self.dir)                                 # (memoised answer, deterministic scoring), so score it once per process
+            # (memoised answer, deterministic scoring), so score it once per process
+            pop = str(self.dir)
             miss = list(dict.fromkeys(it for it in items if (pop,) + it not in _OUTCOMES))
             args = [(self.families[f], i, x) for (_, f, i), x in zip(miss, self._answers(miss) if miss else [])]
             n = count("RTE_TEXT_PROCS")
-            if n > 1 and len(args) > 20000:                     # scoring rebuilds each instance: fork it (pure function, same result)
+            if n > 1 and len(args) > 20000:
+                # scoring rebuilds each instance: fork it (pure function, same result)
                 import multiprocessing as mp
-                with mp.get_context("fork").Pool(n) as pool: res = pool.starmap(families.correct, args, chunksize=5000)
-            else: res = [families.correct(*a) for a in args]
+                with mp.get_context("fork").Pool(n) as pool:
+                    res = pool.starmap(families.correct, args, chunksize=5000)
+            else:
+                res = [families.correct(*a) for a in args]
             _OUTCOMES.update({(pop,) + it: r for it, r in zip(miss, res)})
             return np.array([_OUTCOMES[(pop,) + it] for it in items], dtype=np.int8)
         return np.array([families.correct(self.families[f], i, x)

@@ -24,10 +24,13 @@ class WarmStartBandit(BetaBandit):
         return self.n0 * D, self.n0 * (1 - D)
 
     def build(self, view, budget):
-        self.b = budget.b; super().build(view, budget)
+        self.b = budget.b
+        super().build(view, budget)
 
     def churn(self, departed, arrived):
         """Fresh prior from the arrivals' declarations (len(arrived) messages) plus b probes per family each."""
-        v, ids = self.view, np.asarray(arrived); v.ledger.message(ids.size)
-        D = np.clip(v.declared[ids], 1e-3, 1 - 1e-3); s = reprobe(v, ids, self.b).sum(-1)
+        v, ids = self.view, np.asarray(arrived)
+        v.ledger.message(ids.size)
+        D = np.clip(v.declared[ids], 1e-3, 1 - 1e-3)
+        s = reprobe(v, ids, self.b).sum(-1)
         self.alpha[ids], self.beta[ids] = self.n0 * D + s, self.n0 * (1 - D) + self.b - s

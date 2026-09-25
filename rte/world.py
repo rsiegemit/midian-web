@@ -81,7 +81,9 @@ def skill_excess_ratio_family(S: np.ndarray, n_probes: int) -> float:
     S = np.asarray(S, float)
     r = []
     for f in range(S.shape[1]):
-        col = S[:, f]; p = col.mean(); vn = p * (1 - p) / max(int(n_probes), 1)
+        col = S[:, f]
+        p = col.mean()
+        vn = p * (1 - p) / max(int(n_probes), 1)
         r.append(col.var(ddof=1) / vn if vn > 0 else np.nan)
     return float(np.nanmedian(r))
 
@@ -100,15 +102,22 @@ def probe_seed(salt: int, a, f, k) -> np.ndarray:
     """Deterministic 31-bit instance seed for the k-th probe of (agent a, family f); vectorized integer mixing."""
     x = (np.asarray(a, np.uint64) * np.uint64(0x9E3779B97F4A7C15) + np.asarray(f, np.uint64) * np.uint64(0xC2B2AE3D27D4EB4F)
          + np.asarray(k, np.uint64) * np.uint64(0x165667B19E3779F9) + np.uint64(salt))
-    x ^= x >> np.uint64(33); x *= np.uint64(0xFF51AFD7ED558CCD); x ^= x >> np.uint64(33); x *= np.uint64(0xC4CEB9FE1A85EC53); x ^= x >> np.uint64(33)
+    x ^= x >> np.uint64(33)
+    x *= np.uint64(0xFF51AFD7ED558CCD)
+    x ^= x >> np.uint64(33)
+    x *= np.uint64(0xC4CEB9FE1A85EC53)
+    x ^= x >> np.uint64(33)
     return (x & np.uint64(0x7FFFFFFF)).astype(np.int64)
 
 
 def _occurrence(key: np.ndarray) -> np.ndarray:
     """For each element, how many earlier elements (row-major) share its key."""
-    flat = key.ravel(); order = np.argsort(flat, kind="stable"); ks = flat[order]
+    flat = key.ravel()
+    order = np.argsort(flat, kind="stable")
+    ks = flat[order]
     start = np.flatnonzero(np.r_[True, ks[1:] != ks[:-1]])
-    rank = np.empty(flat.size, np.int64); rank[order] = np.arange(flat.size) - np.repeat(start, np.diff(np.r_[start, flat.size]))
+    rank = np.empty(flat.size, np.int64)
+    rank[order] = np.arange(flat.size) - np.repeat(start, np.diff(np.r_[start, flat.size]))
     return rank.reshape(key.shape)
 
 
@@ -136,7 +145,8 @@ def apply_lying(D_honest: np.ndarray, liars: np.ndarray, mode: str = "inflate",
         return D
     if mode == "inflate":
         D[liars] = np.clip(D[liars] + delta, 0.0, 1.0)
-    elif mode == "max":                                   # the strongest declared lie: claim perfect skill in every family
+    elif mode == "max":
+        # the strongest declared lie: claim perfect skill in every family
         D[liars] = 1.0
     elif mode == "squat":
         if demand is None:
@@ -258,22 +268,30 @@ class World:
                                   np.random.default_rng(stable_seed_32(seed, "liars")))
         D_honest = np.asarray(self.backend.declared(declared_source), dtype=np.float32)
         self.D = apply_lying(D_honest, self.liars, lie_mode, self.demand)
-        self.D_view = self.D.copy(); self.D_view.setflags(write=False)
-        self._probe_idx = np.zeros((self.n, self.K), np.uint32)    # probes drawn so far per (agent, family); uint16 capped at 65,535 and halving hands one winner 146k at n=1e7 b=3
+        self.D_view = self.D.copy()
+        self.D_view.setflags(write=False)
+        # probes drawn so far per (agent, family); uint16 capped at 65,535 and halving hands one winner 146k at n=1e7 b=3
+        self._probe_idx = np.zeros((self.n, self.K), np.uint32)
         self._probe_salt = stable_seed_32(seed, "probes")
-        self.epoch = np.zeros(self.n, np.int32); self.seen_epoch = np.zeros(self.n, np.int32); self.churn_events = 0
+        self.epoch = np.zeros(self.n, np.int32)
+        self.seen_epoch = np.zeros(self.n, np.int32)
+        self.churn_events = 0
         self._snap = (self.S.copy(), self.D.copy(), self.liars.copy(), self.backend.snapshot())
 
     # ---- churn (see module docstring)
     def churn(self, frac: float) -> np.ndarray:
-        rng = np.random.default_rng(stable_seed_32(self.seed, "churn", self.churn_events)); self.churn_events += 1
+        rng = np.random.default_rng(stable_seed_32(self.seed, "churn", self.churn_events))
+        self.churn_events += 1
         ids = np.sort(rng.choice(self.n, int(round(frac * self.n)), replace=False))
         self.backend.redraw(ids, rng)
         self.S = np.asarray(self.backend.true_skill(), dtype=np.float32)
-        self.liars[ids] = rng.random(ids.size) < self.beta                   # arrivals lie at rate beta, whatever liar_select
+        # arrivals lie at rate beta, whatever liar_select
+        self.liars[ids] = rng.random(ids.size) < self.beta
         self.D = apply_lying(np.asarray(self.backend.declared(self.declared_source), np.float32), self.liars, self.lie_mode, self.demand)
-        self.D_view = self.D.copy(); self.D_view.setflags(write=False)
-        self._probe_idx[ids] = 0; self.epoch[ids] += 1
+        self.D_view = self.D.copy()
+        self.D_view.setflags(write=False)
+        self._probe_idx[ids] = 0
+        self.epoch[ids] += 1
         return ids
 
     # ---- demand / tasks
@@ -305,14 +323,16 @@ class World:
         for i in range(Q):
             p = self.demand * (used < size)
             f = int(rng.choice(self.K, p=p / p.sum()))
-            out.append(Task(i, f, int(order[f][used[f]]))); used[f] += 1
+            out.append(Task(i, f, int(order[f][used[f]])))
+            used[f] += 1
         return out
 
     # ---- execution
     def execute(self, a: int, task: Task) -> int:
         self.ledger.task(1)
         if self.seen_epoch[a] < self.epoch[a]:                    # stale route to a replaced agent: fails, now seen
-            self.seen_epoch[a] = self.epoch[a]; return 0
+            self.seen_epoch[a] = self.epoch[a]
+            return 0
         return int(self.backend.execute(int(a), task))
 
     def oracle(self, task: Task) -> int:
@@ -333,9 +353,13 @@ class World:
         self.ledger.probe(agents.size * reps)
         lin, flat = agents * self.K + families, self._probe_idx.reshape(-1)     # flat view: _probe_idx is C-contiguous
         k0, pos = flat[lin], np.arange(lin.size, dtype=np.uint32).reshape(lin.shape)
-        flat[lin] = pos                                                  # a repeated cell cannot hold every position written to it
-        if (flat[lin] != pos).any():                                     # repeated cell: each occurrence takes the next instances,
-            flat[lin] = k0; np.add.at(flat, lin, reps)                   # as sequential calls would
+        # a repeated cell cannot hold every position written to it
+        flat[lin] = pos
+        if (flat[lin] != pos).any():
+            # repeated cell: each occurrence takes the next instances,
+            # as sequential calls would
+            flat[lin] = k0
+            np.add.at(flat, lin, reps)
             k0 = k0.astype(np.int64) + reps * _occurrence(lin)
         else:
             flat[lin] = k0 + np.uint32(reps)
@@ -361,7 +385,8 @@ class World:
     # ---- reports: the only channel decentralized methods learn through
     def report_many(self, reporters: np.ndarray, agents: np.ndarray, outcomes: np.ndarray) -> np.ndarray:
         reporters, agents, outcomes = np.broadcast_arrays(reporters, agents, outcomes)
-        out = np.array(outcomes, dtype=np.float32 if outcomes.dtype.kind == "f" else np.int8, order="C")   # contiguous copy: the lie edits it in place
+        # contiguous copy: the lie edits it in place
+        out = np.array(outcomes, dtype=np.float32 if outcomes.dtype.kind == "f" else np.int8, order="C")
         self.ledger.report(out.size)
         if not self.collude or not self.liars.any():
             return out
@@ -380,16 +405,20 @@ class World:
             uj = uk // self.n
             order = np.lexsort((uk % self.n, -means, uj))            # by reporter, then mean desc, then agent id
             ujs = uj[order]
-            start = np.searchsorted(ujs, ujs, "left"); size = np.searchsorted(ujs, ujs, "right") - start
-            zero_sorted = (np.arange(ujs.size) - start) < np.ceil(REPORT_LIE_TOP_FRAC * size)   # first ceil(20%) per reporter
-            zero_pairs = np.empty(uk.size, dtype=bool); zero_pairs[order] = zero_sorted
+            start = np.searchsorted(ujs, ujs, "left")
+            size = np.searchsorted(ujs, ujs, "right") - start
+            # first ceil(20%) per reporter
+            zero_sorted = (np.arange(ujs.size) - start) < np.ceil(REPORT_LIE_TOP_FRAC * size)
+            zero_pairs = np.empty(uk.size, dtype=bool)
+            zero_pairs[order] = zero_sorted
             ro[idx[zero_pairs[inv]]] = 0
         return out
 
     def probe_at(self, agents, families, k) -> np.ndarray:
         """Same-instance re-probe (audits): charged as probes, probe index untouched, epoch marked seen."""
         a, f, k = np.broadcast_arrays(np.asarray(agents, np.int64), np.asarray(families, np.int64), np.asarray(k, np.int64))
-        self.ledger.probe(a.size); self.seen_epoch[a] = self.epoch[a]
+        self.ledger.probe(a.size)
+        self.seen_epoch[a] = self.epoch[a]
         return self.backend.execute_many(a, f, probe_seed(self._probe_salt, a, f, k))
 
     def reset(self) -> None:
@@ -398,9 +427,13 @@ class World:
         self.ledger.reset()
         self._probe_idx[:] = 0                      # every method starts at probe index 0 of every cell
         if self.churn_events:                       # undo churn: same initial population for every method
-            self.S, self.D, self.liars = (x.copy() for x in self._snap[:3]); self.backend.restore(self._snap[3])
-            self.D_view = self.D.copy(); self.D_view.setflags(write=False)
-            self.epoch[:] = 0; self.seen_epoch[:] = 0; self.churn_events = 0
+            self.S, self.D, self.liars = (x.copy() for x in self._snap[:3])
+            self.backend.restore(self._snap[3])
+            self.D_view = self.D.copy()
+            self.D_view.setflags(write=False)
+            self.epoch[:] = 0
+            self.seen_epoch[:] = 0
+            self.churn_events = 0
 
     # ---- view
     def view(self, needs: Iterable[str], seed: int | None = None) -> View:

@@ -45,7 +45,8 @@ async def _select(req):
         return await _handoff(req, llm)
     choices = [ToolMetadata(name=c["name"], description=c["description"]) for c in req["candidates"]]
     result = await LLMSingleSelector.from_defaults(llm=llm).aselect(choices, req["task"])
-    ind = result.selections[0].index                    # first selection (a model that names several agents would raise on .ind)
+    # first selection (a model that names several agents would raise on .ind)
+    ind = result.selections[0].index
     if 0 <= ind < len(choices):
         return req["candidates"][ind]["name"], f"LLMSingleSelector ind={ind} of {len(result.selections)}"
 

@@ -16,12 +16,18 @@ class Ledger:
             setattr(self, c, 0)
 
     # one increment site each ------------------------------------------------
-    def probe(self, k: int = 1):      self.probes += int(k)
-    def report(self, k: int = 1):     self.reports += int(k)
-    def message(self, k: int = 1):    self.messages += int(k)
-    def hop(self, k: int = 1):        self.hops += int(k)
-    def compare(self, k: int = 1):    self.comparisons += int(k)
-    def task(self, k: int = 1):       self.tasks += int(k)
+    def probe(self, k: int = 1):
+        self.probes += int(k)
+    def report(self, k: int = 1):
+        self.reports += int(k)
+    def message(self, k: int = 1):
+        self.messages += int(k)
+    def hop(self, k: int = 1):
+        self.hops += int(k)
+    def compare(self, k: int = 1):
+        self.comparisons += int(k)
+    def task(self, k: int = 1):
+        self.tasks += int(k)
 
     def snapshot(self) -> dict:
         return {c: getattr(self, c) for c in COUNTERS}

@@ -28,9 +28,11 @@ def halving(view, f, budget, peers=0, delta=1 / 3):
             a = alive[lo:lo + CHUNK]
             out = view.probe_many(a, f, pulls)
             if peers:
-                rep = (a[:, None] + view.rng.integers(1, n, (a.size, peers))) % n              # random peers, never self
+                # random peers, never self
+                rep = (a[:, None] + view.rng.integers(1, n, (a.size, peers))) % n
                 out = trimmed_by_reporter(view.report_many(rep[:, :, None], a[:, None, None], out[:, None, :]), delta, peers + 1)[:, None] * pulls
-            tot[a] += out.sum(1); cnt[a] += pulls
+            tot[a] += out.sum(1)
+            cnt[a] += pulls
         used += alive.size * pulls
         alive = alive[np.argsort(-tot[alive] / cnt[alive], kind="stable")[:max(1, alive.size // 2)]]
     return int(alive[np.argmax(tot[alive] / np.maximum(cnt[alive], 1))]), used
@@ -57,4 +59,5 @@ class SequentialHalving(Method):
 
     def churn(self, departed, arrived):
         """rebuild: the full n*K*b halving again at every churn event (charged); stale: keep the old picks."""
-        if self.churn_mode == "rebuild": self.build(self.view, self.budget)
+        if self.churn_mode == "rebuild":
+            self.build(self.view, self.budget)

@@ -103,7 +103,8 @@ def trimmed_by_reporter(rep: np.ndarray, delta: float, s: int, exclude: np.ndarr
     per = np.sort(np.where(exclude, np.nan, per), axis=-1)                       # NaN sorts last
     v = (~exclude).sum(-1, keepdims=True)
     t = np.clip(np.minimum(int(delta * (s - 1) + 1e-9), (v - 2) // 2), 0, None)
-    cs = np.cumsum(np.nan_to_num(per), -1); hi = np.maximum(v - t, 1)
+    cs = np.cumsum(np.nan_to_num(per), -1)
+    hi = np.maximum(v - t, 1)
     tot = np.take_along_axis(cs, hi - 1, -1) - np.where(t > 0, np.take_along_axis(cs, np.maximum(t - 1, 0), -1), 0)
     return (tot / np.maximum(hi - t, 1))[..., 0]
 
@@ -138,13 +139,16 @@ def peer_reported_estimates(view, b: int, cohorts: np.ndarray, delta: float, by_
     step = max(1, min(CHUNK, REPORT_ELEMS // (K * b * max(r - 1, 1))) // r)
     for ag in cohort_blocks(cohorts, step):
         C, s = ag.shape
-        out = outcomes[ag.ravel()] if outcomes is not None else view.probe_many(ag.reshape(-1, 1), np.arange(K)[None, :], b)   # (C*s, K, b)
+        # (C*s, K, b)
+        out = outcomes[ag.ravel()] if outcomes is not None else view.probe_many(ag.reshape(-1, 1), np.arange(K)[None, :], b)
         if s == 1:                                                                       # no peers to report
             est[ag.ravel()] = out.mean(2)
             continue
         peers = others(s)                                                                # (s, s-1)
-        if by_reporter:                                                                  # every peer reports every probe,
-            k = min(observers or s - 1, s - 1)                                           # trimmed by PEER (a random k of them)
+        if by_reporter:
+            # every peer reports every probe,
+            # trimmed by PEER (a random k of them)
+            k = min(observers or s - 1, s - 1)
             obs = ag[:, peers] if k == s - 1 else np.take_along_axis(
                 ag[:, peers], np.argsort(view.rng.random((C, s, s - 1)), 2)[:, :, :k], 2)
             per = view.report_many(obs[:, :, None, :, None], ag[:, :, None, None, None],
@@ -172,7 +176,12 @@ def greedy_walk(view, start: int, depth: int, neighbors, score) -> int:
     one; return the best-scoring agent seen. `neighbors(cur) -> ids`, `score(cur, ids) -> values`."""
     cur, best = start, (-np.inf, start)
     for _ in range(depth):
-        nb = neighbors(cur); sc = score(cur, nb)
-        view.bus.send_many(2 * len(nb)); view.ledger.compare(len(nb)); view.ledger.hop(1)
-        i = int(np.argmax(sc)); best = max(best, (float(sc[i]), int(nb[i]))); cur = int(nb[i])
+        nb = neighbors(cur)
+        sc = score(cur, nb)
+        view.bus.send_many(2 * len(nb))
+        view.ledger.compare(len(nb))
+        view.ledger.hop(1)
+        i = int(np.argmax(sc))
+        best = max(best, (float(sc[i]), int(nb[i])))
+        cur = int(nb[i])
     return best[1]

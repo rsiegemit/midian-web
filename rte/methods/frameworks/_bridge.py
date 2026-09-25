@@ -19,7 +19,8 @@ WORKERS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "workers")
 
 
 def venv_python(env_name: str) -> str:
-    from rte.config import RTE_DATA       # not at module level: workers import this file standalone, outside the package
+    # not at module level: workers import this file standalone, outside the package
+    from rte.config import RTE_DATA
     p = os.path.join(RTE_DATA, "env", env_name, "bin", "python")
     if not os.path.exists(p):
         raise RuntimeError(f"framework venv missing: {p} (build it with scripts/fw_envs/{env_name.removeprefix('fw_')}.sh)")
@@ -39,7 +40,8 @@ class Bridge:
         for k in ("http_proxy", "https_proxy", "HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "all_proxy"):
             env.pop(k, None)
         env.setdefault("OPENAI_API_KEY", "EMPTY")
-        env["PYTHONNOUSERSITE"] = "1"                  # conda prefixes see ~/.local site-packages; never let it shadow a venv
+        # conda prefixes see ~/.local site-packages; never let it shadow a venv
+        env["PYTHONNOUSERSITE"] = "1"
         self._proc = subprocess.Popen([venv_python(self.env_name), os.path.join(WORKERS, self.worker)],
                                       stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=sys.stderr,
                                       text=True, bufsize=1, env=env)
@@ -55,13 +57,16 @@ class Bridge:
                    "base_url": base_url, "api_key": api_key, "params": params or {}}
             self.stats["calls"] += 1
             try:
-                self._proc.stdin.write(json.dumps(req) + "\n"); self._proc.stdin.flush()
+                self._proc.stdin.write(json.dumps(req) + "\n")
+                self._proc.stdin.flush()
                 line = _readline_timeout(self._proc, self.timeout)
                 resp = json.loads(line)
             except Exception as e:                       # worker died / timed out: restart next call
                 self.stats["errors"] += 1
-                try: self._proc.kill()
-                except Exception: pass
+                try:
+                    self._proc.kill()
+                except Exception:
+                    pass
                 self._proc = None
                 return {"id": self._next, "choice": None, "error": f"{type(e).__name__}: {e}", "raw": None}
             if resp.get("error"):
@@ -70,8 +75,11 @@ class Bridge:
 
     def close(self):
         if self._proc is not None:
-            try: self._proc.stdin.close(); self._proc.wait(timeout=5)
-            except Exception: self._proc.kill()
+            try:
+                self._proc.stdin.close()
+                self._proc.wait(timeout=5)
+            except Exception:
+                self._proc.kill()
             self._proc = None
 
 
@@ -82,8 +90,11 @@ def _readline_timeout(proc, timeout):
         while True:
             line = proc.stdout.readline()
             if not line or line.lstrip().startswith("{"):
-                out["line"] = line; return
-    t = threading.Thread(target=rd, daemon=True); t.start(); t.join(timeout)
+                out["line"] = line
+                return
+    t = threading.Thread(target=rd, daemon=True)
+    t.start()
+    t.join(timeout)
     if t.is_alive():
         raise TimeoutError(f"worker did not answer within {timeout}s")
     if not out.get("line"):
@@ -107,4 +118,5 @@ def serve_worker(select_fn):
                 resp["choice"] = out
         except Exception as e:                           # never die on one bad request
             resp["error"] = f"{type(e).__name__}: {e}"
-        sys.stdout.write(json.dumps(resp, default=str) + "\n"); sys.stdout.flush()
+        sys.stdout.write(json.dumps(resp, default=str) + "\n")
+        sys.stdout.flush()

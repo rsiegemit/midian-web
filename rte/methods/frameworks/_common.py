@@ -32,7 +32,8 @@ LEXICAL = ("bm25", "hybrid", "sota")        # modes that need the BM25 block
 # Framework errors that are the supervisor LLM's own invalid action, not infrastructure (every class that has failed a
 # unit): ADK / OpenAI Agents -- a tool named after the agent instead of the routing tool; MAF -- no next
 # speaker. Anything else stays an infrastructure error (docs/errata.md).
-INVALID_ACTION = re.compile(r"Tool '?[\w.-]+'? not found|ModelBehaviorError|next_speaker must be provided|KeyError: '?agent_\d+'?")   # MAF: orchestrator names a non-candidate
+# MAF: orchestrator names a non-candidate
+INVALID_ACTION = re.compile(r"Tool '?[\w.-]+'? not found|ModelBehaviorError|next_speaker must be provided|KeyError: '?agent_\d+'?")
 _TOK = re.compile(r"[a-z0-9]+")
 
 
@@ -55,17 +56,22 @@ def _bm25(texts: list[str], queries: list[str], k1: float = 1.5, b: float = 0.75
     post: dict[str, dict[int, float]] = {}
     L = np.zeros(len(texts), dtype=np.float32)
     for i, t in enumerate(texts):
-        ws = _TOK.findall(t.lower()); L[i] = len(ws)
-        for w in ws: post.setdefault(w, {}); post[w][i] = post[w].get(i, 0.0) + 1.0
+        ws = _TOK.findall(t.lower())
+        L[i] = len(ws)
+        for w in ws:
+            post.setdefault(w, {})
+            post[w][i] = post[w].get(i, 0.0) + 1.0
     avg = float(L.mean()) or 1.0
     norm = k1 * (1.0 - b + b * (L / avg))                     # per-document length normalisation
     out = np.zeros((len(queries), len(texts)), dtype=np.float32)
     for j, q in enumerate(queries):
         for w in set(_TOK.findall(q.lower())):
             p = post.get(w)
-            if not p: continue
+            if not p:
+                continue
             idf = np.log(1.0 + (len(texts) - len(p) + 0.5) / (len(p) + 0.5))
-            d = np.fromiter(p.keys(), np.int64, len(p)); f = np.fromiter(p.values(), np.float32, len(p))
+            d = np.fromiter(p.keys(), np.int64, len(p))
+            f = np.fromiter(p.values(), np.float32, len(p))
             out[j, d] += (idf * f * (k1 + 1.0) / (f + norm[d])).astype(np.float32)
     return out
 
@@ -74,7 +80,9 @@ def _rrf(*ranks: np.ndarray, k: float = 60.0) -> np.ndarray:
     """Reciprocal rank fusion over score rows (higher score = better); returns a fused score per column."""
     out = np.zeros_like(ranks[0], dtype=np.float32)
     for r in ranks:
-        order = np.argsort(-r, kind="stable"); pos = np.empty_like(order); pos[order] = np.arange(len(order))
+        order = np.argsort(-r, kind="stable")
+        pos = np.empty_like(order)
+        pos[order] = np.arange(len(order))
         out += (1.0 / (k + 1.0 + pos)).astype(np.float32)
     return out
 
@@ -166,7 +174,8 @@ class FrameworkMethod(Method):
         # retrieval="embed" (labeled variant): rank by cosine over all-MiniLM-L6-v2 embeddings of the same
         # descriptions (the encoder knn_router uses) instead of hashed TF-IDF -- the dense retriever a deployed stack
         # would put in front of a framework. Embeddings are cached per population dir (descriptions_minilm.npy).
-        if retrieval in ("midian", "midian_wo_audit"):        # verified shortlist: MIDIAN's (or MIDIAN w/o audits') leaf cohort (k = r)
+        if retrieval in ("midian", "midian_wo_audit"):
+            # verified shortlist: MIDIAN's (or MIDIAN w/o audits') leaf cohort (k = r)
             self.needs = self.needs | {"probe", "reports"}
         self.stats = {"picks": 0, "fallbacks": 0, "failures": 0, "bad_name": 0, "invalid_action": 0, "success_strict": 0.0, "fallback_rate": 0.0}
         self._picked, self._n, self._strict, self._calls = False, 0, 0, 0
@@ -174,7 +183,8 @@ class FrameworkMethod(Method):
     # ---- world accessors (llm backend provides real text; bernoulli/replay get synthesized descriptions)
     def _relabel(self, desc, view, top=3):
         """Rewrite the trailing 'Declared areas: ...' clause from the DECLARED channel (see lie_text)."""
-        fams = list(view.families); D = view.declared
+        fams = list(view.families)
+        D = view.declared
         out = []
         for a, d in enumerate(desc):
             if self.claim_threshold > 0:
@@ -196,7 +206,8 @@ class FrameworkMethod(Method):
         D = view.declared
         fams = list(view.families)
         desc = ["Self-rated competence: " + ", ".join(f"{fams[f]} {D[a, f]:.2f}" for f in np.argsort(-D[a])[:5])
-                for a in range(view.n)]                  # no agent id in the text: id tokens collide with real words in the hash
+                # no agent id in the text: id tokens collide with real words in the hash
+                for a in range(view.n)]
         fdesc = [f"Tasks of family {fn}" for fn in fams]
         return desc, fdesc, (lambda task: f"A task of family {fams[task.family]} (instance {task.instance}).")
 
@@ -209,22 +220,29 @@ class FrameworkMethod(Method):
         try:
             from rte.backends import llm as L
             be = L.current_backend()
-            if be is not None and be.n == view.n: return be.dir
+            if be is not None and be.n == view.n:
+                return be.dir
         except Exception:
             pass
-        root = os.environ.get("RTE_EMBED_CACHE_DIR")        # opt-in: unset (tests, every other grid) -> no cache, as before
-        if not root or getattr(self, "desc", None) is None: return None
+        # opt-in: unset (tests, every other grid) -> no cache, as before
+        root = os.environ.get("RTE_EMBED_CACHE_DIR")
+        if not root or getattr(self, "desc", None) is None:
+            return None
         import hashlib
         h = hashlib.blake2b(digest_size=12)
-        for t in list(self.desc) + ["\x00"] + list(self.fdesc): h.update(t.encode()); h.update(b"\x00")
-        d = Path(root) / h.hexdigest(); d.mkdir(parents=True, exist_ok=True)
+        for t in list(self.desc) + ["\x00"] + list(self.fdesc):
+            h.update(t.encode())
+            h.update(b"\x00")
+        d = Path(root) / h.hexdigest()
+        d.mkdir(parents=True, exist_ok=True)
         return d
 
     def _ltag(self):
         """Cache-name suffix when lie_text is on. Keyed on a hash of the DOCUMENTS, not on beta/liar_select: the view
         deliberately does not expose those (they are adversary knowledge), and content-hashing is what the cache
         actually needs -- two regimes that produce the same text should share vectors, and any text change must miss."""
-        if not self.lie_text: return ""
+        if not self.lie_text:
+            return ""
         import hashlib
         return "_lt" + hashlib.blake2b("\x00".join(self.desc).encode(), digest_size=4).hexdigest()
 
@@ -242,11 +260,14 @@ class FrameworkMethod(Method):
         path = (d / name) if d is not None else None
         if path is not None and path.exists():
             T = np.load(path)
-            if T.shape[0] == len(self.fdesc): return T
+            if T.shape[0] == len(self.fdesc):
+                return T
         pool = self._pool if self.dedup else np.arange(view.n)
         T = sota_shortlist(self._B, self._Xa, self._Xf, pool, self.desc, self.fdesc, self._rerank, self.k, self.rerank_pool)
         if path is not None:                                 # atomic: concurrent jobs may race to write the same file
-            tmp = path.with_suffix(f".{os.getpid()}.tmp.npy"); np.save(tmp, T); os.replace(tmp, path)
+            tmp = path.with_suffix(f".{os.getpid()}.tmp.npy")
+            np.save(tmp, T)
+            os.replace(tmp, path)
         return T
 
     def _embeddings(self, view):
@@ -254,7 +275,8 @@ class FrameworkMethod(Method):
         filename carrying the model so MiniLM and the strong embedder never share a cache. Asymmetric models (Qwen3)
         want the retrieval prompt on the QUERY side only -- here the family descriptions."""
         from .._learned import embed
-        slug = self._slug(self.embed_model) + self._ltag()   # lie_text rewrites the documents: never reuse honest vectors
+        # lie_text rewrites the documents: never reuse honest vectors
+        slug = self._slug(self.embed_model) + self._ltag()
         d = self._popdir(view)
         cache = (d / f"descriptions_{slug}.npy") if d is not None else None
         fcache = cache.with_name(f"families_{slug}{self._itag()}.npy") if cache is not None else None
@@ -263,7 +285,8 @@ class FrameworkMethod(Method):
 
         def cached(path, texts, rows, **kw):
             E = np.load(path) if path is not None and path.exists() else None
-            if E is not None and E.shape[0] == rows: return E
+            if E is not None and E.shape[0] == rows:
+                return E
             if self.embed_model != MINILM:                   # a strong embedder on a CPU routing node is a 100x stall,
                 import torch                                 # not a slow path worth taking silently
                 if not torch.cuda.is_available():
@@ -271,7 +294,9 @@ class FrameworkMethod(Method):
                                        f"run: python scripts/embed_populations.py --model {self.embed_model}")
             E = embed(texts, self.embed_model, **kw)
             if path is not None:                             # atomic: concurrent jobs may race to write the same file
-                tmp = path.with_suffix(f".{os.getpid()}.tmp.npy"); np.save(tmp, E); os.replace(tmp, path)
+                tmp = path.with_suffix(f".{os.getpid()}.tmp.npy")
+                np.save(tmp, E)
+                os.replace(tmp, path)
             return E
 
         # both blocks are cached, so a routing job on a precomputed population never loads the embedder at all
@@ -292,18 +317,21 @@ class FrameworkMethod(Method):
     def build(self, view, budget):
         super().build(view, budget)
         self._index(view)
-        self.bridge = Bridge(self.env, self.worker); self._pre = {}
+        self.bridge = Bridge(self.env, self.worker)
+        self._pre = {}
         self.base_url = self._base_url or _endpoint(self.supervisor)
         view.ledger.message(view.n)                         # every agent sends its description to the registry once
         if self.retrieval in ("midian", "midian_wo_audit"):
             from ..midian import Midian
-            self.mid = Midian(r=self.r) if self.retrieval == "midian" else Midian(audit=False, r=self.r); self.mid.build(view, budget)
+            self.mid = Midian(r=self.r) if self.retrieval == "midian" else Midian(audit=False, r=self.r)
+            self.mid.build(view, budget)
 
     def _index(self, view):
         """Texts, retrieval vectors and shortlist tables: everything build() derives from the population alone, with no
         supervisor. scripts/embed_routereval.py calls exactly this on a GPU to pre-warm the RTE_EMBED_CACHE_DIR files."""
         self.desc, self.fdesc, self._task_text = self._texts(view)
-        if self.lie_text: self.desc = self._relabel(self.desc, view)
+        if self.lie_text:
+            self.desc = self._relabel(self.desc, view)
         self.names = [f"agent_{a:06d}" for a in range(view.n)]
         self._name2id = {nm: a for a, nm in enumerate(self.names)}
         if self.retrieval in DENSE:
@@ -313,7 +341,8 @@ class FrameworkMethod(Method):
             self._Xa, self._Xf = X[:view.n], X[view.n:]
         self._B = _bm25(self.desc, self.fdesc) if self.retrieval in LEXICAL else None
         first = {}
-        for a, t in enumerate(self.desc): first.setdefault(t, a)
+        for a, t in enumerate(self.desc):
+            first.setdefault(t, a)
         self._pool = np.array(sorted(first.values()), dtype=np.int64)   # lowest id per distinct description (dedup)
         self._sota = self._sota_table(view) if self.retrieval == "sota" else None   # (K, k) -- needs _pool, so after it
 
@@ -332,14 +361,17 @@ class FrameworkMethod(Method):
         pool = self._pool if self.dedup else np.arange(self.view.n)   # dedup: one representative per distinct text
         if self.retrieval == "declared":                     # top-k by the DECLARED claim: the cheap baseline a
             sims = self.view.declared[pool, f]               # practitioner reaches for before any retriever
-        elif self.retrieval == "bm25": sims = self._B[f][pool]
+        elif self.retrieval == "bm25":
+            sims = self._B[f][pool]
         else:
             sims = (self._Xa @ self._Xf[f])[pool]            # cosine: rows are L2-normalised in every dense mode
-            if self.retrieval == "hybrid": sims = _rrf(self._B[f][pool], sims)
+            if self.retrieval == "hybrid":
+                sims = _rrf(self._B[f][pool], sims)
         return pool[np.argsort(-sims, kind="stable")][:min(self.k, len(pool))]
 
     def observe(self, task, agent, outcome):
-        self._n += 1; self._strict += int(outcome) if self._picked else 0
+        self._n += 1
+        self._strict += int(outcome) if self._picked else 0
         self.stats["success_strict"] = self._strict / self._n
         self.stats["fallback_rate"] = 1 - self.stats["picks"] / max(1, sum(self.stats[k] for k in ("picks", "fallbacks", "failures", "bad_name", "invalid_action")))
         if self.retrieval in ("midian", "midian_wo_audit"):
@@ -351,37 +383,47 @@ class FrameworkMethod(Method):
         memory, so a pick cannot depend on which requests came before it -- fetch() sees exactly the response a
         sequential run would. The MIDIAN cohorts learn online (retrieve depends on earlier observes) and stay sequential."""
         n = count("RTE_FW_PARALLEL")
-        if n <= 1 or self.retrieval in ("midian", "midian_wo_audit"): return
+        if n <= 1 or self.retrieval in ("midian", "midian_wo_audit"):
+            return
         import queue
         from concurrent.futures import ThreadPoolExecutor
         free = queue.Queue()
-        for _ in range(n): free.put(Bridge(self.env, self.worker))
+        for _ in range(n):
+            free.put(Bridge(self.env, self.worker))
 
         def one(task):
-            cand = self.retrieve(task); b = free.get()
+            cand = self.retrieve(task)
+            b = free.get()
             try:
                 payload = [{"name": self.names[a], "description": self.desc[a]} for a in cand]
                 return b.select(self._task_text(task), payload, self.supervisor, self._base_url or _endpoint(self.supervisor), params=self.params)
-            finally: free.put(b)
+            finally:
+                free.put(b)
         with ThreadPoolExecutor(max_workers=n) as ex:
             self._pre = dict(zip(map(id, stream), ex.map(one, stream)))
-        while not free.empty(): free.get().close()
+        while not free.empty():
+            free.get().close()
 
     def fetch(self, task) -> int:
         cand = self.retrieve(task)
-        self.view.ledger.compare(len(cand)); self.view.ledger.hop(1)
+        self.view.ledger.compare(len(cand))
+        self.view.ledger.hop(1)
         self.view.ledger.message(len(cand) + 2)             # k descriptions read + supervisor request/reply
         payload = [{"name": self.names[a], "description": self.desc[a]} for a in cand]
-        ask = lambda: self.bridge.select(self._task_text(task), payload, self.supervisor, self._base_url or _endpoint(self.supervisor), params=self.params)   # re-pick per call: replicas that join mid-run get used
+        # re-pick per call: replicas that join mid-run get used
+        ask = lambda: self.bridge.select(self._task_text(task), payload, self.supervisor, self._base_url or _endpoint(self.supervisor), params=self.params)
         resp = self._pre.pop(id(task), None) or ask()      # prefetched response, if prefetch() ran
-        if resp.get("error") and not INVALID_ACTION.search(resp["error"]): resp = ask()   # one retry: the bridge restarts a dead worker
+        if resp.get("error") and not INVALID_ACTION.search(resp["error"]):
+            # one retry: the bridge restarts a dead worker
+            resp = ask()
         self._calls += 1
         if resp.get("error") and INVALID_ACTION.search(resp["error"]):
             # the SUPERVISOR's invalid action, raised by the framework itself (a tool named after the agent instead of the
             # routing tool, no next speaker): the framework did not delegate -- a non-pick like an unparseable reply, with
             # the same declared-argmax fallback inside the shortlist, counted in fallback_rate. Not retried (no other
             # non-pick gets a second sample), and never an infrastructure error.
-            self.stats["invalid_action"] += 1; self._picked = False
+            self.stats["invalid_action"] += 1
+            self._picked = False
             D = self.view.declared
             return int(cand[np.argmax(D[cand, task.family])])
         if resp.get("error"):
@@ -393,7 +435,8 @@ class FrameworkMethod(Method):
             if self.stats["infra_errors"] > max(3, 0.02 * self._calls):
                 raise RuntimeError(f"{self.name}: {self.stats['infra_errors']} of {self._calls} supervisor calls failed "
                                    f"({resp['error'][:160]}) -- refusing to write a fallback-contaminated row")
-            D = self.view.declared; self._picked = False
+            D = self.view.declared
+            self._picked = False
             return int(cand[np.argmax(D[cand, task.family])])
         choice = resp.get("choice")
         self._picked = choice in self._name2id and self._name2id[choice] in set(int(a) for a in cand)

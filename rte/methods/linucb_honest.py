@@ -35,17 +35,22 @@ class LinUcbHonest(Method):
         self.view, d = view, 4
         self.cnt = np.full((view.n, view.K), budget.b, np.int64)
         self.mean = probe_means(view, budget.b)
-        self.A = np.tile(np.eye(d), (view.K, 1, 1)); self.b = np.zeros((view.K, d))
+        self.A = np.tile(np.eye(d), (view.K, 1, 1))
+        self.b = np.zeros((view.K, d))
         for f in range(view.K):                                  # the warm-up pulls train the model, one row per arm
             x = self.features(f)
-            self.A[f] += budget.b * x.T @ x; self.b[f] += budget.b * x.T @ self.mean[:, f]
+            self.A[f] += budget.b * x.T @ x
+            self.b[f] += budget.b * x.T @ self.mean[:, f]
 
     def fetch(self, task):
         f = task.family
-        x = self.features(f); Ainv = np.linalg.inv(self.A[f])
+        x = self.features(f)
+        Ainv = np.linalg.inv(self.A[f])
         self.view.ledger.compare(self.view.n)
-        if self.bonus == "own":                                  # uncertainty of the agent's own (intercept, count) evidence
-            xo = x[:, [0, 2]]; Ao = np.linalg.inv(self.A[f][np.ix_([0, 2], [0, 2])])
+        if self.bonus == "own":
+            # uncertainty of the agent's own (intercept, count) evidence
+            xo = x[:, [0, 2]]
+            Ao = np.linalg.inv(self.A[f][np.ix_([0, 2], [0, 2])])
             bonus = np.sqrt(np.einsum("ij,jk,ik->i", xo, Ao, xo)) / np.sqrt(self.cnt[:, f])
         else:
             bonus = np.sqrt(np.einsum("ij,jk,ik->i", x, Ainv, x))
@@ -54,5 +59,6 @@ class LinUcbHonest(Method):
     def observe(self, task, agent, outcome):
         f = task.family
         x = self.features(f)[agent]
-        self.A[f] += np.outer(x, x); self.b[f] += x * outcome
+        self.A[f] += np.outer(x, x)
+        self.b[f] += x * outcome
         running_mean(self.mean, self.cnt, agent, f, outcome)

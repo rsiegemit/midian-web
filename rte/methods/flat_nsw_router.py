@@ -30,9 +30,12 @@ class FlatNSWRouter(Method):
         self.index.set_num_threads(1)
         for lo in range(0, view.n, CHUNK):
             self.index.add_items(self.est[lo:lo + CHUNK], np.arange(lo, min(view.n, lo + CHUNK)))
-        self.index.set_ef(self.ef); self.hops = math.ceil(math.log2(max(view.n, 2)))
+        self.index.set_ef(self.ef)
+        self.hops = math.ceil(math.log2(max(view.n, 2)))
 
     def fetch(self, task):
-        q = np.zeros((1, self.view.K), np.float32); q[0, task.family] = 1
-        self.view.ledger.hop(self.hops); self.view.ledger.compare(self.ef)
+        q = np.zeros((1, self.view.K), np.float32)
+        q[0, task.family] = 1
+        self.view.ledger.hop(self.hops)
+        self.view.ledger.compare(self.ef)
         return int(self.index.knn_query(q, k=1)[0][0, 0])

@@ -27,7 +27,8 @@ class VerifyOnClaim(Method):
     def fetch(self, task):
         f = task.family
         if f not in self.order:
-            self.order[f] = np.argsort(-self.D[:, f], kind="stable"); self.view.ledger.compare(self.view.n)
+            self.order[f] = np.argsort(-self.D[:, f], kind="stable")
+            self.view.ledger.compare(self.view.n)
         else:
             self.view.ledger.compare(1)
         tries, best = 0, (-1.0, int(self.order[f][0]))
@@ -36,7 +37,8 @@ class VerifyOnClaim(Method):
                 if tries == self.max_tries:
                     break
                 m = self.view.probe_many([a], f, self.k).mean()
-                self.verdict[a, f] = (m >= self.D[a, f] - self.margin, m); tries += 1
+                self.verdict[a, f] = (m >= self.D[a, f] - self.margin, m)
+                tries += 1
             ok, m = self.verdict[a, f]
             if ok:
                 return a

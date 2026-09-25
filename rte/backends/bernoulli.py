@@ -40,22 +40,26 @@ class BernoulliBackend:
         return self._S
 
     def declared(self, source: str = "programmatic") -> np.ndarray:
-        return declared_for(self._S, self.seed, source, self.declared_noise)   # no LLM here: programmatic / self_described are the honest control
+        # no LLM here: programmatic / self_described are the honest control
+        return declared_for(self._S, self.seed, source, self.declared_noise)
 
     def execute(self, a: int, task: Task) -> int:
         u = np.random.default_rng(stable_seed_32(self.seed, "exec", int(a), task.family, task.instance)).random()
         return int(u < self._S[a, task.family])
 
     def execute_many(self, agents, families, inst) -> np.ndarray:
-        u = (np.asarray(inst, np.uint64) * np.uint64(0x9E3779B97F4A7C15) + np.uint64(self.seed)) >> np.uint64(11)   # 53-bit uniform
+        # 53-bit uniform
+        u = (np.asarray(inst, np.uint64) * np.uint64(0x9E3779B97F4A7C15) + np.uint64(self.seed)) >> np.uint64(11)
         return ((u.astype(np.float64) / 2 ** 53) < self._S[agents, families]).astype(np.int8)
 
     def stats(self) -> dict:
         return {}
 
     # ---- churn
-    def snapshot(self): return self._S.copy()
-    def restore(self, snap): self._S = snap.copy()
+    def snapshot(self):
+        return self._S.copy()
+    def restore(self, snap):
+        self._S = snap.copy()
     def redraw(self, ids, rng):
         self._S[ids] = self._Sm[rng.integers(0, self._Sm.shape[0], size=len(ids))] if self._Sm is not None \
             else sample_skill(self.dist, len(ids), self.K, rng).astype(np.float32)

@@ -100,7 +100,8 @@ _sig: dict = {}                               # shard file -> (size, mtime) when
 _last_refresh = 0.0
 REFRESH_S = 30.0
 ENDPOINT_TTL = 20.0
-_lat: dict = {}                                # endpoint url -> EWMA request latency (this process)                          # seconds a process sticks to one endpoint before re-picking among replicas
+# endpoint url -> EWMA request latency (this process)                          # seconds a process sticks to one endpoint before re-picking among replicas
+_lat: dict = {}
 
 
 def _refresh(force: bool = False) -> None:
@@ -115,9 +116,11 @@ def _refresh(force: bool = False) -> None:
         if f.name == mine:
             continue
         try:
-            st = f.stat(); sig = (st.st_size, st.st_mtime_ns)
+            st = f.stat()
+            sig = (st.st_size, st.st_mtime_ns)
             if _sig.get(f) == sig:
-                continue                        # unchanged since last read: a stat, not an open (1000s of shards on NFS)
+                # unchanged since last read: a stat, not an open (1000s of shards on NFS)
+                continue
             con = _open(f, readonly=True)
             rows = con.execute("SELECT rowid, k, v FROM memo WHERE rowid > ?", (_seen.get(f, 0),)).fetchall()
             con.close()
@@ -188,7 +191,8 @@ def _generate(model: str, messages: Sequence[dict], max_tokens: int) -> str:
             r = _clients[model][0].chat.completions.create(
                 model=model, messages=for_model(model, messages), max_tokens=int(max_tokens),
                 temperature=0.0, seed=0)
-            u = str(_clients[model][0].base_url); _lat[u] = 0.7 * _lat.get(u, time.time() - t0) + 0.3 * (time.time() - t0)
+            u = str(_clients[model][0].base_url)
+            _lat[u] = 0.7 * _lat.get(u, time.time() - t0) + 0.3 * (time.time() - t0)
             _bump("generations")
             return r.choices[0].message.content or ""
         except Exception as e:                                    # noqa: BLE001
@@ -207,7 +211,8 @@ def memo_call(key: str, fn) -> str:
         v = fn()
         with _LOCK:
             mem[key] = v
-            shard.execute("INSERT OR REPLACE INTO memo VALUES (?, ?)", (key, v)); shard.commit()
+            shard.execute("INSERT OR REPLACE INTO memo VALUES (?, ?)", (key, v))
+            shard.commit()
     return mem[key]
 
 
