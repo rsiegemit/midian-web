@@ -1,4 +1,4 @@
-"""LlamaIndex rival (SPEC §6A row 8), mode="selector"|"handoff". See NOTES_llamaindex.md."""
+"""LlamaIndex rival (SPEC §6A row 8), mode="selector"|"handoff". See docs/frameworks/NOTES_llamaindex.md."""
 from ._common import FrameworkMethod
 
 

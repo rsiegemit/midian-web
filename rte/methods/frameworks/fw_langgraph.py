@@ -1,4 +1,4 @@
-"""LangGraph rival (SPEC §6A row 1). See NOTES_langgraph.md."""
+"""LangGraph rival (SPEC §6A row 1). See docs/frameworks/NOTES_langgraph.md."""
 from ._common import FrameworkMethod
 
 

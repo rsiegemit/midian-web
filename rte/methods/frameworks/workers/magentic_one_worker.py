@@ -5,7 +5,7 @@ dispatching, which is the only place to stop it with the pick in hand. Since 202
 the default) a ledger the orchestrator rejects is read by name mention instead of being retried up to
 `max_json_retries` times: the first participant named after "next_speaker" in the raw reply (else the first
 named anywhere) is the pick; a rejected ledger naming nobody, or a ledger that declares the request satisfied
-without any speaker (the orchestrator answered the task itself), is a FAILURE. See NOTES_magentic_one.md."""
+without any speaker (the orchestrator answered the task itself), is a FAILURE. See docs/frameworks/NOTES_magentic_one.md."""
 import os
 import re
 import sys

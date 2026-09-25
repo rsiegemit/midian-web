@@ -1,4 +1,4 @@
-"""CrewAI rival (SPEC §6A row 2). See NOTES_crewai.md."""
+"""CrewAI rival (SPEC §6A row 2). See docs/frameworks/NOTES_crewai.md."""
 from ._common import FrameworkMethod
 
 

@@ -1,4 +1,4 @@
-"""smolagents rival (SPEC §6A row 9, recipe 8). See NOTES_smolagents.md."""
+"""smolagents rival (SPEC §6A row 9, recipe 8). See docs/frameworks/NOTES_smolagents.md."""
 from ._common import FrameworkMethod
 
 

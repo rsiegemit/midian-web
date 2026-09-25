@@ -1,4 +1,4 @@
-"""AutoGen rival (SPEC §6A row 3). See NOTES_autogen.md."""
+"""AutoGen rival (SPEC §6A row 3). See docs/frameworks/NOTES_autogen.md."""
 from ._common import FrameworkMethod
 
 

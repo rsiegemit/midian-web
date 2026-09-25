@@ -1,4 +1,4 @@
-"""CAMEL Workforce rival (SPEC §6A row 10, recipe 9). See NOTES_camel.md."""
+"""CAMEL Workforce rival (SPEC §6A row 10, recipe 9). See docs/frameworks/NOTES_camel.md."""
 from ._common import FrameworkMethod
 
 

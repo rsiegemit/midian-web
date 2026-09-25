@@ -1,4 +1,4 @@
-"""Microsoft Agent Framework rival (SPEC §6A row 5), mode="groupchat"|"handoff". See NOTES_maf.md."""
+"""Microsoft Agent Framework rival (SPEC §6A row 5), mode="groupchat"|"handoff". See docs/frameworks/NOTES_maf.md."""
 from ._common import FrameworkMethod
 
 
