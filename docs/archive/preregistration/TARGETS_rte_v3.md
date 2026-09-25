@@ -1,7 +1,5 @@
 # TARGETS_rte_v3.md — pre-registered expectations for the external comparisons (written 2026-09-03 18:10, before any run)
 
-> Names: this document predates the 2026-09-24 rename — MIDIAN-VA is now MIDIAN; MIDIAN is now MIDIAN w/o defenses; MIDIAN-V is MIDIAN w/o audits; MIDIAN-A is MIDIAN w/o verification; MIDIAN-SH/SHA are withdrawn (CHANGES_AND_ERRATA §8g).
-
 Motivation (RESULTS_rte_v2.md §11, last bullet): the v1/v2 benchmark is built around a cheap, checkable probe, so
 "probe then route" wins by construction. Two follow-ups answer the reviewer's question "why does nobody do this":
 

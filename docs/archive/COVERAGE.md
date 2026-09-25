@@ -107,8 +107,8 @@ both v5 sweeps at every rung and regime (referral / gossip to 10^6); the twelve 
   `fw_live_n10k_cartel_shapes`): six new populations (2 shapes × 3 seeds, ~480k generations each) warmed by one
   flat_probe_argmax job apiece (`warm10k_*`), the 950 other units launched by `shapes_gate` behind them.
 - The nine frameworks on RouterEval (10 / 100, 1,000, 5,000) with the MiniLM (`_em`) and MIDIAN-cohort (`_va`) shortlists.
-- Speed: every job of §7 and §8 is one unit (or one seed) and is submitted to `sapphire,serial_requeue`; §7's already-queued
-  jobs were widened to both partitions by `logs/fill/spread.sh`. `kempner_requeue` refuses multi-partition submissions.
+- Speed: every job of §7 and §8 is one unit (or one seed) and is submitted to `<cpu-partition>,<requeue-partition>`; §7's already-queued
+  jobs were widened to both partitions by `logs/fill/spread.sh`. `<gpu-requeue-partition>` refuses multi-partition submissions.
 - Fold `fill_fold_expand`; then matrices, tables, NUMBERS.json, bar figures (M-figures gain the 10^4 shapes and β = 0.1 cells).
 
 ## 9. Status of the fill and expansion campaigns (2026-09-17 18:30)

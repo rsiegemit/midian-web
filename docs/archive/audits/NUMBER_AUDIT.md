@@ -51,7 +51,7 @@ throughout; NUMBERS.json carries the seed convention.
 
 # Number audit — v6 sync (2026-09-17)
 
-- `paper/NUMBERS.json` regenerated on sapphire (7,700 entries). New: `v6.<source>.n<n>.<dist>.<regime>.<framework|frameworks_mean|frameworks_best|identical_cells_frac>` for the five framework shortlist sources and `v6.halving_live.n100000.<regime>.seed<k>` + `cells_done`.
+- `paper/NUMBERS.json` regenerated on <cpu-partition> (7,700 entries). New: `v6.<source>.n<n>.<dist>.<regime>.<framework|frameworks_mean|frameworks_best|identical_cells_frac>` for the five framework shortlist sources and `v6.halving_live.n100000.<regime>.seed<k>` + `cells_done`.
 - The framework tables in RESULTS II.2, II.4c and Appendix S are generated (`scripts/doc_tables.py`) and verified row by row (`--verify`: OK at sync). Cells marked * are incomplete and re-synced with `--sync`.
 - Corrections to numbers quoted in chat/commits before the sync: 10^5 dedup Magentic-One 0.432 → 0.446 and the dedup mean 0.363 → 0.366 (the earlier figures pooled both β = 0 cells; the convention is the random cell alone); 10^5 MiniLM mean 0.493 → 0.495 for the same reason. No conclusion changes.
 - Trusted-observer `sequential_halving` has zero entries (erratum 26).
