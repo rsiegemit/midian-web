@@ -4,7 +4,7 @@ hnswlib exposes no visit count, so per query we charge hop(ceil log2 n) and comp
 import math
 import numpy as np
 from .base import Method
-from ._est import probe_successes, CHUNK
+from ._est import probe_means, CHUNK
 
 
 class FlatNSWRouter(Method):
@@ -18,7 +18,7 @@ class FlatNSWRouter(Method):
     def build(self, view, budget):
         import hnswlib
         self.view = view
-        self.est = (probe_successes(view, budget.b) / budget.b).astype(np.float32)
+        self.est = probe_means(view, budget.b).astype(np.float32)
         self.index = hnswlib.Index("ip", view.K)
         self.index.init_index(view.n, M=self.M, ef_construction=self.efc,   # keyword: positional order is M first
                               random_seed=int(view.rng.integers(2 ** 31 - 1)))

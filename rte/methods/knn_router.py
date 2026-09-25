@@ -4,6 +4,7 @@ default because an agent has only b probes per family). Pick = argmax over agent
 `online=True` adds every routed (prompt, agent, outcome) to the store, the learned-router analogue of flat_online."""
 import numpy as np
 from .base import Method
+from ._est import scan_argmax
 from ._learned import vec, probe_set, task_vec
 
 
@@ -27,9 +28,8 @@ class KNNRouter(Method):
         return np.take_along_axis(self.Y, top, 1).mean(1)
 
     def fetch(self, task):
-        self.view.ledger.compare(self.view.n)
         self._q = task_vec(self.view, task)
-        return int(np.argmax(self._pred(self._q)))
+        return scan_argmax(self.view, self._pred(self._q))
 
     def observe(self, task, agent, outcome):
         if not self.online: return

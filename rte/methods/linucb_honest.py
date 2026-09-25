@@ -5,7 +5,7 @@ scores arms by x^T theta_f + alpha * sqrt(x^T A_f^-1 x). Warm-up = the shared n*
 each fed to the model as an observation); online updates on. Fetch scans the n arms (compare(n))."""
 import numpy as np
 
-from ._est import probe_successes
+from ._est import probe_means, running_mean
 from .base import Method
 
 
@@ -29,7 +29,7 @@ class LinUcbHonest(Method):
     def build(self, view, budget):
         self.view, d = view, 4
         self.cnt = np.full((view.n, view.K), budget.b, np.int64)
-        self.mean = probe_successes(view, budget.b) / budget.b
+        self.mean = probe_means(view, budget.b)
         self.A = np.tile(np.eye(d), (view.K, 1, 1)); self.b = np.zeros((view.K, d))
         for f in range(view.K):                                  # the warm-up pulls train the model, one row per arm
             x = self.features(f)
@@ -50,5 +50,4 @@ class LinUcbHonest(Method):
         f = task.family
         x = self.features(f)[agent]
         self.A[f] += np.outer(x, x); self.b[f] += x * outcome
-        self.cnt[agent, f] += 1
-        self.mean[agent, f] += (outcome - self.mean[agent, f]) / self.cnt[agent, f]
+        running_mean(self.mean, self.cnt, agent, f, outcome)

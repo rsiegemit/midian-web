@@ -3,6 +3,7 @@ at build (O(1) fetch); default is a flat O(n) scan per fetch."""
 import numpy as np
 from .base import Method
 from ._decl import declared, scan
+from ._est import lookup
 
 
 class DeclaredArgmax(Method):
@@ -21,6 +22,5 @@ class DeclaredArgmax(Method):
 
     def fetch(self, task):
         if self.cached:
-            self.view.ledger.compare(1)
-            return int(self.best[task.family])
+            return lookup(self.view, self.best, task.family)
         return int(np.argmax(scan(self.view, self.D, task.family)))

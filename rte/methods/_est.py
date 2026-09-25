@@ -16,6 +16,49 @@ def probe_successes(view, b: int) -> np.ndarray:
     return S
 
 
+def probe_means(view, b: int) -> np.ndarray:
+    """Mean of b probes per (agent, family), float64[n, K] (the division happens in float64, before any cast)."""
+    return probe_successes(view, b) / b
+
+
+def reprobe(view, ids, b: int) -> np.ndarray:
+    """Churn repair: probe agents `ids` b times on every family; outcomes[len(ids), K, b]."""
+    return view.probe_many(np.asarray(ids)[:, None], np.arange(view.K)[None, :], b)
+
+
+def running_mean(est, cnt, a, f, outcome) -> None:
+    """Online update of one (agent, family) estimate: count += 1, then est += (outcome - est) / count."""
+    cnt[a, f] += 1
+    est[a, f] += (outcome - est[a, f]) / cnt[a, f]
+
+
+def scan_argmax(view, values) -> int:
+    """Argmax over all n agents, charged as an O(n) comparison scan."""
+    view.ledger.compare(view.n)
+    return int(np.argmax(values))
+
+
+def lookup(view, best, f) -> int:
+    """A precomputed per-family pick, charged as one comparison."""
+    view.ledger.compare(1)
+    return int(best[f])
+
+
+def others(s: int) -> np.ndarray:
+    """int32[s, s-1]: row m lists the positions 0..s-1 other than m (a member's peers within a group of s)."""
+    return np.array([[j for j in range(s) if j != m] for m in range(s)], np.int32)
+
+
+def cohort_blocks(cohorts: np.ndarray, step: int) -> list:
+    """Full cohorts in blocks of `step`, then the short last cohort (its -1 padding dropped) as a block of its own."""
+    short = cohorts[-1, -1] < 0
+    full = cohorts[:len(cohorts) - short]
+    blocks = [full[lo:lo + step] for lo in range(0, len(full), step)]
+    if short:
+        blocks.append(cohorts[-1][cohorts[-1] >= 0][None, :])
+    return blocks
+
+
 class BetaBandit(Method):
     """Thompson sampling over Beta(alpha, beta) per (agent, family); subclasses set the prior in `prior(view)`."""
     needs = frozenset({"probe"})
@@ -30,8 +73,7 @@ class BetaBandit(Method):
         self.alpha, self.beta = a0 + s, b0 + (budget.b - s)
 
     def fetch(self, task):
-        self.view.ledger.compare(self.view.n)
-        return int(np.argmax(self.view.rng.beta(self.alpha[:, task.family], self.beta[:, task.family])))
+        return scan_argmax(self.view, self.view.rng.beta(self.alpha[:, task.family], self.beta[:, task.family]))
 
     def observe(self, task, agent, outcome):
         (self.alpha if outcome else self.beta)[agent, task.family] += 1
@@ -94,18 +136,13 @@ def peer_reported_estimates(view, b: int, cohorts: np.ndarray, delta: float, by_
     K, r = view.K, cohorts.shape[1]
     est = np.zeros((view.n, K), np.float32)
     step = max(1, min(CHUNK, REPORT_ELEMS // (K * b * max(r - 1, 1))) // r)
-    short = cohorts[-1, -1] < 0
-    full = cohorts[:len(cohorts) - short]
-    blocks = [full[lo:lo + step] for lo in range(0, len(full), step)]
-    if short:
-        blocks.append(cohorts[-1][cohorts[-1] >= 0][None, :])
-    for ag in blocks:
+    for ag in cohort_blocks(cohorts, step):
         C, s = ag.shape
         out = outcomes[ag.ravel()] if outcomes is not None else view.probe_many(ag.reshape(-1, 1), np.arange(K)[None, :], b)   # (C*s, K, b)
         if s == 1:                                                                       # no peers to report
             est[ag.ravel()] = out.mean(2)
             continue
-        peers = np.array([[j for j in range(s) if j != m] for m in range(s)], np.int32)   # (s, s-1)
+        peers = others(s)                                                                # (s, s-1)
         if by_reporter:                                                                  # every peer reports every probe,
             k = min(observers or s - 1, s - 1)                                           # trimmed by PEER (a random k of them)
             obs = ag[:, peers] if k == s - 1 else np.take_along_axis(

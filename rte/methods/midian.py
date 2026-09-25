@@ -18,7 +18,8 @@ trims by reporter), midian{"audit": false, "verify": false} (w/o defenses: level
 groups level 0 by measured probe mean. Arrays per level, padded to a multiple of r. `_choose` is the LLM-descent hook."""
 import numpy as np
 
-from ._est import REPORT_ELEMS, peer_estimate, peer_reported_estimates, probe_outcomes, trim_k, trimmed_by_reporter
+from ._est import (REPORT_ELEMS, cohort_blocks, others, peer_estimate, peer_reported_estimates, probe_outcomes, trim_k,
+                   trimmed_by_reporter)
 from .base import Method
 
 NEG = np.float32(-np.inf)
@@ -100,7 +101,7 @@ class Midian(Method):
         children's representatives lead[M,r] (trimmed by reporter), folded into its running estimate."""
         r, k = self.r, min(self.observers, self.r - 1)
         node, slot, fam = np.nonzero(cand >= 0); child = slot_child[slot]                # valid candidates, their child
-        peers = np.array([[j for j in range(r) if j != m] for m in range(r)], np.int32)
+        peers = others(r)
         rep_of = np.where(ch >= 0, lead, -1)[node[:, None], peers[child]]                # (V, r-1) OTHER children's reps
         if (bad := rep_of < 0).any():                                                    # short (padded) node: cycle
             rep_of = np.where(bad, np.where(ch >= 0, lead, lead[:, :1])[node][:, :1].repeat(r - 1, 1), rep_of)
@@ -129,17 +130,14 @@ class Midian(Method):
         self.est = np.zeros((n, K), np.float32)
         self.rsum, self.rcnt = np.zeros((n, K, r - 1), np.float32), np.zeros((n, K, r - 1), np.int32)
         self.peer_of, self.excluded = np.full((n, r - 1), -1, np.int32), np.zeros(n, bool)
-        short = cohorts[-1, -1] < 0
-        full = cohorts[:len(cohorts) - short]
         step = max(1, REPORT_ELEMS // (K * r * r * max(b, 1)))
-        blocks = [full[lo:lo + step] for lo in range(0, len(full), step)] + ([cohorts[-1][cohorts[-1] >= 0][None]] if short else [])
         fam = np.arange(K)[None, :, None]
-        for ag in blocks:
+        for ag in cohort_blocks(cohorts, step):
             C, s = ag.shape
             if s == 1:                                                              # nobody to report: own probes
                 self.est[ag[:, 0]] = (outcomes[ag[:, 0]] if outcomes is not None else view.probe_many(ag, fam[0], b)).mean(-1)
                 continue
-            peers = np.array([[j for j in range(s) if j != m] for m in range(s)], np.int32)
+            peers = others(s)
             rep_ids = ag[:, peers]                                                  # (C, s, s-1) reporter ids
             self.peer_of[ag.ravel(), :s - 1] = rep_ids.reshape(-1, s - 1)
             cidx = np.arange(C)[:, None, None]

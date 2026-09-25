@@ -3,7 +3,7 @@ Runs entirely at build; fetch is a cached lookup, no online update."""
 import math
 import numpy as np
 from .base import Method
-from ._est import CHUNK, trimmed_by_reporter
+from ._est import CHUNK, lookup, trimmed_by_reporter
 
 
 def halving(view, f, budget, peers=0, delta=1 / 3):
@@ -46,8 +46,7 @@ class SequentialHalving(Method):
         assert sum(u for _, u in res) <= budget.total_probes(view.n, view.K)
 
     def fetch(self, task):
-        self.view.ledger.compare(1)
-        return int(self.best[task.family])
+        return lookup(self.view, self.best, task.family)
 
     def churn(self, departed, arrived):
         """rebuild: the full n*K*b halving again at every churn event (charged); stale: keep the old picks."""

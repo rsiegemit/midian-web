@@ -5,6 +5,7 @@ multi-output partial fit); the online learned router is knn_router(online=True).
 import numpy as np
 from sklearn.neural_network import MLPRegressor
 from .base import Method
+from ._est import scan_argmax
 from ._learned import probe_set, task_vec
 
 
@@ -24,6 +25,5 @@ class MLPRouter(Method):
         self.model = MLPRegressor(hidden_layer_sizes=(self.hidden,), max_iter=self.epochs, random_state=0).fit(X, Y.reshape(-1))
 
     def fetch(self, task):
-        self.view.ledger.compare(self.view.n)
         q = task_vec(self.view, task)
-        return int(np.argmax(self.model.predict(np.concatenate([self.eye, np.broadcast_to(q, (self.view.n, q.size))], 1))))
+        return scan_argmax(self.view, self.model.predict(np.concatenate([self.eye, np.broadcast_to(q, (self.view.n, q.size))], 1)))

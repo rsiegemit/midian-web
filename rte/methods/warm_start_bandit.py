@@ -1,6 +1,6 @@
 """Thompson sampling with a Beta prior of pseudo-count n0 centred on the declared skill D[a,f]."""
 import numpy as np
-from ._est import BetaBandit
+from ._est import BetaBandit, reprobe
 
 
 class WarmStartBandit(BetaBandit):
@@ -22,5 +22,5 @@ class WarmStartBandit(BetaBandit):
     def churn(self, departed, arrived):
         """Fresh prior from the arrivals' declarations (len(arrived) messages) plus b probes per family each."""
         v, ids = self.view, np.asarray(arrived); v.ledger.message(ids.size)
-        D = np.clip(v.declared[ids], 1e-3, 1 - 1e-3); s = v.probe_many(ids[:, None], np.arange(v.K)[None, :], self.b).sum(-1)
+        D = np.clip(v.declared[ids], 1e-3, 1 - 1e-3); s = reprobe(v, ids, self.b).sum(-1)
         self.alpha[ids], self.beta[ids] = self.n0 * D + s, self.n0 * (1 - D) + self.b - s

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import numpy as np
 
+from ._est import scan_argmax
 from .base import Method
 
 _MAX_N = 100_000
@@ -59,8 +60,7 @@ class TrueSkillPerFamily(Method):
         self.mu = np.array([[ratings[a][f].mu for f in range(K)] for a in range(n)])
 
     def fetch(self, task) -> int:
-        self.view.ledger.compare(self.view.n)
-        return int(np.argmax(self.mu[:, task.family]))
+        return scan_argmax(self.view, self.mu[:, task.family])
 
     def observe(self, task, agent: int, outcome: int) -> None:
         return None
