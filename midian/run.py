@@ -349,10 +349,9 @@ def consolidate(out, prune: bool = False, force: bool = False):
     names = sorted(f for f in os.listdir(f"{out}/rows.d") if f.endswith(".json"))   # snapshot: later arrivals wait
     frames = []
     if os.path.exists(csv):
-        # NOTE: pandas' default float parser is not round-trip exact (0.08399999999999996 -> 0.0839999999999999), so a
-        # row that lives only in the CSV can drift a few ulps on each merge. Left as is: changing it would alter stored
-        # values on the next merge of a live grid.
-        old = pd.read_csv(csv, low_memory=False)
+        # round_trip: pandas' default float parser is not exact (0.08399999999999996 -> 0.0839999999999999), which let a
+        # row living only in the CSV drift a few ulps on every merge (docs/errata.md, erratum 31)
+        old = pd.read_csv(csv, low_memory=False, float_precision="round_trip")
         if "rid" not in old.columns or old.rid.isna().any():     # a CSV rebuilt by pre-guard code has no rid: re-key it
             old["rid"] = [rid_of_row(r) for _, r in old.iterrows()]   # so dedup works and nothing doubles
         frames.append(old)
