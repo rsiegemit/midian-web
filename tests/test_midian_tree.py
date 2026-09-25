@@ -196,8 +196,12 @@ def test_llm_descent_follows_a_parseable_answer(monkeypatch):
 
 # ---------------------------------------------------------------- v2 (2026-09-03): per-probe reports, stratify, churn, MIDIAN w/o audits
 def _build(name, n, seed=1, beta=0.0, **kw):
-    w = World(n, 16, "specialist", beta, seed=seed); M = load_method(name)(**kw); v = w.view(M.needs)
-    s0 = w.ledger.snapshot(); M.build(v, Budget(3)); return w, M, v, w.ledger.diff(s0)
+    w = World(n, 16, "specialist", beta, seed=seed)
+    M = load_method(name)(**kw)
+    v = w.view(M.needs)
+    s0 = w.ledger.snapshot()
+    M.build(v, Budget(3))
+    return w, M, v, w.ledger.diff(s0)
 
 
 @pytest.mark.parametrize("n", [100, 1000])
@@ -209,26 +213,35 @@ def test_midian_wo_audit_reports_one_per_reporter_per_probe(n):
 
 def test_midian_wo_audit_caches_by_default():
     """cached defaults to verify: midian{audit: false} == midian{audit: false, verify: true, cached: true}."""
-    wa, A, _, da = _build("midian", 300, seed=4, beta=0.25, audit=False); wb, B_, _, db = _build("midian", 300, seed=4, beta=0.25, audit=False, verify=True, cached=True)
+    wa, A, _, da = _build("midian", 300, seed=4, beta=0.25, audit=False)
+    wb, B_, _, db = _build("midian", 300, seed=4, beta=0.25, audit=False, verify=True, cached=True)
     assert da == db and [A.fetch(t) for t in wa.tasks(50)] == [B_.fetch(t) for t in wb.tasks(50)]
 
 
 def test_stratified_cohorts_take_one_member_per_stratum(monkeypatch):
     """1.5: with exact probes the key is S.mean(1); every full cohort holds exactly one agent from each of the r deciles."""
-    w = World(100, 16, "specialist", 0.0, seed=3); M = load_method("midian")(stratify=True, audit=False, verify=False); v = w.view(M.needs)
+    w = World(100, 16, "specialist", 0.0, seed=3)
+    M = load_method("midian")(stratify=True, audit=False, verify=False)
+    v = w.view(M.needs)
     monkeypatch.setattr("rte.methods.midian.probe_outcomes", lambda view, b: np.broadcast_to(w.S[:, :, None], (100, 16, b)).astype(np.float32))
-    s0 = w.ledger.snapshot(); M.build(v, Budget(3)); d = w.ledger.diff(s0)
+    s0 = w.ledger.snapshot()
+    M.build(v, Budget(3))
+    d = w.ledger.diff(s0)
     assert d["probes"] == 0 and d["reports"] == 100 * 16 * 3 * 9            # (mocked probes; reports still charged)
     rest = np.setdiff1d(np.arange(100), M.leaves[-1])                     # the last cohort is the random (short) one
-    stratum = np.empty(100, int); stratum[rest[np.argsort(w.S[rest].mean(1), kind="stable")]] = np.arange(90) // 9
+    stratum = np.empty(100, int)
+    stratum[rest[np.argsort(w.S[rest].mean(1), kind="stable")]] = np.arange(90) // 9
     for cohort in M.leaves[:-1]:
         assert sorted(stratum[cohort]) == list(range(10))
 
 
 def test_churn_repairs_only_the_arrived_agents():
     w, M, v, _ = _build("midian", 200, seed=2, audit=False, verify=False)
-    arrived = np.array([3, 50, 77]); before = M.est.copy(); s0 = w.ledger.snapshot()
-    M.churn(arrived, arrived); d = w.ledger.diff(s0)
+    arrived = np.array([3, 50, 77])
+    before = M.est.copy()
+    s0 = w.ledger.snapshot()
+    M.churn(arrived, arrived)
+    d = w.ledger.diff(s0)
     assert d["probes"] == 3 * 16 * 3 and d["reports"] == 3 * 16 * 3 * 9
     assert d["messages"] == 3 * (9 + M.depth + 16 * M.depth) and d["comparisons"] == 3 * 16 * M.r * M.depth   # + path recompute (K families, all levels)
     untouched = np.setdiff1d(np.arange(200), arrived)
@@ -236,4 +249,5 @@ def test_churn_repairs_only_the_arrived_agents():
     for l in range(M.depth):                                               # tree still consistent after the repair
         for node in range(len(M.children[l])):
             for f in (0, 7):
-                vals = M._values(l, node, f); assert M.summary[l][node, f] == vals.max() and M.best[l][node, f] == vals.argmax()
+                vals = M._values(l, node, f)
+                assert M.summary[l][node, f] == vals.max() and M.best[l][node, f] == vals.argmax()

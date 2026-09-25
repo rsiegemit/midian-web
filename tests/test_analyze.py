@@ -36,7 +36,8 @@ def toy():
         base = 0.55 + 0.02 * seed
         for p, s in ((OFF, base), (WO_VERIFY, base + 0.04)):
             rows.append(("midian", p, 0.5, "self_described", seed, s, ""))
-    df = frame(rows); df.loc[np.isclose(df.beta, 0.5), "liar_select"] = "low_skill_first"
+    df = frame(rows)
+    df.loc[np.isclose(df.beta, 0.5), "liar_select"] = "low_skill_first"
     return df
 
 

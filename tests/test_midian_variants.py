@@ -17,11 +17,17 @@ OFF = dict(audit=False, verify=False)                     # MIDIAN w/o defenses
 
 def run(n=100, beta=0.25, seed=1, b=3, Q=300, **kw):
     w = World(n, 16, "specialist", beta, seed=seed, liar_select="low_skill_first")
-    m = Midian(**kw); before = w.ledger.snapshot()
-    m.build(w.view(m.needs), Budget(b)); build = w.ledger.diff(before)
-    stream = w.tasks(Q); s = []
+    m = Midian(**kw)
+    before = w.ledger.snapshot()
+    m.build(w.view(m.needs), Budget(b))
+    build = w.ledger.diff(before)
+    stream = w.tasks(Q)
+    s = []
     for t in stream:
-        a = m.fetch(t); o = w.execute(a, t); m.observe(t, a, o); s.append(o)
+        a = m.fetch(t)
+        o = w.execute(a, t)
+        m.observe(t, a, o)
+        s.append(o)
     return w, m, build, float(np.mean(s))
 
 
@@ -59,7 +65,8 @@ def test_online_audit_charges_reports():
     m.rate = 1.0                                          # audit every routed outcome
     w.ledger.reset()
     for t in w.tasks(50):
-        a = m.fetch(t); m.observe(t, a, w.execute(a, t))
+        a = m.fetch(t)
+        m.observe(t, a, w.execute(a, t))
     assert w.ledger.reports > 0
 
 
@@ -68,9 +75,15 @@ def test_full_method_costs_like_wo_audit():
     cached root pick) a fetch charges 1 comparison + 2 messages."""
     out = {}
     for tag, kw in (("wo_audit", dict(audit=False)), ("full", {})):
-        w = World(n=200, K=8, dist="specialist", beta=0.25, seed=3, backend="bernoulli"); m = Midian(**kw)
-        v = w.view(m.needs); m.build(v, Budget(3)); out[tag] = dict(w.ledger.snapshot())
-        w.ledger.reset(); t = w.tasks(20)[0]; a = m.fetch(t); assert 0 <= a < w.n
+        w = World(n=200, K=8, dist="specialist", beta=0.25, seed=3, backend="bernoulli")
+        m = Midian(**kw)
+        v = w.view(m.needs)
+        m.build(v, Budget(3))
+        out[tag] = dict(w.ledger.snapshot())
+        w.ledger.reset()
+        t = w.tasks(20)[0]
+        a = m.fetch(t)
+        assert 0 <= a < w.n
         assert w.ledger.snapshot()["comparisons"] == 1 and w.ledger.snapshot()["messages"] == 2
     assert out["full"]["probes"] <= 1.05 * out["wo_audit"]["probes"] + 1
 

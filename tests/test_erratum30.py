@@ -138,7 +138,8 @@ def test_replay_split_disjoint_rows(tmp, real):
         pytest.skip("real cells not present")
     kw = dict(n=60, K=64 if real else 8, dist="specialist", beta=0.5, liar_select="low_skill_first", seed=3, backend="replay",
               backend_kwargs={"split": True, **({} if real else {"cells_path": fake_cells(f"{tmp}/c.npz")})})
-    w = World(**kw); b = w.backend
+    w = World(**kw)
+    b = w.backend
     d = np.load(REPLAY_NPZ if real else kw["backend_kwargs"]["cells_path"])
     O, off, npr = d["outcomes"], d["offsets"], d["n_prompts"]
     sel = np.sort(np.argsort(-npr, kind="stable")[:b.K])
@@ -149,7 +150,8 @@ def test_replay_split_disjoint_rows(tmp, real):
         assert np.allclose(b._model_cat_acc[:, f], O[p].mean(0))          # S reads the probe rows only
     # execute -> task rows; execute_many (probes) -> probe rows
     for t in w.tasks(300):
-        a = int(np.argmax(w.S[:, t.family])); f = t.family
+        a = int(np.argmax(w.S[:, t.family]))
+        f = t.family
         m = b._weakest_model[f] if b.mask[a, f] else b.model_id[a]
         assert w.backend.execute(a, t) == O[b.task_rows[f][t.instance % len(b.task_rows[f])], m]
     a, f, inst = np.arange(w.n) % w.n, np.arange(w.n) % w.K, np.arange(w.n) * 7919
@@ -161,8 +163,10 @@ def test_replay_split_disjoint_rows(tmp, real):
 # ------------------------------------------------------------------ FIX C: no repeated test prompts
 class _Pool:
     no_repeat = True
-    def __init__(self, sizes): self.sizes = np.array(sizes)
-    def task_pool_sizes(self): return self.sizes
+    def __init__(self, sizes):
+        self.sizes = np.array(sizes)
+    def task_pool_sizes(self):
+        return self.sizes
 
 
 def test_no_repeat_stream_unit(tmp):
@@ -186,7 +190,8 @@ def test_no_repeat_llmrouterbench():
         pytest.skip("LLMRouterBench not present")
     kw = dict(n=20, K=15, dist="all", beta=0.5, liar_select="low_skill_first", seed=3, backend="routereval",
               backend_kwargs={"dataset": "llmrouterbench", "no_repeat": True})
-    w = World(**kw); b = w.backend
+    w = World(**kw)
+    b = w.backend
     s = w.tasks(390)
     rows = [b._te[t.family][t.instance] for t in s]
     assert len(set(rows)) == 390 and all(t.instance < len(b._te[t.family]) for t in s)

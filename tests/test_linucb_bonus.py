@@ -17,7 +17,8 @@ def test_own_bonus_beats_context_bonus_at_1e4():
     from rte.run import run_method
     from rte.world import World
     C = f"{os.environ['RTE_DATA']}/populations/specialist_n1000_K16_seed1/S.npy"
-    w = World(10000, 16, "specialist", 0.0, seed=1, backend="bernoulli", backend_kwargs={"calibrate_from": C}); st = w.tasks(1000)
+    w = World(10000, 16, "specialist", 0.0, seed=1, backend="bernoulli", backend_kwargs={"calibrate_from": C})
+    st = w.tasks(1000)
     old = run_method(w, st, {"name": "linucb_honest", "params": {}}, 3)["success"]
     new = run_method(w, st, {"name": "linucb_honest", "params": {"bonus": "own"}}, 3)["success"]
     assert new > old + 0.03

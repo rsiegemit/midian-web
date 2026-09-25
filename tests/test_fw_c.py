@@ -44,11 +44,14 @@ def mock_url():
             break
         time.sleep(0.1)
     else:
-        proc.kill(); raise RuntimeError("mock server did not start")
+        proc.kill()
+        raise RuntimeError("mock server did not start")
     yield f"http://127.0.0.1:{port}/v1"
     proc.terminate()
-    try: proc.wait(timeout=10)
-    except subprocess.TimeoutExpired: proc.kill()
+    try:
+        proc.wait(timeout=10)
+    except subprocess.TimeoutExpired:
+        proc.kill()
 
 
 @pytest.mark.parametrize("method,env", sorted(FRAMEWORKS.items()))
@@ -88,9 +91,11 @@ def test_no_delegation_is_a_failure_with_strict_success_zero(method):
     M.bridge.select = lambda *a, **kw: {"choice": None, "error": None, "raw": "FAILURE: answered itself"}
     tasks = w.tasks(4)
     for t in tasks[:2]:
-        a = M.fetch(t); M.observe(t, a, 1)
+        a = M.fetch(t)
+        M.observe(t, a, 1)
     M.bridge.select = lambda task, cands, *a, **kw: {"choice": cands[0]["name"], "error": None, "raw": "ok"}
     for t in tasks[2:]:
-        a = M.fetch(t); M.observe(t, a, 1)
+        a = M.fetch(t)
+        M.observe(t, a, 1)
     assert M.stats["failures"] == 2 and M.stats["picks"] == 2 and M.stats["fallbacks"] == 0
     assert M.stats["success_strict"] == 0.5 and M.stats["fallback_rate"] == 0.5

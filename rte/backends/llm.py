@@ -266,7 +266,8 @@ class LLMBackend:
         first = lambda i: prompts.rate_task(fam, q, sig[i][1], sig[i][2])                  # noqa: E731
         jobs = {i: s[0] for i, s in enumerate(sig)}
         text = self._ask(jobs, first, 32)
-        if again: text = self._ask(jobs, lambda i: prompts.rate_again(first(i), text[i]), 32)
+        if again:
+            text = self._ask(jobs, lambda i: prompts.rate_again(first(i), text[i]), 32)
         return [text[i] for i in range(len(sig))]
 
     def family_descriptions(self) -> list[str]:

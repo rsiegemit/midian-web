@@ -52,9 +52,12 @@ def test_snapshot_is_a_copy_not_a_live_view():
 
 def test_diff_conservation():
     led = Ledger()
-    led.probe(3); led.hop(2)
+    led.probe(3)
+    led.hop(2)
     before = led.snapshot()
-    led.probe(4); led.compare(9); led.task(1)
+    led.probe(4)
+    led.compare(9)
+    led.task(1)
     d = led.diff(before)
     assert d == {**ZERO, "probes": 4, "comparisons": 9, "tasks": 1}
     after = led.snapshot()

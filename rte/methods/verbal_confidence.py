@@ -27,18 +27,23 @@ def parse_confidence(text):
     reverse), else the LAST in the reply ("on a scale of 0 to 10, I'd say 8" -> 0.8). x/y and "x out of y" -> x/y;
     x% -> x/100; a decimal <= 1 (0.7, 1.0) is already a fraction; any other x <= 10 is on the asked 0-10 scale (x/10); 10 < x <= 100 reads as a percentage (a bare "85" -> 0.85); anything else -> None."""
     tags = ANSWER_RE.findall(text or "")
-    if tags: return next((v for v in map(_rating, tags) if v is not None), None)
+    if tags:
+        return next((v for v in map(_rating, tags) if v is not None), None)
     return _rating(text or "", last=True)
 
 
 def _rating(s, last=False):
     ms = list(_NUM.finditer(s))
-    if not ms: return None
+    if not ms:
+        return None
     m = ms[-1] if last else ms[0]
     x, num, den = float(m.group(1)), m.group(1), m.group(3)
-    if den: v = x / float(den) if float(den) else -1.0
-    elif m.group(2) == "%" or x > 10: v = x / 100
-    else: v = x if "." in num and x <= 1 else x / 10
+    if den:
+        v = x / float(den) if float(den) else -1.0
+    elif m.group(2) == "%" or x > 10:
+        v = x / 100
+    else:
+        v = x if "." in num and x <= 1 else x / 10
     return v if 0 <= v <= 1 else None
 
 
@@ -48,7 +53,8 @@ class VerbalConfidence(Method):
     requires_llm = True
 
     def __init__(self, k=10, shortlist="declared"):              # no **params: a typo must not enter the row id silently
-        if shortlist not in ("declared", "embed"): raise ValueError(f"shortlist must be declared|embed, got {shortlist!r}")
+        if shortlist not in ("declared", "embed"):
+            raise ValueError(f"shortlist must be declared|embed, got {shortlist!r}")
         super().__init__(k=k, shortlist=shortlist)
         self.k, self.shortlist = int(k), shortlist
         self.stats = {"asked": 0, "reasked": 0, "unparseable": 0, "untagged": 0, "ties": 0, "ties_distinct": 0}
@@ -57,18 +63,24 @@ class VerbalConfidence(Method):
         self.view = view
         view.ledger.message(view.n)                                    # declarations / descriptions to the registry
         self.sl = FrameworkMethod(k=self.k, retrieval=self.shortlist)   # its retrieval only: no supervisor, no bridge
-        self.sl.view = view; self.sl._index(view)
+        self.sl.view = view
+        self.sl._index(view)
 
     def fetch(self, task):
         cand = self.sl.retrieve(task)
-        said = self.view.ask_confidence(cand, task); conf = [parse_confidence(t) for t in said]
-        self.stats["asked"] += len(cand); self.stats["untagged"] += sum(not ANSWER_RE.search(t or "") for t in said)
+        said = self.view.ask_confidence(cand, task)
+        conf = [parse_confidence(t) for t in said]
+        self.stats["asked"] += len(cand)
+        self.stats["untagged"] += sum(not ANSWER_RE.search(t or "") for t in said)
         bad = [i for i, x in enumerate(conf) if x is None]
         if bad:                                                        # once more, same conversation
-            for i, t in zip(bad, self.view.ask_confidence(cand[bad], task, again=True)): said[i], conf[i] = t, parse_confidence(t)
+            for i, t in zip(bad, self.view.ask_confidence(cand[bad], task, again=True)):
+                said[i], conf[i] = t, parse_confidence(t)
             self.stats["reasked"] += len(bad)
         self.stats["unparseable"] += conf.count(None)
-        c = np.array([0.0 if x is None else x for x in conf]); top = np.flatnonzero(c == c.max())
+        c = np.array([0.0 if x is None else x for x in conf])
+        top = np.flatnonzero(c == c.max())
         self.view.ledger.compare(len(cand))
-        self.stats["ties"] += int(top.size > 1); self.stats["ties_distinct"] += int(len({said[i] for i in top}) > 1)
+        self.stats["ties"] += int(top.size > 1)
+        self.stats["ties_distinct"] += int(len({said[i] for i in top}) > 1)
         return int(cand[top[0]])                                       # first maximum: earliest shortlist position

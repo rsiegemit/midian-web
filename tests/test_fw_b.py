@@ -47,7 +47,8 @@ def mock_url():
         except OSError:
             time.sleep(0.1)
     yield url
-    proc.kill(); proc.wait()
+    proc.kill()
+    proc.wait()
 
 
 @pytest.mark.parametrize("name,params,first", CASES,

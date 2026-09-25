@@ -39,12 +39,14 @@ def test_bm25_scores_match_a_direct_okapi_computation():
     m = _built(dedup=True, retrieval="bm25")
     k1, b = 1.5, 0.75
     toks = [t.lower().split() for t in m.desc]
-    L = np.array([len(t) for t in toks], float); avg = L.mean()
+    L = np.array([len(t) for t in toks], float)
+    avg = L.mean()
     for f in range(4):
         want = np.zeros(len(m.desc))
         for w in set(m.fdesc[f].lower().split()):
             df = sum(w in t for t in toks)
-            if not df: continue
+            if not df:
+                continue
             idf = np.log(1 + (len(toks) - df + 0.5) / (df + 0.5))
             tf = np.array([t.count(w) for t in toks], float)
             want += idf * tf * (k1 + 1) / (tf + k1 * (1 - b + b * L / avg))
@@ -84,11 +86,13 @@ def test_sota_reranks_the_fused_pool_once_per_family_at_build_time():
     calls, order = [], {}
 
     def fake(query, docs):                                   # deterministic: exactly reverses the fused pool
-        calls.append(query); order[query] = list(docs)
+        calls.append(query)
+        order[query] = list(docs)
         return np.arange(len(docs), dtype=np.float32)
 
     class _S(_Fw):
-        def _rerank(self, q, d): return fake(q, d)
+        def _rerank(self, q, d):
+            return fake(q, d)
 
     m = _S(base_url="http://127.0.0.1:1/v1", embed_model="all-MiniLM-L6-v2", dedup=True, retrieval="sota", rerank_pool=25)
     m.build(World(N, K, "specialist", 0.0, seed=1).view(m.needs), Budget(1))
@@ -107,7 +111,8 @@ def test_sota_pool_handed_to_the_reranker_is_the_hybrid_ranking():
 
     class _S(_Fw):
         def _rerank(self, q, d):
-            got[q] = list(d); return np.arange(len(d), dtype=np.float32)
+            got[q] = list(d)
+            return np.arange(len(d), dtype=np.float32)
 
     m = _S(base_url="http://127.0.0.1:1/v1", embed_model="all-MiniLM-L6-v2", dedup=True, retrieval="sota", rerank_pool=25)
     m.build(World(N, K, "specialist", 0.0, seed=1).view(m.needs), Budget(1))
@@ -240,7 +245,8 @@ def test_infrastructure_errors_fail_the_unit_instead_of_writing_a_fallback_row()
     m.bridge.select = lambda *a, **k: {"choice": None, "error": "ImportError: libffi.so.8", "raw": None}
     tasks = list(_tasks(40))
     with pytest.raises(RuntimeError, match="refusing to write"):
-        for t in tasks: m.fetch(t)
+        for t in tasks:
+            m.fetch(t)
     assert m.stats["infra_errors"] >= 4 and m.stats["fallbacks"] == 0      # never counted as framework behaviour
 
 
@@ -248,7 +254,8 @@ def test_a_framework_naming_nobody_is_still_a_fallback_not_an_error():
     """choice=None WITHOUT an error is genuine framework behaviour (it named no candidate): it falls back and counts."""
     m = _built(dedup=True, retrieval="tfidf")
     m.bridge.select = lambda *a, **k: {"choice": None, "error": None, "raw": "I would pick the arithmetic expert"}
-    for t in _tasks(10): m.fetch(t)
+    for t in _tasks(10):
+        m.fetch(t)
     assert m.stats["fallbacks"] == 10 and m.stats.get("infra_errors", 0) == 0
 
 
@@ -260,15 +267,18 @@ def test_a_supervisor_invalid_action_is_a_non_pick_not_an_infrastructure_error(e
     """Every error class that ever failed a unit (2026-09-23) was the supervisor LLM's own invalid action raised by the
     framework (ADK / OpenAI Agents: a tool named after the agent; MAF: no next speaker). That is the framework failing to
     route: a non-pick with the usual declared-argmax fallback, counted in fallback_rate, never retried, never fatal."""
-    m = _built(dedup=True, retrieval="tfidf"); calls = []
+    m = _built(dedup=True, retrieval="tfidf")
+    calls = []
     m.bridge.select = lambda *a, **k: calls.append(1) or {"choice": None, "error": err, "raw": None}
     tasks = list(_tasks(40))
     for t in tasks:
-        D = m.view.declared; cand = m.retrieve(t)
+        D = m.view.declared
+        cand = m.retrieve(t)
         assert m.fetch(t) == int(cand[np.argmax(D[cand, t.family])]) and m._picked is False
     assert len(calls) == 40                                              # no retry: one sample, like any other non-pick
     assert m.stats["invalid_action"] == 40 and m.stats.get("infra_errors", 0) == 0
-    for t in tasks: m.observe(t, 0, 0)
+    for t in tasks:
+        m.observe(t, 0, 0)
     assert m.stats["fallback_rate"] == 1.0
 
 
@@ -276,13 +286,15 @@ def test_a_supervisor_invalid_action_is_a_non_pick_not_an_infrastructure_error(e
 def test_parallel_prefetch_gives_exactly_the_sequential_picks(monkeypatch, retrieval):
     """RTE_FW_PARALLEL runs the (stateless) framework requests concurrently before the run loop; fetch must return the
     same agent for every task, with the same stats and ledger, and never touch the sequential bridge."""
-    tasks = list(_tasks(60)); runs = {}
+    tasks = list(_tasks(60))
+    runs = {}
     for par in ("1", "8"):
         monkeypatch.setenv("RTE_FW_PARALLEL", par)
         m = _Fw(base_url="http://127.0.0.1:1/v1", dedup=True, retrieval=retrieval)
         m.build(World(N, K, "specialist", 0.5, seed=1, liar_select="low_skill_first").view(m.needs), Budget(1))
         m.prefetch(tasks)
-        if par != "1": m.bridge.select = lambda *a, **k: pytest.fail("prefetched run called the sequential bridge")
+        if par != "1":
+            m.bridge.select = lambda *a, **k: pytest.fail("prefetched run called the sequential bridge")
         runs[par] = ([m.fetch(t) for t in tasks], dict(m.stats), m.view.ledger.snapshot())
         m.bridge.close()
     assert runs["1"] == runs["8"] and runs["1"][1]["picks"] == len(tasks)
@@ -302,7 +314,9 @@ def test_content_keyed_cache_is_opt_in_and_keyed_on_the_texts(monkeypatch, tmp_p
     monkeypatch.delenv("RTE_EMBED_CACHE_DIR", raising=False)
     assert m._popdir(m.view) is None
     monkeypatch.setenv("RTE_EMBED_CACHE_DIR", str(tmp_path))
-    d1 = m._popdir(m.view); assert d1 is not None and d1.parent == tmp_path and d1.is_dir()
+    d1 = m._popdir(m.view)
+    assert d1 is not None and d1.parent == tmp_path and d1.is_dir()
     assert m._popdir(m.view) == d1                                   # same texts -> same directory
-    m.desc = list(m.desc); m.desc[0] = m.desc[0] + " changed"
+    m.desc = list(m.desc)
+    m.desc[0] = m.desc[0] + " changed"
     assert m._popdir(m.view) != d1                                   # any text change misses
