@@ -2,7 +2,7 @@
 
 Mechanism: est = mean of b probes per (agent, family), as flat_probe_argmax, indexed under inner product; a query
 one-hot(f) returns the nearest item, i.e. an approximate argmax_a est[a, f], in ~log n steps. hnswlib exposes no visit
-count, so a query is charged ceil(log2 n) hops and ef comparisons (see docs/errata.md).
+count, so a query is charged ceil(log2 n) hops and ef comparisons (see docs/archive/DEVIATIONS.md).
 
 Ledger: build = n*K*b probes; fetch = ceil(log2 n) hops + ef comparisons; observe = 0.
 Params: M=16, ef=50, ef_construction=200."""

@@ -2,8 +2,9 @@
 
 The routers train on exactly MIDIAN's probe budget (b probes per agent per family), but keep the prompt text of every
 probe: a router "on our terms" learns a map (prompt, agent) -> outcome from the probes it paid for, then scores every
-agent on the incoming task's text. Embeddings are all-MiniLM-L6-v2 on CPU (the same model scripts/routerbench_terms.py
-uses for RouterBench's own routers); the embedding arithmetic is not in the ledger, like the frameworks' TF-IDF shortlist.
+agent on the incoming task's text. Embeddings are all-MiniLM-L6-v2 on CPU (the same model
+scripts/routerbench_terms.py uses for RouterBench's own routers); the embedding arithmetic is not in the ledger, like
+the frameworks' TF-IDF shortlist.
 `embed(texts, model=...)` also serves the frameworks' SOTA retrieval stack, which passes a strong Qwen3 embedder."""
 import os, numpy as np
 from ..config import RTE_DATA, count, flag
@@ -35,11 +36,13 @@ def embed(texts, model: str = MINILM, prompt_name: str | None = None, prompt: st
     m = _models[model]
     bs = 256 if model == MINILM else 32
     kw = {"prompt": prompt} if prompt else ({"prompt_name": prompt_name} if prompt_name else {})
-    return m.encode(list(texts), batch_size=bs, show_progress_bar=False, normalize_embeddings=True, **kw).astype(np.float32)
+    E = m.encode(list(texts), batch_size=bs, show_progress_bar=False, normalize_embeddings=True, **kw)
+    return E.astype(np.float32)
 
 
 def probe_set(view, b: int):
-    """Probe every agent b times per family, keeping the prompts: E[n, K*b, d] embeddings, Y[n, K*b] outcomes, F[K*b] family."""
+    """Probe every agent b times per family, keeping the prompts.
+    Returns E[n, K*b, d] embeddings, Y[n, K*b] outcomes, F[K*b] family."""
     Y, I = np.zeros((view.n, view.K, b)), np.zeros((view.n, view.K, b), np.int64)
     for f in range(view.K):
         for lo in range(0, view.n, CHUNK):
@@ -50,13 +53,15 @@ def probe_set(view, b: int):
         key = (view.n, view.K, b, view.text(0, int(I[0, 0, 0]), True), hashlib.sha1(I.tobytes()).hexdigest())
         if _E_CACHE.get("key") != key:
             _E_CACHE.clear()
-            _E_CACHE.update(key=key, E=embed(_texts(view, [(f, int(i)) for a in range(view.n) for f in range(view.K) for i in I[a, f]])).reshape(view.n, view.K * b, -1))
+            items = [(f, int(i)) for a in range(view.n) for f in range(view.K) for i in I[a, f]]
+            _E_CACHE.update(key=key, E=embed(_texts(view, items)).reshape(view.n, view.K * b, -1))
             # shared by every method of the process: never written in place
             _E_CACHE["E"].flags.writeable = False
         E = _E_CACHE["E"]
     else:
         # default: one encode per prompt (float-level differences only)
-        E = np.stack([vec(view, f, i, True) for a in range(view.n) for f in range(view.K) for i in I[a, f]]).reshape(view.n, view.K * b, -1)
+        rows = [vec(view, f, i, True) for a in range(view.n) for f in range(view.K) for i in I[a, f]]
+        E = np.stack(rows).reshape(view.n, view.K * b, -1)
     return E, Y.reshape(view.n, view.K * b), np.repeat(np.arange(view.K), b)
 
 
@@ -69,7 +74,8 @@ def _text1(fi):
 
 
 def _texts(view, items):
-    """Probe prompt texts; RTE_TEXT_PROCS > 1 (opt-in) generates them in forked worker processes (deterministic, same texts)."""
+    """Probe prompt texts; RTE_TEXT_PROCS > 1 (opt-in) generates them in forked worker processes (deterministic, same
+    texts)."""
     global _V
     n = count("RTE_TEXT_PROCS")
     if n <= 1:

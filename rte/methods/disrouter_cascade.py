@@ -2,7 +2,7 @@
 
 Mechanism: at build, order agents by their mean declared skill (cheap first). Each fetch walks that order for the task's
 family; an agent takes the task once D[a, f] >= tau, else forwards it (one message, one hop). If nobody takes it, the
-highest declarer does rather than the last agent (see docs/errata.md).
+highest declarer does rather than the last agent (see docs/archive/DEVIATIONS.md).
 
 Ledger: build = n messages; fetch = p messages + p hops (p = position of the taker, n - 1 if none); observe = 0.
 Params: tau=0.7."""

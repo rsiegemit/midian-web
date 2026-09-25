@@ -1,5 +1,6 @@
 """The pre-registered expectations (v1: six targets, v2: V2-2..V2-11), each checked against the rows and reported as
-PASS/HIT, MISS, WITHIN_FLOOR, REPORTED or NO DATA with its numbers. Never a fix. See docs/archive for the target texts."""
+PASS/HIT, MISS, WITHIN_FLOOR, REPORTED or NO DATA with its numbers. Never a fix. See docs/archive/preregistration for
+the target texts."""
 import json
 import numpy as np, pandas as pd
 from .load import FLAT, FLAT_ON, FLOOR, PLAIN, REF, fmt
@@ -101,7 +102,8 @@ def _t6(df, fits):
             if {"heavy_tail", "iid_uniform"} <= set(g.index) else None,
             "gap by dist: " + ", ".join(f"{k} {v:.3f}" for k, v in g.sort_values(ascending=False).items()))
 def targets(df, fits):
-    """The six pre-registered v1 expectations (texts in docs/archive). PASS / MISS / NO DATA with the numbers. Never a fix."""
+    """The six pre-registered v1 expectations (texts in docs/archive/preregistration). PASS / MISS / NO DATA with the
+    numbers. Never a fix."""
     out = []
     for i, fn in enumerate((_t1, _t2, _t3, _t4, _t5, _t6), 1):
         try:
@@ -116,7 +118,8 @@ def targets(df, fits):
 
 
 def _v2(df, fits):
-    """V2-2 MIDIAN w/o verification: beta=0.5-collude loss vs beta=0 <= 0.02 on specialist; unchanged within 0.01 at beta<=0.25; build probes <= 1.05x"""
+    ("V2-2 MIDIAN w/o verification: beta=0.5-collude loss vs beta=0 <= 0.02 on specialist; unchanged within 0.01 "
+     "at beta<=0.25; build probes <= 1.05x")
     a = df[(df.label == "midian_wo_verify") & (df.dist == "specialist") & (df.collude == True)]   # noqa: E712
     if a.empty:
         return None, "needs midian_wo_verify rows on specialist"
@@ -126,8 +129,11 @@ def _v2(df, fits):
     d = pair(df, "midian_wo_verify", REF, "build_probes")
     ratio = float((d["midian_wo_verify"] / d[REF]).mean()) if not d.empty else float("nan")
     if not np.isfinite(loss) or not n:
-        return None, "needs midian_wo_verify at beta=0 and beta=0.5 (collude) on specialist and at beta<=0.25 paired with midian_wo_defenses"
-    return bool(loss <= 0.02 and abs(x) <= 0.01 and ratio <= 1.05 + 1e-9), f"specialist loss beta 0->0.5 = {loss:+.3f}; vs MIDIAN w/o defenses at beta<=0.25 {x:+.3f} ({n} pairs); build probes {ratio:.3f}x", x
+        return None, ("needs midian_wo_verify at beta=0 and beta=0.5 (collude) on specialist and at beta<=0.25 "
+                      "paired with midian_wo_defenses")
+    return (bool(loss <= 0.02 and abs(x) <= 0.01 and ratio <= 1.05 + 1e-9),
+            f"specialist loss beta 0->0.5 = {loss:+.3f}; vs MIDIAN w/o defenses at beta<=0.25 {x:+.3f} ({n} pairs); "
+            f"build probes {ratio:.3f}x", x)
 def _v4(df, fits):
     """V2-4 stratified cohorts vs random (no directional expectation; reported as measured)"""
     d = pair(df, "midian_stratified", REF)
@@ -136,16 +142,19 @@ def _v4(df, fits):
     by = (d.midian_stratified - d[REF]).groupby(level=["dist", "beta"]).mean()
     return "REPORTED", "stratified - random by (shape, beta): " + ", ".join(f"{k} {v:+.3f}" for k, v in by.items())
 def _v5(df, fits):
-    """V2-5 LinUCB-honest between flat_online and warm_start_bandit at beta=0; flat in beta (|beta=0.5 - beta=0| <= 0.03)"""
+    ("V2-5 LinUCB-honest between flat_online and warm_start_bandit at beta=0; flat in beta (|beta=0.5 - beta=0| <= "
+     "0.03)")
     b0 = df[np.isclose(df.beta, 0)]
     lo, hi = delta(b0, "linucb_honest", FLAT_ON)[0], delta(b0, "warm_start_bandit", "linucb_honest")[0]
     l = df[df.label == "linucb_honest"]
     if l.empty or not np.isfinite(lo):
         return None, "needs linucb_honest rows at beta=0 with flat_probe_argmax_online"
     flat = float(l[np.isclose(l.beta, .5)].success.mean() - l[np.isclose(l.beta, 0)].success.mean())
-    return bool(lo >= 0 and hi >= 0 and abs(flat) <= 0.03), f"linucb - flat_online {lo:+.3f}; warm_start - linucb {hi:+.3f}; beta 0.5 - 0: {flat:+.3f}"
+    return (bool(lo >= 0 and hi >= 0 and abs(flat) <= 0.03),
+            f"linucb - flat_online {lo:+.3f}; warm_start - linucb {hi:+.3f}; beta 0.5 - 0: {flat:+.3f}")
 def _v6(df, fits):
-    """V2-6 churn: MIDIAN w/o defenses within 0.03 of no-churn at 10% with repair <= 3% of build; halving-stale loses >= 0.05 at 30%; halving-rebuild matches at >= 10x MIDIAN's repair"""
+    ("V2-6 churn: MIDIAN w/o defenses within 0.03 of no-churn at 10% with repair <= 3% of build; halving-stale "
+     "loses >= 0.05 at 30%; halving-rebuild matches at >= 10x MIDIAN's repair")
     c, base = df[df.churn_frac > 0], df[(df.churn_frac == 0) & (df.declared_source == "self_described")]
     if c.empty or base.empty:
         return None, "needs churn_n1000 rows and a no-churn baseline (live_f1_n1000 / variants_f1, self-described)"
@@ -157,50 +166,67 @@ def _v6(df, fits):
         j = pd.concat([a, b], axis=1, join="inner")
         return float((j.iloc[:, 1] - j.iloc[:, 0]).mean()) if len(j) else np.nan
     rep = lambda label: float((c[c.label == label].repair_probes_per_event / c[c.label == label].build_probes).mean())
-    m10, stale30, reb30 = drop(REF, .1), drop("sequential_halving_peer_stale", .3), drop("sequential_halving_peer_rebuild", .3)
+    m10 = drop(REF, .1)
+    stale30, reb30 = drop("sequential_halving_peer_stale", .3), drop("sequential_halving_peer_rebuild", .3)
     rm, rh = rep(REF), rep("sequential_halving_peer_rebuild")
     ok = m10 <= 0.03 and rm <= 0.03 and stale30 >= 0.05 and reb30 <= 0.03 and rh >= 10 * rm
     return (bool(ok) if np.isfinite([m10, rm, stale30, reb30, rh]).all() else None,
-            f"MIDIAN w/o defenses loss at 10% {m10:+.3f}, repair {100*rm:.2f}% of build/event; halving-stale loss at 30% {stale30:+.3f}; halving-rebuild loss at 30% {reb30:+.3f}, repair {rh/rm if rm else np.nan:.1f}x MIDIAN w/o defenses'")
+            f"MIDIAN w/o defenses loss at 10% {m10:+.3f}, repair {100*rm:.2f}% of build/event; "
+            f"halving-stale loss at 30% {stale30:+.3f}; halving-rebuild loss at 30% {reb30:+.3f}, "
+            f"repair {rh/rm if rm else np.nan:.1f}x MIDIAN w/o defenses'")
 def _v7(df, fits):
-    """V2-7 n=10k, b=3, self-described: MIDIAN w/o defenses >= flat_online - 0.02; frameworks below flat_online on specialist by >= 0.10"""
+    ("V2-7 n=10k, b=3, self-described: MIDIAN w/o defenses >= flat_online - 0.02; frameworks below flat_online on "
+     "specialist by >= 0.10")
     d = df[(df.n == 10000) & (df.b == 3)]
     x, n = delta(d, REF, FLAT_ON)
-    fw = d[d.group == "framework"].success.mean() - d[d.label == FLAT_ON].success.mean() if (d.group == "framework").any() else np.nan
+    fw = (d[d.group == "framework"].success.mean() - d[d.label == FLAT_ON].success.mean()
+          if (d.group == "framework").any() else np.nan)
     if not n:
         return None, "needs live_n10k_v2 rows"
-    return bool(x >= -0.02 and fw <= -0.10), f"MIDIAN w/o defenses - flat_online {x:+.3f} ({n} pairs); frameworks - flat_online {fw:+.3f}", x
+    return (bool(x >= -0.02 and fw <= -0.10),
+            f"MIDIAN w/o defenses - flat_online {x:+.3f} ({n} pairs); frameworks - flat_online {fw:+.3f}", x)
 def _v8(df, fits):
-    """V2-8 replication (seeds 11-20): MIDIAN w/o audits - MIDIAN w/o defenses = +0.02 +- 0.02 at beta<=0.25; beta=0.5 collude exposure reported"""
+    ("V2-8 replication (seeds 11-20): MIDIAN w/o audits - MIDIAN w/o defenses = +0.02 +- 0.02 at beta<=0.25; "
+     "beta=0.5 collude exposure reported")
     r = df[df.seed >= 11]
     x, n = delta(r[r.beta <= 0.25], "midian_wo_audit", REF)
     y, _ = delta(r[np.isclose(r.beta, .5)], "midian_wo_audit", REF)
     if not n:
         return None, "needs midian_v_replication rows"
-    return bool(0.0 <= x <= 0.04), f"midian_wo_audit - midian_wo_defenses at beta<=0.25 {x:+.3f} ({n} pairs); at beta=0.5 {y:+.3f} (as measured)", x - 0.02
+    return (bool(0.0 <= x <= 0.04),
+            f"midian_wo_audit - midian_wo_defenses at beta<=0.25 {x:+.3f} ({n} pairs); at beta=0.5 {y:+.3f} "
+            f"(as measured)", x - 0.02)
 def _v9(df, fits):
-    """V2-9 b=10: bimodal framework gap within +-0.02 of MIDIAN w/o defenses; heavy_tail MIDIAN w/o defenses >= frameworks + 0.03"""
+    ("V2-9 b=10: bimodal framework gap within +-0.02 of MIDIAN w/o defenses; heavy_tail MIDIAN w/o defenses >= "
+     "frameworks + 0.03")
     d = df[df.b == 10]
     if d.empty or not (d.group == "framework").any():
         return None, "needs budget_b10_shapes rows"
-    g = {s: float(x[x.group == "framework"].success.mean() - x[x.label == REF].success.mean()) for s, x in d.groupby("dist")}
+    g = {s: float(x[x.group == "framework"].success.mean() - x[x.label == REF].success.mean())
+         for s, x in d.groupby("dist")}
     ok = abs(g.get("bimodal", np.nan)) <= 0.02 and g.get("heavy_tail", np.nan) <= -0.03
-    return (bool(ok) if all(k in g for k in ("bimodal", "heavy_tail")) else None), "frameworks - MIDIAN w/o defenses at b=10: " + fmt(g)
+    return ((bool(ok) if all(k in g for k in ("bimodal", "heavy_tail")) else None),
+            "frameworks - MIDIAN w/o defenses at b=10: " + fmt(g))
 def _v10(df, fits):
-    """V2-10 internals at beta=0.5 collude: trimming (delta=1/3 vs 0) hurts MIDIAN w/o defenses by >= 0.02, not MIDIAN w/o verification (|d| <= 0.02)"""
+    ("V2-10 internals at beta=0.5 collude: trimming (delta=1/3 vs 0) hurts MIDIAN w/o defenses by >= 0.02, not "
+     "MIDIAN w/o verification (|d| <= 0.02)")
     d = df[np.isclose(df.beta, .5) & (df.collude == True) & (df.method == "midian")].copy()   # noqa: E712
     par = d.params.map(json.loads)
     d["r"], d["delta"] = [p.get("r") for p in par], [p.get("delta") for p in par]
-    d["arm"] = [REF if p.get("audit") is False and p.get("verify") is False else "midian_wo_verify" if p.get("verify") is False and "audit" not in p
+    d["arm"] = [REF if p.get("audit") is False and p.get("verify") is False
+                else "midian_wo_verify" if p.get("verify") is False and "audit" not in p
                 else None for p in par]                     # the two arms by their defense flags (r, delta vary)
     d = d[(d.r == 10) & d.delta.notna() & d.arm.notna()]
     if d.arm.nunique() < 2 or d.delta.nunique() < 2:
         return None, "needs internals_v2 rows (r=10, both deltas, midian_wo_defenses and midian_wo_verify)"
     t = d.pivot_table(index="arm", columns="delta", values="success")
     sep = t[t.columns.max()] - t[t.columns.min()]
-    return bool(sep[REF] <= -0.02 and abs(sep["midian_wo_verify"]) <= 0.02), f"delta=1/3 - delta=0 at r=10: MIDIAN w/o defenses {sep[REF]:+.3f}, MIDIAN w/o verification {sep['midian_wo_verify']:+.3f}"
+    return (bool(sep[REF] <= -0.02 and abs(sep["midian_wo_verify"]) <= 0.02),
+            f"delta=1/3 - delta=0 at r=10: MIDIAN w/o defenses {sep[REF]:+.3f}, "
+            f"MIDIAN w/o verification {sep['midian_wo_verify']:+.3f}")
 def _v11(df, fits):
-    """V2-11 MIDIAN >= max(MIDIAN w/o audits, MIDIAN w/o verification) - 0.01 at every beta; within 0.02 of MIDIAN w/o verification at beta=0.5 collude low-skill-first; build probes <= 1.05x w/o audits"""
+    ("V2-11 MIDIAN >= max(MIDIAN w/o audits, MIDIAN w/o verification) - 0.01 at every beta; within 0.02 of MIDIAN "
+     "w/o verification at beta=0.5 collude low-skill-first; build probes <= 1.05x w/o audits")
     s = df[df.label.isin(["midian", "midian_wo_audit", "midian_wo_verify"])]
     piv = s.pivot_table(index="beta", columns="label", values="success")
     if piv.shape[1] < 3:
@@ -211,11 +237,14 @@ def _v11(df, fits):
     d = pair(df, "midian", "midian_wo_audit", "build_probes")
     ratio = float((d["midian"] / d["midian_wo_audit"]).mean()) if not d.empty else float("nan")
     ok = bool((gap >= -0.01).all() and x >= -0.02 and ratio <= 1.05 + 1e-9)
-    return ok, ("MIDIAN - max(w/o audits, w/o verification) by beta: " + ", ".join(f"{b}: {v:+.3f}" for b, v in gap.items())
-                + f"; MIDIAN - w/o verification at beta=0.5 low-skill {x:+.3f} ({n} pairs); build probes {ratio:.3f}x w/o audits"), float(gap.min())
+    return ok, ("MIDIAN - max(w/o audits, w/o verification) by beta: "
+                + ", ".join(f"{b}: {v:+.3f}" for b, v in gap.items())
+                + f"; MIDIAN - w/o verification at beta=0.5 low-skill {x:+.3f} ({n} pairs); "
+                  f"build probes {ratio:.3f}x w/o audits"), float(gap.min())
 def targets_v2(df, fits):
-    """The pre-registered v2 expectations (texts in docs/archive): HIT / MISS / WITHIN_FLOOR / REPORTED / NO DATA, with the numbers. V2-1 and
-    V2-3 tested the withdrawn successive-halving variants (SH, SH+A); the remaining targets keep their numbers."""
+    """The pre-registered v2 expectations (texts in docs/archive/preregistration): HIT / MISS / WITHIN_FLOOR /
+    REPORTED / NO DATA, with the numbers. V2-1 and V2-3 tested the withdrawn successive-halving variants (SH, SH+A);
+    the remaining targets keep their numbers."""
     out, env = [], envelope(df)
     for i, fn in ((2, _v2), (4, _v4), (5, _v5), (6, _v6), (7, _v7), (8, _v8), (9, _v9), (10, _v10), (11, _v11)):
         try:  # key = the decisive paired delta, when the target is one
@@ -224,5 +253,6 @@ def targets_v2(df, fits):
             ok, detail, key = None, f"no data ({type(e).__name__}: {e})", []
         v = ("NO DATA" if ok is None else ok if isinstance(ok, str) else "HIT" if ok else
              FLOOR if key and np.isfinite(env) and abs(key[0]) <= env else "MISS")
-        out.append({"target": f"V2-{i}", "verdict": v, "name": fn.__doc__, "detail": detail + (f"  [MIDIAN w/o defenses seed envelope {env:.3f}]" if np.isfinite(env) else "")})
+        tail = f"  [MIDIAN w/o defenses seed envelope {env:.3f}]" if np.isfinite(env) else ""
+        out.append({"target": f"V2-{i}", "verdict": v, "name": fn.__doc__, "detail": detail + tail})
     return out

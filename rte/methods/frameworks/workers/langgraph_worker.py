@@ -1,5 +1,6 @@
 """LangGraph: `create_supervisor` gives the supervisor one `transfer_to_<name>` handoff
-tool per agent and injects no descriptions, so the roster goes in its `prompt`. See docs/frameworks/NOTES_langgraph.md."""
+tool per agent and injects no descriptions, so the roster goes in its `prompt`.
+See docs/frameworks/NOTES_langgraph.md."""
 import os
 import sys
 import warnings

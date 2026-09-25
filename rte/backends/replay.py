@@ -7,7 +7,7 @@ Cell table (`scripts/02_download_routerbench.py` builds it):
     model_names(M,) category_names(K_full,) str; offsets(K_full+1,) n_prompts(K_full,) int64;
     outcomes(sum(n_prompts), M) int8 -- outcomes[offsets[c]:offsets[c+1]] is category c.
 
-See docs/errata.md for: K=67 not 64 on the real pickle, the per-dist
+See docs/archive/DEVIATIONS.md for: K=67 not 64 on the real pickle, the per-dist
 profile draw, and the masked-category (handicap) rule.
 
 `split: true`: each category's prompts are split once (rng 0, 70/30 as LLMRouterBench) into probe rows and
@@ -47,7 +47,7 @@ def _draw_profiles(dist: str, n: int, K: int, model_rank: np.ndarray, rng: np.ra
         strong = rng.random(n) < 0.2
         model_id[strong] = strong_half[rng.integers(0, strong_half.size, size=int(strong.sum()))]
         model_id[~strong] = weak_half[rng.integers(0, weak_half.size, size=int((~strong).sum()))]
-        # no masking: good/bad realized entirely by model choice (see docs/errata.md)
+        # no masking: good/bad realized entirely by model choice (see docs/archive/DEVIATIONS.md)
     elif dist == "correlated":
         mask = group_mask(n, K, 4, 0.5, rng)
     elif dist == "iid_uniform":

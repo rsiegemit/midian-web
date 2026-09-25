@@ -19,11 +19,15 @@ WORKERS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "workers")
 
 
 def venv_python(env_name: str) -> str:
+    """The interpreter of framework venv `env_name`; "rte" (the base env: fw_echo) is this interpreter."""
+    if env_name == "rte":
+        return sys.executable
     # not at module level: workers import this file standalone, outside the package
     from rte.config import RTE_DATA
     p = os.path.join(RTE_DATA, "env", env_name, "bin", "python")
     if not os.path.exists(p):
-        raise RuntimeError(f"framework venv missing: {p} (build it with scripts/fw_envs/{env_name.removeprefix('fw_')}.sh)")
+        script = f"scripts/fw_envs/{env_name.removeprefix('fw_')}.sh"
+        raise RuntimeError(f"framework venv missing: {p} (build it with {script})")
     return p
 
 
@@ -46,7 +50,8 @@ class Bridge:
                                       stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=sys.stderr,
                                       text=True, bufsize=1, env=env)
 
-    def select(self, task: str, candidates: list[dict], model: str, base_url: str, api_key: str = "EMPTY", params: dict | None = None) -> dict:
+    def select(self, task: str, candidates: list[dict], model: str, base_url: str, api_key: str = "EMPTY",
+               params: dict | None = None) -> dict:
         with self._lock:
             if self._proc is None or self._proc.poll() is not None:
                 if self._proc is not None:

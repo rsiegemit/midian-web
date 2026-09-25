@@ -19,10 +19,10 @@ class LinUcbHonest(Method):
     needs = frozenset({"probe"})
 
     def __init__(self, alpha=1.0, bonus="context", **p):
-        # bonus="own" (post-hoc variant, docs/errata.md): the exploration bonus uses only the agent's OWN evidence for the
-        # family ([1, sqrt(count)]), not the full context. With the full context, agents tied at the top estimate are
-        # separated by how ATYPICAL their cross-family mean is -- i.e. weak agents that got lucky -- so LinUCB fell to
-        # random at 10^4-10^5. Default "context" keeps the pre-registered behaviour (and every existing row).
+        # bonus="own" (post-hoc variant, docs/errata.md): the exploration bonus uses only the agent's OWN evidence for
+        # the family ([1, sqrt(count)]), not the full context. With the full context, agents tied at the top estimate
+        # are separated by how ATYPICAL their cross-family mean is -- i.e. weak agents that got lucky -- so LinUCB fell
+        # to random at 10^4-10^5. Default "context" keeps the pre-registered behaviour (and every existing row).
         super().__init__(alpha=alpha, **({"bonus": bonus} if bonus != "context" else {}), **p)
         self.alpha, self.bonus = float(alpha), bonus
 

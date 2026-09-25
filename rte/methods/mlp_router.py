@@ -27,8 +27,10 @@ class MLPRouter(Method):
         n, m, d = E.shape
         self.eye = np.eye(n, dtype=np.float32)
         X = np.concatenate([np.repeat(self.eye, m, 0), E.reshape(n * m, d)], 1)
-        self.model = MLPRegressor(hidden_layer_sizes=(self.hidden,), max_iter=self.epochs, random_state=0).fit(X, Y.reshape(-1))
+        self.model = MLPRegressor(hidden_layer_sizes=(self.hidden,), max_iter=self.epochs,
+                                  random_state=0).fit(X, Y.reshape(-1))
 
     def fetch(self, task):
         q = task_vec(self.view, task)
-        return scan_argmax(self.view, self.model.predict(np.concatenate([self.eye, np.broadcast_to(q, (self.view.n, q.size))], 1)))
+        X = np.concatenate([self.eye, np.broadcast_to(q, (self.view.n, q.size))], 1)
+        return scan_argmax(self.view, self.model.predict(X))

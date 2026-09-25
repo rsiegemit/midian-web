@@ -40,8 +40,8 @@ def _canon(p: dict) -> dict:
 
 
 def to_new(method: str, params: dict | None) -> tuple[str, dict] | None:
-    """(method, params) under the current keys; None for a withdrawn variant. Idempotent on new keys ONLY for directories
-    that were never migrated -- a bare `midian` is the old undefended method there (see SENTINEL)."""
+    """(method, params) under the current keys; None for a withdrawn variant. Idempotent on new keys ONLY for
+    directories that were never migrated -- a bare `midian` is the old undefended method there (see SENTINEL)."""
     p = dict(params or {})
     if method in WITHDRAWN:
         return None
@@ -54,7 +54,8 @@ def to_new(method: str, params: dict | None) -> tuple[str, dict] | None:
             p.pop(k, None)
         return "midian", _canon({**p, "audit": False})
     if method == "midian":                                                   # the old plain method: defenses off
-        return "midian", _canon({**p, "audit": False, "verify": p.get("verify", False), "cached": p.get("cached", False)})
+        return "midian", _canon({**p, "audit": False, "verify": p.get("verify", False),
+                                 "cached": p.get("cached", False)})
     if method.startswith("fw_") and p.get("retrieval") in RETRIEVAL:
         return method, {**p, "retrieval": RETRIEVAL[p["retrieval"]]}
     return method, p
@@ -80,7 +81,8 @@ def normalize(df, results_dir: str):
     import json, os
     if df is None or len(df) == 0 or "method" not in df:
         return df
-    old = list(zip(df.method.astype(str), (df["params"].fillna("{}").astype(str) if "params" in df else ["{}"] * len(df))))
+    params = df["params"].fillna("{}").astype(str) if "params" in df else ["{}"] * len(df)
+    old = list(zip(df.method.astype(str), params))
     load = lambda p: json.loads(p) if p.startswith("{") else {}
     if os.path.exists(os.path.join(results_dir, SENTINEL)):
         for m, p in set(old):

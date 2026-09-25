@@ -2,8 +2,8 @@
 
 Mechanism: the head of a cluster is its member with the highest mean declared skill. Fetch picks the best cluster by its
 head's D[., f], then the argmax of D[., f] inside it. Naive k-means with k = ceil(n/r) centroids is O(n*k) per sweep
-(~90 min per sweep at n = 10^6), so clusters are built within random buckets of `bucket` agents (see docs/errata.md);
-fetch still searches the global set of ~n/r clusters.
+(~90 min per sweep at n = 10^6), so clusters are built within random buckets of `bucket` agents (see
+docs/archive/DEVIATIONS.md); fetch still searches the global set of ~n/r clusters.
 
 Ledger: build = n messages; fetch = (#clusters + cluster size) comparisons, 2 hops, 4 messages; observe = 0.
 Params: r=10, iters=5, bucket=20000."""

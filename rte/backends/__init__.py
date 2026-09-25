@@ -1,11 +1,13 @@
-"""Backends: bernoulli (synthetic), replay (RouterBench cells), llm (vLLM agents).
+"""Backends: bernoulli (synthetic), replay (RouterBench cells), routereval (RouterEval pools), llm (vLLM agents).
 
 Backend protocol (duck-typed; see bernoulli.py for the reference):
     n, K, families                              ints / list[str]
     true_skill() -> S[n,K]                      float in [0,1]; runner-only
-    declared(source) -> D[n,K]                  honest declared skill; source in {programmatic, self_described, calibrated (non-live)}
+    declared(source) -> D[n,K]                  honest declared skill; source in {programmatic, self_described,
+                                                calibrated (non-live)}
     execute(a, task) -> int                     0/1; Task.instance is the instance seed
-    execute_many(agents, families, inst) -> int8 of inst.shape   fresh instances from the given seeds (World index-seeds them)
+    execute_many(agents, families, inst)        int8 of inst.shape: fresh instances from the given seeds (World
+                                                index-seeds them)
     stats() -> dict                             e.g. cache hit rate
     snapshot() / restore(snap) / redraw(ids, rng)   churn support: copy the population state, put it back,
                                                 and replace agents `ids` in place with fresh profiles
@@ -24,8 +26,8 @@ def noisy_declared(S, seed, sigma=0.05):
 
 
 # `calibrated` declarations (docs/errata.md): the live self-rating's error pattern. D | S is drawn from the empirical
-# distribution of the live D_self_described given S's decile, pooled over the live specialist n = 100 and 1,000 populations
-# (scripts/fit_declared_calibration.py fits this table and validates it). i.i.d. per (agent, family).
+# distribution of the live D_self_described given S's decile, pooled over the live specialist n = 100 and 1,000
+# populations (scripts/fit_declared_calibration.py fits this table and validates it). i.i.d. per (agent, family).
 CAL_VALUES = np.array([0, .2, .5, .6, .7, .75, .8, .85, .9, .95, 1], np.float32)   # the ratings live models emit
 CAL_P = np.array([                         # P(D = CAL_VALUES[j] | S in decile k), rows k = 0..9
     [0.0535, 0.0439, 0.5577, 0.0000, 0.0445, 0.0000, 0.0865, 0.0528, 0.0445, 0.0000, 0.1167],
@@ -47,7 +49,8 @@ def cal_bin(S):
 
 
 def calibrated_declared(S, seed):
-    """Realistic declaration: over-confident and weakly informative like the live self-rating (mean ~0.69, corr ~0.35)."""
+    """Realistic declaration: over-confident and weakly informative like the live self-rating (mean ~0.69,
+    corr ~0.35)."""
     rng = np.random.default_rng(stable_seed_32(seed, "declared_calibrated"))
     cum = np.cumsum(CAL_P, 1)[:, :-1] / CAL_P.sum(1, keepdims=True)
     D = np.empty(S.shape, np.float32)
@@ -58,7 +61,8 @@ def calibrated_declared(S, seed):
 
 
 def declared_for(S, seed, source, sigma=0.05):
-    """The non-live backends' declared(source): `calibrated`, else the honest programmatic copy (for both other sources)."""
+    """The non-live backends' declared(source): `calibrated`, else the honest programmatic copy (for both other
+    sources)."""
     return calibrated_declared(S, seed) if source == "calibrated" else noisy_declared(S, seed, sigma)
 
 

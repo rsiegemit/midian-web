@@ -7,8 +7,8 @@ argmax among the k when the framework fails to pick (counted in stats). Two acco
 
 Ledger: build = n messages (every description sent to the registry once; retrieval="midian*" adds MIDIAN's build);
 fetch = k comparisons, 1 hop, k + 2 messages; observe = 0.
-Params: k=10, supervisor, retrieval="tfidf" (| declared | embed | bm25 | hybrid | sota | midian | midian_wo_audit), r=10,
-dedup=False, embed_model, rerank_model, rerank_pool=50, embed_instruct="", shuffle=False, lie_text=False,
+Params: k=10, supervisor, retrieval="tfidf" (| declared | embed | bm25 | hybrid | sota | midian | midian_wo_audit),
+r=10, dedup=False, embed_model, rerank_model, rerank_pool=50, embed_instruct="", shuffle=False, lie_text=False,
 claim_threshold=0.0; subclasses add `mode`."""
 from __future__ import annotations
 
@@ -31,9 +31,9 @@ DECLARED = "declared"                        # top-k by the declared claim; no t
 LEXICAL = ("bm25", "hybrid", "sota")        # modes that need the BM25 block
 # Framework errors that are the supervisor LLM's own invalid action, not infrastructure (every class that has failed a
 # unit): ADK / OpenAI Agents -- a tool named after the agent instead of the routing tool; MAF -- no next
-# speaker. Anything else stays an infrastructure error (docs/errata.md).
-# MAF: orchestrator names a non-candidate
-INVALID_ACTION = re.compile(r"Tool '?[\w.-]+'? not found|ModelBehaviorError|next_speaker must be provided|KeyError: '?agent_\d+'?")
+# speaker, or the orchestrator names a non-candidate. Anything else stays an infrastructure error (docs/errata.md).
+INVALID_ACTION = re.compile(r"Tool '?[\w.-]+'? not found|ModelBehaviorError|next_speaker must be provided"
+                            r"|KeyError: '?agent_\d+'?")
 _TOK = re.compile(r"[a-z0-9]+")
 
 
@@ -111,8 +111,10 @@ def _tag(prefix: str, text: str) -> str:
     return "" if not text else prefix + hashlib.blake2b(text.encode(), digest_size=4).hexdigest()
 
 
-def sota_cache_name(embed_model: str, rerank_model: str, k: int, rerank_pool: int, dedup: bool, instruct: str = "") -> str:
-    """The cache filename carries every input that changes the table, so a changed setting can never read a stale one."""
+def sota_cache_name(embed_model: str, rerank_model: str, k: int, rerank_pool: int, dedup: bool,
+                    instruct: str = "") -> str:
+    """The cache filename carries every input that changes the table, so a changed setting can never read a stale
+    one."""
     it = _tag("_i", instruct)
     return f"shortlist_sota_{slug(embed_model)}_{slug(rerank_model)}_k{k}p{rerank_pool}{'_dd' if dedup else ''}{it}.npy"
 
@@ -152,13 +154,13 @@ class FrameworkMethod(Method):
         # best agent sits in position 1 and a supervisor with position bias gets it for free. Shuffling permutes that
         # list deterministically per cohort, which separates "the cohort is better material" from "the pick was first".
         self.shuffle = bool(shuffle)
-        # lie_text (docs/errata.md): the benchmark's lie inflates the declared MATRIX but leaves the self-description TEXT
-        # stating the agent's TRUE specialty, so a liar's text and its numbers disagree and every text retriever is
+        # lie_text (docs/errata.md): the benchmark's lie inflates the declared MATRIX but leaves the self-description
+        # TEXT stating the agent's TRUE specialty, so a liar's text and its numbers disagree and every text retriever is
         # shielded from the attack. With lie_text the "Declared areas:" clause -- the structured claim carried IN the
-        # text -- is rederived from view.declared for EVERY agent, liar or not, so the method needs no knowledge of
-        # who lies. Honest agents barely move (their declared is true skill plus 0.05 noise); liars now claim in text
-        # what they claim in the matrix. The LLM prose is untouched and still describes the real specialty, so this is
-        # a PARTIAL text lie and must be reported as one.
+        # text -- is rederived from view.declared for EVERY agent, liar or not, so the method needs no knowledge of who
+        # lies. Honest agents barely move (their declared is true skill plus 0.05 noise); liars now claim in text what
+        # they claim in the matrix. The LLM prose is untouched and still describes the real specialty, so this is a
+        # PARTIAL text lie and must be reported as one.
         self.lie_text = bool(lie_text)
         # claim_threshold > 0: the clause lists EVERY family the agent rates above the threshold instead of its top 3.
         # The top-3 form barely carries the benchmark's lie -- `inflate` adds +0.4 to every family, which preserves an
@@ -177,7 +179,8 @@ class FrameworkMethod(Method):
         if retrieval in ("midian", "midian_wo_audit"):
             # verified shortlist: MIDIAN's (or MIDIAN w/o audits') leaf cohort (k = r)
             self.needs = self.needs | {"probe", "reports"}
-        self.stats = {"picks": 0, "fallbacks": 0, "failures": 0, "bad_name": 0, "invalid_action": 0, "success_strict": 0.0, "fallback_rate": 0.0}
+        self.stats = {"picks": 0, "fallbacks": 0, "failures": 0, "bad_name": 0, "invalid_action": 0,
+                      "success_strict": 0.0, "fallback_rate": 0.0}
         self._picked, self._n, self._strict, self._calls = False, 0, 0, 0
 
     # ---- world accessors (llm backend provides real text; bernoulli/replay get synthesized descriptions)
@@ -188,7 +191,8 @@ class FrameworkMethod(Method):
         out = []
         for a, d in enumerate(desc):
             if self.claim_threshold > 0:
-                fs = [f for f in np.argsort(-D[a], kind="stable") if D[a, f] > self.claim_threshold] or [int(np.argmax(D[a]))]
+                fs = ([f for f in np.argsort(-D[a], kind="stable") if D[a, f] > self.claim_threshold]
+                      or [int(np.argmax(D[a]))])
             else:
                 fs = np.argsort(-D[a], kind="stable")[:top]
             claim = ", ".join(fams[f] for f in fs)
@@ -214,9 +218,9 @@ class FrameworkMethod(Method):
     def _popdir(self, view):
         """Where this population's embedding / shortlist caches live. Live backend: the population directory. Any other
         backend (RouterEval, whose descriptions are rendered at run time), only when RTE_EMBED_CACHE_DIR is set: a
-        directory under it keyed by a hash of the exact agent
-        and family TEXTS, so a GPU pre-warm (scripts/embed_routereval.py) and the CPU routing units meet on the same files,
-        and any text change misses. Needs self.desc / self.fdesc, i.e. call after _texts."""
+        directory under it keyed by a hash of the exact agent and family TEXTS, so a GPU pre-warm
+        (scripts/embed_routereval.py) and the CPU routing units meet on the same files, and any text change misses.
+        Needs self.desc / self.fdesc, i.e. call after _texts."""
         try:
             from rte.backends import llm as L
             be = L.current_backend()
@@ -263,7 +267,8 @@ class FrameworkMethod(Method):
             if T.shape[0] == len(self.fdesc):
                 return T
         pool = self._pool if self.dedup else np.arange(view.n)
-        T = sota_shortlist(self._B, self._Xa, self._Xf, pool, self.desc, self.fdesc, self._rerank, self.k, self.rerank_pool)
+        T = sota_shortlist(self._B, self._Xa, self._Xf, pool, self.desc, self.fdesc, self._rerank, self.k,
+                           self.rerank_pool)
         if path is not None:                                 # atomic: concurrent jobs may race to write the same file
             tmp = path.with_suffix(f".{os.getpid()}.tmp.npy")
             np.save(tmp, T)
@@ -300,7 +305,8 @@ class FrameworkMethod(Method):
             return E
 
         # both blocks are cached, so a routing job on a precomputed population never loads the embedder at all
-        return cached(cache, self.desc, view.n), cached(fcache, self.fdesc, len(self.fdesc), prompt_name=qp, prompt=qprompt)
+        return (cached(cache, self.desc, view.n),
+                cached(fcache, self.fdesc, len(self.fdesc), prompt_name=qp, prompt=qprompt))
 
     def _rerank(self, query: str, docs: list[str]) -> np.ndarray:
         """Cross-encoder relevance for one family against the fused pool. Qwen3-Reranker ships modules.json and a
@@ -328,7 +334,8 @@ class FrameworkMethod(Method):
 
     def _index(self, view):
         """Texts, retrieval vectors and shortlist tables: everything build() derives from the population alone, with no
-        supervisor. scripts/embed_routereval.py calls exactly this on a GPU to pre-warm the RTE_EMBED_CACHE_DIR files."""
+        supervisor. scripts/embed_routereval.py calls exactly this on a GPU to pre-warm the RTE_EMBED_CACHE_DIR
+        files."""
         self.desc, self.fdesc, self._task_text = self._texts(view)
         if self.lie_text:
             self.desc = self._relabel(self.desc, view)
@@ -352,7 +359,8 @@ class FrameworkMethod(Method):
             coh = self.mid.leaves[self.mid.leaf_of[a]]
             out = np.concatenate([[a], coh[(coh >= 0) & (coh != a)]])
             if self.shuffle:                                 # position control: same members, pick no longer first
-                out = out[np.random.default_rng(stable_seed_32(int(a), "fw_shuffle", int(task.family))).permutation(len(out))]
+                rng = np.random.default_rng(stable_seed_32(int(a), "fw_shuffle", int(task.family)))
+                out = out[rng.permutation(len(out))]
             return out
         f = int(task.family)
         if self.retrieval == "sota":
@@ -373,7 +381,8 @@ class FrameworkMethod(Method):
         self._n += 1
         self._strict += int(outcome) if self._picked else 0
         self.stats["success_strict"] = self._strict / self._n
-        self.stats["fallback_rate"] = 1 - self.stats["picks"] / max(1, sum(self.stats[k] for k in ("picks", "fallbacks", "failures", "bad_name", "invalid_action")))
+        asked = sum(self.stats[k] for k in ("picks", "fallbacks", "failures", "bad_name", "invalid_action"))
+        self.stats["fallback_rate"] = 1 - self.stats["picks"] / max(1, asked)
         if self.retrieval in ("midian", "midian_wo_audit"):
             self.mid.observe(task, agent, outcome)
 
@@ -381,7 +390,8 @@ class FrameworkMethod(Method):
         """Ask the framework about every task at once, PARALLEL requests in flight, before the run loop consumes them in
         order. Only for stateless shortlists: the workers build a fresh team per request at temperature 0 and keep no
         memory, so a pick cannot depend on which requests came before it -- fetch() sees exactly the response a
-        sequential run would. The MIDIAN cohorts learn online (retrieve depends on earlier observes) and stay sequential."""
+        sequential run would. The MIDIAN cohorts learn online (retrieve depends on earlier observes) and stay
+        sequential."""
         n = count("RTE_FW_PARALLEL")
         if n <= 1 or self.retrieval in ("midian", "midian_wo_audit"):
             return
@@ -396,7 +406,8 @@ class FrameworkMethod(Method):
             b = free.get()
             try:
                 payload = [{"name": self.names[a], "description": self.desc[a]} for a in cand]
-                return b.select(self._task_text(task), payload, self.supervisor, self._base_url or _endpoint(self.supervisor), params=self.params)
+                return b.select(self._task_text(task), payload, self.supervisor,
+                                self._base_url or _endpoint(self.supervisor), params=self.params)
             finally:
                 free.put(b)
         with ThreadPoolExecutor(max_workers=n) as ex:
@@ -411,30 +422,31 @@ class FrameworkMethod(Method):
         self.view.ledger.message(len(cand) + 2)             # k descriptions read + supervisor request/reply
         payload = [{"name": self.names[a], "description": self.desc[a]} for a in cand]
         # re-pick per call: replicas that join mid-run get used
-        ask = lambda: self.bridge.select(self._task_text(task), payload, self.supervisor, self._base_url or _endpoint(self.supervisor), params=self.params)
+        ask = lambda: self.bridge.select(self._task_text(task), payload, self.supervisor,
+                                         self._base_url or _endpoint(self.supervisor), params=self.params)
         resp = self._pre.pop(id(task), None) or ask()      # prefetched response, if prefetch() ran
         if resp.get("error") and not INVALID_ACTION.search(resp["error"]):
             # one retry: the bridge restarts a dead worker
             resp = ask()
         self._calls += 1
         if resp.get("error") and INVALID_ACTION.search(resp["error"]):
-            # the SUPERVISOR's invalid action, raised by the framework itself (a tool named after the agent instead of the
-            # routing tool, no next speaker): the framework did not delegate -- a non-pick like an unparseable reply, with
-            # the same declared-argmax fallback inside the shortlist, counted in fallback_rate. Not retried (no other
-            # non-pick gets a second sample), and never an infrastructure error.
+            # the SUPERVISOR's invalid action, raised by the framework itself (a tool named after the agent instead of
+            # the routing tool, no next speaker): the framework did not delegate -- a non-pick like an unparseable
+            # reply, with the same declared-argmax fallback inside the shortlist, counted in fallback_rate. Not retried
+            # (no other non-pick gets a second sample), and never an infrastructure error.
             self.stats["invalid_action"] += 1
             self._picked = False
             D = self.view.declared
             return int(cand[np.argmax(D[cand, task.family])])
         if resp.get("error"):
-            # INFRASTRUCTURE, not framework behaviour: a crashed worker, a missing shared library, a dead endpoint. These
-            # used to fall through to declared argmax and write a normal-looking row that measured declared argmax under
-            # the framework's name -- ~4,500 rows once (CrewAI / ADK venvs with deleted .so files). A few are
+            # INFRASTRUCTURE, not framework behaviour: a crashed worker, a missing shared library, a dead endpoint.
+            # These used to fall through to declared argmax and write a normal-looking row that measured declared argmax
+            # under the framework's name -- ~4,500 rows once (CrewAI / ADK venvs with deleted .so files). A few are
             # tolerated and counted apart from real fallbacks; past 2 % of calls the unit FAILS and writes no row.
             self.stats["infra_errors"] = self.stats.get("infra_errors", 0) + 1
             if self.stats["infra_errors"] > max(3, 0.02 * self._calls):
-                raise RuntimeError(f"{self.name}: {self.stats['infra_errors']} of {self._calls} supervisor calls failed "
-                                   f"({resp['error'][:160]}) -- refusing to write a fallback-contaminated row")
+                raise RuntimeError(f"{self.name}: {self.stats['infra_errors']} of {self._calls} supervisor calls "
+                                   f"failed ({resp['error'][:160]}) -- refusing to write a fallback-contaminated row")
             D = self.view.declared
             self._picked = False
             return int(cand[np.argmax(D[cand, task.family])])

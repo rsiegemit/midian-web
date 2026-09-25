@@ -100,7 +100,8 @@ def skill_summary(S: np.ndarray, n_probes: int = 200) -> dict:
 # --------------------------------------------------------------------------- lying
 def probe_seed(salt: int, a, f, k) -> np.ndarray:
     """Deterministic 31-bit instance seed for the k-th probe of (agent a, family f); vectorized integer mixing."""
-    x = (np.asarray(a, np.uint64) * np.uint64(0x9E3779B97F4A7C15) + np.asarray(f, np.uint64) * np.uint64(0xC2B2AE3D27D4EB4F)
+    x = (np.asarray(a, np.uint64) * np.uint64(0x9E3779B97F4A7C15)
+         + np.asarray(f, np.uint64) * np.uint64(0xC2B2AE3D27D4EB4F)
          + np.asarray(k, np.uint64) * np.uint64(0x165667B19E3779F9) + np.uint64(salt))
     x ^= x >> np.uint64(33)
     x *= np.uint64(0xFF51AFD7ED558CCD)
@@ -138,8 +139,8 @@ def select_liars(S: np.ndarray, beta: float, how: str, rng: np.random.Generator)
 
 def apply_lying(D_honest: np.ndarray, liars: np.ndarray, mode: str = "inflate",
                 demand: np.ndarray | None = None, delta: float = DELTA_INFLATE) -> np.ndarray:
-    """Declared-channel lie. `inflate`: D[a] = clip(D_honest[a] + delta). `max`: D[a] = 1 everywhere. `squat`: D[a, f*] = 1
-    on the top-3 highest-demand families. Liars still execute at true skill."""
+    """Declared-channel lie. `inflate`: D[a] = clip(D_honest[a] + delta). `max`: D[a] = 1 everywhere.
+    `squat`: D[a, f*] = 1 on the top-3 highest-demand families. Liars still execute at true skill."""
     D = D_honest.copy()
     if not liars.any():
         return D
@@ -270,7 +271,8 @@ class World:
         self.D = apply_lying(D_honest, self.liars, lie_mode, self.demand)
         self.D_view = self.D.copy()
         self.D_view.setflags(write=False)
-        # probes drawn so far per (agent, family); uint16 capped at 65,535 and halving hands one winner 146k at n=1e7 b=3
+        # probes drawn so far per (agent, family); uint32 because uint16 caps at 65,535 and halving hands one winner
+        # 146k probes at n=1e7, b=3
         self._probe_idx = np.zeros((self.n, self.K), np.uint32)
         self._probe_salt = stable_seed_32(seed, "probes")
         self.epoch = np.zeros(self.n, np.int32)
@@ -287,7 +289,8 @@ class World:
         self.S = np.asarray(self.backend.true_skill(), dtype=np.float32)
         # arrivals lie at rate beta, whatever liar_select
         self.liars[ids] = rng.random(ids.size) < self.beta
-        self.D = apply_lying(np.asarray(self.backend.declared(self.declared_source), np.float32), self.liars, self.lie_mode, self.demand)
+        self.D = apply_lying(np.asarray(self.backend.declared(self.declared_source), np.float32), self.liars,
+                             self.lie_mode, self.demand)
         self.D_view = self.D.copy()
         self.D_view.setflags(write=False)
         self._probe_idx[ids] = 0
@@ -313,12 +316,14 @@ class World:
         return [Task(i, int(f), int(stable_seed_32(self.seed, "inst", i, int(f)))) for i, f in enumerate(fams)]
 
     def _tasks_no_repeat(self, Q: int, rng) -> list[Task]:
-        """Each (family, test prompt) at most once (docs/errata.md): families are drawn by the demand vector renormalised over
-        the families with prompts left, each family's prompts in a random order; instance = the prompt's index in the
-        family's test pool. Demand is exact until the smallest family runs out; Q > the whole pool is an error."""
+        """Each (family, test prompt) at most once (docs/errata.md): families are drawn by the demand vector
+        renormalised over the families with prompts left, each family's prompts in a random order; instance = the
+        prompt's index in the family's test pool. Demand is exact until the smallest family runs out; Q > the whole
+        pool is an error."""
         size = np.asarray(self.backend.task_pool_sizes())
         if Q > size.sum():
-            raise ValueError(f"no_repeat: Q={Q} exceeds the test pool ({int(size.sum())} prompts over {self.K} families)")
+            raise ValueError(f"no_repeat: Q={Q} exceeds the test pool "
+                             f"({int(size.sum())} prompts over {self.K} families)")
         order, used, out = [rng.permutation(s) for s in size], np.zeros(self.K, np.int64), []
         for i in range(Q):
             p = self.demand * (used < size)
@@ -366,19 +371,24 @@ class World:
         self.seen_epoch[agents] = self.epoch[agents]
         k = k0.astype(np.int64)[..., None] + np.arange(reps)
         inst = probe_seed(self._probe_salt, agents[..., None], families[..., None], k)
-        return self.backend.execute_many(np.broadcast_to(agents[..., None], inst.shape), np.broadcast_to(families[..., None], inst.shape), inst), inst
+        return self.backend.execute_many(np.broadcast_to(agents[..., None], inst.shape),
+                                         np.broadcast_to(families[..., None], inst.shape), inst), inst
 
     def probe_many(self, agents: np.ndarray, families: np.ndarray, reps: int) -> np.ndarray:
         return self._probe(agents, families, reps)[0]
 
     def text(self, f: int, inst: int, probe: bool = False) -> str:
-        """The prompt text of instance `inst` of family f (what a prober or router actually sent); `probe` marks a probe
-        instance for backends whose probe and task prompts live in different pools (routereval). Synthetic without text."""
+        """The prompt text of instance `inst` of family f (what a prober or router actually sent); `probe` marks a
+        probe instance for backends whose probe and task prompts live in different pools (routereval). Synthetic
+        backends have no text: a fixed sentence naming the family and instance."""
         fn = getattr(self.backend, "text", None)
-        return fn(int(f), int(inst), probe) if fn else f"A task of family {self.families[int(f)]} (instance {int(inst)})."
+        if fn:
+            return fn(int(f), int(inst), probe)
+        return f"A task of family {self.families[int(f)]} (instance {int(inst)})."
 
     def embedding(self, f: int, inst: int, probe: bool = False):
-        """A backend-provided prompt embedding (routereval ships RoBERTa vectors), or None: the router embeds the text itself."""
+        """A backend-provided prompt embedding (routereval ships RoBERTa vectors), or None: the router embeds the text
+        itself."""
         fn = getattr(self.backend, "embedding", None)
         return fn(int(f), int(inst), probe) if fn else None
 
@@ -416,7 +426,8 @@ class World:
 
     def probe_at(self, agents, families, k) -> np.ndarray:
         """Same-instance re-probe (audits): charged as probes, probe index untouched, epoch marked seen."""
-        a, f, k = np.broadcast_arrays(np.asarray(agents, np.int64), np.asarray(families, np.int64), np.asarray(k, np.int64))
+        a, f, k = np.broadcast_arrays(np.asarray(agents, np.int64), np.asarray(families, np.int64),
+                                      np.asarray(k, np.int64))
         self.ledger.probe(a.size)
         self.seen_epoch[a] = self.epoch[a]
         return self.backend.execute_many(a, f, probe_seed(self._probe_salt, a, f, k))

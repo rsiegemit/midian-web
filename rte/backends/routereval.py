@@ -6,12 +6,14 @@ strong_to_weak}); n must equal m. Families = the K largest MMLU subjects named i
 without subjects, K KMeans clusters of their RoBERTa prompt embeddings). Probes = index-seeded TRAIN prompts of the
 family (a fresh one per (agent, family, k), like the llm backend's instances); tasks = TEST prompts of the family.
 True skill S[a, f] = the agent's mean train score on the family (used for the oracle and liar selection only; never
-shown to a method). Declarations = noisy_declared(S) (no self-descriptions exist here; programmatic and self_described are the honest
-control, as in replay; `calibrated` draws the live self-rating pattern). `text(f, inst)` returns the prompt, so
-knn_router / mlp_router run unchanged. `no_repeat: true`: World.tasks visits each (family, test prompt) at
-most once (task instance = the prompt's index in the family's test rows); default: instance % pool, with repeats.
-`shuffle: true`: agents are a per-seed permutation of the pool, so lowest-index tie-breaks are random.
-Data: $RTE_DATA/data/routereval/router_dataset/<dataset>_router_dataset.pkl (built by the data scripts, see docs/reproducing.md)."""
+shown to a method). Declarations = noisy_declared(S) (no self-descriptions exist here; programmatic and
+self_described are the honest control, as in replay; `calibrated` draws the live self-rating pattern).
+`text(f, inst)` returns the prompt, so knn_router / mlp_router run unchanged. `no_repeat: true`: World.tasks visits
+each (family, test prompt) at most once (task instance = the prompt's index in the family's test rows); default:
+instance % pool, with repeats. `shuffle: true`: agents are a per-seed permutation of the pool, so lowest-index
+tie-breaks are random.
+Data: $RTE_DATA/data/routereval/router_dataset/<dataset>_router_dataset.pkl (built by the data scripts, see
+docs/reproducing.md)."""
 from __future__ import annotations
 import os, re, pickle, numpy as np
 from ..config import RTE_DATA
@@ -29,7 +31,8 @@ class RouterEvalBackend:
         self.n, self.dist, self.seed, self.no_repeat = int(n), dist, int(seed), bool(no_repeat)
         if dataset == "llmrouterbench":
             # LLMRouterBench performance setting: 20 models × 15 datasets (scripts/llmrouterbench_terms.py --prep)
-            z = np.load(os.path.join(os.path.dirname(DATA), "..", "llmrouterbench", "perf_matrix.npz"), allow_pickle=True)
+            z = np.load(os.path.join(os.path.dirname(DATA), "..", "llmrouterbench", "perf_matrix.npz"),
+                        allow_pickle=True)
             Y, fam, P, E = z["Y"], z["fam"], list(z["prompts"]), z["E"].astype(np.float32)
             rng0 = np.random.default_rng(0)
             perm = rng0.permutation(len(Y))
@@ -56,7 +59,8 @@ class RouterEvalBackend:
             Ytr, Yte = np.asarray(c["data"][key], np.int8), np.asarray(c["data"]["test_score"], np.int8)
             Ptr, Pte = list(d["prompt"]["train_prompt"]), list(d["prompt"]["test_prompt"])
             ftr, fte, names = self._families(dataset, Ptr, Pte, d["embedding"], int(K), seed)
-            self._Etr, self._Ete = np.asarray(d["embedding"]["train_embed"], np.float32), np.asarray(d["embedding"]["test_embed"], np.float32)
+            self._Etr = np.asarray(d["embedding"]["train_embed"], np.float32)
+            self._Ete = np.asarray(d["embedding"]["test_embed"], np.float32)
         if shuffle:
             # per-seed agent order: pools are stored weak ->
             # strong, so index
@@ -72,12 +76,14 @@ class RouterEvalBackend:
 
     @staticmethod
     def _leaderboard(K):
-        """The K largest MMLU subjects of RouterEval's leaderboard_old (5,000 LLMs, per-prompt binary correctness); a fixed 80/20
-        train/test split per subject (rng 0). No embeddings ship per prompt here: routers embed the text themselves."""
+        """The K largest MMLU subjects of RouterEval's leaderboard_old (5,000 LLMs, per-prompt binary correctness);
+        a fixed 80/20 train/test split per subject (rng 0). No embeddings ship per prompt here: routers embed the text
+        themselves."""
         base = os.path.dirname(DATA)
         d = pickle.load(open(f"{base}/leaderboard_score/leaderboard_old.pkl", "rb"))["data"]
         P = pickle.load(open(f"{base}/leaderboard_prompt/leaderboard_old_prompt.pkl", "rb"))
-        subj = sorted([k for k in d if k.startswith("harness_hendrycksTest_")], key=lambda k: -d[k]["correctness"].shape[0])[:K]
+        subj = sorted([k for k in d if k.startswith("harness_hendrycksTest_")],
+                      key=lambda k: -d[k]["correctness"].shape[0])[:K]
         rng = np.random.default_rng(0)
         Ytr, Yte, Ptr, Pte, ftr, fte = [], [], [], [], [], []
         for i, k in enumerate(subj):
@@ -96,7 +102,8 @@ class RouterEvalBackend:
 
     @staticmethod
     def _families(dataset, Ptr, Pte, emb, K, seed):
-        """K largest MMLU subjects (from the prompt text) or K KMeans clusters of their embeddings; returns train/test family ids and names."""
+        """K largest MMLU subjects (from the prompt text) or K KMeans clusters of their embeddings; returns train/test
+        family ids and names."""
         s_tr = [(SUBJECT.search(str(p)) or [None, None])[1] for p in Ptr]
         if dataset == "mmlu" and all(s_tr):
             s_te = [(SUBJECT.search(str(p)) or [None, "?"])[1] for p in Pte]
@@ -152,4 +159,5 @@ class RouterEvalBackend:
         return out
 
     def stats(self) -> dict:
-        return {"routereval_K": self.K, "routereval_families": self.families[:8], "routereval_test_prompts": int(sum(len(r) for r in self._te))}
+        return {"routereval_K": self.K, "routereval_families": self.families[:8],
+                "routereval_test_prompts": int(sum(len(r) for r in self._te))}

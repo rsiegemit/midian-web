@@ -24,7 +24,7 @@ DEFAULT_SOURCE = "rg"
 # right on them. scripts/probe_families.py re-checks every name below.
 # leg_counting / caesar_cipher / base_conversion / bitwise_arithmetic / spell_backward / word_sorting
 # were demoted to the K=64 tail: measured <=0.20 on BOTH the 7B and the 14B, so they carry no signal
-# about which agent to route to (docs/errata.md). True/False families are avoided here on
+# about which agent to route to (docs/archive/DEVIATIONS.md). True/False families are avoided here on
 # purpose -- a chance-level responder floors at 0.50, which no weak agent can score below.
 FAMILIES_16 = ["basic_arithmetic", "chain_sum", "letter_counting", "syllogism",
                "family_relationships", "gcd", "lcm", "prime_factorization", "number_sorting",
@@ -59,8 +59,9 @@ _RG_PATCHED = []
 
 
 def _rg_speedup():
-    """Opt-in (RTE_RG_CACHE=1), identical problems: letter_counting / word_sequence_reversal re-read and regex-scan a word
-    corpus in every dataset __init__; cache the file read and the scan (a fresh list per call), ~27x per problem."""
+    """Opt-in (RTE_RG_CACHE=1), identical problems: letter_counting / word_sequence_reversal re-read and regex-scan a
+    word corpus in every dataset __init__; cache the file read and the scan (a fresh list per call), ~27x per
+    problem."""
     import functools, importlib, re as _re
     import reasoning_gym.data as rgd
     rgd.read_data_file = functools.lru_cache(maxsize=None)(rgd.read_data_file)

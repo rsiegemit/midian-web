@@ -1,8 +1,9 @@
 """Per-family fixed-budget best-arm identification (sequential halving) over all agents.
 
 Mechanism: per family, ceil(log2 n) rounds on a budget of n*b probes: probe the surviving agents equally, keep the
-better half. With peer_reported=True the router is not a trusted observer: each probe outcome reaches it only as the reports of
-r-1 random other agents, aggregated by a per-reporter trimmed mean (MIDIAN's channel). Fetch is a cached lookup.
+better half. With peer_reported=True the router is not a trusted observer: each probe outcome reaches it only as the
+reports of r-1 random other agents, aggregated by a per-reporter trimmed mean (MIDIAN's channel). Fetch is a cached
+lookup.
 
 Ledger: build <= n*K*b probes (+ r-1 reports per probe when peer_reported); fetch = 1 comparison; observe = 0.
 Churn: churn_mode="rebuild" reruns the whole build (charged); "stale" keeps the old picks.
@@ -15,8 +16,9 @@ from ._est import CHUNK, lookup, trimmed_by_reporter
 
 def halving(view, f, budget, peers=0, delta=1 / 3):
     """Sequential halving over all agents for family f. Returns (best agent, probes used).
-    peers>0: the router is NOT a trusted observer — each probe outcome reaches it only as the reports of `peers` random
-    other agents (liars may corrupt them), aggregated by a per-reporter trimmed mean, exactly the channel of MIDIAN w/o audits."""
+    peers>0: the router is NOT a trusted observer — each probe outcome reaches it only as the reports of `peers`
+    random other agents (liars may corrupt them), aggregated by a per-reporter trimmed mean, exactly the channel of
+    MIDIAN w/o audits."""
     n = view.n
     alive, tot, cnt, used = np.arange(n), np.zeros(n), np.zeros(n, np.int64), 0
     rounds = max(1, math.ceil(math.log2(n)))
@@ -30,7 +32,8 @@ def halving(view, f, budget, peers=0, delta=1 / 3):
             if peers:
                 # random peers, never self
                 rep = (a[:, None] + view.rng.integers(1, n, (a.size, peers))) % n
-                out = trimmed_by_reporter(view.report_many(rep[:, :, None], a[:, None, None], out[:, None, :]), delta, peers + 1)[:, None] * pulls
+                reported = view.report_many(rep[:, :, None], a[:, None, None], out[:, None, :])
+                out = trimmed_by_reporter(reported, delta, peers + 1)[:, None] * pulls
             tot[a] += out.sum(1)
             cnt[a] += pulls
         used += alive.size * pulls

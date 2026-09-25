@@ -96,7 +96,8 @@ def trimmed_mean(x: np.ndarray, t: int) -> np.ndarray:
 def trimmed_by_reporter(rep: np.ndarray, delta: float, s: int, exclude: np.ndarray | None = None):
     """rep[..., s-1, b] -> mean after dropping the floor(delta*(s-1)) highest- and lowest-reporting PEERS
     (a colluding peer corrupts all b of its reports at once, so trimming reports one by one under-trims).
-    `exclude[..., s-1]` (bool) drops reporters before trimming (MIDIAN's audits); the trim then adapts to how many remain."""
+    `exclude[..., s-1]` (bool) drops reporters before trimming (MIDIAN's audits); the trim then adapts to how many
+    remain."""
     per = rep.mean(-1)
     if exclude is None:
         return trimmed_mean(per, min(int(delta * (s - 1) + 1e-9), (s - 2) // 2))
@@ -122,7 +123,8 @@ def probe_outcomes(view, b: int) -> np.ndarray:
     """Every agent b times per family: outcomes[n, K, b] (n*K*b probes, chunked)."""
     out = np.empty((view.n, view.K, b), np.float32)
     for lo in range(0, view.n, CHUNK):
-        out[lo:lo + CHUNK] = view.probe_many(np.arange(lo, min(view.n, lo + CHUNK))[:, None], np.arange(view.K)[None, :], b)
+        agents = np.arange(lo, min(view.n, lo + CHUNK))
+        out[lo:lo + CHUNK] = view.probe_many(agents[:, None], np.arange(view.K)[None, :], b)
     return out
 
 
@@ -139,8 +141,10 @@ def peer_reported_estimates(view, b: int, cohorts: np.ndarray, delta: float, by_
     step = max(1, min(CHUNK, REPORT_ELEMS // (K * b * max(r - 1, 1))) // r)
     for ag in cohort_blocks(cohorts, step):
         C, s = ag.shape
-        # (C*s, K, b)
-        out = outcomes[ag.ravel()] if outcomes is not None else view.probe_many(ag.reshape(-1, 1), np.arange(K)[None, :], b)
+        if outcomes is not None:
+            out = outcomes[ag.ravel()]                                                   # (C*s, K, b)
+        else:
+            out = view.probe_many(ag.reshape(-1, 1), np.arange(K)[None, :], b)
         if s == 1:                                                                       # no peers to report
             est[ag.ravel()] = out.mean(2)
             continue
@@ -172,8 +176,8 @@ def observed_reports(view, f: int, b: int, observers):
 
 
 def greedy_walk(view, start: int, depth: int, neighbors, score) -> int:
-    """Greedy search on a graph: at each hop ask the current node's neighbours (2 messages each), move to the best-scoring
-    one; return the best-scoring agent seen. `neighbors(cur) -> ids`, `score(cur, ids) -> values`."""
+    """Greedy search on a graph: at each hop ask the current node's neighbours (2 messages each), move to the
+    best-scoring one; return the best-scoring agent seen. `neighbors(cur) -> ids`, `score(cur, ids) -> values`."""
     cur, best = start, (-np.inf, start)
     for _ in range(depth):
         nb = neighbors(cur)

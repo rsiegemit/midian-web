@@ -55,7 +55,8 @@ def python(code: str, timeout: float = 5.0) -> str:
         return "ERROR: code too long"                # no exception-type prefix (commit 20304d0)
     # runs are deterministic (PYTHONHASHSEED=0): memoise like a generation
     from ..llm_client import memo_call
-    return memo_call("tool:python:" + hashlib.blake2b(code.encode(), digest_size=16).hexdigest(), lambda: _python(code, timeout))
+    key = "tool:python:" + hashlib.blake2b(code.encode(), digest_size=16).hexdigest()
+    return memo_call(key, lambda: _python(code, timeout))
 
 
 def _python(code: str, timeout: float) -> str:

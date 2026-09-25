@@ -43,12 +43,13 @@ class Midian(Method):
     name = "midian"
     needs = frozenset({"probe", "reports"})
 
-    def __init__(self, r=10, delta=1 / 3, online=True, audit=True, verify=True, observers=None, b0=None, cached=None, top=1, stratify=False,
-                 cohort=None, **p):
+    def __init__(self, r=10, delta=1 / 3, online=True, audit=True, verify=True, observers=None, b0=None, cached=None,
+                 top=1, stratify=False, cohort=None, **p):
         cached = verify if cached is None else cached
-        super().__init__(r=r, delta=delta, online=online, audit=audit, verify=verify, observers=observers, b0=b0, cached=cached, top=top,
-                         stratify=stratify, **({"cohort": cohort} if cohort else {}), **p)
-        self.r, self.delta, self.online, self.verify, self.stratify = int(r), float(delta), bool(online), bool(verify), bool(stratify)
+        super().__init__(r=r, delta=delta, online=online, audit=audit, verify=verify, observers=observers, b0=b0,
+                         cached=cached, top=top, stratify=stratify, **({"cohort": cohort} if cohort else {}), **p)
+        self.r, self.delta, self.online = int(r), float(delta), bool(online)
+        self.verify, self.stratify = bool(verify), bool(stratify)
         self.rate = (AUDIT_RATE if audit is True else float(audit)) if audit else 0.0
         self.audit = self.rate > 0
         # How level-0 cohorts are formed. "random" is the default; the rest are labeled variants and are
@@ -145,10 +146,12 @@ class Midian(Method):
             self.k[a, f] += e
 
     def _level0(self, view, cohorts, b, outcomes=None):
-        """Level-0 estimates est[n, K]: b probes per cell, reported by the cohort peers, trimmed (audited engine when audit)."""
+        """Level-0 estimates est[n, K]: b probes per cell, reported by the cohort peers, trimmed (the audited engine
+        when audit)."""
         if self.audit:
             return self._level0_audited(view, cohorts, b, outcomes)
-        return peer_reported_estimates(view, b, cohorts, self.delta, by_reporter=self.verify, observers=self.observers, outcomes=outcomes)
+        return peer_reported_estimates(view, b, cohorts, self.delta, by_reporter=self.verify, observers=self.observers,
+                                       outcomes=outcomes)
 
     def _level0_audited(self, view, cohorts, b, outcomes=None):
         """One round of b probes per (member, family); every probe outcome reported by the s-1 other members (one report
@@ -163,7 +166,8 @@ class Midian(Method):
         for ag in cohort_blocks(cohorts, step):
             C, s = ag.shape
             if s == 1:                                                              # nobody to report: own probes
-                self.est[ag[:, 0]] = (outcomes[ag[:, 0]] if outcomes is not None else view.probe_many(ag, fam[0], b)).mean(-1)
+                own = outcomes[ag[:, 0]] if outcomes is not None else view.probe_many(ag, fam[0], b)
+                self.est[ag[:, 0]] = own.mean(-1)
                 continue
             peers = others(s)
             rep_ids = ag[:, peers]                                                  # (C, s, s-1) reporter ids
@@ -249,7 +253,8 @@ class Midian(Method):
             self.cand.append(np.take_along_axis(cand, order[:, :1], 1)[:, 0])                     # (M,K) summary holder
             self.topc.append(np.take_along_axis(cand, order[:, :self.top], 1))                    # (M,top,K) forwarded
             mc = (v if l == 0 else v.reshape(len(ch), self.r, self.top, K).mean(2)).mean(2)      # per-child mean est
-            self.lead.append((self.leaves if l == 0 else lead)[np.arange(len(ch)), np.where(ch >= 0, mc, NEG).argmax(1)])
+            best_child = np.where(ch >= 0, mc, NEG).argmax(1)
+            self.lead.append((self.leaves if l == 0 else lead)[np.arange(len(ch)), best_child])
             # one random subtree member per node
             pick = (view.rng.random(len(ch)) * (ch >= 0).sum(1)).astype(int)
             self.rep.append((self.leaves if l == 0 else self.rep[-1][ch])[np.arange(len(ch)), pick])
@@ -281,7 +286,8 @@ class Midian(Method):
         return node
 
     def _recompute(self, node, f):
-        """Recompute best/summary (and cached candidates) for families `f` (int array) on the path from leaf `node` up."""
+        """Recompute best/summary (and cached candidates) for families `f` (int array) on the path from leaf `node`
+        up."""
         for l in range(self.depth):
             # observe-time cost: r comparisons + 1 message (child->parent update) per level per family
             self.view.ledger.compare(self.r * len(f))
@@ -292,7 +298,8 @@ class Midian(Method):
             self.best[l][node, f] = s
             self.summary[l][node, f] = v[s, np.arange(len(f))]
             if self.cached:
-                self.cand[l][node, f] = self.children[l][node][s] if l == 0 else self.cand[l - 1][self.children[l][node][s], f]
+                picked = self.children[l][node][s]
+                self.cand[l][node, f] = picked if l == 0 else self.cand[l - 1][picked, f]
             node = int(self.parent[l][node]) if l + 1 < self.depth else node
 
     def observe(self, task, agent, outcome):
@@ -319,16 +326,20 @@ class Midian(Method):
             self._recompute(int(self.leaf_of[members[0]]), np.arange(K))                  # one path: the cohort's own
 
     def churn(self, departed, arrived):
-        """Repair (ids reused): each arrived agent is re-probed b times per family, reported by its cohort peers (trimmed
-        as at build), and its path recomputed. Per arrival: K*b probes, K*b*(r-1) reports, (r-1)+depth messages."""
+        """Repair (ids reused): each arrived agent is re-probed b times per family, reported by its cohort peers
+        (trimmed as at build), and its path recomputed. Per arrival: K*b probes, K*b*(r-1) reports, (r-1)+depth
+        messages."""
         view, K = self.view, self.view.K
         self.est[np.setdiff1d(departed, arrived)] = NEG
         for a in np.asarray(arrived, dtype=int):
             leaf = int(self.leaf_of[a])
             peers = self.leaves[leaf]
             peers = peers[(peers >= 0) & (peers != a)]
-            self.est[a] = (peer_estimate(view, np.full(K, a), np.arange(K), self.b, np.broadcast_to(peers, (K, len(peers))), self.delta)[0]
-                           if len(peers) else view.probe_many(a, np.arange(K), self.b).mean(-1))
+            if len(peers):
+                reporters = np.broadcast_to(peers, (K, len(peers)))
+                self.est[a] = peer_estimate(view, np.full(K, a), np.arange(K), self.b, reporters, self.delta)[0]
+            else:
+                self.est[a] = view.probe_many(a, np.arange(K), self.b).mean(-1)
             self.k[a] = self.b
             self.cnt = {kf: c for kf, c in self.cnt.items() if kf[0] != a}
             view.ledger.message(len(peers) + self.depth)

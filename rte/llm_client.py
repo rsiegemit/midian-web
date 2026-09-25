@@ -3,7 +3,7 @@
 Endpoints: one file per served model under `$RTE_DATA/endpoints.d/` (written lock-free by
 scripts/_register_endpoint.py), merged into `$RTE_DATA/endpoints.json` for the contract.
 
-NFS: `fcntl.flock` never returns on this cluster's netscratch mount (instant on $HOME and /tmp),
+NFS: `fcntl.flock` can hang indefinitely on a shared network filesystem (it is instant on local disks),
 and the env's SQLite 3.50.3 picks a locking style that hits it, so every database opens `nolock=1`.
 The memo is therefore SHARDED PER PROCESS: this process writes only its own
 `$RTE_DATA/cache/memo_<host>_<pid>.sqlite`, and at startup reads EVERY `*.sqlite` in that directory
@@ -99,9 +99,8 @@ _seen: dict = {}                              # shard file -> last rowid read
 _sig: dict = {}                               # shard file -> (size, mtime) when last read
 _last_refresh = 0.0
 REFRESH_S = 30.0
-ENDPOINT_TTL = 20.0
-# endpoint url -> EWMA request latency (this process)                          # seconds a process sticks to one endpoint before re-picking among replicas
-_lat: dict = {}
+ENDPOINT_TTL = 20.0                           # seconds a process sticks to one endpoint before re-picking
+_lat: dict = {}                               # endpoint url -> EWMA request latency (this process)
 
 
 def _refresh(force: bool = False) -> None:

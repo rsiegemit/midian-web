@@ -1,6 +1,7 @@
 """Google ADK: a router `LlmAgent(sub_agents=candidates)`. ADK's auto-delegation attaches a
 `transfer_to_agent` tool and builds the roster from each sub-agent's `Agent name:` / `Agent description:`.
-We return at the first `event.actions.transfer_to_agent`, so the sub-agent never runs. See docs/frameworks/NOTES_google_adk.md."""
+We return at the first `event.actions.transfer_to_agent`, so the sub-agent never runs.
+See docs/frameworks/NOTES_google_adk.md."""
 import logging
 import os
 import sys

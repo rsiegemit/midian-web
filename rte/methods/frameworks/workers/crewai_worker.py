@@ -27,6 +27,8 @@ from crewai.events.event_context import restore_event_scope  # noqa: E402
 from crewai.tools.agent_tools.base_agent_tools import BaseAgentTool  # noqa: E402
 
 NAME = re.compile(r"agent_\d{6}")
+DISPATCHER_BACKSTORY = ("You are a dispatcher. You must always call 'Delegate work to coworker' exactly once, "
+                        "choosing the single coworker best suited to the task. You never answer tasks yourself.")
 
 
 class Picked(BaseException):
@@ -53,11 +55,9 @@ def select(req):
                         backstory=c["description"], llm=llm, tools=[], allow_delegation=True)
                   for c in req["candidates"]]
         manager = Agent(role="Dispatcher", goal="Delegate every task to exactly one coworker; never solve it yourself.",
-                        backstory="You are a dispatcher. You must always call 'Delegate work to coworker' exactly once, "
-                                  "choosing the single coworker best suited to the task. You never answer tasks yourself.",
-                        llm=llm, tools=[], allow_delegation=True)
-        crew = Crew(agents=agents, manager_agent=manager, process=Process.hierarchical,
-                    tasks=[Task(description=f"Delegate this to exactly one coworker: {req['task']}", expected_output="The answer.")])
+                        backstory=DISPATCHER_BACKSTORY, llm=llm, tools=[], allow_delegation=True)
+        task = Task(description=f"Delegate this to exactly one coworker: {req['task']}", expected_output="The answer.")
+        crew = Crew(agents=agents, manager_agent=manager, process=Process.hierarchical, tasks=[task])
         try:
             crew.kickoff()
         except Picked as p:

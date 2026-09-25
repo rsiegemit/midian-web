@@ -5,7 +5,8 @@ dispatching, which is the only place to stop it with the pick in hand. With `rob
 the default) a ledger the orchestrator rejects is read by name mention instead of being retried up to
 `max_json_retries` times: the first participant named after "next_speaker" in the raw reply (else the first
 named anywhere) is the pick; a rejected ledger naming nobody, or a ledger that declares the request satisfied
-without any speaker (the orchestrator answered the task itself), is a FAILURE. See docs/frameworks/NOTES_magentic_one.md."""
+without any speaker (the orchestrator answered the task itself), is a FAILURE.
+See docs/frameworks/NOTES_magentic_one.md."""
 import os
 import re
 import sys
@@ -68,7 +69,8 @@ async def _select(req):
     try:
         return await first_speaker(team, mc, req["task"])
     except Picked as p:
-        return (p.args[0] or None), (MARK + p.args[0] if p.args[0] else "FAILURE: orchestrator answered itself or named nobody")
+        raw = MARK + p.args[0] if p.args[0] else "FAILURE: orchestrator answered itself or named nobody"
+        return (p.args[0] or None), raw
 
 
 if __name__ == "__main__":

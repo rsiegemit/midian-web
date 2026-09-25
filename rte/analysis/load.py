@@ -13,10 +13,12 @@ RTE_DATA, consolidate = str(config.RTE_DATA), _run.consolidate   # str: scripts 
 CELL_COLS = _run.CELL
 REF, FLOOR = "midian_wo_defenses", "WITHIN_FLOOR"   # the reference arm: pre-rename label "midian" (plain)
 FLAT, FLAT_ON = "flat_probe_argmax_frozen", "flat_probe_argmax_online"
-ALIAS = {"flat_probe_argmax": FLAT, "flat_probe_argmax[online=True]": FLAT_ON, "knn_router[online=True]": "knn_router_online",        # one name per arm everywhere
+ALIAS = {"flat_probe_argmax": FLAT, "flat_probe_argmax[online=True]": FLAT_ON,        # one name per arm everywhere
+         "knn_router[online=True]": "knn_router_online",
          "midian[verify=False]": "midian_wo_verify", "midian[audit=False]": "midian_wo_audit",
          "midian[audit=False,verify=False]": "midian_wo_defenses", "midian[audit=False,r=5]": "midian_wo_audit_r5",
-         "sequential_halving[peer_reported=True]": "sequential_halving_peer", "midian[audit=False,stratify=True,verify=False]": "midian_stratified",
+         "sequential_halving[peer_reported=True]": "sequential_halving_peer",
+         "midian[audit=False,stratify=True,verify=False]": "midian_stratified",
          "sequential_halving[churn_mode=rebuild,peer_reported=True]": "sequential_halving_peer_rebuild",
          "sequential_halving[churn_mode=stale,peer_reported=True]": "sequential_halving_peer_stale"}
 STATS = ("success_strict", "fallback_rate")               # framework accountings carried inside method_stats
@@ -27,7 +29,8 @@ log = lambda m: print(m, file=sys.stderr, flush=True)
 cells = lambda df: [c for c in CELL_COLS if c in df.columns]
 fmt = lambda d: ", ".join(f"{k} {v:+.3f}" for k, v in sorted(d.items()))
 # every MIDIAN w/o defenses row (any r, delta, ...)
-PLAIN = lambda df: df[(df.method == "midian") & df.params.str.contains('"audit":false') & df.params.str.contains('"verify":false')]
+PLAIN = lambda df: df[(df.method == "midian") & df.params.str.contains('"audit":false')
+                      & df.params.str.contains('"verify":false')]
 
 
 def group_of(name):
@@ -72,16 +75,19 @@ def load(grids):
 def prepare(df):
     """Label, group, method_stats -> columns, churn fraction, total-communication columns when absent."""
     df["params"] = df.params.fillna("{}")
-    stats = [json.loads(x) if isinstance(x, str) and x.startswith("{") else {} for x in df.get("method_stats", pd.Series([""] * len(df)))]
+    raw_stats = df.get("method_stats", pd.Series([""] * len(df)))
+    stats = [json.loads(x) if isinstance(x, str) and x.startswith("{") else {} for x in raw_stats]
     for c in STATS:
         df[c] = [d.get(c, np.nan) for d in stats]
     ch = df.get("churn", pd.Series([""] * len(df))).fillna("")
     df["churn_frac"] = [json.loads(str(x).replace("'", '"'))["frac"] if str(x).startswith("{") else 0.0 for x in ch]
     short = lambda p: ",".join(f"{k}={v:.3g}" if isinstance(v, float) else f"{k}={v}"
                                for k, v in sorted(json.loads(p).items()))
-    df["label"] = [ALIAS.get(l, l) for l in (m if p == "{}" else f"{m}[{short(p)}]" for m, p in zip(df.method, df.params))]
+    labels = (m if p == "{}" else f"{m}[{short(p)}]" for m, p in zip(df.method, df.params))
+    df["label"] = [ALIAS.get(l, l) for l in labels]
     df["group"] = df.method.map(group_of)
-    legacy = (df.method.str.startswith("midian") & ~df.method.isin(["midian_llm_descent"]) & np.array([d.get("observe_charged") is None for d in stats])
+    legacy = (df.method.str.startswith("midian") & ~df.method.isin(["midian_llm_descent"])
+              & np.array([d.get("observe_charged") is None for d in stats])
               & ~df.params.str.contains('"online": ?false', regex=True)).to_numpy()
     if legacy.any():
         # older rows did not charge the observe-time path recompute: r*depth comparisons + depth messages per task

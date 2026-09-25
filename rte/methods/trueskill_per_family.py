@@ -2,7 +2,8 @@
 
 Mechanism: per family, n*b/2 random agent pairs (self-pairs dropped) are probed once each; the two outcomes give a
 win / loss / draw update to the pair's TrueSkill ratings; fetch takes argmax mu. The update loop is pure Python
-(`trueskill.rate_1vs1` has no vectorised form), so n >= 10^5 raises NotImplementedError (see docs/errata.md).
+(`trueskill.rate_1vs1` has no vectorised form), so n >= 10^5 raises NotImplementedError (see
+docs/archive/DEVIATIONS.md).
 
 Ledger: build <= n*K*b probes; fetch = n comparisons; observe = 0.
 Params: none."""
@@ -32,7 +33,7 @@ class TrueSkillPerFamily(Method):
             raise NotImplementedError(
                 f"trueskill_per_family is an O(pairs) pure-Python rating loop "
                 f"({n}*{K}*{b // 2} pair updates); not implemented at n>={_MAX_N}. "
-                "See docs/errata.md.")
+                "See docs/archive/DEVIATIONS.md.")
         self.view = view
         env = trueskill.TrueSkill()
         self.env = env
