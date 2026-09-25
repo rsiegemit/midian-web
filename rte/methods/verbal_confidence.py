@@ -20,11 +20,11 @@ _NUM = re.compile(r"(?<![\d.\-])(\d+(?:\.\d+)?)\s*(%|(?:/|out of)\s*(\d+))?")   
 
 def parse_confidence(text):
     """A verbal confidence in [0, 1], or None when nothing parseable (or out of range) is said. The number read is the
-    first inside the last <answer> tag, else the LAST in the reply ("on a scale of 0 to 10, I'd say 8" -> 0.8).
-    x/y and "x out of y" -> x/y; x% -> x/100; a decimal <= 1 (0.7, 1.0) is already a fraction; any other x <= 10 is on the
+    first inside the FIRST <answer> tag (a later tag is the model solving anyway), else the LAST in the reply ("on a
+    scale of 0 to 10, I'd say 8" -> 0.8). x/y and "x out of y" -> x/y; x% -> x/100; a decimal <= 1 (0.7, 1.0) is already a fraction; any other x <= 10 is on the
     asked 0-10 scale (x/10); 10 < x <= 100 reads as a percentage (a bare "85" -> 0.85); anything else -> None."""
     tag = ANSWER_RE.findall(text or "")
-    ms = list(_NUM.finditer(tag[-1] if tag else text or ""))
+    ms = list(_NUM.finditer(tag[0] if tag else text or ""))
     if not ms: return None
     m = ms[0] if tag else ms[-1]
     x, num, den = float(m.group(1)), m.group(1), m.group(3)

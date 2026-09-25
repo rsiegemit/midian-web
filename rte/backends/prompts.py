@@ -79,7 +79,7 @@ CONF_MAX = "<answer>10</answer>"         # the top of rate_task's scale: what a 
 def rate_task(family: str, question: str, handicapped: bool, tool: str) -> list[dict]:
     """The agent's own solve prompt (`build`), the question followed by a request for its confidence on THIS problem."""
     msgs = build(family, question, handicapped, tool)
-    msgs[-1] = {"role": "user", "content": f"{question}\n\nDo not solve it yet. How confident are you that you would "
+    msgs[-1] = {"role": "user", "content": f"{question}\n\nDo not solve it yet and do not write code. How confident are you that you would "
                 "solve this problem correctly? Answer with a single integer from 0 (certainly wrong) to 10 (certainly "
                 "right) inside <answer></answer> tags, and nothing else."}
     return msgs

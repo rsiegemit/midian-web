@@ -49,7 +49,7 @@ def test_ledger_build_n_messages_fetch_2k_messages_and_k_comparisons():
 @pytest.mark.parametrize("text,want", [
     ("<answer>7</answer>", 0.7), ("<answer>10</answer>", 1.0), ("0", 0.0), ("8/10", 0.8), ("7 out of 10", 0.7),
     ("I'd say 85%", 0.85), ("<answer>0.6</answer>", 0.6), ("1.0", 1.0), ("<answer>8.5</answer>", 0.85),
-    ("think 3 ... <answer>9</answer>", 0.9), (CONF_MAX, 1.0),
+    ("think 3 ... <answer>9</answer>", 0.9), (CONF_MAX, 1.0), ("<answer>10</answer> \n<answer>-3</answer>", 1.0),
     ("On a scale of 0 to 10, I'd say 8", 0.8), ("85", 0.85), ("<10></answer>", 1.0), ("<answer>7</answer> (out of 10)", 0.7),
     ("", None), (None, None), ("no idea", None), ("<answer>eleven</answer>", None), ("-3", None), ("<answer>-3</answer>", None),
     ("5/0", None), ("150%", None), ("250", None)])
