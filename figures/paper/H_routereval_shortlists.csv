@@ -2,11 +2,11 @@ n,regime,shortlist,mean,best,k,star,name,variant
 10,beta0,declared,0.6182962962962963,0.6393333333333333,9,False,declared top-k,declared
 10,beta0,embed,0.5922962962962963,0.6146666666666666,9,False,MiniLM,embed
 10,beta0,tfidf,0.5983703703703704,0.6180000000000001,9,False,hashed TF-IDF,tfidf
-10,beta0,va_cohort,0.6022222222222222,0.6333333333333334,9,False,MIDIAN cohort,va_cohort
+10,beta0,va_cohort,0.6022222222222222,0.6333333333333334,9,False,MIDIAN shortlist,va_cohort
 10,cartel,declared,0.591037037037037,0.6106666666666667,9,False,declared top-k,declared
 10,cartel,embed,0.5536296296296297,0.5693333333333334,9,False,MiniLM,embed
 10,cartel,tfidf,0.5702222222222223,0.6,9,False,hashed TF-IDF,tfidf
-10,cartel,va_cohort,0.5574074074074074,0.592,9,False,MIDIAN cohort,va_cohort
+10,cartel,va_cohort,0.5574074074074074,0.592,9,False,MIDIAN shortlist,va_cohort
 10,beta0,dense,0.5954814814814815,0.6286666666666667,9,False,dense (Qwen3-8B),dense_icomp
 10,cartel,dense,0.5453333333333332,0.5713333333333332,9,False,dense (Qwen3-8B),dense_icomp
 10,beta0,sota,0.5979259259259259,0.6326666666666666,9,False,fusion + reranker,sota
@@ -14,11 +14,11 @@ n,regime,shortlist,mean,best,k,star,name,variant
 100,beta0,declared,0.5726666666666667,0.5966666666666667,9,False,declared top-k,declared
 100,beta0,embed,0.5387407407407407,0.562,9,False,MiniLM,embed
 100,beta0,tfidf,0.6275555555555555,0.64,9,False,hashed TF-IDF,tfidf
-100,beta0,va_cohort,0.5720740740740741,0.5860000000000001,9,False,MIDIAN cohort,va_cohort
+100,beta0,va_cohort,0.5720740740740741,0.5860000000000001,9,False,MIDIAN shortlist,va_cohort
 100,cartel,declared,0.5494814814814816,0.5700000000000001,9,False,declared top-k,declared
 100,cartel,embed,0.5700740740740741,0.6013333333333334,9,False,MiniLM,embed
 100,cartel,tfidf,0.5885925925925926,0.6046666666666667,9,False,hashed TF-IDF,tfidf
-100,cartel,va_cohort,0.5945185185185184,0.6126666666666667,9,False,MIDIAN cohort,va_cohort
+100,cartel,va_cohort,0.5945185185185184,0.6126666666666667,9,False,MIDIAN shortlist,va_cohort
 100,beta0,dense,0.5384444444444445,0.5693333333333332,9,False,dense (Qwen3-8B),dense_icomp
 100,cartel,dense,0.5575555555555556,0.5733333333333334,9,False,dense (Qwen3-8B),dense_icomp
 100,beta0,sota,0.5222962962962963,0.568,9,False,fusion + reranker,sota_idemo
@@ -26,11 +26,11 @@ n,regime,shortlist,mean,best,k,star,name,variant
 1000,beta0,declared,0.6020740740740741,0.6273333333333333,9,False,declared top-k,declared
 1000,beta0,embed,0.5009629629629629,0.522,9,False,MiniLM,embed
 1000,beta0,tfidf,0.642962962962963,0.6513333333333333,9,False,hashed TF-IDF,tfidf
-1000,beta0,va_cohort,0.5781481481481481,0.6193333333333333,9,False,MIDIAN cohort,va_cohort
+1000,beta0,va_cohort,0.5781481481481481,0.6193333333333333,9,False,MIDIAN shortlist,va_cohort
 1000,cartel,declared,0.5742222222222222,0.598,9,False,declared top-k,declared
 1000,cartel,embed,0.5797037037037037,0.5980000000000001,9,False,MiniLM,embed
 1000,cartel,tfidf,0.579037037037037,0.5926666666666668,9,False,hashed TF-IDF,tfidf
-1000,cartel,va_cohort,0.57,0.5993333333333333,9,False,MIDIAN cohort,va_cohort
+1000,cartel,va_cohort,0.57,0.5993333333333333,9,False,MIDIAN shortlist,va_cohort
 1000,beta0,dense,0.5328148148148149,0.5653333333333334,9,False,dense (Qwen3-8B),dense_icomp
 1000,cartel,dense,0.5793333333333334,0.5980000000000001,9,False,dense (Qwen3-8B),dense_icomp
 1000,beta0,sota,0.5136296296296297,0.5559999999999999,9,False,fusion + reranker,sota
@@ -38,11 +38,11 @@ n,regime,shortlist,mean,best,k,star,name,variant
 5000,beta0,declared,0.5649382716049383,0.6055555555555555,9,False,declared top-k,declared
 5000,beta0,embed,0.49209876543209874,0.5311111111111111,9,False,MiniLM,embed
 5000,beta0,tfidf,0.6596296296296296,0.6666666666666666,9,False,hashed TF-IDF,tfidf
-5000,beta0,va_cohort,0.6108641975308642,0.6333333333333333,9,False,MIDIAN cohort,va_cohort
+5000,beta0,va_cohort,0.6108641975308642,0.6333333333333333,9,False,MIDIAN shortlist,va_cohort
 5000,cartel,declared,0.5334567901234568,0.56,9,False,declared top-k,declared
 5000,cartel,embed,0.587037037037037,0.6033333333333334,9,False,MiniLM,embed
 5000,cartel,tfidf,0.6122222222222222,0.6266666666666666,9,False,hashed TF-IDF,tfidf
-5000,cartel,va_cohort,0.5512345679012345,0.5755555555555556,9,False,MIDIAN cohort,va_cohort
+5000,cartel,va_cohort,0.5512345679012345,0.5755555555555556,9,False,MIDIAN shortlist,va_cohort
 5000,beta0,dense,0.565679012345679,0.59,9,False,dense (Qwen3-8B),dense_icomp
 5000,cartel,dense,0.5590123456790123,0.58,9,False,dense (Qwen3-8B),dense_icomp
 5000,beta0,sota,0.53320987654321,0.5922222222222222,9,False,fusion + reranker,sota_icomp

@@ -71,7 +71,7 @@ After the rename (MIDIAN = full method), use exactly these strings everywhere:
 | `MIDIAN-VA` | `MIDIAN` |
 | `MIDIAN` (plain tree) | `MIDIAN w/o defenses` |
 | `MIDIAN-VA (whole population)` | `MIDIAN, no framework` |
-| `MIDIAN-VA leaf cohort` / `VA cohort` | `MIDIAN cohort` |
+| `MIDIAN-VA leaf cohort` / `VA cohort` / `MIDIAN cohort` | `MIDIAN shortlist` |
 | `flat probe argmax (online)` | `flat probe argmax` |
 | `best learned router` | `best learned/declared router` |
 | `best bandit` | `best bandit` |
@@ -100,18 +100,18 @@ Backend tick labels in B: `live`, `Bernoulli`, `RouterBench replay`, `RouterEval
 - x ticks: the five backends with $n$ on the second line.
 
 #### Figure 3 (body): `F_shortlists_1e5`
-- Seven shortlists, sorted by honest mean: declared top-k, MIDIAN cohort, dense (Qwen3-8B), MiniLM, fusion + reranker, BM25 (if it has rows at $10^5$; otherwise omit), hashed TF-IDF. The instruction variants go to the appendix version.
+- The body shortlists in the fixed order of §3b (not sorted by value): MIDIAN shortlist, hashed TF-IDF, BM25 (if it has rows at $10^5$; otherwise omit), MiniLM, dense (Qwen3-8B), fusion + reranker, declared top-k. The instruction variants go to the appendix version.
 - Add a dotted grey `random` line at 0.44 (live $10^5$ random) alongside the oracle line; both in the legend.
 - Best-framework dots stay (black, 3 pt), legend entry "best framework".
 - x tick labels horizontal if they fit at seven bars; otherwise 30°.
 
 #### Figure 4 (body): `H_routereval_shortlists`
-- Shortlists: hashed TF-IDF, MiniLM, dense (best instruction), fusion + reranker (best instruction), declared top-k, MIDIAN cohort. Instruction variants to the appendix.
+- Shortlists (order of §3b): MIDIAN shortlist, hashed TF-IDF, MiniLM, dense (best instruction), fusion + reranker (best instruction), declared top-k. Instruction variants to the appendix.
 - x ticks: $m = 10$, $10^2$, $10^3$, $5{,}000$. Reference lines as in Figure 3.
 
 #### Figure 5 (body): `D_energy_per_query`
 - MIDIAN only. Nine lines as now (n = $10^3$, $10^5$, $10^7$ light to dark; b = 1 dotted, 3 solid, 5 dashed). Legend inside the axes, bottom-left, two columns: three colour swatches labelled $n = 10^3$ / $10^5$ / $10^7$ and three line styles labelled b = 1 / 3 / 5, instead of nine separate entries.
-- Band: light grey, both edges drawn and labelled at the right margin (AutoGen 20.6 J; Magentic-One 220 J). Break-even crosses stay (black ×, 3 pt).
+- Band: light grey, both edges drawn and labelled at the right margin (AutoGen 20.6 J; Magentic-One 220 J). Break-even markers and the $T^\ast$ annotation: §3b.
 - y: "energy per query (J)", log; x: "queries served T", log. The word "estimated" goes to the caption.
 - Move the legend fully inside the axes so it no longer overlaps the y label.
 
@@ -123,6 +123,44 @@ Backend tick labels in B: `live`, `Bernoulli`, `RouterBench replay`, `RouterEval
 - `I_max_lie`: the Figure 1 arms without the oracle bar, all hatched (cartel), ±1 s.e.; the oracle as the dotted line; a
   short black tick on each bar for the same arm under the standard lie, with a "standard lie" legend entry.
 - If C and D are to share the body: one figure 5.5 × 2.0 in, two panels side by side labelled (a) and (b) in the bottom-left corner of each panel (8 pt, bold), one legend each inside the panel.
+
+### 3b. Shortlist palette, order and emphasis; D break-even marker
+
+Implemented in `scripts/figures/lib/figspec.py` (`SHORTLIST_ORDER`, `SHORTLIST_COLOR`, `INSTR_TINT`, `SHORTLIST_EDGE`,
+`ref`) and `scripts/figures/efficiency_figs.py` (`BREAK_EVEN`, `render_D`); applies to E, F, F appendix, G, H and D.
+
+**Palette.** Greyscale values for reference (Rec. 601 luma $0.299R+0.587G+0.114B$ and WCAG relative luminance, sRGB 0–1):
+
+| shortlist | colour | luma (601) | rel. luminance |
+|---|---|---|---|
+| MIDIAN shortlist | `#2ecc71` | 0.574 | 0.450 |
+| hashed TF-IDF | `#d3d7d8` | 0.839 | 0.674 |
+| MiniLM | `#2c8ac8` | 0.459 | 0.229 |
+| dense (Qwen3-8B) | `#793a93` | 0.341 | 0.092 |
+| fusion + reranker | `#592d19` | 0.219 | 0.041 |
+| declared top-k | `#ebbf0e` | 0.721 | 0.550 |
+
+The hues are the collaborator round's (MIDIAN green `#2ecc71` unchanged); lightness was adjusted so that every pair of
+the six body colours differs by at least 0.115 in luma (the round's hex codes left dense and fusion + reranker 0.004
+apart), so the six bars separate when printed in greyscale (`figures/paper/F_shortlists_1e5_greyscale.png`).
+BM25 (not drawn in the current figures) keeps `#17becf`.
+Instruction variants: competence instr. = the base colour blended 40 % toward white (dense `#af89be`, fusion `#9b8175`);
+demonstration instr. = 65 % toward white (dense `#d0bad9`, fusion `#c5b6ae`). In the appendix figures a variant
+sits next to its base, so position separates it even where its grey is close to another shortlist's. Cartel bars keep the `////` hatch.
+Reference lines: oracle grey dotted, random light-grey dotted (1.0 pt), `MIDIAN, no framework` green `#2ecc71` solid 1.6 pt.
+
+**Order.** Left to right (F, F appendix, H; within each n group of E; G): MIDIAN shortlist, hashed TF-IDF, BM25 (when
+present), MiniLM, dense (Qwen3-8B), fusion + reranker, declared top-k. Never sorted by value. Instruction variants follow
+their base: dense, dense competence instr., dense demonstration instr., then fusion + reranker and its two variants in the
+same pattern. In G hashed TF-IDF is the reference and has no bar; the rest keep the order.
+
+**Emphasis.** MIDIAN-shortlist bars (and legend swatch) have a 0.8 pt black edge; every other bar 0.3 pt.
+
+**D break-even marker.** Open black circles (`marker="o"`, no fill, edge black, size 3.5, edge width 0.8) where a MIDIAN
+line meets a band edge, with the legend entry `break-even (line meets band edge)` in a fourth row under the b column
+(legend inside the axes, bottom left, n swatches and b line styles as before). Annotation inside the axes bottom right,
+above the x axis, 8 pt serif: $T^\ast = J_{\mathrm{build}}/(J_{\mathrm{fw}}-J_{\mathrm{route}})$. Band edge labels stay
+at the right margin.
 
 ### 4. What the captions already carry (do not duplicate in figures)
 Backend, population sizes and seed counts; regime encoding; the budget overlay rule; what pooled arms are; what a whisker is; that energy is estimated; that hashed TF-IDF returns clones at $10^5$; which frameworks are averaged.

@@ -7,7 +7,7 @@ n,regime,shortlist,mean,best,k,star,name
 100000,beta0,sota_icomp,0.43200000000000005,0.5533333333333333,10,False,"fusion + reranker, competence instr."
 100000,beta0,sota_idemo,0.4231111111111111,0.5211111111111111,10,False,"fusion + reranker, demonstration instr."
 100000,beta0,tfidf,0.3788888888888889,0.3788888888888889,10,False,hashed TF-IDF
-100000,beta0,va_cohort,0.5711111111111111,0.6655555555555556,10,False,MIDIAN cohort
+100000,beta0,va_cohort,0.5711111111111111,0.6655555555555556,10,False,MIDIAN shortlist
 100000,cartel,declared,0.5481111111111111,0.57,10,False,declared top-k
 100000,cartel,dense_icomp,0.487,0.6088888888888889,10,False,"dense, competence instr."
 100000,cartel,dense_idemo,0.4633333333333334,0.5711111111111111,10,False,"dense, demonstration instr."
@@ -16,4 +16,4 @@ n,regime,shortlist,mean,best,k,star,name
 100000,cartel,sota_icomp,0.42866666666666664,0.5277777777777778,10,False,"fusion + reranker, competence instr."
 100000,cartel,sota_idemo,0.41722222222222216,0.5233333333333333,10,False,"fusion + reranker, demonstration instr."
 100000,cartel,tfidf,0.3788888888888889,0.3788888888888889,10,False,hashed TF-IDF
-100000,cartel,va_cohort,0.5559999999999999,0.6666666666666666,10,False,MIDIAN cohort
+100000,cartel,va_cohort,0.5559999999999999,0.6666666666666666,10,False,MIDIAN shortlist
