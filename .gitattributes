@@ -3,3 +3,4 @@ cluster export-ignore
 cluster/** export-ignore
 scripts/checks/anonymity_patterns.txt export-ignore
 .gitattributes export-ignore
+tests/golden/parity_baseline.json export-ignore
