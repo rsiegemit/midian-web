@@ -94,7 +94,7 @@ if os.path.exists(S): put_v("a.llmrouterbench_terms_rows", [l for l in open(S).r
 # ------------------------------------------------------------------------------------------------ (b) cost
 from scripts.analysis import energy
 t = pd.read_pickle(f"{CACHE}/energy_table.pkl") if CACHE and os.path.exists(f"{CACHE}/energy_table.pkl") else energy.table()
-put_v("b.autogen_J_per_task", round(float(t.loc["fw_autogen", "per_task_J"]), 2), "scripts/energy.py cost model × fw_live_n1000 ledger"); put_v("b.autogen_latency_s", round(float(t.loc["fw_autogen", "latency_s"]), 3), "fw_live_n1000 median supervisor wall-clock")
+put_v("b.autogen_J_per_task", round(float(t.loc["fw_autogen", "per_task_J"]), 2), "scripts/analysis/energy.py cost model × fw_live_n1000 ledger"); put_v("b.autogen_latency_s", round(float(t.loc["fw_autogen", "latency_s"]), 3), "fw_live_n1000 median supervisor wall-clock")
 put_v("b.midian_wo_defenses_build_probes", int(round(t.loc["midian_wo_defenses", "build_msgs"] * 0 + rows("variants_f1").query("label == 'midian_wo_defenses'").build_probes.mean())), "variants_f1 ledger"); put_v("b.midian_wo_defenses_build_gpu_s", round(float(t.loc["midian_wo_defenses", "build_gpu_s"]), 1), "energy.py (specialist)")
 put_v("b.midian_wo_audit_comparisons_per_task", round(float(t.loc["midian_wo_audit", "cmp_per_task"]), 2), "ledger"); put_v("b.midian_wo_audit_messages_per_task", round(float(t.loc["midian_wo_audit", "msgs_per_task"]), 2), "ledger"); put_v("b.midian_wo_audit_latency_s", round(float(t.loc["midian_wo_audit", "latency_s"]), 4), "energy.py latency model")
 put_v("b.midian_comparisons_per_task", round(float(t.loc["midian", "cmp_per_task"]), 2), "ledger"); put_v("b.midian_messages_per_task", round(float(t.loc["midian", "msgs_per_task"]), 2), "ledger")
@@ -183,7 +183,7 @@ def v4_cohort_deltas():
 v4_cohort_deltas()
 
 # ------------------------------------------------------------------------------------------------ (v5) scale and budget sweeps
-# Read from the per-grid artefacts (matrix_success.csv from scripts/scale_matrix.py, cost_exponents.csv from rte.analyze),
+# Read from the per-grid artefacts (matrix_success.csv from scripts/analysis/scale_matrix.py, cost_exponents.csv from rte.analyze),
 # NOT through rows(): these grids hold 1.2-2.2 M rows each and the login node's memory cgroup kills the frame.
 def v5_sweeps():
     """v5.<grid>.<label>_n<n>_b<b>_<regime> = success mean/CI/seeds; v5.<grid>.exp_<metric>_<label>_b<b> = cost exponent."""

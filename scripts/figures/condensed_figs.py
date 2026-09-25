@@ -1,5 +1,5 @@
 """Figures 1 / 2 of the submission (A_live_stacked, B_families_stacked) and their appendix versions (_allb); style, names,
-legend order and saving from scripts/figspec.py (docs/FIGURE_SPEC.md).
+legend order and saving from scripts/figures/lib/figspec.py (docs/FIGURE_SPEC.md).
     python scripts/figures/condensed_figs.py [--out DIR] [--from-csv]
       -> <out>/{A,B}_{allb,stacked}.{png,pdf,csv}; <out> = $RTE_FIG_OUT or figures/paper
       + results/aggregates/figures/<name>.{csv,draw.csv}: the figure's CSV and its display list (every bar, whisker,

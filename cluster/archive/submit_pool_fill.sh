@@ -9,7 +9,7 @@ sub() {  # key partition cpus mem time workers grid args...
   grep -qF " $key" $LOG && return
   while :; do
     j=$(sbatch --parsable -p $p -A "$RTE_ACCOUNT" -c $c --mem=$m -t $t -J rte_$g -o $D/logs/units/%x-%j.out -e $D/logs/units/%x-%j.err \
-        --export=ALL,RTE_DATA=$D,RTE_PYTHON=$D/env/rte/bin/python,RTE_WORKERS=$w,RTE_CONSOLIDATE=0 scripts/run_grid.sbatch $g "$@" 2>&1)
+        --export=ALL,RTE_DATA=$D,RTE_PYTHON=$D/env/rte/bin/python,RTE_WORKERS=$w,RTE_CONSOLIDATE=0 cluster/slurm/run_grid.sbatch $g "$@" 2>&1)
     case "$j" in *QOSMax*) sleep 120;; ''|*[!0-9]*) echo "FAIL $key $j" >&2; return;; *) echo "$j $key" >> $LOG; return;; esac
   done
 }

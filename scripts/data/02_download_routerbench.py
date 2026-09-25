@@ -1,14 +1,12 @@
-"""Download RouterBench (withmartian/routerbench, 0-shot pickle) and normalize it
-into a compact cell table for `rte.backends.replay`.
+"""Download RouterBench (withmartian/routerbench, 0-shot pickle) and normalize it into a compact cell table for
+`rte.backends.replay`.   python scripts/data/02_download_routerbench.py      (login node: needs internet)
 
-Reproduces the old project's category definition (`the reference implementation's data.py (
-_normalize_routerbench`): category = raw `eval_name` (this already includes each MMLU
-subject as its own eval_name, e.g. "mmlu-abstract-algebra"), keep categories with
->= `min_category_samples` (60) rows, binarize a model's score at >= 0.5.
+Category definition (as the reference implementation's `_normalize_routerbench`): category = the raw `eval_name`
+(each MMLU subject is its own eval_name, e.g. "mmlu-abstract-algebra"); keep categories with >= MIN_CATEGORY_SAMPLES
+(60) rows; a model's score counts as correct at >= 0.5.
 
-At that threshold the old code's 64 is wrong for THIS pickle: 67 categories survive
-(verified below and recorded in DEVIATIONS.md). We follow the code, not the number in
-the CONTRACT prose.
+At that threshold 67 categories survive for THIS pickle, not the 64 the CONTRACT prose names; main() prints the count
+and the difference is recorded in DEVIATIONS.md. The code's rule is followed, not the prose number.
 
 Output: $RTE_DATA/data/routerbench_cells.npz, a CSR-style compact table:
     model_names   (M,)  str            M=11 RouterBench models
@@ -20,12 +18,14 @@ Output: $RTE_DATA/data/routerbench_cells.npz, a CSR-style compact table:
 from __future__ import annotations
 
 import os
+import sys
 import urllib.request
 
 import numpy as np
 import pandas as pd
 
-RTE_DATA = os.environ.get("RTE_DATA", os.path.expanduser("~/rte_data"))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+from rte.config import RTE_DATA  # noqa: E402
 DATA_DIR = os.path.join(RTE_DATA, "data")
 PICKLE_URL = "https://huggingface.co/datasets/withmartian/routerbench/resolve/main/routerbench_0shot.pkl"
 RAW_PATH = os.path.join(DATA_DIR, "routerbench_0shot.pkl")

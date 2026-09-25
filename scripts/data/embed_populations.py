@@ -1,5 +1,5 @@
 """Precompute the dense description embeddings the frameworks' SOTA retrieval stack reads, one .npy per population.
-    python scripts/embed_populations.py [--model M] [--dists ...] [--ns ...] [--seeds K] [--list]
+    python scripts/data/embed_populations.py [--model M] [--dists ...] [--ns ...] [--seeds K] [--list]
 Writes <population>/descriptions_<slug>.npy (n x d) and families_<slug>.npy (K x d), exactly the files
 FrameworkMethod._embeddings looks for, so the routing jobs never load the embedder. --sota also pre-warms the reranked (K, k) shortlist, which is what
 keeps the sota routing jobs off the GPU entirely. Needs a GPU for anything

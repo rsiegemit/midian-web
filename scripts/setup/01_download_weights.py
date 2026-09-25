@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Download the RTE model ladder into $RTE_DATA/hf_cache (login node only -- compute nodes are offline).
 
-    python scripts/01_download_weights.py                 # all models
-    python scripts/01_download_weights.py --only Qwen/Qwen2.5-0.5B-Instruct
+    python scripts/setup/01_download_weights.py                 # all models
+    python scripts/setup/01_download_weights.py --only Qwen/Qwen2.5-0.5B-Instruct
 
 Full snapshots minus duplicate weight formats (.bin/.pth/.gguf/...), then verified with the
 same offline `snapshot_download` call vLLM makes at load time.

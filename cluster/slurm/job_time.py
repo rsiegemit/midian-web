@@ -22,4 +22,9 @@ def slurm(m: int) -> str:
     return f"{d}-{h:02d}:{mm:02d}:00" if d else f"{h:02d}:{mm:02d}:00"
 
 if __name__ == "__main__":
-    print(slurm(minutes(sys.argv[1], sys.argv[2])))
+    import argparse
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("grid")
+    ap.add_argument("method")
+    a = ap.parse_args()
+    print(slurm(minutes(a.grid, a.method)))

@@ -1,5 +1,5 @@
 """GraphRouter (Feng et al., ICLR 2025) through the released LLMRouter library, on RouterBench's part-A splits and on a
-RouterEval pool — TARGETS_rte_v3.md part D3.   $RTE_DATA/env/llmrouter/bin/python scripts/rivals_llmrouter.py [routerbench|routereval] [n_splits]
+RouterEval pool — TARGETS_rte_v3.md part D3.   $RTE_DATA/env/llmrouter/bin/python scripts/analysis/rivals_llmrouter.py [routerbench|routereval] [n_splits]
 
 Their pipeline, unchanged: routing JSONL (one row per (query, model) with `performance` and an `embedding_id`), a
 query-embedding tensor, an LLM json (name -> {feature, embedding}), a yaml config; `GraphRouter(yaml)` builds the
@@ -112,6 +112,12 @@ def routereval(m=100, cfg="strong_to_weak", n_train=2000):
 
 
 if __name__ == "__main__":
-    what = sys.argv[1] if len(sys.argv) > 1 else "routerbench"
-    if what == "routerbench": routerbench(3, seeds=[int(x) for x in sys.argv[2:]] or None)
-    else: routereval(int(sys.argv[2]) if len(sys.argv) > 2 else 100)
+    import argparse
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("what", nargs="?", default="routerbench", choices=["routerbench", "routereval"])
+    ap.add_argument("args", nargs="*", type=int, help="routerbench: seeds (default all); routereval: m (default 100)")
+    a = ap.parse_args()
+    if a.what == "routerbench":
+        routerbench(3, seeds=a.args or None)
+    else:
+        routereval(a.args[0] if a.args else 100)

@@ -1,0 +1,6 @@
+figure,key,value,text,n
+D_energy_per_query,cheapest,20.60023539411765,AutoGen,
+D_energy_per_query,costliest,219.75412344826285,Magentic-One,
+I_max_lie,oracle,0.8620000000000001,,1000.0
+I_max_lie,oracle,0.8588888888888889,,10000.0
+I_max_lie,oracle,0.8622222222222221,,100000.0

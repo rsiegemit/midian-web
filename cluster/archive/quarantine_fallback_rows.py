@@ -1,10 +1,10 @@
 """Quarantine framework rows contaminated by infrastructure fallback (OPS_RULES D1/D4), and list the units to rerun.
-    python scripts/ops/quarantine_fallback_rows.py [--apply]      # dry run by default
+    python cluster/archive/quarantine_fallback_rows.py [--apply]      # dry run by default
 A row is contaminated when its supervisor never really answered and the adapter routed by declared argmax instead:
   * CrewAI / ADK (envs with deleted .so files): fallback > 0.05 -- their working units sit at ~0, the failure is per unit
   * every other framework: fallback >= 0.9 (the bimodal infrastructure signature)
 Rows are MOVED to results/<grid>/quarantine/ (never deleted) and dropped from rows.csv; the unit list goes to
-results/quarantine_units.tsv for scripts/ops/rerun_units.sh. rte.run recomputes a unit whose rids are absent."""
+results/quarantine_units.tsv for cluster/ops/rerun_units.sh. rte.run recomputes a unit whose rids are absent."""
 import glob, json, os, sys
 import pandas as pd
 

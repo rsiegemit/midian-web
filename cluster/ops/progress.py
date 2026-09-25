@@ -1,11 +1,11 @@
 """How far along is a run? Memo growth (LLM generations) and per-grid row counts, from the stored artefacts only.
 
-    python scripts/progress.py                      # memo stats + every grid with rows
-    python scripts/progress.py live_n100k cohort_rte # just these grids, with per-method detail
-    python scripts/progress.py --memo               # memo stats alone (cheap; use while a build is running)
-    python scripts/progress.py --memo --rows        # add row counts (SLOW: full scan; avoid while jobs write)
-    python scripts/progress.py --merge --prune g1 g2       # fold rows.d into rows.csv once, deleting what it folded
-    python scripts/progress.py --merge --prune --every=900 # ... and keep doing it, for a sweep writing millions of rows
+    python cluster/ops/progress.py                      # memo stats + every grid with rows
+    python cluster/ops/progress.py live_n100k cohort_rte # just these grids, with per-method detail
+    python cluster/ops/progress.py --memo               # memo stats alone (cheap; use while a build is running)
+    python cluster/ops/progress.py --memo --rows        # add row counts (SLOW: full scan; avoid while jobs write)
+    python cluster/ops/progress.py --merge --prune g1 g2       # fold rows.d into rows.csv once, deleting what it folded
+    python cluster/ops/progress.py --merge --prune --every=900 # ... and keep doing it, for a sweep writing millions of rows
 
 Replaces the ad-hoc row counters and `du`-based progress guesses used during the 10^5 build. Two lessons are baked in:
 `du` on the cache is useless as a progress signal (SQLite grows in page chunks, so short windows read as stalls), and a
@@ -76,19 +76,27 @@ def merge(grids: list[str], prune: bool, every: int = 0) -> None:
         time.sleep(every)
 
 
-def main(argv: list[str]) -> None:
-    grids = [a for a in argv if not a.startswith("--")]
-    if "--merge" in argv:
-        every = next((int(a.split("=")[1]) for a in argv if a.startswith("--every=")), 0)
+def main(argv=None) -> None:
+    import argparse
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("grids", nargs="*")
+    ap.add_argument("--memo", action="store_true", help="memo stats alone")
+    ap.add_argument("--rows", action="store_true", help="count memo rows (slow)")
+    ap.add_argument("--merge", action="store_true", help="fold rows.d into rows.csv")
+    ap.add_argument("--prune", action="store_true", help="with --merge: delete what was folded")
+    ap.add_argument("--every", type=int, default=0, help="with --merge: repeat every N seconds")
+    a = ap.parse_args(argv)
+    grids = a.grids
+    if a.merge:
         if not grids:
             grids = sorted(d for d in os.listdir(RESULTS) if os.path.isdir(f"{RESULTS}/{d}/rows.d"))
-        return merge(grids, prune="--prune" in argv, every=every)
-    m = memo_stats(count_rows="--rows" in argv)
+        return merge(grids, prune=a.prune, every=a.every)
+    m = memo_stats(count_rows=a.rows)
     rows = (f"; rows: {m['compact_rows']:,} compacted + {m['shard_rows']:,} new" if m["compact_rows"] is not None else "")
     print(f"memo: compacted {m['compact_bytes'] / 1e9:.1f} GB, {m['shards']} new shard(s) "
           f"{m['shard_bytes'] / 1e9:.2f} GB, total {(m['compact_bytes'] + m['shard_bytes']) / 1e9:.1f} GB{rows}"
           + ("" if m["compact_rows"] is not None else "   (--rows to count rows; slow, and slower still under write load)"))
-    if "--memo" in argv:
+    if a.memo:
         return
     if not grids:
         grids = sorted(d for d in os.listdir(RESULTS) if os.path.isdir(f"{RESULTS}/{d}/rows.d") and os.listdir(f"{RESULTS}/{d}/rows.d"))
@@ -103,4 +111,4 @@ def main(argv: list[str]) -> None:
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    main()

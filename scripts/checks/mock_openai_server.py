@@ -2,7 +2,7 @@
 Policy: if the request has `tools`, return a tool_call to the first tool whose name contains a
 candidate-like token (transfer_to_*, handoff_to_*, agent_*), else the first tool; if no tools,
 return a text/JSON answer naming the first `agent_XXXXXX` mentioned in the prompt (also as
-{"next_speaker": ..., "assignee_id": ..., "choice": 1 (1-based, LlamaIndex), "index": 0}). Usage: python scripts/mock_openai_server.py 8123
+{"next_speaker": ..., "assignee_id": ..., "choice": 1 (1-based, LlamaIndex), "index": 0}). Usage: python scripts/checks/mock_openai_server.py 8123
 """
 import json, re, sys, time, uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -135,6 +135,9 @@ class H(BaseHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    port = int(sys.argv[1]) if len(sys.argv) > 1 else 8123
+    import argparse
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("port", nargs="?", type=int, default=8123)
+    port = ap.parse_args().port
     print(f"mock openai server on http://127.0.0.1:{port}/v1", flush=True)
     Server(("127.0.0.1", port), H).serve_forever()   # threaded: frameworks fire concurrent calls

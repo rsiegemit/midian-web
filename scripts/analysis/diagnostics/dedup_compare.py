@@ -1,5 +1,5 @@
 """Pre-registered TF-IDF shortlist vs the deduplicated one (erratum 25): same cells, seeds, frameworks, paired by row.
-    python scripts/dedup_compare.py            # every _dd grid against its source
+    python scripts/analysis/diagnostics/dedup_compare.py            # every _dd grid against its source
 Reads the _dd grid's rows.d + rows.csv (deduped by rid) and the source grid's rows.csv; pairs on
 (cell, method, params minus dedup, seed); prints per (grid, dist, regime) means, the paired delta with a 95% seed
 bootstrap, and how many cells had every framework byte-identical (the clone signature) before and after."""
@@ -35,7 +35,10 @@ def boot(x, B=2000, seed=0):
     rng = np.random.default_rng(seed); x = np.asarray(x, float)
     m = np.array([rng.choice(x, len(x)).mean() for _ in range(B)]); return np.percentile(m, [2.5, 97.5])
 
-grids = sys.argv[1:] or list(SRC)
+import argparse  # noqa: E402
+ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+ap.add_argument("grids", nargs="*", help=f"dedup grids (default: {', '.join(SRC)})")
+grids = ap.parse_args().grids or list(SRC)
 for g in grids:
     new, old = load(g), load(SRC[g])
     old = old[~old.params.str.contains("retrieval")]                        # tfidf arms only

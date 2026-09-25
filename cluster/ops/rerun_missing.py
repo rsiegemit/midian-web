@@ -10,9 +10,15 @@ from cluster.slurm.job_time import minutes, slurm                               
 from scripts.figures.lib.rows import label                                                                    # noqa: E402
 from scripts.figures.shortlist_figs import rows                                                               # noqa: E402
 
-D, PART, ACCT = os.environ["RTE_DATA"], os.environ["RTE_CPU_PARTITIONS"], os.environ["RTE_ACCOUNT"]; dry = "--dry-run" in sys.argv
+import argparse  # noqa: E402
+ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+ap.add_argument("grids", nargs="+")
+ap.add_argument("--dry-run", action="store_true")
+args = ap.parse_args()
+D, PART, ACCT = os.environ["RTE_DATA"], os.environ["RTE_CPU_PARTITIONS"], os.environ["RTE_ACCOUNT"]
+dry = args.dry_run
 queued = subprocess.run(["squeue", "-u", os.environ["USER"], "-h", "-o", "%j"], capture_output=True, text=True, check=True).stdout.split()
-for g in [a for a in sys.argv[1:] if not a.startswith("--")]:
+for g in args.grids:
     if any(j.startswith(f"rte_{g}__") for j in queued): print(f"{g}: jobs still queued, skipped"); continue
     df = rows(g)
     have = set() if df.empty else {(int(n), int(b), str(d), float(be), str(ls), int(s), label(m, p)) for n, b, d, be, ls, s, m, p

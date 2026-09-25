@@ -1,6 +1,6 @@
 """Correctness + ledger-accounting checker (CONTRACT 'Correctness checks'). Run on any method names
 (or the MIDIAN ablation labels in ARMS):
-    PYTHONPATH=. python scripts/check_methods.py flat_probe_argmax ucb_per_family midian_wo_defenses ...
+    PYTHONPATH=. python scripts/checks/check_methods.py flat_probe_argmax ucb_per_family midian_wo_defenses ...
 Per method, at n in {100, 1000} on bernoulli specialist beta=0: valid ids; build probes <= budget; build/per-fetch ledger vs the
 documented formula (EXPECT); success >= random; exact-estimate argmax check for methods with an `est`/`best` table."""
 import math, sys
@@ -67,7 +67,10 @@ def exact_argmax(name, n):
 
 
 if __name__ == "__main__":
-    for name in sys.argv[1:]:
+    import argparse
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("methods", nargs="+", help="method names (rte/methods)")
+    for name in ap.parse_args().methods:
         for n in (100, 1000):
             M, w, build, fetch, succ, rnd = run(name, n)
             eb, ef = EXPECT.get(name, (lambda n: {}, lambda n: {}))

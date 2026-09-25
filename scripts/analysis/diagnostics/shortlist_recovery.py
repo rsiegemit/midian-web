@@ -7,7 +7,7 @@ and seeds, from the MEASURED S (read for measurement only; no method ever sees i
 Lists are built exactly as the framework adapter builds them (rte/methods/frameworks/_common.py retrieve): TF-IDF
 without dedup (pre-registered), every other source over the dedup pool; declared = top-k by the regime's lied-to D;
 dense / rerank from the cached Qwen3 files. The MIDIAN cohort is MIDIAN's pick + its leaf cohort, rebuilt on a bernoulli
-world carrying the population's exact S (as scripts/declared_cohort.py), so it is a reconstruction.
+world carrying the population's exact S (as scripts/analysis/diagnostics/declared_cohort.py), so it is a reconstruction.
 Recovery per framework = (framework success - list mean) / (best in list - list mean), framework success from
 figures/shortlist/live.csv (seed mean, same cell); 0 = a uniform pick from the list, 1 = the list's best agent."""
 import json, os, sys

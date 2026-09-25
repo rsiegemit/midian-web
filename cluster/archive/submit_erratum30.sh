@@ -1,6 +1,6 @@
 #!/bin/bash
 # Erratum-30 reruns (configs/grid.yaml *_cal / *_split_cal / *_norep_cal, non-framework grids), --nice 100000: behind the focus
-# work, ahead of linucb_fix_* (1e6). Resumable via logs/launch_erratum30.txt. Framework grids: scripts/launch_units.sh.
+# work, ahead of linucb_fix_* (1e6). Resumable via logs/launch_erratum30.txt. Framework grids: cluster/slurm/launch_units.sh.
 . "$(dirname "$(readlink -f "$0")")/../env.sh"
 need RTE_DATA RTE_ACCOUNT
 D=$RTE_DATA; LOG=$D/logs/launch_erratum30.txt; touch $LOG; cd "$RTE_REPO"
@@ -9,7 +9,7 @@ sub() {  # key partition cpus mem time workers grid args...
   grep -qF " $key" $LOG && return
   while :; do
     j=$(sbatch --parsable --nice=100000 -p $p -A "$RTE_ACCOUNT" -c $c --mem=$m -t $t -J rte_$g -o $D/logs/units/%x-%j.out -e $D/logs/units/%x-%j.err \
-        --export=ALL,RTE_DATA=$D,RTE_PYTHON=$D/env/rte/bin/python,RTE_WORKERS=$w,RTE_CONSOLIDATE=0 scripts/run_grid.sbatch $g "$@" 2>&1)
+        --export=ALL,RTE_DATA=$D,RTE_PYTHON=$D/env/rte/bin/python,RTE_WORKERS=$w,RTE_CONSOLIDATE=0 cluster/slurm/run_grid.sbatch $g "$@" 2>&1)
     case "$j" in *QOSMax*) sleep 120;; ''|*[!0-9]*) echo "FAIL $key $j" >&2; return;; *) echo "$j $key" >> $LOG; return;; esac
   done
 }

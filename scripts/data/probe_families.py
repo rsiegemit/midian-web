@@ -5,8 +5,8 @@ For each family: generate instance seed 7, check the *gold* answer scores 1.0, a
 scores < 0.99, and that regenerating from the same seed gives the identical question.
 Prints one line per family and a PASS/FAIL summary. No GPU, no endpoints needed.
 
-    python scripts/probe_families.py            # the K=64 list
-    python scripts/probe_families.py --all      # every generator reasoning-gym registers
+    python scripts/data/probe_families.py            # the K=64 list
+    python scripts/data/probe_families.py --all      # every generator reasoning-gym registers
 """
 from __future__ import annotations
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """End-to-end smoke test of LLMBackend against whatever the fleet is serving.
 
-    $RTE_DATA/env/rte/bin/python scripts/smoke_backend.py
+    $RTE_DATA/env/rte/bin/python scripts/checks/smoke_backend.py
 
 n=5, K=4, 20 probes. Exercises the whole path: prompt, generation, tool round, verifier, memo,
 ledger. Works against the one-model smoke server as well as the full fleet.

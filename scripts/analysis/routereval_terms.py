@@ -1,5 +1,5 @@
 """RouterEval (Huang et al., EMNLP 2025 Findings) on its own terms — TARGETS_rte_v3.md part D1.
-    python scripts/routereval_terms.py <dataset> [<dataset> ...]      (all 12 when none given)
+    python scripts/analysis/routereval_terms.py <dataset> [<dataset> ...]      (all 12 when none given)
 
 Their data ($RTE_DATA/data/routereval/router_dataset/<ds>_router_dataset.pkl): candidate pools of m in {10, 100, 1000}
 REAL LLMs (three pool configs: all_strong / all_weak / strong_to_weak), binary score of every candidate on every prompt,
@@ -175,7 +175,14 @@ def summarise():
 
 
 if __name__ == "__main__":
-    if sys.argv[1:] == ["--summary"]: summarise()
+    import argparse
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("datasets", nargs="*", help="default: every dataset")
+    ap.add_argument("--summary", action="store_true", help="only rewrite summary.md from the saved results")
+    a = ap.parse_args()
+    if a.summary:
+        summarise()
     else:
-        for ds in (sys.argv[1:] or DATASETS): run(ds)
+        for ds in (a.datasets or DATASETS):
+            run(ds)
         summarise()

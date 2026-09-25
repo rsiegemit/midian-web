@@ -1,7 +1,7 @@
 """Rebuild results/job_sizing.csv from sacct (OPS_RULES R2/R3): per (population size, framework) runtime p50/p95/max
-and p95 MaxRSS over COMPLETED framework jobs. scripts/job_time.py reads it. Rebuild whenever the fleet changes --
+and p95 MaxRSS over COMPLETED framework jobs. cluster/slurm/job_time.py reads it. Rebuild whenever the fleet changes --
 unit runtime tracks supervisor latency, i.e. fleet load, not grid size.
-    python scripts/ops/build_job_sizing.py [--since 2026-09-22T14:45]     # default: since the last fleet change
+    python cluster/ops/build_job_sizing.py [--since 2026-09-22T14:45]     # default: since the last fleet change
 Note: sacct silently returns NOTHING for some long windows on this cluster; keep --since within ~1 week."""
 import argparse, io, os, subprocess, sys
 import pandas as pd

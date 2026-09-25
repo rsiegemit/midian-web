@@ -12,7 +12,7 @@ itself (blob keyed by the file's remote etag/oid, snapshot entry symlinked to it
 what hf_hub would have produced. Large files already present are left alone -- it only ever adds
 what the snapshot lacks. Then it verifies each repo with the same offline call vLLM makes.
 
-    python scripts/complete_snapshots.py [--repo Qwen/Qwen2.5-7B-Instruct]
+    python scripts/setup/complete_snapshots.py [--repo Qwen/Qwen2.5-7B-Instruct]
 """
 from __future__ import annotations
 

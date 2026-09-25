@@ -1,5 +1,5 @@
 """RouteLLM's released routers vs the probe-family router, on RouterBench's own outcomes for RouteLLM's model pair,
-scored with RouteLLM's metrics (TARGETS_rte_v3.md, part B).  python scripts/rivals_routellm.py
+scored with RouteLLM's metrics (TARGETS_rte_v3.md, part B).  python scripts/analysis/rivals_routellm.py
 
 Pair: strong = gpt-4-1106-preview, weak = mistralai/mixtral-8x7b-chat (both RouterBench models: no new generations).
 Routers: `bert` = routellm/bert_gpt4_augmented with RouteLLM's BERTRouter.calculate_strong_win_rate reproduced verbatim

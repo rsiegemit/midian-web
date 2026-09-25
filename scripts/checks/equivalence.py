@@ -1,7 +1,7 @@
 """Refactor guard: fingerprint every pick, ledger count and estimate of the MIDIAN family on the bernoulli backend.
-    python scripts/equivalence.py before.json      # on the old code
-    python scripts/equivalence.py after.json       # on the new code, then diff the two files (must be identical)"""
-import hashlib, json, os, sys
+    python scripts/checks/equivalence.py before.json      # on the old code
+    python scripts/checks/equivalence.py after.json       # on the new code, then diff the two files (must be identical)"""
+import argparse, hashlib, json, os, sys
 import numpy as np
 from rte.budget import Budget
 from rte.methods import load_method
@@ -13,6 +13,9 @@ SPECS = [("midian", OFF), ("midian", {**OFF, "r": 5}), ("midian", {"audit": Fals
 CELLS = [(n, d, s) for n in (100, 1000) for d in ("specialist", "heavy_tail") for s in (1, 2, 3)]
 h = lambda *xs: hashlib.blake2b(b"|".join(np.ascontiguousarray(x).tobytes() if isinstance(x, np.ndarray) else json.dumps(x, sort_keys=True).encode() for x in xs), digest_size=12).hexdigest()
 
+ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+ap.add_argument("out", help="fingerprint JSON to write")
+dest = ap.parse_args().out
 out = {}
 for name, params in SPECS:
     for n, dist, seed in CELLS:
@@ -24,4 +27,5 @@ for name, params in SPECS:
             a = m.fetch(t); m.observe(t, a, w.execute(a, t)); picks.append(int(a))
         out[f"{name}{json.dumps(params, sort_keys=True)}|n={n}|{dist}|s{seed}"] = dict(
             picks=h(picks), build=build, run=w.ledger.snapshot(), est=h(m.est), summary=h(*m.summary), best=h(*m.best))
-json.dump(out, open(sys.argv[1], "w"), indent=1, sort_keys=True); print(len(out), "fingerprints ->", sys.argv[1])
+json.dump(out, open(dest, "w"), indent=1, sort_keys=True)
+print(len(out), "fingerprints ->", dest)

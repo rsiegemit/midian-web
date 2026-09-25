@@ -1,4 +1,4 @@
-"""RouterBench on its own terms (TARGETS_rte_v3.md, part A).  python scripts/routerbench_terms.py [--embed]
+"""RouterBench on its own terms (TARGETS_rte_v3.md, part A).  python scripts/analysis/routerbench_terms.py [--embed]
 
 Their data (36,497 prompts x 11 models, per-prompt score and $ cost), their protocol (fit on a stratified 70/30 train
 split, route each held-out prompt, sweep a willingness-to-pay lambda, score = mean test performance vs mean test cost,
@@ -63,9 +63,12 @@ def aiq(pts, c_lo, c_hi, hull=False):
     return float(q.mean())
 
 
+EMBED = False                                                    # --embed
+
+
 def main():
     prompts, fam, perf, cost, M = data()
-    e = embed(prompts) if "--embed" in sys.argv or not os.path.exists(EMB) else np.load(EMB)
+    e = embed(prompts) if EMBED or not os.path.exists(EMB) else np.load(EMB)
     fams = np.unique(fam); F = {f: i for i, f in enumerate(fams)}; fi = np.array([F[f] for f in fam])
     rows, curves = [], []
     for seed, (tr, te) in enumerate(StratifiedShuffleSplit(n_splits=SEEDS, test_size=TEST, random_state=0).split(e, fam)):
@@ -128,7 +131,13 @@ def fig(cv, agg):
 
 
 if __name__ == "__main__":
-    if "--fig" in sys.argv:                                        # redraw from the saved csvs
+    import argparse
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--embed", action="store_true", help="recompute the prompt embeddings")
+    ap.add_argument("--fig", action="store_true", help="redraw from the saved csvs")
+    a = ap.parse_args()
+    EMBED = a.embed
+    if a.fig:                                                      # redraw from the saved csvs
         df, cv = pd.read_csv(f"{OUT}/aiq_rows.csv"), pd.read_csv(f"{OUT}/curves.csv")
         fig(cv, df.groupby("router").agg(aiq=("aiq", "mean")))
     else:

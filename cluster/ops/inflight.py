@@ -1,5 +1,5 @@
 """Which (grid, method, only, seed) units are in flight right now, from every submission log x the live SLURM queue.
-    python scripts/ops/inflight.py            # summary + any unit held by more than one live job (a double run)
+    python cluster/ops/inflight.py            # summary + any unit held by more than one live job (a double run)
     from inflight import inflight; inflight() -> {(grid, method, only, seed): [(jobid, state), ...]}
 Logs read (all under $RTE_DATA/logs): launch_<grid>.txt ("jobid method|only|seed"), resubmit_*.txt and *_packed.txt
 ("jobid grid|method|only|seed"). A pack job holds several units. Job-level submitters (launch_va_b / launch_rivals_b /

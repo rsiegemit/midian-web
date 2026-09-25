@@ -1,6 +1,6 @@
 """Golden parity harness (refactor invariant G3): re-run stored rows and demand identical output.
 
-Generalises scripts/equivalence.py from a fixed MIDIAN fingerprint to every stored arm. For each (backend, method,
+Generalises scripts/checks/equivalence.py from a fixed MIDIAN fingerprint to every stored arm. For each (backend, method,
 params) present in the stored rows of the non-LLM backends (bernoulli, replay, routereval) it picks up to --per rows
 (cheap cells n <= 10^4 first, then the most recently written rows.csv, smallest n, rid; one row per directory before
 a second from the same one: recent grids are the ones today's code should reproduce; the sample moves with file mtimes,

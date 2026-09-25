@@ -6,7 +6,7 @@ agent near 0.70-0.95 on its specialty families and 0.05-0.30 elsewhere. That nee
 generators to sit at a difficulty the ladder can partly solve, and it needs the handicap to be
 MONOTONE. This answers both for whatever is served, before a full measurement is paid for.
 
-    $RTE_DATA/env/rte/bin/python scripts/calibrate_families.py --probes 20 [--tools]
+    $RTE_DATA/env/rte/bin/python scripts/data/calibrate_families.py --probes 20 [--tools]
 """
 from __future__ import annotations
 

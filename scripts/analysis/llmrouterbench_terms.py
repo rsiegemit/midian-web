@@ -1,5 +1,5 @@
 """LLMRouterBench (Li et al. 2026, Findings@ACL'26) on its own terms — TARGETS_rte_v3.md part F.
-    python scripts/llmrouterbench_terms.py [--prep]      (--prep builds the score matrix + MiniLM embeddings once)
+    python scripts/analysis/llmrouterbench_terms.py [--prep]      (--prep builds the score matrix + MiniLM embeddings once)
 
 Their performance-oriented setting: 15 datasets (AIME, MATH500, MATHBench, HumanEval, MBPP, LiveCodeBench, BBH, KORBench,
 Knights & Knaves, MMLU-Pro, GPQA, FinQA, MedQA, EmoryNLP, MELD) × the same 20 lightweight (~7–9B) models, per-instance
@@ -96,5 +96,11 @@ def main():
 
 
 if __name__ == "__main__":
-    if "--prep" in sys.argv or not os.path.exists(NPZ): prep()
-    if "--prep" not in sys.argv: main()
+    import argparse
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--prep", action="store_true", help="only (re)build the embeddings npz")
+    a = ap.parse_args()
+    if a.prep or not os.path.exists(NPZ):
+        prep()
+    if not a.prep:
+        main()

@@ -15,7 +15,7 @@ wait_for() {  # $1 = regex of grids to EXCLUDE ('^$' excludes nothing)
   done
 }
 refresh() {
-  $RTE_DATA/env/rte/bin/python scripts/ops/build_job_sizing.py
+  $RTE_DATA/env/rte/bin/python cluster/ops/build_job_sizing.py
   sbatch --parsable -p "$RTE_TEST_PARTITION" -A "$RTE_ACCOUNT" -c 8 --mem=96G -t 4:00:00 -J "finalize_$1" \
     -o $RTE_DATA/logs/finalize_$1.log -e $RTE_DATA/logs/finalize_$1.err $RTE_DATA/jobs/finalize_refresh.sh
   echo "$(date -Is) finalize_$1 submitted"

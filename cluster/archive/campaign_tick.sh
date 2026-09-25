@@ -9,12 +9,12 @@
 #   2. alerts (logs/ALERT_fleet) if fewer than 2 supervisor replicas are serving (OPS_RULES F2)
 #   3. stage 1: once all units are submitted and every HEADLINE rerun + lietext_th job has drained -> finalize_stage1
 #   4. stage 2: once every rerun job (ablation included) has drained -> finalize_stage2, and stop ticking
-#   sbatch scripts/ops/campaign_tick.sh          # start (idempotent: a tick that finds another queued exits)
+#   sbatch cluster/archive/campaign_tick.sh          # start (idempotent: a tick that finds another queued exits)
 set -u
 . "$(dirname "$(readlink -f "$0")")/../env.sh"
 need RTE_DATA RTE_ACCOUNT
 L=$RTE_DATA/logs; REPO=$RTE_REPO; PY=$RTE_DATA/env/rte/bin/python; cd $REPO
-RTE_DATA=$RTE_DATA $PY scripts/ops/prune_endpoints.py >> $L/prune_endpoints.log 2>&1   # dead replicas fail framework calls (2026-09-23)
+RTE_DATA=$RTE_DATA $PY cluster/ops/prune_endpoints.py >> $L/prune_endpoints.log 2>&1   # dead replicas fail framework calls (2026-09-23)
 say() { echo "$(date -Is) $*"; }
 ABL='fw_live_n(1000|100)(_lowskill)?_sota'
 q() { squeue -u "$USER" -h -o "%i %j %T"; }
@@ -26,7 +26,7 @@ HB=$L/rerun_submitter.heartbeat                        # a live submitter (SLURM
 fresh=$([ -e $HB ] && [ $(( $(date +%s) - $(stat -c %Y $HB) )) -lt 900 ] && echo 1 || echo 0)
 if [ "$subd" -lt "$plan" ] && [ "$fresh" = 0 ] && ! q | grep -q " rte_rerun_submitter "; then
   sbatch -p "$RTE_TEST_PARTITION" -A "$RTE_ACCOUNT" -c 1 --mem=4G -t 11:00:00 -J rte_rerun_submitter \
-    -o $L/rerun_submitter.log --open-mode=append --wrap="$REPO/scripts/ops/rerun_units.sh" >/dev/null && say "submitter (re)started: $subd/$plan submitted"
+    -o $L/rerun_submitter.log --open-mode=append --wrap="$REPO/cluster/ops/rerun_units.sh" >/dev/null && say "submitter (re)started: $subd/$plan submitted"
 fi
 
 # 2. fleet health
@@ -37,9 +37,9 @@ rep=$($PY -c "import json; print(sum(k.startswith('Qwen/Qwen2.5-7B') for k in js
 ids() { cat $L/rerun_quarantine.txt $L/launch_lietext_th.txt $L/resubmit_parallel.txt $L/resubmit_drip.txt $L/focus_packed.txt 2>/dev/null | grep -Ev "$1" | awk '{print $1}' | sort -u; }
 live() { comm -12 <(ids "$1") <(squeue -u "$USER" -h -o "%i" | sort -u) | wc -l; }
 fin() {
-  $PY scripts/ops/build_job_sizing.py
+  $PY cluster/ops/build_job_sizing.py
   sbatch -p "$RTE_TEST_PARTITION" -A "$RTE_ACCOUNT" -c 8 --mem=96G -t 4:00:00 -J "finalize_$1" \
-    -o $L/finalize_$1.log -e $L/finalize_$1.err $REPO/scripts/ops/finalize_refresh.sh >/dev/null && touch $L/DONE_$1 && say "finalize_$1 submitted"
+    -o $L/finalize_$1.log -e $L/finalize_$1.err $REPO/cluster/archive/finalize_refresh.sh >/dev/null && touch $L/DONE_$1 && say "finalize_$1 submitted"
 }
 if [ "$subd" -ge "$plan" ]; then
   h=$(live "$ABL"); a=$(live '^$'); say "all $plan submitted; headline/lietext live=$h, all live=$a, replicas=$rep"
@@ -51,4 +51,4 @@ fi
 
 # re-schedule (only if no other tick is already queued -- keeps exactly one tick alive)
 # TICK_LOOP=1: driven by a login-node setsid loop instead (test's 5-job cap is shared with the packs, OPS_RULES T3)
-[ -z "${TICK_LOOP:-}" ] && [ "$(q | grep -c ' rte_campaign_tick PENDING')" -eq 0 ] && sbatch --begin=now+30minutes $REPO/scripts/ops/campaign_tick.sh >/dev/null
+[ -z "${TICK_LOOP:-}" ] && [ "$(q | grep -c ' rte_campaign_tick PENDING')" -eq 0 ] && sbatch --begin=now+30minutes $REPO/cluster/archive/campaign_tick.sh >/dev/null
