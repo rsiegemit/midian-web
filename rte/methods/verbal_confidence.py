@@ -20,13 +20,18 @@ _NUM = re.compile(r"(?<![\d.\-])(\d+(?:\.\d+)?)\s*(%|(?:/|out of)\s*(\d+))?")   
 
 def parse_confidence(text):
     """A verbal confidence in [0, 1], or None when nothing parseable (or out of range) is said. The number read is the
-    first inside the FIRST <answer> tag (a later tag is the model solving anyway), else the LAST in the reply ("on a
-    scale of 0 to 10, I'd say 8" -> 0.8). x/y and "x out of y" -> x/y; x% -> x/100; a decimal <= 1 (0.7, 1.0) is already a fraction; any other x <= 10 is on the
-    asked 0-10 scale (x/10); 10 < x <= 100 reads as a percentage (a bare "85" -> 0.85); anything else -> None."""
-    tag = ANSWER_RE.findall(text or "")
-    ms = list(_NUM.finditer(tag[0] if tag else text or ""))
+    first inside the first <answer> tag that parses (gemma-9b emits "<answer>-1</answer><answer>10</answer>" and the
+    reverse), else the LAST in the reply ("on a scale of 0 to 10, I'd say 8" -> 0.8). x/y and "x out of y" -> x/y;
+    x% -> x/100; a decimal <= 1 (0.7, 1.0) is already a fraction; any other x <= 10 is on the asked 0-10 scale (x/10); 10 < x <= 100 reads as a percentage (a bare "85" -> 0.85); anything else -> None."""
+    tags = ANSWER_RE.findall(text or "")
+    if tags: return next((v for v in map(_rating, tags) if v is not None), None)
+    return _rating(text or "", last=True)
+
+
+def _rating(s, last=False):
+    ms = list(_NUM.finditer(s))
     if not ms: return None
-    m = ms[0] if tag else ms[-1]
+    m = ms[-1] if last else ms[0]
     x, num, den = float(m.group(1)), m.group(1), m.group(3)
     if den: v = x / float(den) if float(den) else -1.0
     elif m.group(2) == "%" or x > 10: v = x / 100
