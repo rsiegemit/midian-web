@@ -270,7 +270,8 @@ def main(argv=None):
         for c, seed, todo, *_ in units[:50]: log(f"  {' '.join(f'{f}={c[f]}' for f in CELL)} seed={seed} methods={[s['name'] for s in todo]}")
         return
     if not os.path.isdir(out):                   # a new directory holds current keys only: mark it (keys.SENTINEL)
-        os.makedirs(out); open(f"{out}/{keys.SENTINEL}", "w").write('{"created": "new"}')
+        os.makedirs(out, exist_ok=True)          # exist_ok: units of a new grid may start at the same moment
+        open(f"{out}/{keys.SENTINEL}", "w").write('{"created": "new"}')
     os.makedirs(rows_dir, exist_ok=True); t0 = time.perf_counter(); fails = []
     if workers > 1:
         with get_context("fork").Pool(workers) as pool:
