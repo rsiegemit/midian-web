@@ -2,8 +2,8 @@
 
 Two halves. (1) A View raises AccessError on anything outside `needs` -- including the mutation
 test, where the only difference between a method that works and one that blows up is the
-declaration itself. (2) `select_liars` / `apply_lying` / the report channel behave as SPEC §4 says,
-and the scalar (`report`) and vectorized (`report_many`) paths agree on the same inputs.
+declaration itself. (2) `select_liars` / `apply_lying` / the report channel (`report_many`) implement the
+lying model.
 """
 from __future__ import annotations
 
@@ -24,7 +24,6 @@ def world(beta=0.25, n=60, **kw):
 # =========================================================== 1. view enforcement
 @pytest.mark.parametrize("what,call", [
     ("declared", lambda v: v.declared),
-    ("report_channel", lambda v: v.report_channel(0, 1, 1)),
     ("report_many", lambda v: v.report_many([0], [1], [1])),
     ("bus", lambda v: v.bus),
 ])
@@ -191,24 +190,22 @@ def test_honest_reporter_passes_every_outcome_through():
     w = world(0.5)
     _, liars, honest = parties(w)
     j = int(honest[0])
-    for a in list(honest[:5]) + list(liars[:5]):
-        assert [w.report(j, int(a), o) for o in (0, 1)] == [0, 1]
+    agents = np.repeat(np.r_[honest[:5], liars[:5]], 2)
+    outcomes = np.tile([0, 1], 10)
+    assert np.array_equal(w.report_many(np.full(20, j), agents, outcomes), outcomes.astype(np.int8))
 
 
 def test_colluding_liar_vouches_for_liars_and_zeroes_the_top_honest_it_has_seen():
     w = world(0.5)
     j, liars, honest = parties(w)
-    for a in liars[1:6]:
-        assert w.report(j, int(a), 0) == 1              # reports 1 about a liar it saw fail
-    assert w.report(j, int(honest[0]), 1) == 0          # the first honest agent seen is its top
-    assert w.report(j, int(honest[1]), 1) == 1          # a later, worse one is reported truthfully
+    got = w.report_many(np.full(7, j), np.r_[liars[1:6], honest[:2]], np.array([0, 0, 0, 0, 0, 1, 1]))
+    assert list(got[:5]) == [1] * 5                      # reports 1 about liars it saw fail
+    assert list(got[5:]) == [0, 1]                       # of two tied honest agents, ceil(20%) = 1 is zeroed (lowest id)
 
 
 def test_collude_false_disables_the_report_lie_on_both_paths():
     w = world(0.5, collude=False)
     j, liars, honest = parties(w)
-    for a in list(honest[:5]) + list(liars[1:5]):
-        assert [w.report(j, int(a), o) for o in (0, 1)] == [0, 1]
     rng = np.random.default_rng(0)
     rep, ag, out = (rng.integers(0, w.n, 200), rng.integers(0, w.n, 200), rng.integers(0, 2, 200))
     assert np.array_equal(w.report_many(rep, ag, out), out.astype(np.int8))
@@ -233,19 +230,6 @@ def test_report_many_leaves_honest_reporters_alone():
     assert np.array_equal(w.report_many(np.array([j] * 3), agents, outcomes), outcomes.astype(np.int8))
 
 
-@pytest.mark.parametrize("seed", [5, 6, 9])
-def test_report_and_report_many_agree_on_the_same_inputs(seed):
-    """The scalar path folds observations in one at a time and the batch path all at once. Fed the
-    same (reporter, agent, outcome) sequence in descending-mean order they must agree."""
-    w1, w2 = World(60, 8, "specialist", 0.5, seed=seed), World(60, 8, "specialist", 0.5, seed=seed)
-    j, liars, honest = parties(w1)
-    agents = [int(liars[1])] + [int(x) for x in honest[:5]]
-    outcomes = [0, 1, 1, 0, 0, 0]                        # honest means descend: 1, 1, 0, 0, 0
-    scalar = [w1.report(j, a, o) for a, o in zip(agents, outcomes)]
-    batch = w2.report_many(np.array([j] * 6), np.array(agents), np.array(outcomes))
-    assert scalar == [int(x) for x in batch]
-
-
 def test_report_many_treats_each_liar_reporter_independently():
     w = world(0.5)
     _, liars, honest = parties(w)
@@ -263,4 +247,3 @@ def test_no_liars_means_no_corruption_anywhere():
     rng = np.random.default_rng(0)
     rep, ag, out = (rng.integers(0, w.n, 50), rng.integers(0, w.n, 50), rng.integers(0, 2, 50))
     assert np.array_equal(w.report_many(rep, ag, out), out.astype(np.int8))
-    assert [w.report(int(r), int(a), int(o)) for r, a, o in zip(rep, ag, out)] == list(map(int, out))

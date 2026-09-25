@@ -9,7 +9,7 @@ see. Methods NEVER see S or the liar set.
 
 Churn (v2): `World.churn(frac)` replaces round(frac*n) random agents IN PLACE (same ids, n unchanged): the backend
 redraws their profiles (llm: new ladder signature + fresh self-description; bernoulli/replay: new skill row / model),
-liars are redrawn at rate beta, declarations recomputed, probe indices reset, reporters forget them. Draws are seeded
+liars are redrawn at rate beta, declarations recomputed, probe indices reset. Draws are seeded
 by the event index, so every method sees the same churn sequence, and `reset()` restores the initial population.
 Epoch rule: `epoch[a]` is bumped when a is replaced and `seen_epoch[a]` catches up when a is probed or executed; the
 first task routed to a replaced agent the method has not probed or observed since the swap scores 0 (the message went
@@ -17,7 +17,6 @@ to an agent that no longer exists) and marks it seen.
 """
 from __future__ import annotations
 
-import math
 from dataclasses import dataclass
 from typing import Any, Iterable
 
@@ -67,7 +66,7 @@ def sample_skill(dist: str, n: int, K: int, rng: np.random.Generator) -> np.ndar
 
 def skill_excess_ratio(S: np.ndarray, n_probes: int) -> float:
     """Between-agent variance of mean skill over the binomial noise floor at n_probes.
-    Same definition as the old repo's premise gate (>= 1.5 passes)."""
+    The population gate passes at >= 1.5 (rte.measure)."""
     per_agent = np.asarray(S, float).mean(axis=1)
     p = per_agent.mean()
     var_obs = per_agent.var(ddof=1) if per_agent.size > 1 else 0.0
@@ -224,11 +223,6 @@ class View:
     def embedding(self, f: int, inst: int, probe: bool = False):
         return self._w.embedding(f, inst, probe)
 
-    def report_channel(self, j: int, a: int, outcome: int) -> int:
-        """Peer j reports the outcome it observed for agent a. May be corrupted if j lies."""
-        self._require("reports")
-        return self._w.report(int(j), int(a), int(outcome))
-
     def report_many(self, reporters, agents, outcomes) -> np.ndarray:
         """Vectorized reports (one row per report). Liars' top-20% rule uses the means within this batch."""
         self._require("reports")
@@ -265,7 +259,6 @@ class World:
         D_honest = np.asarray(self.backend.declared(declared_source), dtype=np.float32)
         self.D = apply_lying(D_honest, self.liars, lie_mode, self.demand)
         self.D_view = self.D.copy(); self.D_view.setflags(write=False)
-        self._obs: dict[int, dict[int, list]] = {}    # reporter j -> {a: [sum, cnt]} (scalar report path)
         self._probe_idx = np.zeros((self.n, self.K), np.uint32)    # probes drawn so far per (agent, family); uint16 capped at 65,535 and halving hands one winner 146k at n=1e7 b=3
         self._probe_salt = stable_seed_32(seed, "probes")
         self.epoch = np.zeros(self.n, np.int32); self.seen_epoch = np.zeros(self.n, np.int32); self.churn_events = 0
@@ -280,7 +273,7 @@ class World:
         self.liars[ids] = rng.random(ids.size) < self.beta                   # arrivals lie at rate beta, whatever liar_select
         self.D = apply_lying(np.asarray(self.backend.declared(self.declared_source), np.float32), self.liars, self.lie_mode, self.demand)
         self.D_view = self.D.copy(); self.D_view.setflags(write=False)
-        self._probe_idx[ids] = 0; self.epoch[ids] += 1; self._obs.clear()      # reporters' scalar-path memories restart
+        self._probe_idx[ids] = 0; self.epoch[ids] += 1
         return ids
 
     # ---- demand / tasks
@@ -366,27 +359,6 @@ class World:
         return fn(int(f), int(inst), probe) if fn else None
 
     # ---- reports: the only channel decentralized methods learn through
-    def _lie_report(self, j: int, a: int, outcome: int, observed_mean_of: dict) -> int:
-        """Report-channel lie for liar j about agent a. observed_mean_of: {agent: mean outcome j has seen}."""
-        if self.liars[a]:
-            return 1
-        honest = [(m, -x) for x, m in observed_mean_of.items() if not self.liars[x]]
-        if honest:
-            k = max(1, math.ceil(REPORT_LIE_TOP_FRAC * len(honest)))
-            honest.sort(reverse=True)
-            top = {-x for _, x in honest[:k]}
-            if a in top:
-                return 0
-        return int(outcome)
-
-    def report(self, j: int, a: int, outcome: int) -> int:
-        self.ledger.report(1)
-        st = self._obs.setdefault(j, {})
-        s = st.setdefault(a, [0, 0]); s[0] += outcome; s[1] += 1
-        if not (self.collude and self.liars[j]):
-            return int(outcome)
-        return self._lie_report(j, a, outcome, {x: v[0] / v[1] for x, v in st.items()})
-
     def report_many(self, reporters: np.ndarray, agents: np.ndarray, outcomes: np.ndarray) -> np.ndarray:
         reporters, agents, outcomes = np.broadcast_arrays(reporters, agents, outcomes)
         out = np.array(outcomes, dtype=np.float32 if outcomes.dtype.kind == "f" else np.int8, order="C")   # contiguous copy: the lie edits it in place
@@ -420,10 +392,11 @@ class World:
         self.ledger.probe(a.size); self.seen_epoch[a] = self.epoch[a]
         return self.backend.execute_many(a, f, probe_seed(self._probe_salt, a, f, k))
 
-    def reset(self, tag: str = "") -> None:
-        """Start a method: zero the ledger, forget reporters' observations, reset the probe index so a method's
-        build never depends on which methods ran before it (pairing is through the task stream + deterministic execute)."""
-        self.ledger.reset(); self._obs.clear()
+    def reset(self, tag=None) -> None:
+        """Start a method: zero the ledger, reset the probe index so a method's build never depends on which methods ran
+        before it (pairing is through the task stream + deterministic execute), and undo churn. `tag` is ignored (a
+        caller's old argument, accepted until every caller drops it)."""
+        self.ledger.reset()
         self._probe_idx[:] = 0                      # every method starts at probe index 0 of every cell
         if self.churn_events:                       # undo churn: same initial population for every method
             self.S, self.D, self.liars = (x.copy() for x in self._snap[:3]); self.backend.restore(self._snap[3])

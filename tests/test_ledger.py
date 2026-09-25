@@ -94,10 +94,6 @@ def test_probe_many_charges_the_broadcast_size(w):
     charges(w, lambda: w.probe_many(np.arange(4), np.asarray(2), 3), probes=12)
 
 
-def test_report_charges_exactly_one(w):
-    charges(w, lambda: w.report(1, 2, 1), reports=1)
-
-
 @pytest.mark.parametrize("shape", [(1,), (4,), (37,), (3, 2)])
 def test_report_many_charges_one_per_report(w, shape):
     rng = np.random.default_rng(0)
