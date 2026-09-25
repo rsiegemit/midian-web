@@ -25,9 +25,6 @@ all = ["rte[learned,llm,figures,test,dev]"]
 [tool.setuptools.packages.find]
 include = ["rte*"]          # namespaces on: also picks up rte/methods/frameworks/workers (no __init__.py)
 
-[tool.setuptools.package-data]
-"rte.methods.frameworks" = ["NOTES_*.md"]
-
 [tool.ruff]
 line-length = 120
 target-version = "py312"
