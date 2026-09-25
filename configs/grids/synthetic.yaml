@@ -46,7 +46,7 @@ grids:
   # should show w/o audits / MIDIAN
   # switching on at b=2 and every probe arm improving with b while declaration arms stay flat.
   # 20, 30 added 2026-09-14 (same cells/seeds; MIDIAN was still climbing at b=10)
-  # fill_arms added 2026-09-17 (COVERAGE.md §7)
+  # fill_arms added 2026-09-17 (docs/archive/COVERAGE.md §7)
   # [NUM] probe-budget axis b = 1..30 at n = 10^3..10^5; read by: paper_figs, paper_numbers
   bernoulli_b_sweep:
     K: [16]

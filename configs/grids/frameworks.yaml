@@ -193,12 +193,12 @@ grids:
       - {name: fw_smolagents, params: {retrieval: embed, dedup: true}}
       - {name: fw_camel_workforce, params: {retrieval: embed, dedup: true}}
 
-  # ---- 2026-09-17: the SOTA retrieval stack in front of the frameworks (METHODS.md 5a). The pre-registered adapter is
-  # hashed TF-IDF and the _em mirrors are all-MiniLM-L6-v2; neither is what a deployed system puts in front of a
-  # framework, so the frameworks have only ever been measured with weak retrieval. These arms are the production
+  # ---- 2026-09-17: the SOTA retrieval stack in front of the frameworks (docs/methods.md §5). The pre-registered
+  # adapter is hashed TF-IDF and the _em mirrors are all-MiniLM-L6-v2; neither is what a deployed system puts in front
+  # of a framework, so the frameworks have only ever been measured with weak retrieval. These arms are the production
   # stack: BM25 alone, Qwen3-Embedding-8B alone (top of MTEB), reciprocal-rank fusion of the two, and fusion + a
   # Qwen3-Reranker-4B cross-encoder over the top 50. A shortlist depends only on the population, so the dense block
-  # and the reranked table are precomputed by `scripts/embed_populations.py --sota` and every job here is CPU-only.
+  # and the reranked table are precomputed by `scripts/data/embed_populations.py --sota` and every job here is CPU-only.
   # Four-arm ablation at 10^3 (which PART of the stack buys what); sota + hybrid elsewhere (the headline comparison).
   # [FIG:A,E] Qwen3 fusion (+ rerank) shortlists of fw_live_n1000; read by: shortlist_figs
   fw_live_n1000_sota:
@@ -311,11 +311,11 @@ grids:
       - {set: fw10_sota_ic}
       - {set: fw10_sota_id}
 
-  # ---- 2026-09-18: dense-alone WITH a tuned instruction. The shortlist-skill diagnostic (jobs/shortlist_skill.py)
-  # shows this is the best text retriever at 10^5 -- top-10 true skill 0.485 against MiniLM 0.455, random 0.428 and
-  # the stock-instruction dense arm 0.407 -- while FUSING BM25 in drags it to 0.370 and the cross-encoder to 0.428.
-  # The first probe grid ran hybrid and sota under the instructions but not dense alone, i.e. it omitted the
-  # configuration that actually wins; this grid is that omission.
+  # ---- 2026-09-18: dense-alone WITH a tuned instruction. The shortlist-skill diagnostic
+  # (scripts/analysis/diagnostics/shortlist_skill.py) shows this is the best text retriever at 10^5 -- top-10 true skill
+  # 0.485 against MiniLM 0.455, random 0.428 and the stock-instruction dense arm 0.407 -- while FUSING BM25 in drags it
+  # to 0.370 and the cross-encoder to 0.428. The first probe grid ran hybrid and sota under the instructions but not
+  # dense alone, i.e. it omitted the configuration that actually wins; this grid is that omission.
   # [FIG:A,E,F,G] Qwen3 dense shortlist under two task instructions, n = 10^5; read by: shortlist_figs
   fw_live_n100k_dense_instruct:
     mirror_of: live_n100k
@@ -323,12 +323,13 @@ grids:
               {set: fw10_dense_id}]
 
   # ---- 2026-09-18: the declared-claim shortlist, the cheap baseline every text retriever should be measured against.
-  # Diagnostics (jobs/shortlist_skill.py, jobs/declared_cohort.py) at 10^5 show the declared top-10 has the HIGHEST
-  # shortlist mean of any source (0.615 honest, 0.526-0.572 under liars) while its best member is only 0.66-0.75
-  # against the MIDIAN cohort's 0.838 -- and frameworks recover just 15-35 % of the mean->best gap, so the mean is what
-  # they mostly get. That predicts the declared top-10 BEATS the MIDIAN cohort as a framework shortlist in three of five
-  # regimes, losing only under the beta = 0.25 cartel. Prediction from a linear fit, hence this grid.
-  # It also concentrates liars: 74 % of the declared top-10 at beta = 0.5 random, against a 50 % population rate.
+  # Diagnostics (scripts/analysis/diagnostics/shortlist_skill.py, scripts/analysis/diagnostics/declared_cohort.py) at
+  # 10^5 show the declared top-10 has the HIGHEST shortlist mean of any source (0.615 honest, 0.526-0.572 under liars)
+  # while its best member is only 0.66-0.75 against the MIDIAN cohort's 0.838 -- and frameworks recover just 15-35 % of
+  # the mean->best gap, so the mean is what they mostly get. That predicts the declared top-10 BEATS the MIDIAN cohort
+  # as a framework shortlist in three of five regimes, losing only under the beta = 0.25 cartel. Prediction from a
+  # linear fit, hence this grid. It also concentrates liars: 74 % of the declared top-10 at beta = 0.5 random, against a
+  # 50 % population rate.
   # [FIG:A,E,F,G] frameworks on the declared-claim top-k, n = 10^5; read by: shortlist_figs
   fw_live_n100k_declared:
     mirror_of: live_n100k
@@ -336,11 +337,12 @@ grids:
 
   # ---- 2026-09-18: POSITION CONTROL for the MIDIAN cohort. The midian modes hand the framework [MIDIAN's pick] + its
   # leaf cohort, so the best agent sits in position 1. Frameworks recover 35 % of the mean->best gap on that cohort
-  # against 15-28 % on every text shortlist (jobs/shortlist_skill.py, jobs/cohort_skill.py), and position bias is the
-  # obvious confound: the MIDIAN cohort's mean true skill is only 0.447 against a population mean of 0.426, so its
-  # advantage is NOT that the members are better -- it is that one excellent member (0.832) is present, and first.
-  # shuffle=true permutes the same members deterministically. If success falls to the text-shortlist recovery rate,
-  # the frameworks were reading position, not descriptions, and the whole framework comparison measures ordering.
+  # against 15-28 % on every text shortlist (scripts/analysis/diagnostics/shortlist_skill.py,
+  # scripts/analysis/diagnostics/cohort_skill.py), and position bias is the obvious confound: the MIDIAN cohort's mean
+  # true skill is only 0.447 against a population mean of 0.426, so its advantage is NOT that the members are better --
+  # it is that one excellent member (0.832) is present, and first. shuffle=true permutes the same members
+  # deterministically. If success falls to the text-shortlist recovery rate, the frameworks were reading position, not
+  # descriptions, and the whole framework comparison measures ordering.
   # [NUM] position control: MIDIAN cohort shuffled, n = 10^5; read by: shortlist_figs
   fw_live_n100k_verified_va_shuffled:
     mirror_of: live_n100k
@@ -493,8 +495,8 @@ grids:
   # ---- 2026-09-22 BACKFILL (post-hoc): the five shortlists that existed only at 10^5 -- Qwen3 dense and fusion +
   # reranker under both task instructions, and the declared-claim top-k -- at 10^2 / 10^3 / 10^4, in the two headline
   # cells only (specialist; beta = 0 and the beta = 0.5 low-skill cartel), seeds 1-3 as at 10^4 / 10^5. Mirrors keep Q
-  # and b. The instruction caches are pre-warmed by scripts/embed_populations.py --instruct ... --sota (GPU), so every
-  # job is CPU-only.
+  # and b. The instruction caches are pre-warmed by scripts/data/embed_populations.py --instruct ... --sota (GPU), so
+  # every job is CPU-only.
   # [FIG:A,E] backfill: Qwen3 + declared shortlists of fw_live_n100; read by: shortlist_figs
   fw_live_n100_backfill:
     mirror_of: fw_live_n100

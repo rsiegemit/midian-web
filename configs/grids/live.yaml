@@ -28,7 +28,8 @@ grids:
     collude: [true, false]
     methods: {set: midian_variants}
 
-  # ---- v2 work order (TARGETS_rte_v2.md), 2026-09-03. Variants are labeled; MIDIAN w/o defenses unchanged.
+  # ---- v2 work order (docs/archive/preregistration/TARGETS_rte_v2.md), 2026-09-03. Variants are labeled; MIDIAN w/o
+  # defenses unchanged.
   # 1.4
   # [HIST] v2 1.4: cohort size r = 20; read by: none
   midian_r20:
@@ -394,9 +395,9 @@ grids:
       - gossip_reputation_greedy
       - llm_supervisor
 
-  # ---- 2026-09-17 expansions (COVERAGE.md §8): live β = 0.1 above 10^3; live heavy_tail / bimodal at 10^4; the
-  # frameworks on RouterEval with the MiniLM and MIDIAN cohort shortlists (dedup is a no-op there: every rendered
-  # description is unique).
+  # ---- 2026-09-17 expansions (docs/archive/COVERAGE.md §8): live β = 0.1 above 10^3; live heavy_tail / bimodal at
+  # 10^4; the frameworks on RouterEval with the MiniLM and MIDIAN cohort shortlists (dedup is a no-op there: every
+  # rendered description is unique).
   # [FIG:E] beta = 0.1 cells of learned_n10k; read by: shortlist_figs
   learned_n10k_beta01:      {mirror_of: learned_n10k,      beta: [0.1]}
 
@@ -584,8 +585,8 @@ grids:
 
   # ---- 2026-09-23 POOL FILL for condensed A / B: "best learned router" / "best bandit" are chosen from the SAME
   # candidate set at every b in a cell (the user: no arm may change between b values because a candidate did not run).
-  # Each cell's pool = LEARNED + BANDIT + warm_start_bandit[n0=0.5] (scripts/condensed_figs.py) minus the arms that
-  # cannot run there: trueskill_per_family at n >= 10^5 (NotImplemented), knn/mlp_router on bernoulli / replay (no
+  # Each cell's pool = LEARNED + BANDIT + warm_start_bandit[n0=0.5] (scripts/figures/condensed_figs.py) minus the arms
+  # that cannot run there: trueskill_per_family at n >= 10^5 (NotImplemented), knn/mlp_router on bernoulli / replay (no
   # prompt text: they embed n*K*b prompts), mlp_router at n >= 5,000 (agent one-hot over >= 2.4e5 probes, as
   # learned_n10k). These grids hold ONLY arms no other grid ran in that cell, so nothing is run twice (tuned n0 = 0.5 at
   # live b = 3 is tuned_wsb_*).
