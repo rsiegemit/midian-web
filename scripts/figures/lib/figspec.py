@@ -112,12 +112,12 @@ SHORTLIST_ORDER = [
 ]  # left to right wherever a figure shows several shortlists (docs/figures.md section 3b); variants follow their base
 SHORTLIST_COLOR = {
     "va_cohort": "#2ecc71",
-    "tfidf": "#7f8c8d",
+    "tfidf": "#d3d7d8",
     "bm25": "#17becf",
-    "embed": "#2980b9",
-    "dense": "#8e44ad",
-    "sota": "#a0522d",
-    "declared": "#f1c40f",
+    "embed": "#2c8ac8",
+    "dense": "#793a93",
+    "sota": "#592d19",
+    "declared": "#ebbf0e",
 }
 INSTR_TINT = {"icomp": 0.40, "idemo": 0.65}  # instruction variants: the base colour blended this far toward white
 SHORTLIST_EDGE = {"va_cohort": 0.8}  # bar edge width (pt): the MIDIAN shortlist emphasised, every other bar 0.3

@@ -134,18 +134,19 @@ Implemented in `scripts/figures/lib/figspec.py` (`SHORTLIST_ORDER`, `SHORTLIST_C
 | shortlist | colour | luma (601) | rel. luminance |
 |---|---|---|---|
 | MIDIAN shortlist | `#2ecc71` | 0.574 | 0.450 |
-| hashed TF-IDF | `#7f8c8d` | 0.534 | 0.252 |
-| MiniLM | `#2980b9` | 0.425 | 0.194 |
-| dense (Qwen3-8B) | `#8e44ad` | 0.400 | 0.129 |
-| fusion + reranker | `#a0522d` | 0.396 | 0.137 |
-| declared top-k | `#f1c40f` | 0.740 | 0.582 |
+| hashed TF-IDF | `#d3d7d8` | 0.839 | 0.674 |
+| MiniLM | `#2c8ac8` | 0.459 | 0.229 |
+| dense (Qwen3-8B) | `#793a93` | 0.341 | 0.092 |
+| fusion + reranker | `#592d19` | 0.219 | 0.041 |
+| declared top-k | `#ebbf0e` | 0.721 | 0.550 |
 
-The six colours are NOT all separable in greyscale: minimum pairwise luma gap 0.004 (dense vs fusion + reranker;
-relative luminance 0.008); MiniLM / dense 0.025, MiniLM / fusion 0.029 and MIDIAN shortlist / hashed TF-IDF 0.040 are also
-below 0.06. In print they are told apart by position (fixed order) and, for the MIDIAN shortlist, by the heavy edge.
+The hues are the collaborator round's (MIDIAN green `#2ecc71` unchanged); lightness was adjusted so that every pair of
+the six body colours differs by at least 0.115 in luma (the round's hex codes left dense and fusion + reranker 0.004
+apart), so the six bars separate when printed in greyscale (`figures/paper/F_shortlists_1e5_greyscale.png`).
 BM25 (not drawn in the current figures) keeps `#17becf`.
-Instruction variants: competence instr. = the base colour blended 40 % toward white (dense `#bb8fce`, fusion `#c69781`);
-demonstration instr. = 65 % toward white (dense `#d7bee2`, fusion `#dec2b6`). Cartel bars keep the `////` hatch.
+Instruction variants: competence instr. = the base colour blended 40 % toward white (dense `#af89be`, fusion `#9b8175`);
+demonstration instr. = 65 % toward white (dense `#d0bad9`, fusion `#c5b6ae`). In the appendix figures a variant
+sits next to its base, so position separates it even where its grey is close to another shortlist's. Cartel bars keep the `////` hatch.
 Reference lines: oracle grey dotted, random light-grey dotted (1.0 pt), `MIDIAN, no framework` green `#2ecc71` solid 1.6 pt.
 
 **Order.** Left to right (F, F appendix, H; within each n group of E; G): MIDIAN shortlist, hashed TF-IDF, BM25 (when
