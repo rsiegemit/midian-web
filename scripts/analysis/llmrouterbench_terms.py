@@ -113,7 +113,7 @@ def main():
         n_te = int(TEST * N)
         te, tr = perm[:n_te], perm[n_te:]
         n_va = int(0.2 * len(tr))
-        va, tr_ = tr[:n_va], tr[n_va:]  # validation slice of the train split for hyperparameters
+        va = tr[:n_va]  # validation slice of the train split for hyperparameters
         Ytr, Yva, Yte, ftr, fva, fte = Y[tr], Y[va], Y[te], fam[tr], fam[va], fam[te]
         Etr, Eva, Ete = E[tr], E[va], E[te]
         per_ds = lambda pick, Yx, fx: np.array(

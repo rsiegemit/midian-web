@@ -8,7 +8,7 @@ import pytest
 
 from rte.budget import Budget
 from rte.methods._learned import embed
-from rte.methods.frameworks._common import FrameworkMethod, _bm25, _rrf
+from rte.methods.frameworks._common import FrameworkMethod, _rrf
 from rte.world import World
 
 N, K, Q = 300, 16, 8
@@ -156,7 +156,6 @@ def test_declared_retrieval_ranks_by_the_declared_claim():
 def test_shuffle_permutes_the_midian_cohort_without_changing_its_members():
     """The position control: shuffle must keep the SAME shortlist (so only ordering differs from the reported arm),
     move MIDIAN's pick off position 1 for most families, and be deterministic across calls and instances."""
-    import numpy as np
 
     from rte.budget import Budget
     from rte.world import World

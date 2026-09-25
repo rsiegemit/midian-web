@@ -907,7 +907,7 @@ for k, v in N.items():
     if k.startswith("v5.") and "exp_" not in k:
         continue  # 6,000+ cells; in the JSON, not on stdout
     if (
-        not k[:2] in ("T2", "T3", "T5", "T7", "T8", "D.")
+        k[:2] not in ("T2", "T3", "T5", "T7", "T8", "D.")
         and not isinstance(v["value"], list)
         or k.startswith("a.paired_framework")
         or k.startswith("a.frameworks")

@@ -3,7 +3,7 @@ d-regular and symmetric under the partner slot `s ^ 1`; the per-edge coverage is
 import numpy as np
 
 from rte.budget import Budget
-from rte.methods.referral_network import ReferralNetwork, regular_graph
+from rte.methods.referral_network import ReferralNetwork
 from rte.world import World
 
 

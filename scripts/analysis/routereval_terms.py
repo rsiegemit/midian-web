@@ -143,7 +143,7 @@ def run(ds):
         fams_va[K] = km.predict(Eva)
     if ds == "mmlu":
         subj = lambda P: np.array([(SUBJECT.search(str(p)) or [None, "?"])[1] for p in P])
-        s_tr, s_te = subj(Ptr), subj(Pte)
+        s_tr = subj(Ptr)
         names = {s: i for i, s in enumerate(sorted(set(s_tr)))}
         fams["subject"] = (np.array([names[s] for s in s_tr]), None)  # test family predicted below
     for m, cfgs in d["hard"].items():

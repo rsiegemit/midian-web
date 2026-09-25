@@ -72,7 +72,7 @@ def shortlist_table(dist="specialist"):
     """Frameworks pooled by shortlist source, n x regime; MIDIAN itself and the oracle beside. Cell = mean (best
     framework)."""
     lines = [
-        f"| n | regime | " + " | ".join(s[0] for s in SOURCES) + " | MIDIAN itself | oracle |",
+        "| n | regime | " + " | ".join(s[0] for s in SOURCES) + " | MIDIAN itself | oracle |",
         "|---|---|" + "---|" * (len(SOURCES) + 2),
     ]
     for n in (100, 1000, 10000, 100000):
