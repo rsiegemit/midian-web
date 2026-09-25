@@ -12,6 +12,15 @@ Every module reads its data root and its optional switches from here, never from
     RTE_OUTCOME_CACHE   cache scored outcomes within a process (speed only; identical outcomes).
     RTE_RG_CACHE        cache Reasoning-Gym data files within a process (speed only; identical tasks).
 
+Path-valued switches, read where they are used (defaults under RTE_DATA or the repo):
+    RTE_ENDPOINTS          the merged model -> URL registry (default $RTE_DATA/endpoints.json).
+    RTE_ENDPOINT_DIR       per-replica endpoint files merged into it (default endpoints.d/ beside RTE_ENDPOINTS).
+    RTE_LLM_CACHE          the LLM reply memo, sqlite shards (default $RTE_DATA/cache).
+    RTE_LLM_CACHE_NOLOCK   open the memo shards with sqlite nolock=1 (default 1: NFS; 0 uses normal file locking).
+    RTE_POPULATIONS        the live-backend agent populations (default $RTE_DATA/populations).
+    RTE_MODELS_YAML        the model ladder (default configs/models.yaml).
+    RTE_EMBED_CACHE_DIR    opt-in embedding/shortlist cache for non-live backends (unset: no cache).
+
 The speed-only switches are off by default. Stored rows of three kNN grids were produced with RTE_EMBED_BATCH=1
 (docs/errata.md), so reproducing those rows bit-for-bit needs the same setting.
 """
