@@ -4,7 +4,7 @@ The LLM is mocked by a `confidence` method on the bernoulli backend that rates e
 import numpy as np
 import pytest
 
-from rte.backends.prompts import CONF_MAX, build, rate_task
+from rte.backends.prompts import CONF_MAX, build, rate_again, rate_task
 from rte.budget import Budget
 from rte.methods import load_method
 from rte.methods.verbal_confidence import parse_confidence
@@ -13,13 +13,15 @@ from rte.world import AccessError, World
 K, B = 8, Budget(3)
 
 
-def mocked(beta=0.0, lie_mode="inflate", n=60, garbage=()):
+def mocked(beta=0.0, lie_mode="inflate", n=60, garbage=(), fixed=()):
+    """`garbage` agents give no rating; asked again, the `fixed` ones among them answer 3."""
     w = World(n, K, "specialist", beta, liar_select="low_skill_first", seed=3, lie_mode=lie_mode)
-    w.asked = []
+    w.asked, w.reasked = [], []
 
-    def confidence(agents, f, inst):
-        w.asked += list(agents)
-        return ["I cannot say" if a in garbage else f"<answer>{int(round(10 * w.S[a, f]))}</answer>" for a in agents]
+    def confidence(agents, f, inst, again=False):
+        (w.reasked if again else w.asked).extend(agents)
+        return [("<answer>3</answer>" if again and a in fixed else "I cannot say") if a in garbage
+                else f"<answer>{int(round(10 * w.S[a, f]))}</answer>" for a in agents]
     w.backend.confidence = confidence
     return w
 
@@ -65,7 +67,18 @@ def test_routes_to_most_confident_first_maximum_and_counts_garbage():
         cand = np.argsort(-D[:, t.family], kind="stable")[:10]
         c = np.array([0.0 if a in (0, 1, 2) else round(10 * w.S[a, t.family]) / 10 for a in cand])
         assert m.fetch(t) == cand[np.argmax(c)]
-    assert m.stats["unparseable"] == sum(a in (0, 1, 2) for a in w.asked)
+    assert m.stats["unparseable"] == m.stats["reasked"] == sum(a in (0, 1, 2) for a in w.asked) == len(w.reasked)
+
+
+def test_no_rating_is_asked_once_more_and_charged():
+    w = mocked(garbage=set(range(0, 60, 2)), fixed=set(range(0, 60, 4))); m = built(w, k=10)
+    for t in w.tasks(20):
+        cand = np.argsort(-w.D[:, t.family], kind="stable")[:10]; g = [a for a in cand if a % 2 == 0]
+        s = w.ledger.snapshot(); a = m.fetch(t); d = w.ledger.diff(s)
+        assert d["messages"] == 20 + 2 * len(g) and d["comparisons"] == 10
+        c = [(0.3 if a % 4 == 0 else 0.0) if a % 2 == 0 else round(10 * w.S[a, t.family]) / 10 for a in cand]
+        assert a == cand[int(np.argmax(c))]
+    assert m.stats["reasked"] == len(w.reasked) and m.stats["unparseable"] == sum(a % 4 == 2 for a in w.reasked)
 
 
 @pytest.mark.parametrize("mode", ["inflate", "squat", "max"])
@@ -134,7 +147,7 @@ def test_llm_backend_asks_each_agent_its_own_model_and_prompt_deduplicated(monke
     from rte.backends import families, llm as L
     monkeypatch.setattr(L, "_CURRENT", L._CURRENT)                     # restored after: other tests read current_backend()
     shard = type("Shard", (), {"execute": lambda *a: None, "executemany": lambda *a: None, "commit": lambda *a: None})()
-    monkeypatch.setattr(llm_client, "_memo", lambda: ({}, shard)); monkeypatch.setattr(llm_client, "_refresh", lambda force=False: None)
+    memo = {}; monkeypatch.setattr(llm_client, "_memo", lambda: (memo, shard)); monkeypatch.setattr(llm_client, "_refresh", lambda force=False: None)
     sent = []
     monkeypatch.setattr(llm_client, "_generate", lambda model, msgs, mt: sent.append((model, msgs, mt)) or "<answer>7</answer>")
     be = L.LLMBackend(n=40, K=16, dist="specialist", seed=1, population_dir=str(tmp_path))
@@ -144,3 +157,6 @@ def test_llm_backend_asks_each_agent_its_own_model_and_prompt_deduplicated(monke
     want = {(s[0], str(rate_task(fam, q, s[1], s[2]))) for s in (be._sig(int(a), f) for a in agents)}
     assert {(m, str(msgs)) for m, msgs, _ in sent} == want and len(sent) == len(want) < 40   # one generation per signature
     assert {mt for *_, mt in sent} == {32}
+    sent.clear(); be.confidence(agents, f, inst, again=True)          # first replies are memo hits; only the follow-ups generate
+    again = {(s[0], str(rate_again(rate_task(fam, q, s[1], s[2]), "<answer>7</answer>"))) for s in (be._sig(int(a), f) for a in agents)}
+    assert {(m, str(msgs)) for m, msgs, _ in sent} == again and len(sent) == len(want)

@@ -263,12 +263,16 @@ class LLMBackend:
         path.write_text(json.dumps(self._desc, indent=2))
         return self._desc
 
-    def confidence(self, agents, f: int, inst: int) -> list[str]:
+    def confidence(self, agents, f: int, inst: int, again: bool = False) -> list[str]:
         """Each agent's raw verbal confidence on instance `inst` of family f, asked by its own model in its own solve
-        prompt (prompts.rate_task). Memoised by content hash: agents sharing a signature share one generation."""
+        prompt (prompts.rate_task); `again` continues that conversation once (prompts.rate_again: the first reply is a
+        memo hit). Memoised by content hash: agents sharing a signature share one generation."""
         fam, sig = self.families[f], [self._sig(int(a), f) for a in agents]
         q = families.question(fam, int(inst))
-        text = self._ask({i: s[0] for i, s in enumerate(sig)}, lambda i: prompts.rate_task(fam, q, sig[i][1], sig[i][2]), 32)
+        first = lambda i: prompts.rate_task(fam, q, sig[i][1], sig[i][2])                  # noqa: E731
+        jobs = {i: s[0] for i, s in enumerate(sig)}
+        text = self._ask(jobs, first, 32)
+        if again: text = self._ask(jobs, lambda i: prompts.rate_again(first(i), text[i]), 32)
         return [text[i] for i in range(len(sig))]
 
     def family_descriptions(self) -> list[str]:

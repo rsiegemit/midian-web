@@ -4,11 +4,12 @@ it is that it solves THIS task, route to the most confident. LLM backend only (t
 Shortlist: `declared` = top-k by the declared claim D[:, f]; `embed` = top-k by MiniLM cosine between the agents' self-
 descriptions and the family description (the frameworks' retrieval="embed", cached with the population). The question is
 asked in each agent's own solve prompt by its own model (rte.backends.prompts.rate_task); the reply is a 0-10 rating,
-parsed here (see parse_confidence). Unparseable = 0; stats count unparseable, untagged (no <answer> tag) and ties (ties
-_distinct: tied by different reply texts, not by clones). Ties go to the earliest shortlist position (declared: the
-higher claim; embed: the closer description). A liar claims the maximum -- that lie lives in the World.
-Ledger: build n messages (declarations/descriptions to the registry); fetch 2k messages (k queries + k replies, charged
-by view.ask_confidence) and compare(k) for the argmax."""
+parsed here (see parse_confidence). A reply with no rating (small models answer the task instead) is asked once more in
+the same conversation (`reasked`); still none = 0. Stats count reasked, unparseable (after the re-ask), untagged (first
+replies with no <answer> tag) and ties (ties_distinct: tied by different reply texts, not by clones). Ties go to the
+earliest shortlist position (declared: the higher claim; embed: the closer description). A liar claims the maximum --
+that lie lives in the World. Ledger: build n messages (declarations/descriptions to the registry); fetch 2k messages
+(k queries + k replies, charged by view.ask_confidence) + 2 per re-ask, and compare(k) for the argmax."""
 import re
 import numpy as np
 from .base import Method
@@ -48,7 +49,7 @@ class VerbalConfidence(Method):
         if shortlist not in ("declared", "embed"): raise ValueError(f"shortlist must be declared|embed, got {shortlist!r}")
         super().__init__(k=k, shortlist=shortlist)
         self.k, self.shortlist = int(k), shortlist
-        self.stats = {"asked": 0, "unparseable": 0, "untagged": 0, "ties": 0, "ties_distinct": 0}
+        self.stats = {"asked": 0, "reasked": 0, "unparseable": 0, "untagged": 0, "ties": 0, "ties_distinct": 0}
 
     def build(self, view, budget):
         self.view = view
@@ -59,8 +60,12 @@ class VerbalConfidence(Method):
     def fetch(self, task):
         cand = self.sl.retrieve(task)
         said = self.view.ask_confidence(cand, task); conf = [parse_confidence(t) for t in said]
-        self.stats["asked"] += len(cand); self.stats["unparseable"] += conf.count(None)
-        self.stats["untagged"] += sum(not ANSWER_RE.search(t or "") for t in said)
+        self.stats["asked"] += len(cand); self.stats["untagged"] += sum(not ANSWER_RE.search(t or "") for t in said)
+        bad = [i for i, x in enumerate(conf) if x is None]
+        if bad:                                                        # once more, same conversation
+            for i, t in zip(bad, self.view.ask_confidence(cand[bad], task, again=True)): said[i], conf[i] = t, parse_confidence(t)
+            self.stats["reasked"] += len(bad)
+        self.stats["unparseable"] += conf.count(None)
         c = np.array([0.0 if x is None else x for x in conf]); top = np.flatnonzero(c == c.max())
         self.view.ledger.compare(len(cand))
         self.stats["ties"] += int(top.size > 1); self.stats["ties_distinct"] += int(len({said[i] for i in top}) > 1)

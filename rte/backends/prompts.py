@@ -85,6 +85,14 @@ def rate_task(family: str, question: str, handicapped: bool, tool: str) -> list[
     return msgs
 
 
+def rate_again(msgs: list[dict], reply: str) -> list[dict]:
+    """The same conversation continued once when the reply held no rating (small models answer the task instead)."""
+    return msgs + [{"role": "assistant", "content": reply},
+                   {"role": "user", "content": "That is not a rating. How confident are you that you would solve the "
+                                               "problem correctly? Reply with only a single integer from 0 to 10 inside "
+                                               "<answer></answer> tags."}]
+
+
 def describe_self(model: str, tool: str, specialty: str) -> list[dict]:
     return [{"role": "system", "content":
              "Write one short paragraph (<=70 words) describing yourself as a service in an agent "
