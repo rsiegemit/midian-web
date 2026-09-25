@@ -90,7 +90,7 @@ def _rrf(*ranks: np.ndarray, k: float = 60.0) -> np.ndarray:
 def sota_shortlist(B, Xa, Xf, pool, desc, fdesc, rerank, k: int = 10, rerank_pool: int = 50) -> np.ndarray:
     """(K, k) SOTA shortlist: reciprocal-rank fusion of BM25 with the dense scores, the top `rerank_pool` reranked by
     the cross-encoder, the top k kept (-1 pads a family with fewer than k distinct candidates). Shared by the method
-    and by scripts/embed_populations.py, which pre-warms the cache -- they must never drift apart."""
+    and by scripts/data/embed_populations.py, which pre-warms the cache -- they must never drift apart."""
     rows = []
     for f in range(len(fdesc)):
         fused = _rrf(B[f][pool], (Xa @ Xf[f])[pool])
@@ -219,7 +219,7 @@ class FrameworkMethod(Method):
         """Where this population's embedding / shortlist caches live. Live backend: the population directory. Any other
         backend (RouterEval, whose descriptions are rendered at run time), only when RTE_EMBED_CACHE_DIR is set: a
         directory under it keyed by a hash of the exact agent and family TEXTS, so a GPU pre-warm
-        (scripts/embed_routereval.py) and the CPU routing units meet on the same files, and any text change misses.
+        (scripts/data/embed_routereval.py) and the CPU routing units meet on the same files, and any text change misses.
         Needs self.desc / self.fdesc, i.e. call after _texts."""
         try:
             from rte.backends import llm as L
@@ -257,7 +257,8 @@ class FrameworkMethod(Method):
 
     def _sota_table(self, view):
         """The (K, k) shortlist for retrieval='sota'. It depends only on the population, so it is computed once and
-        cached beside it; scripts/embed_populations.py pre-warms it, which is what keeps routing jobs off the GPU."""
+        cached beside it; scripts/data/embed_populations.py pre-warms it, which is what keeps routing jobs off the
+        GPU."""
         d = self._popdir(view)
         name = sota_cache_name(self.embed_model, self.rerank_model, self.k, self.rerank_pool, self.dedup,
                                self.embed_instruct + self._ltag())
@@ -296,7 +297,7 @@ class FrameworkMethod(Method):
                 import torch                                 # not a slow path worth taking silently
                 if not torch.cuda.is_available():
                     raise RuntimeError(f"{self.embed_model} has no cached block for {d} and no GPU is visible; "
-                                       f"run: python scripts/embed_populations.py --model {self.embed_model}")
+                                       f"run: python scripts/data/embed_populations.py --model {self.embed_model}")
             E = embed(texts, self.embed_model, **kw)
             if path is not None:                             # atomic: concurrent jobs may race to write the same file
                 tmp = path.with_suffix(f".{os.getpid()}.tmp.npy")
@@ -334,7 +335,7 @@ class FrameworkMethod(Method):
 
     def _index(self, view):
         """Texts, retrieval vectors and shortlist tables: everything build() derives from the population alone, with no
-        supervisor. scripts/embed_routereval.py calls exactly this on a GPU to pre-warm the RTE_EMBED_CACHE_DIR
+        supervisor. scripts/data/embed_routereval.py calls exactly this on a GPU to pre-warm the RTE_EMBED_CACHE_DIR
         files."""
         self.desc, self.fdesc, self._task_text = self._texts(view)
         if self.lie_text:

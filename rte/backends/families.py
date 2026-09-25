@@ -21,7 +21,7 @@ DEFAULT_SOURCE = "rg"
 # 16 diverse generators with programmatic verifiers (K=16 default).
 # `propositional_logic` and `graph_color` are deliberately absent: in reasoning-gym 0.1.19 both
 # emit entries with answer=None and score their own gold answer 0.0, so no agent can ever be
-# right on them. scripts/probe_families.py re-checks every name below.
+# right on them. scripts/data/probe_families.py re-checks every name below.
 # leg_counting / caesar_cipher / base_conversion / bitwise_arithmetic / spell_backward / word_sorting
 # were demoted to the K=64 tail: measured <=0.20 on BOTH the 7B and the 14B, so they carry no signal
 # about which agent to route to (docs/archive/DEVIATIONS.md). True/False families are avoided here on

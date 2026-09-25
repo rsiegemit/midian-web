@@ -26,7 +26,7 @@ def venv_python(env_name: str) -> str:
     from rte.config import RTE_DATA
     p = os.path.join(RTE_DATA, "env", env_name, "bin", "python")
     if not os.path.exists(p):
-        script = f"scripts/fw_envs/{env_name.removeprefix('fw_')}.sh"
+        script = f"scripts/setup/fw_envs/{env_name.removeprefix('fw_')}.sh"
         raise RuntimeError(f"framework venv missing: {p} (build it with {script})")
     return p
 

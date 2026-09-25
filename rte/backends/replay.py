@@ -3,7 +3,7 @@ pre-recorded outcomes. A thin table lookup — agents are (model, per-category
 handicap mask) profiles; execution never leaves the table. Swap datasets by
 pointing `cells_path` at a different npz with the same layout, nothing else.
 
-Cell table (`scripts/02_download_routerbench.py` builds it):
+Cell table (`scripts/data/02_download_routerbench.py` builds it):
     model_names(M,) category_names(K_full,) str; offsets(K_full+1,) n_prompts(K_full,) int64;
     outcomes(sum(n_prompts), M) int8 -- outcomes[offsets[c]:offsets[c+1]] is category c.
 

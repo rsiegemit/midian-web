@@ -1,7 +1,7 @@
 """The single place any LLM call goes through. OpenAI-compatible, temperature 0, disk-memoized.
 
 Endpoints: one file per served model under `$RTE_DATA/endpoints.d/` (written lock-free by
-scripts/_register_endpoint.py), merged into `$RTE_DATA/endpoints.json` for the contract.
+cluster/slurm/_register_endpoint.py), merged into `$RTE_DATA/endpoints.json` for the contract.
 
 NFS: `fcntl.flock` can hang indefinitely on a shared network filesystem (it is instant on local disks),
 and the env's SQLite 3.50.3 picks a locking style that hits it, so every database opens `nolock=1`.
@@ -58,7 +58,7 @@ def endpoints() -> dict[str, str]:
         eps = json.loads(ENDPOINTS_PATH.read_text())
     if not eps and not (ENDPOINT_DIR.is_dir() or ENDPOINTS_PATH.exists()):
         raise NoEndpointsError(f"no vLLM endpoints at {ENDPOINT_DIR} or {ENDPOINTS_PATH}; launch "
-                               f"scripts/serve_fleet.sbatch or set RTE_ENDPOINTS")
+                               f"cluster/slurm/serve_fleet.sbatch or set RTE_ENDPOINTS")
     return eps
 
 

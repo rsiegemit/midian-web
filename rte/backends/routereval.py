@@ -30,7 +30,7 @@ class RouterEvalBackend:
         pool = pool or dist                                              # the grid's `dist` axis names the pool config
         self.n, self.dist, self.seed, self.no_repeat = int(n), dist, int(seed), bool(no_repeat)
         if dataset == "llmrouterbench":
-            # LLMRouterBench performance setting: 20 models × 15 datasets (scripts/llmrouterbench_terms.py --prep)
+            # LLMRouterBench performance setting: 20 models × 15 datasets (perf_matrix.npz, see docs/reproducing.md)
             z = np.load(os.path.join(os.path.dirname(DATA), "..", "llmrouterbench", "perf_matrix.npz"),
                         allow_pickle=True)
             Y, fam, P, E = z["Y"], z["fam"], list(z["prompts"]), z["E"].astype(np.float32)
