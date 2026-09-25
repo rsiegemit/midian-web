@@ -131,7 +131,7 @@ def run(ds):
     d = pickle.load(open(f"{DATA}/{ds}_router_dataset.pkl", "rb"))
     Etr, Ete = np.asarray(d["embedding"]["train_embed"]), np.asarray(d["embedding"]["test_embed"])
     Eva = np.asarray(d["embedding"]["val_embed"])
-    Ptr, Pte = d["prompt"]["train_prompt"], d["prompt"]["test_prompt"]
+    Ptr = d["prompt"]["train_prompt"]
     rng = np.random.default_rng(SEED)
     rows = []
     # families that do not depend on the pool: unsupervised clusters, and the MMLU subject
