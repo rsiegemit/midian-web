@@ -4,7 +4,12 @@ unit runtime tracks supervisor latency, i.e. fleet load, not grid size.
     python cluster/ops/build_job_sizing.py [--since 2026-09-22T14:45]     # default: since the last fleet change
 Note: sacct silently returns NOTHING for some long windows on this cluster; keep --since within ~1 week."""
 
-import argparse, io, os, subprocess, sys
+import argparse
+import io
+import os
+import subprocess
+import sys
+
 import pandas as pd
 
 ap = argparse.ArgumentParser()

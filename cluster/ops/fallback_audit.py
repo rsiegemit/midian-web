@@ -2,7 +2,10 @@
 choice=None and the adapter routes by declared argmax instead -- the row then measures declared argmax, not the
 framework. fallback_rate comes from method_stats; failures = the framework answered instead of delegating."""
 
-import glob, json, os
+import glob
+import json
+import os
+
 import pandas as pd
 
 R = os.environ["RTE_DATA"] + "/results"

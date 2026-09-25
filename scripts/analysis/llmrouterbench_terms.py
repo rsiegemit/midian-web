@@ -14,14 +14,20 @@ too). Hyperparameters of every router are chosen on a 20% validation slice of th
 defaults). With truthful labels every MIDIAN variant is the probe table (max-tree = argmax; nothing to audit); MIDIAN
 with liars is grid `llmrouterbench_pool` (rte/backends/routereval.py, dataset=llmrouterbench)."""
 
-import os, sys, json, glob, numpy as np, pandas as pd
+import glob
+import json
+import os
+import sys
+
+import numpy as np
+import pandas as pd
 
 sys.path.insert(0, os.path.dirname(__file__))
 from routereval_terms import embedllm
-from sklearn.neighbors import NearestNeighbors, KNeighborsClassifier
 from sklearn.cluster import KMeans
-from sklearn.neural_network import MLPRegressor
 from sklearn.linear_model import Ridge
+from sklearn.neighbors import KNeighborsClassifier, NearestNeighbors
+from sklearn.neural_network import MLPRegressor
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 from rte.config import RTE_DATA  # noqa: E402

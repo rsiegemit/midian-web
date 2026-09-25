@@ -17,7 +17,8 @@ import numpy as np
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 from scripts.figures.lib.grids import VARIANTS  # noqa: E402
 from scripts.figures.lib.regimes import tag as regime  # noqa: E402
-from scripts.figures.lib.rows import load_fw as load, pending_reruns  # noqa: E402
+from scripts.figures.lib.rows import load_fw as load  # noqa: E402
+from scripts.figures.lib.rows import pending_reruns
 from scripts.figures.lib.stats import bootstrap_ci as ci  # noqa: E402
 
 PENDING: set = set()

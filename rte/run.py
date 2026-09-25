@@ -3,16 +3,28 @@
 A cell = one point of the CELL axes; a unit = (cell, seed): one World, one paired task stream shared by every
 method, the oracle line executed once. Each row is its own JSON file under results/<grid>/rows.d (atomic, resumable);
 rows.csv is materialised at the end."""
-import argparse, glob, hashlib, json, os, pkgutil, sys, time, traceback
+import argparse
+import glob
+import hashlib
+import json
+import os
+import pkgutil
+import sys
+import time
+import traceback
 from itertools import product
 from multiprocessing import get_context
-import numpy as np, yaml
+
+import numpy as np
+import yaml
+
+import rte.methods
+from rte.methods import keys
+
 from .budget import Budget
 from .config import RTE_DATA as _DATA
 from .methods import load_method
 from .world import World
-import rte.methods
-from rte.methods import keys
 
 RTE_DATA = str(_DATA)                        # str: expanded into backend_kwargs strings and paths
 CELL = ("backend", "n", "K", "dist", "beta", "liar_select", "collude", "declared_source", "lie_mode", "demand", "b", "Q")
@@ -301,7 +313,7 @@ def consolidate(out, prune: bool = False, force: bool = False):
                 with open(f"{out}/rows.d/{f}") as fh: return {**json.load(fh), "rid": f[:-5]}
             except (FileNotFoundError, json.JSONDecodeError):
                 return None                      # gone, or caught mid-write: it is in the CSV already or will be next pass
-        from concurrent.futures import ThreadPoolExecutor   # NFS small-file reads are latency-bound: fan out
+        from concurrent.futures import ThreadPoolExecutor  # NFS small-file reads are latency-bound: fan out
         with ThreadPoolExecutor(max_workers=32) as ex:
             got = [r for r in ex.map(_read, names, chunksize=256) if r is not None]
         names = [r["rid"] + ".json" for r in got]        # prune only what was actually read
@@ -318,7 +330,7 @@ def consolidate(out, prune: bool = False, force: bool = False):
         def _rm(f):
             try: os.unlink(f"{out}/rows.d/{f}")
             except FileNotFoundError: pass
-        from concurrent.futures import ThreadPoolExecutor   # NFS unlinks are latency-bound too: ~80/s serial
+        from concurrent.futures import ThreadPoolExecutor  # NFS unlinks are latency-bound too: ~80/s serial
         with ThreadPoolExecutor(max_workers=32) as ex:
             list(ex.map(_rm, [f for f in names if f[:-5] in done], chunksize=256))
     return len(df)

@@ -157,6 +157,7 @@ def test_shuffle_permutes_the_midian_cohort_without_changing_its_members():
     """The position control: shuffle must keep the SAME shortlist (so only ordering differs from the reported arm),
     move MIDIAN's pick off position 1 for most families, and be deterministic across calls and instances."""
     import numpy as np
+
     from rte.budget import Budget
     from rte.world import World
 

@@ -26,15 +26,18 @@ import sys
 import pandas as pd
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))))
+import matplotlib.pyplot as plt  # noqa: E402
+
 from scripts.figures.lib import AGG, ROOT, legend_rank  # noqa: E402
 from scripts.figures.lib import figspec as S  # noqa: E402
 from scripts.figures.lib.exclusions import excluded  # noqa: E402
 from scripts.figures.lib.grids import H30_FW, H30_REF, REF_GRIDS, shortlist_grid  # noqa: E402
-from scripts.figures.lib.regimes import NAME as REGIME_NAME, tag as regime  # noqa: E402
-from scripts.figures.lib.rows import RESULTS as R, load_fw as load, pending_reruns  # noqa: E402
+from scripts.figures.lib.regimes import NAME as REGIME_NAME  # noqa: E402
+from scripts.figures.lib.regimes import tag as regime
+from scripts.figures.lib.rows import RESULTS as R  # noqa: E402
+from scripts.figures.lib.rows import load_fw as load
+from scripts.figures.lib.rows import pending_reruns
 from scripts.figures.lib.stats import se as _ci  # noqa: E402  (whiskers +/- 1 s.e.)
-
-import matplotlib.pyplot as plt  # noqa: E402
 
 CSV_OUT, OUT = os.path.join(AGG, "shortlist"), os.path.join(ROOT, "figures", "shortlist")
 

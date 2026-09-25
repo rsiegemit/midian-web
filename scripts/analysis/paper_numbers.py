@@ -5,11 +5,17 @@
 Means are over (shape, β, liar-selection, seed) units; CIs are the 95% bootstrap over seeds (paired over seeds for
 differences)."""
 
-import json, os, re, sys
-import numpy as np, pandas as pd
+import json
+import os
+import re
+import sys
+
+import numpy as np
+import pandas as pd
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-from rte.analyze import RTE_DATA, load as _load, FLAT_ON, FLAT
+from rte.analyze import FLAT, FLAT_ON, RTE_DATA
+from rte.analyze import load as _load
 from scripts.figures.lib import ROOT
 from scripts.figures.lib.rows import stat
 from scripts.figures.lib.stats import ci as _ci
@@ -548,9 +554,13 @@ V4_POOLS = {
 }
 from scripts.analysis.cohort_table import (
     BASES as V4_BASES,
-    MODES as V4_MODES,
-    arm,
 )  # MIDIAN base arms x cohort modes, labelled as rte.analyze does
+from scripts.analysis.cohort_table import (
+    MODES as V4_MODES,
+)
+from scripts.analysis.cohort_table import (
+    arm,
+)
 
 
 def v4_regimes(co):

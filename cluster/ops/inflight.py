@@ -6,7 +6,11 @@ Logs read (all under $RTE_DATA/logs): launch_<grid>.txt ("jobid method|only|seed
 launch_pool_fill: "jobid key") run a whole grid slice per job and are listed separately by job name."""
 
 from __future__ import annotations
-import glob, os, subprocess, sys
+
+import glob
+import os
+import subprocess
+import sys
 from collections import defaultdict
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))

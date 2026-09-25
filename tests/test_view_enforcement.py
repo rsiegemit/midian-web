@@ -12,7 +12,7 @@ import pytest
 
 from rte.budget import Budget
 from rte.methods.base import Method
-from rte.world import AccessError, DELTA_INFLATE, World, apply_lying, select_liars
+from rte.world import DELTA_INFLATE, AccessError, World, apply_lying, select_liars
 
 PROBE_ONLY = {"probe"}
 

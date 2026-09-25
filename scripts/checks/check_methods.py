@@ -6,10 +6,12 @@ ledger vs the documented formula (EXPECT); success >= random; exact-estimate arg
 `est`/`best` table."""
 
 import math
+
 import numpy as np
-from rte.world import World
+
 from rte.budget import Budget
 from rte.methods import load_method
+from rte.world import World
 
 K, B, Q = 16, 3, 400
 

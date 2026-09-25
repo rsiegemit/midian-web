@@ -11,10 +11,12 @@ earliest shortlist position (declared: the higher claim; embed: the closer descr
 that lie lives in the World. Ledger: build n messages (declarations/descriptions to the registry); fetch 2k messages
 (k queries + k replies, charged by view.ask_confidence) + 2 per re-ask, and compare(k) for the argmax."""
 import re
+
 import numpy as np
+
+from ..backends.prompts import ANSWER_RE
 from .base import Method
 from .frameworks._common import FrameworkMethod
-from ..backends.prompts import ANSWER_RE
 
 _NUM = re.compile(r"(?<![\d.\-])(\d+(?:\.\d+)?)\s*(%|(?:/|out of)\s*(\d+))?")    # no sign: "-3" is not a rating
 

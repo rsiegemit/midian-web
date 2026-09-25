@@ -4,7 +4,8 @@ Regression: every default cell must stay bit-identical. GOLDEN holds fingerprint
 task stream, oracle outcomes, a probe sweep and four methods' success) computed with the code BEFORE erratum 30."""
 from __future__ import annotations
 
-import hashlib, os
+import hashlib
+import os
 
 import numpy as np
 import pytest

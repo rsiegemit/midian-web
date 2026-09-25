@@ -144,7 +144,8 @@ def test_rejects_unknown_shortlist_and_params():
 def test_llm_backend_asks_each_agent_its_own_model_and_prompt_deduplicated(monkeypatch, tmp_path):
     """The real path below the World: LLMBackend.confidence -> llm_client.complete_batch, with only the network stubbed."""
     from rte import llm_client
-    from rte.backends import families, llm as L
+    from rte.backends import families
+    from rte.backends import llm as L
     monkeypatch.setattr(L, "_CURRENT", L._CURRENT)                     # restored after: other tests read current_backend()
     shard = type("Shard", (), {"execute": lambda *a: None, "executemany": lambda *a: None, "commit": lambda *a: None})()
     memo = {}; monkeypatch.setattr(llm_client, "_memo", lambda: (memo, shard)); monkeypatch.setattr(llm_client, "_refresh", lambda force=False: None)

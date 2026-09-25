@@ -1,5 +1,8 @@
 """knn_router with an exact family embedding and k = b reduces to flat_probe_argmax: same probes, same picks."""
-import numpy as np, re
+import re
+
+import numpy as np
+
 import rte.methods._learned as L
 from rte.budget import Budget
 from rte.methods.flat_probe_argmax import FlatProbeArgmax

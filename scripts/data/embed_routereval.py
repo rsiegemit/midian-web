@@ -6,13 +6,17 @@ setting they use, it calls FrameworkMethod._index -- the exact code build() runs
 --check forbids the embedder and the reranker, so it passes only if a routing unit would never touch a GPU."""
 
 from __future__ import annotations
-import argparse, os, sys, time
+
+import argparse
+import os
+import sys
+import time
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-from rte.run import CELL, blocks, cells, expand, jkey, load_config, method_specs, seeds
-from rte.world import World
 from rte.methods import load_method
 from rte.methods.frameworks import _common as C
+from rte.run import CELL, blocks, cells, expand, jkey, load_config, method_specs, seeds
+from rte.world import World
 
 ap = argparse.ArgumentParser()
 ap.add_argument("grids", nargs="+")
@@ -60,6 +64,7 @@ for stage in ("embed", "rerank") if not a.check else ("check",):
         )
     if stage == "embed":
         import torch
+
         from rte.methods._learned import _models
 
         _models.clear()

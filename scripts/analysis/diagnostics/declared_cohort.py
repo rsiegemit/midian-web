@@ -4,14 +4,16 @@ Declared top-10 is built from the live backend's own self-described D with the r
 reconstructed on a bernoulli world carrying the population's exact measured S. S is read for MEASUREMENT
 only; no method ever sees it."""
 
-import os, sys
+import os
+import sys
+
 import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
 from rte.budget import Budget
-from rte.world import World, select_liars, apply_lying, DELTA_INFLATE
 from rte.methods.midian import Midian
 from rte.stable_hash import stable_seed_32
+from rte.world import DELTA_INFLATE, World, apply_lying, select_liars
 
 RD = os.environ["RTE_DATA"]
 K, B, TOPK = 16, 3, 10

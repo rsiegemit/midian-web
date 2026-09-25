@@ -9,13 +9,15 @@ and the one number declared argmax depends on, E[S of argmax_a D[a, f]] in rando
 The rejected alternative, a censored-normal (Tobit) linear model D = clip(a + c S + N(0, s)), is fitted and validated
 beside it, and both are applied to the heavy_tail / bimodal populations as an out-of-sample transfer check."""
 
-import glob, os, sys
+import glob
+import os
+import sys
+
 import numpy as np
 from scipy import optimize, stats
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 from rte.backends import CAL_P, CAL_VALUES, cal_bin, calibrated_declared
-
 from rte.config import RTE_DATA  # noqa: E402
 
 POP = os.path.join(RTE_DATA, "populations")

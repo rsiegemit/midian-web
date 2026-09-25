@@ -21,6 +21,8 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))))
+import matplotlib.pyplot as plt  # noqa: E402
+
 from scripts.figures.lib import AGG, ROOT, legend_rank  # noqa: E402
 from scripts.figures.lib import figspec as S  # noqa: E402
 from scripts.figures.lib.exclusions import excluded  # noqa: E402
@@ -28,8 +30,6 @@ from scripts.figures.lib.grids import LIVE_GRIDS, MATRICES  # noqa: E402
 from scripts.figures.lib.regimes import MATRIX_REGIME, REGIMES  # noqa: E402
 from scripts.figures.lib.rows import RESULTS as R  # noqa: E402
 from scripts.figures.lib.stats import ci as _ci  # noqa: E402
-
-import matplotlib.pyplot as plt  # noqa: E402
 
 CSV_OUT, OUT = os.path.join(AGG, "bars"), os.path.join(ROOT, "figures", "bars")
 NEVER = {"oracle"}  # oracle is the dotted line; the do-not-add list drops the rest

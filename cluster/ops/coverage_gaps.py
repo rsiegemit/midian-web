@@ -8,14 +8,20 @@ cartel; RouterEval strong_to_weak + the 5,000 leaderboard), every expected row i
   GAP       none of the above -> listed, and written as pack-plan lines (grid, method, only, seed) with --plan-out."""
 
 from __future__ import annotations
-import argparse, os, re, sys
+
+import argparse
+import os
+import re
+import sys
 from collections import defaultdict
-import pandas as pd, yaml
+
+import pandas as pd
+import yaml
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 sys.path.insert(0, ROOT)
-from rte.run import blocks, cells, method_specs, row_id, seeds, RTE_DATA
 from cluster.ops.inflight import inflight, queue
+from rte.run import RTE_DATA, blocks, cells, method_specs, row_id, seeds
 from scripts.figures.lib.grids import config
 
 L = f"{RTE_DATA}/logs"

@@ -10,8 +10,12 @@ Reads rows.csv directly (NOT rte.analyze.load, whose consolidate is a no-op on a
 through rte.analyze.prepare for the same labels/aliases as every other table. Regimes follow RESULTS_rte_v4: beta = 0
 once (liar-free, so liar-selection is degenerate) and each beta > 0 per liar-selection cell."""
 
-import argparse, os, sys
-import numpy as np, pandas as pd
+import argparse
+import os
+import sys
+
+import numpy as np
+import pandas as pd
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 from rte.analyze import RTE_DATA, prepare

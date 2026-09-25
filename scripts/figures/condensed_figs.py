@@ -36,14 +36,15 @@ import sys
 import pandas as pd
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))))
+import matplotlib.pyplot as plt  # noqa: E402
+
 from scripts.figures.lib import AGG, fig_out  # noqa: E402
 from scripts.figures.lib import figspec as S  # noqa: E402
 from scripts.figures.lib.exclusions import excluded  # noqa: E402
 from scripts.figures.lib.grids import BUDGET_GRIDS, MATRICES  # noqa: E402
-from scripts.figures.lib.regimes import AB as REG, MATRIX_REGIME  # noqa: E402
+from scripts.figures.lib.regimes import AB as REG  # noqa: E402
+from scripts.figures.lib.regimes import MATRIX_REGIME
 from scripts.figures.lib.stats import crossfit, se  # noqa: E402
-
-import matplotlib.pyplot as plt  # noqa: E402
 
 BARS, DRAW = f"{AGG}/bars", f"{AGG}/figures"
 LEARNED = [
@@ -347,7 +348,9 @@ def add_budgets(C):
     (MIDIAN) and rivals_b_* (budget-matched rivals) rows (per-seed means, whiskers set by narrow()); bernoulli / replay
     b = 1 from their scale matrices. A cell the runs have not reached simply has no bar (figure_status.py lists it)."""
     from scripts.figures.lib.regimes import tag as regime
-    from scripts.figures.lib.rows import RESULTS as R, label, load_fw as rows
+    from scripts.figures.lib.rows import RESULTS as R
+    from scripts.figures.lib.rows import label
+    from scripts.figures.lib.rows import load_fw as rows
 
     for fam, grp, tag in BUDGET_GRIDS:
         if fam in SW:

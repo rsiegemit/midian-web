@@ -17,8 +17,8 @@ import os
 import numpy as np
 import pandas as pd
 
-from rte.config import RTE_DATA
 from rte.analyze import ALIAS
+from rte.config import RTE_DATA
 from rte.methods import keys
 from scripts.figures.lib import grids
 from scripts.figures.lib.regimes import tag

@@ -9,7 +9,11 @@ liar-selection cells are bit-identical and only one is kept; `cartel` is beta = 
 The n = 100,000 pool keeps its cohort arms in live_n100k_cohort and its cohort=random baselines in live_n100k, so the
 two grids are loaded together."""
 
-import argparse, json, os, sys
+import argparse
+import json
+import os
+import sys
+
 import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))

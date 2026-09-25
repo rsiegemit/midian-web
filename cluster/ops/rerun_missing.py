@@ -4,16 +4,18 @@ jobs queued (its units may be in flight). Log: logs/rerun_missing.txt.
     RTE_DATA=... RTE_ACCOUNT=... python cluster/ops/rerun_missing.py <grid> [<grid> ...] [--dry-run]
 Partitions: $RTE_CPU_PARTITIONS; account: $RTE_ACCOUNT (cluster/cluster.env.example)."""
 
-import os, subprocess, sys
+import os
+import subprocess
+import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 sys.path.insert(0, ROOT)
+import argparse  # noqa: E402
+
 import scripts.figures.lib.seed_tables as t  # noqa: E402
 from cluster.slurm.job_time import minutes, slurm  # noqa: E402
 from scripts.figures.lib.rows import label  # noqa: E402
 from scripts.figures.shortlist_figs import rows  # noqa: E402
-
-import argparse  # noqa: E402
 
 ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
 ap.add_argument("grids", nargs="+")

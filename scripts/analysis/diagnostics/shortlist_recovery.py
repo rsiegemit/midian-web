@@ -12,8 +12,12 @@ world carrying the population's exact S (as scripts/analysis/diagnostics/declare
 Recovery per framework = (framework success - list mean) / (best in list - list mean), framework success from
 figures/shortlist/live.csv (seed mean, same cell); 0 = a uniform pick from the list, 1 = the list's best agent."""
 
-import json, os, sys
-import numpy as np, pandas as pd
+import json
+import os
+import sys
+
+import numpy as np
+import pandas as pd
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 sys.path.insert(0, ROOT)
@@ -23,7 +27,7 @@ from rte.methods._learned import embed
 from rte.methods.frameworks._common import _hash_tfidf
 from rte.methods.midian import Midian
 from rte.stable_hash import stable_seed_32
-from rte.world import World, select_liars, apply_lying, DELTA_INFLATE
+from rte.world import DELTA_INFLATE, World, apply_lying, select_liars
 
 RD = os.environ["RTE_DATA"]
 K, TOPK = 16, 10

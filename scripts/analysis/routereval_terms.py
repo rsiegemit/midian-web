@@ -19,12 +19,18 @@ MMLU subject named in the prompt (57; predicted at test by 5-NN over the probe p
 over m truthful candidates is a max-tree over the same estimates and picks identically (asserted, as in part A); the
 report-channel / liar dimension is part D2 (the routereval backend inside our benchmark), not here."""
 
-import os, re, sys, pickle, numpy as np, pandas as pd
-from sklearn.neighbors import NearestNeighbors, KNeighborsClassifier
-from sklearn.cluster import KMeans
-from sklearn.neural_network import MLPRegressor
-from sklearn.linear_model import Ridge
+import os
+import pickle
+import re
+import sys
+
+import numpy as np
+import pandas as pd
 import torch
+from sklearn.cluster import KMeans
+from sklearn.linear_model import Ridge
+from sklearn.neighbors import KNeighborsClassifier, NearestNeighbors
+from sklearn.neural_network import MLPRegressor
 
 
 def embedllm(Etr, Ytr, Ete, dim=64, epochs=5, batch=2048, seed=0):

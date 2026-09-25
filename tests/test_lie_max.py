@@ -1,5 +1,6 @@
 """lie_mode='max': liars declare perfect skill in every family; honest agents and the other modes are untouched."""
 import numpy as np
+
 from rte.world import apply_lying
 
 

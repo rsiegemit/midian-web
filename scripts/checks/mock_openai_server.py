@@ -6,7 +6,10 @@ return a text/JSON answer naming the first `agent_XXXXXX` mentioned in the promp
 scripts/checks/mock_openai_server.py 8123
 """
 
-import json, re, time, uuid
+import json
+import re
+import time
+import uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 AGENT = re.compile(r"agent_\d{6}")

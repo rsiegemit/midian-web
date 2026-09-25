@@ -15,6 +15,7 @@ and LEGACY_RC, the rcParams the retired paper_figs.py set at import, which the A
 """
 
 from __future__ import annotations
+
 import matplotlib
 
 matplotlib.use("Agg")
@@ -229,7 +230,8 @@ def figure(kind: str = "body", ncols: int = 1):
 
 def shade(color: str, b: int) -> tuple:
     """The budget encoding: b = 1 lighter, b = 5 darker than the arm's colour."""
-    import numpy as np, matplotlib.colors as mc
+    import matplotlib.colors as mc
+    import numpy as np
 
     c, t = np.array(mc.to_rgb(color)), B_SHADE.get(b, 0.0)
     return tuple(c + (1 - c) * t) if t > 0 else tuple(c * (1 + t))

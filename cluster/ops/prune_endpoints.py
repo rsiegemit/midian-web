@@ -3,7 +3,10 @@ framework call routed to it fails as an infrastructure error). Only "<model>#<jo
 entries without a job id are left alone. Does nothing if the queue cannot be read.
     python cluster/ops/prune_endpoints.py"""
 
-import json, os, subprocess, sys
+import json
+import os
+import subprocess
+import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 from rte.config import RTE_DATA  # noqa: E402

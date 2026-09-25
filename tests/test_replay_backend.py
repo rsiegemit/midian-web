@@ -10,7 +10,7 @@ import numpy as np
 import pytest
 
 from rte.backends.replay import ReplayBackend
-from rte.world import World, Task
+from rte.world import Task, World
 
 REAL_CELLS_PATH = os.path.join(
     os.environ.get("RTE_DATA", os.path.expanduser("~/rte_data")), "data", "routerbench_cells.npz")

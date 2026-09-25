@@ -12,12 +12,16 @@ evaluate.py verbatim: thresholds at the router-score quantiles so strong calls s
 mean performance of the routed model; CPT(p) = strong % interpolated at p of the weak->strong gap; AUC = trapz(accuracy,
 strong%/100); APGR = (AUC - weak) / (strong - weak)."""
 
-import os, sys, numpy as np, pandas as pd
+import os
+import sys
+
+import numpy as np
+import pandas as pd
 
 sys.path.insert(0, os.path.dirname(__file__))
-from routerbench_terms import data, EMB, SEEDS, TEST, KNN_K, FAM_K, R
+from routerbench_terms import EMB, FAM_K, KNN_K, SEEDS, TEST, R, data
 from sklearn.model_selection import StratifiedShuffleSplit
-from sklearn.neighbors import KNeighborsRegressor, KNeighborsClassifier
+from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
 
 OUT = f"{R}/results/rivals_routellm"
 os.makedirs(OUT, exist_ok=True)

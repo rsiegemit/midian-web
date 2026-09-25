@@ -1,6 +1,7 @@
 """The exploratory figures' legend rule (scripts/figures/lib/legend_rank.py): entries ranked best first by what they
 plot, read row-major."""
-import os, sys
+import os
+import sys
 import matplotlib; matplotlib.use("Agg"); import matplotlib.pyplot as plt
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from scripts.figures.lib.legend_rank import _rowmajor, install  # noqa: E402

@@ -1,6 +1,10 @@
 """RouterEval MMLU families must not depend on PYTHONHASHSEED ('high school biology' and 'philosophy' tie at 248 train prompts)."""
-import os, subprocess, sys
+import os
+import subprocess
+import sys
+
 import pytest
+
 from rte.backends.routereval import DATA
 
 CODE = ("import sys; sys.path.insert(0, '.'); from rte.world import World; "

@@ -3,7 +3,10 @@
 Default run (`pytest -q`) deselects `slow` and `fleet`; `-m slow` runs the kNN / MLP router contracts (~25 min),
 `-m ""` runs everything. `data` and `fwenv` tests skip themselves when $RTE_DATA assets or framework venvs are absent.
 """
-import os, sys, tempfile
+import os
+import sys
+import tempfile
+
 import pytest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))

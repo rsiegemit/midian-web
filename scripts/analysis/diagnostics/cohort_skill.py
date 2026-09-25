@@ -4,13 +4,15 @@ cohort is reconstructed on a bernoulli world carrying the population's exact mea
 selection the live run makes. S is read for MEASUREMENT only; no method ever sees it.
 """
 
-import os, sys
+import os
+import sys
+
 import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
 from rte.budget import Budget
-from rte.world import World
 from rte.methods.midian import Midian
+from rte.world import World
 
 RD = os.environ["RTE_DATA"]
 K, B = 16, 3

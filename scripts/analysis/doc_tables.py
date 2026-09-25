@@ -23,7 +23,9 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspa
 from scripts.analysis.fw_variant_numbers import load, pending_reruns, regime, select  # noqa: E402
 from scripts.figures.lib import ROOT  # noqa: E402
 from scripts.figures.lib.figspec import FW_NAME as NAMES  # noqa: E402
-from scripts.figures.lib.grids import DOC_REF as REF, DOC_REF_CARTEL as REF_CARTEL, NINE  # noqa: E402
+from scripts.figures.lib.grids import DOC_REF as REF  # noqa: E402
+from scripts.figures.lib.grids import DOC_REF_CARTEL as REF_CARTEL
+from scripts.figures.lib.grids import NINE
 from scripts.figures.lib.grids import SHORTLIST_SOURCES as SOURCES  # noqa: E402
 
 DOC = os.path.join(ROOT, "docs", "archive", "results", "RESULTS.md")

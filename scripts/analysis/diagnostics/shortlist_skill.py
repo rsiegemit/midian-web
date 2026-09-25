@@ -1,13 +1,16 @@
 """Diagnostic ONLY: the true skill of each shortlist source. S.npy is read here for MEASUREMENT and is never
 visible to any method -- methods see the declared channel alone."""
 
-import json, os, sys
+import json
+import os
+import sys
+
 import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
 from rte.backends import families
-from rte.methods.frameworks._common import _bm25, _hash_tfidf, _rrf
 from rte.methods._learned import embed
+from rte.methods.frameworks._common import _bm25, _hash_tfidf, _rrf
 
 RD = os.environ["RTE_DATA"]
 K = 16

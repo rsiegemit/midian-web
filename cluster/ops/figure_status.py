@@ -5,7 +5,10 @@ bars whose pool is INCOMPLETE (a member absent or short of seeds). E-H: every (n
 rerun outstanding (star), fewer than MIN_FW frameworks. Grids: set comparison of planned vs landed
 (lib/seed_tables.planned / rows). DIR: the figures' directory ($RTE_FIG_OUT or figures/paper)."""
 
-import itertools, os, sys
+import itertools
+import os
+import sys
+
 import pandas as pd
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))))

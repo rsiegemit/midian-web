@@ -1,6 +1,7 @@
 """Churn (v2): in-place replacement of agents, epoch scoring, deterministic per event, restored by reset, row ids of
 non-churn cells unchanged, halving rebuild cost, runner integration."""
 import numpy as np
+
 from rte.budget import Budget
 from rte.methods import load_method
 from rte.run import CELL, row_id, run_method

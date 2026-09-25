@@ -12,15 +12,24 @@ LLM node features are their random init (no description embeddings; seeded)
 — the batched form of their `route_single`, without the embedding-model mismatch. RouterDC fine-tunes a DeBERTa
 encoder (GPU): NOT RUN. Output: results/rivals_llmrouter/summary.md (quality at λ = 0 next to part A's routers)."""
 
-import os, sys, json, pickle, warnings, numpy as np, pandas as pd, torch, yaml
+import json
+import os
+import pickle
+import sys
+import warnings
+
+import numpy as np
+import pandas as pd
+import torch
+import yaml
 
 warnings.filterwarnings("ignore")
 sys.path.insert(0, os.path.dirname(__file__))
-from routerbench_terms import data, EMB, SEEDS, TEST, R
-from sklearn.model_selection import StratifiedShuffleSplit
-from sklearn.preprocessing import MinMaxScaler
 from llmrouter.models.graphrouter.router import GraphRouter
 from llmrouter.models.graphrouter.trainer import GraphTrainer
+from routerbench_terms import EMB, SEEDS, TEST, R, data
+from sklearn.model_selection import StratifiedShuffleSplit
+from sklearn.preprocessing import MinMaxScaler
 
 OUT = f"{R}/results/rivals_llmrouter"
 os.makedirs(OUT, exist_ok=True)
