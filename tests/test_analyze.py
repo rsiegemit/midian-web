@@ -7,7 +7,8 @@ import pandas as pd
 from rte import analyze as A
 
 CELL = dict(backend="llm", n=1000, K=16, dist="specialist", liar_select="random", collude=True, lie_mode="inflate", demand="uniform", b=3, Q=300)
-OFF, WO_VERIFY = {"audit": False, "verify": False}, {"verify": False}         # MIDIAN w/o defenses (the reference), w/o verification
+# MIDIAN w/o defenses (the reference), w/o verification
+OFF, WO_VERIFY = {"audit": False, "verify": False}, {"verify": False}
 COLS = ("success_late", "regret", "misroute_to_liar", "oracle_success", "build_probes", "comparisons_per_task", "messages_per_task", "seed")
 
 
@@ -56,4 +57,5 @@ def test_targets_v2_verdicts():
     v = {t["target"]: t["verdict"] for t in A.targets_v2(df, fits)}
     assert "V2-1" not in v and "V2-3" not in v   # SH / SH+A: withdrawn
     assert v["V2-6"] == "NO DATA" and v["V2-8"] == "NO DATA"
-    assert v["V2-2"] == "HIT"            # w/o verification: loss beta 0->0.5 <= 0.02, unchanged within 0.01 at beta<=0.25, 1.05x probes
+    # w/o verification: loss beta 0->0.5 <= 0.02, unchanged within 0.01 at beta<=0.25, 1.05x probes
+    assert v["V2-2"] == "HIT"

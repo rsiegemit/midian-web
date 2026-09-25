@@ -101,7 +101,8 @@ def test_sota_reranks_the_fused_pool_once_per_family_at_build_time():
     for task in _tasks(Q):
         top = m.retrieve(task)
         assert len(top) == min(m.k, len(m._pool))
-        assert [m.desc[a] for a in top] == order[m.fdesc[int(task.family)]][::-1][:len(top)]   # reranker order, not fusion order
+        # reranker order, not fusion order
+        assert [m.desc[a] for a in top] == order[m.fdesc[int(task.family)]][::-1][:len(top)]
     assert len(calls) == n_before                            # retrieve() never reruns the reranker
 
 

@@ -10,7 +10,8 @@ import tempfile
 import pytest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-os.environ.setdefault("RTE_LLM_CACHE", tempfile.mkdtemp(prefix="rte_test_memo_"))   # never load the production memo (GBs)
+# never load the production memo (GBs)
+os.environ.setdefault("RTE_LLM_CACHE", tempfile.mkdtemp(prefix="rte_test_memo_"))
 
 SLOW_PARAMS = {"knn_router", "mlp_router"}                       # MiniLM-embedding routers in test_each_method
 FLEET = {"test_live_execution", "test_live_execute_many_shape"}   # need a served vLLM fleet

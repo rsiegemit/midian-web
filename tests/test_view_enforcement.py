@@ -200,7 +200,7 @@ def test_colluding_liar_vouches_for_liars_and_zeroes_the_top_honest_it_has_seen(
     j, liars, honest = parties(w)
     got = w.report_many(np.full(7, j), np.r_[liars[1:6], honest[:2]], np.array([0, 0, 0, 0, 0, 1, 1]))
     assert list(got[:5]) == [1] * 5                      # reports 1 about liars it saw fail
-    assert list(got[5:]) == [0, 1]                       # of two tied honest agents, ceil(20%) = 1 is zeroed (lowest id)
+    assert list(got[5:]) == [0, 1]  # of two tied honest agents, ceil(20%) = 1 is zeroed (lowest id)
 
 
 def test_collude_false_disables_the_report_lie_on_both_paths():

@@ -166,7 +166,7 @@ def test_llm_backend_asks_each_agent_its_own_model_and_prompt_deduplicated(monke
     from rte import llm_client
     from rte.backends import families
     from rte.backends import llm as L
-    monkeypatch.setattr(L, "_CURRENT", L._CURRENT)                     # restored after: other tests read current_backend()
+    monkeypatch.setattr(L, "_CURRENT", L._CURRENT)  # restored after: other tests read current_backend()
     shard = type("Shard", (), {"execute": lambda *a: None, "executemany": lambda *a: None, "commit": lambda *a: None})()
     memo = {}
     monkeypatch.setattr(llm_client, "_memo", lambda: (memo, shard))
@@ -179,7 +179,8 @@ def test_llm_backend_asks_each_agent_its_own_model_and_prompt_deduplicated(monke
     q = families.question(fam, inst)
     assert be.confidence(agents, f, inst) == ["<answer>7</answer>"] * 40
     want = {(s[0], str(rate_task(fam, q, s[1], s[2]))) for s in (be._sig(int(a), f) for a in agents)}
-    assert {(m, str(msgs)) for m, msgs, _ in sent} == want and len(sent) == len(want) < 40   # one generation per signature
+    # one generation per signature
+    assert {(m, str(msgs)) for m, msgs, _ in sent} == want and len(sent) == len(want) < 40
     assert {mt for *_, mt in sent} == {32}
     sent.clear()
     be.confidence(agents, f, inst, again=True)          # first replies are memo hits; only the follow-ups generate

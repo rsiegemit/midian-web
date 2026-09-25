@@ -110,7 +110,7 @@ def test_calibrated_reproduces_live_stats():
 
 
 def test_calibrated_deterministic_per_seed_and_chunk_safe():
-    S = np.random.default_rng(0).random((600_000, 4)).astype(np.float32)     # > CAL_CHUNK rows: crosses a chunk boundary
+    S = np.random.default_rng(0).random((600_000, 4)).astype(np.float32)  # > CAL_CHUNK rows: crosses a chunk boundary
     a, b, c = calibrated_declared(S, 7), calibrated_declared(S, 7), calibrated_declared(S, 8)
     assert np.array_equal(a, b) and not np.array_equal(a, c)
     assert a.dtype == np.float32 and a.shape == S.shape
@@ -175,7 +175,7 @@ def test_no_repeat_stream_unit(tmp):
     s = w.tasks(200)
     pairs = [(t.family, t.instance) for t in s]
     assert len(set(pairs)) == 200 and all(0 <= i < w.backend.sizes[f] for f, i in pairs)
-    assert pairs == [(t.family, t.instance) for t in w.tasks(200)]            # one deterministic stream per (seed, cell)
+    assert pairs == [(t.family, t.instance) for t in w.tasks(200)]  # one deterministic stream per (seed, cell)
     counts = np.bincount([f for f, _ in pairs], minlength=8)
     assert counts[0] == 3 and counts[1] == 5                                  # small families exhausted, never repeated
     first = [f for f, _ in pairs[:24]]                                        # demand is uniform while all have prompts
@@ -244,7 +244,7 @@ def test_shuffle_makes_declared_argmax_ties_random():
         pytest.skip("RouterEval mmlu not present")
     kw = dict(n=1000, K=16, dist="strong_to_weak", beta=0, seed=1, backend="routereval", declared_source="calibrated")
     pick = lambda w: w.S[np.argmax(w.D, 0), np.arange(w.K)].mean()
-    assert pick(World(**kw, backend_kwargs={"dataset": "mmlu"})) < 0.3                       # stored weak -> strong: ties pick weak
+    assert pick(World(**kw, backend_kwargs={"dataset": "mmlu"})) < 0.3  # stored weak -> strong: ties pick weak
     assert 0.55 < pick(World(**kw, backend_kwargs={"dataset": "mmlu", "shuffle": True})) < 0.7
 
 
