@@ -1,12 +1,14 @@
-# METHODS.md — every method in the benchmark: where it comes from, what it is, what it does
+# Methods: where each one comes from, what it is, what it does
 
 One file per method in `rte/methods/` (frameworks in `rte/methods/frameworks/`). Every method sees only what it pays
 for: `needs` ⊆ {declared, probe, reports, bus}. `build` may spend the shared budget of n·K·b probes; `fetch` routes
 one task and is charged comparisons / hops / messages; `observe` is the optional online update. True skill S and the
 liar set are never exposed to any method. **Status**: *reported* = drawn and quoted; *do-not-add* = kept in the grids,
-never drawn (`extra_figs.excluded`); *never reported* = withdrawn from every table (erratum 26). Origins: SPEC §5/§6/§9
-(pre-registered, 2026-09-01), v2 = `TARGETS_rte_v2.md` (2026-09-03, labeled variants), v3 = `TARGETS_rte_v3.md`
-(external routers), v4 = `TARGETS_rte_v4.md` (cohort modes), post-hoc = dated in `DEVIATIONS.md`.
+never drawn (the do-not-add list, §6); *never reported* = withdrawn from every table (erratum 26). Origins: SPEC §5/§6/§9
+(the specification, pre-registered 2026-09-02), v2 / v3 / v4 = the later pre-registrations (labeled variants; external
+routers; cohort modes), post-hoc = a dated entry in the deviations log. All of these are in [archive/](archive/README.md);
+the architecture and accounting rules are in [architecture.md](architecture.md), and how each framework's selection
+primitive is intercepted is in [frameworks/](frameworks/). <!-- VERIFY-PATH: docs/frameworks/ -->
 
 ## 1. Floors and ceiling
 
@@ -19,18 +21,18 @@ never drawn (`extra_figs.excluded`); *never reported* = withdrawn from every tab
 
 One class, `midian`, with two defenses as parameters, both on by default: `audit` (report audits with reporter
 exclusion) and `verify` (verified promotion; `cached` defaults to `verify`). MIDIAN is the default; the ablations switch
-a defense off. Renamed 2026-09-24 (CHANGES_AND_ERRATA §8g; `rte/methods/keys.py` maps the stored keys).
+a defense off. Renamed 2026-09-24 ([errata.md](errata.md#the-midian-rename-2026-09-24); `rte/methods/keys.py` maps the stored keys).
 
 | method | origin | reads | what it does | status |
 |---|---|---|---|---|
-| `midian{"audit": false, "verify": false}` (MIDIAN w/o defenses) | SPEC §5 | probe, reports | Agents in random cohorts of r = 10. Level 0: each member is probed b times per family; the r−1 cohort peers report what they saw; the cohort's estimate of a member is a trimmed mean over reporters (drop ⌊δ(r−1)⌋ from each end, δ = 1/3), so up to that many liars per cohort are absorbed. Each node keeps, per family, the best estimate in its subtree and which child holds it; nodes are regrouped at random up a tree of depth ⌈log_r n⌉. A route descends from the root: r comparisons and 2 messages per level. After each outcome the routed agent's estimate and its path are updated (`online=True`). Build O(n) probes, reports and messages; route O(log n). Parameters never changed. Reference arm of every paired analysis (`analyze.REF`). | reported (MIDIAN w/o defenses) |
+| `midian{"audit": false, "verify": false}` (MIDIAN w/o defenses) | SPEC §5 | probe, reports | Agents in random cohorts of r = 10. Level 0: each member is probed b times per family; the r−1 cohort peers report what they saw; the cohort's estimate of a member is a trimmed mean over reporters (drop ⌊δ(r−1)⌋ from each end, δ = 1/3), so up to that many liars per cohort are absorbed. Each node keeps, per family, the best estimate in its subtree and which child holds it; nodes are regrouped at random up a tree of depth ⌈log_r n⌉. A route descends from the root: r comparisons and 2 messages per level. After each outcome the routed agent's estimate and its path are updated (`online=True`). Build O(n) probes, reports and messages; route O(log n). Parameters never changed. Reference arm of every paired analysis (`REF` in the analysis package). | reported (MIDIAN w/o defenses) |
 | `midian` r ≠ 10 (`r=5`, `r=20`) | v2 1.4 | as above | the same tree with cohorts of 5 or 20; r-sweep control | **do-not-add** |
-| `midian` δ sweep (`delta=0`, r = 10) | v2 2.5 (`internals_v2`) | as above | trimming off; internals ablation (Fig. A_internals) | appendix only |
+| `midian` δ sweep (`delta=0`, r = 10) | v2 2.5 (`internals_v2`) | as above | trimming off; internals ablation (an appendix ablation) | appendix only |
 | `midian{"audit": false}` (MIDIAN w/o audits) | post-hoc 2026-09-02, replicated as v2 V2-8 | probe, reports | verification at promotion: level 0 spends b0 = b−1 probes per cell; the saved n·K·(b−b0) probes re-probe, budget-exactly, every candidate a child forwards to its parent, by reporters drawn from sibling subtrees, and the verified value is written back. The root's per-family pick is cached: a route costs 1 comparison and 2 messages. Level 0 trims by reporter. Zero probes to verify at b = 1 (erratum 22). | reported (MIDIAN w/o audits) |
 | `midian{"verify": false}` (MIDIAN w/o verification) | v2 1.1 | probe, reports | MIDIAN w/o defenses plus report audits: 5% of level-0 probe instances are re-run by the auditor (same index-seeded instance), each peer's report about it is compared with the truth, and a reporter with two mismatches is excluded from every later aggregation; online, 5% of routed outcomes are audited the same way. Cost 1.05× build probes, nothing per task. | reported (MIDIAN w/o verification) |
 | `midian` (MIDIAN, both defenses; the default) | v2 V2-11 | probe, reports | the audited level 0 + verified promotion and cached root pick; excluded reporters are also dropped from verification. The robust arm: flat in β at 10^3–10^7. | reported (MIDIAN) |
-| successive halving inside cohorts, with and without audits | v2 negative controls | probe, reports | level-0 estimation by successive halving inside each cohort; unfundable at b = 1 (erratum 23) | **withdrawn** 2026-09-24: code deleted, stored rows moved to `_premigration_v2` backups (CHANGES_AND_ERRATA §8g) |
-| `midian(stratify=True)` / `cohort=block` / `specialty` / `declared` | v4 (T4-1…T4-6) | probe, reports (+declared for `declared`) | how level-0 cohorts are formed, budget-neutral: `stratify` one member per ability stratum (diverse cohorts); `block` contiguous ability blocks; `specialty` grouped by argmax family of the measured profile; `declared` grouped by the declared profile. Applied to MIDIAN w/o defenses, MIDIAN w/o verification and MIDIAN. Results: RESULTS_rte_v4.md. | reported in the v4 tables only |
+| successive halving inside cohorts, with and without audits | v2 negative controls | probe, reports | level-0 estimation by successive halving inside each cohort; unfundable at b = 1 (erratum 23) | **withdrawn** 2026-09-24: code deleted, stored rows kept only in the pre-migration backups ([errata.md](errata.md)) |
+| `midian(stratify=True)` / `cohort=block` / `specialty` / `declared` | v4 (T4-1…T4-6) | probe, reports (+declared for `declared`) | how level-0 cohorts are formed, budget-neutral: `stratify` one member per ability stratum (diverse cohorts); `block` contiguous ability blocks; `specialty` grouped by argmax family of the measured profile; `declared` grouped by the declared profile. Applied to MIDIAN w/o defenses, MIDIAN w/o verification and MIDIAN. Results: `docs/archive/results/RESULTS_rte_v4.md`. | reported in the v4 tables only |
 | `midian_llm_descent` | SPEC §9 | probe, reports, LLM | MIDIAN w/o defenses where an LLM (not the arithmetic argmax) chooses among a node's r children at each level; unparseable answers fall back to the argmax and are counted | reported (appendix) |
 
 ## 3. Self-contained rivals (SPEC §6), by what they read
@@ -85,7 +87,7 @@ a defense off. Renamed 2026-09-24 (CHANGES_AND_ERRATA §8g; `rte/methods/keys.py
 ## 5. The ten agent frameworks (SPEC §6A), each run inside its own venv through a JSON-lines worker
 
 Each `fw_*.py` hands a shortlist and the task to the framework's OWN selection primitive and returns the agent it named
-(`NOTES_<fw>.md` documents the intercepted code path per framework). Strict accounting: `success_strict` counts only
+([frameworks/](frameworks/) documents the intercepted code path per framework). Strict accounting: `success_strict` counts only
 tasks where the framework itself named a candidate; a supervisor that answers the task itself, names nothing or names a
 non-candidate falls back to declared argmax over the shortlist (counted in `fallback_rate`). Supervisor Qwen2.5-7B;
 Magentic-One also has a 14B-orchestrator arm.
@@ -103,11 +105,11 @@ Magentic-One also has a 14B-orchestrator arm.
 | `fw_smolagents` | managed agents listed in the system prompt and as tools; the called tool |
 | `fw_camel_workforce` | Workforce task assignment over the worker roster |
 | `fw_agentscope` | appendix only: the library has no multi-agent selection primitive; the worker uses its model API for a direct pick |
-| `fw_metagpt` | NotImplemented: nothing to intercept that answers "which agent" (`NOTES_metagpt.md`) |
+| `fw_metagpt` | not implemented: nothing in MetaGPT answers "which agent" |
 | `fw_echo` | protocol check, not a rival: echoes the first candidate |
 
 **Shortlist sources** (the "common scaling adapter"; the frameworks read the whole roster and top out at tens of agents,
-so a top-10 is put in front of them). Five, never pooled, each its own grid (RESULTS II.2, Appendix S):
+so a top-10 is put in front of them). Each source is its own grid and is never pooled with another (Figures E-H):
 
 | adapter parameter | origin | what the framework is handed | status |
 |---|---|---|---|
@@ -121,10 +123,10 @@ so a top-10 is put in front of them). Five, never pooled, each its own grid (RES
 | `retrieval="sota"` (+ `rerank_pool` = 50) | post-hoc 2026-09-17 | hybrid, then the top 50 reranked by a cross-encoder (`Qwen/Qwen3-Reranker-4B`), top k kept. Table is per-population and cached | reported beside |
 | `embed_model` (`Qwen/Qwen3-Embedding-8B`) | post-hoc 2026-09-17 | the strong dense half; defaults to MiniLM so `retrieval="embed"` is bit-identical to what was already reported | reported beside |
 | `embed_instruct` | post-hoc 2026-09-18 | the QUERY-side task instruction an instruction-tuned embedder expects; only the K family texts depend on it, so the n document embeddings are reused | reported beside |
-| `retrieval="declared"` | post-hoc 2026-09-18 | top-k by the declared claim: no text retrieval at all, the cheap baseline every text arm should be measured against | grid written, NOT yet run |
+| `retrieval="declared"` | post-hoc 2026-09-18 | top-k by the declared claim: no text retrieval at all, the cheap baseline every text arm should be measured against | reported beside (Figures E, F, H) |
 | `shuffle=True` | post-hoc 2026-09-18 | position CONTROL: permutes a midian cohort deterministically so the pick is not first. Same members, ordering only | **control -- never a rival, never pooled with the MIDIAN-cohort rows** |
 
-### 5b. What the shortlist diagnostics measure (`jobs/shortlist_skill.py`, `cohort_skill.py`, `position1_skill.py`)
+### 5b. What the shortlist diagnostics measure (`shortlist_skill.py`, `cohort_skill.py`, `position1_skill.py` in `scripts/analysis/`; outputs in `paper/diagnostics/`) <!-- VERIFY-PATH -->
 
 Three statistics of a shortlist, all computed from the measured S matrix OFFLINE -- S is read for MEASUREMENT only and
 is never visible to any method:
@@ -138,9 +140,15 @@ is never visible to any method:
 Measured recovery, `(routing - mean) / (best - mean)`, is 15-35 % across every source: frameworks sit much closer to
 random-within-list than to competent, which is why mean and position-1 both matter and `best` alone never does.
 
-## 6. The do-not-add list (`scripts/extra_figs.py`, `excluded()`), applied to every figure
+## 6. The do-not-add list, applied to every figure
+
+One predicate, `excluded()` in the figure library (`scripts/figures/`), filters the arms of every figure; extend it
+there, never per figure. <!-- VERIFY-PATH -->
+
 
 `midian` with r ≠ 10 (`midian[r=5]`, `midian_wo_audit_r5`, `midian[r=20,…]`, …), `midian_llm_descent`, the online-off
 ablation `midian[audit=False,online=False,verify=False]`,
 `route_to_k_majority` (three executions per task), and the trusted-observer `sequential_halving` (never reported anywhere,
-erratum 26). They stay in the grids and in `paper/NUMBERS.json` (except the trusted arm) for the record.
+erratum 26). They stay in the grids and in `paper/NUMBERS.json` (except the trusted arm) for the record. Two further rules hold in
+every figure and table: MIDIAN variants with r != 10 are never drawn, and the trusted-observer halving arm is never
+reported, only the peer-reported one.
