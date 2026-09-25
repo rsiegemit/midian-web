@@ -251,7 +251,7 @@ Consequences worth knowing:
 - The **liar set, lies, probes and tasks do not depend on the order in which methods run** (§1.1.5).
 - Because `select_liars` returns an empty mask for `round(beta*n) = 0` (`rte/world.py`) and no other RNG uses
   `liar_select`, **β = 0 cells with `random` and `low_skill_first` are the same world**. The grid comment at
-  `configs/grid.yaml` states they were verified bit-identical over 690 cells.
+  `configs/grids/` states they were verified bit-identical over 690 cells.
 
 #### 1.1.3 Tasks (`rte/world.py`)
 
@@ -440,7 +440,7 @@ j reports. If `collude` is **False**, or j is honest, the true outcome comes bac
    mean within that batch per reporter; in the scalar path, j's cumulative observations);
 3. otherwise the true outcome.
 
-Every grid behind A–H has `collude = true` (the default, `configs/grid.yaml`) — **random liars collude too**. The
+Every grid behind A–H has `collude = true` (the default, `configs/grids/`) — **random liars collude too**. The
 only thing that distinguishes the regimes called "cartel" is `liar_select`.
 
 #### 1.3.5 Definition: "β = 0.5 cartel"
@@ -548,7 +548,7 @@ per-family max mean 0.725.
 
 - **Formula**: `Budget(b).total_probes(n, K) = n · K · b` (`rte/budget.py`) — "b probes per (agent, family)" on
   average. Every probing method receives the same `Budget(b)`; `b` is the grid's `b` axis (default 3,
-  `configs/grid.yaml`). Examples: live 10^5 at b = 3 → 4.8 M probes; bernoulli 10^7 at b = 1 → 1.6 × 10^8.
+  `configs/grids/`). Examples: live 10^5 at b = 3 → 4.8 M probes; bernoulli 10^7 at b = 1 → 1.6 × 10^8.
 - **What a probe is**: executing agent *a* on a *fresh* instance of family *f* and returning 0/1, charged
   `ledger.probes += 1` (`rte/world.py`). The k-th probe of (a, f) uses instance seed
   `probe_seed(salt, a, f, k)` (`rte/world.py`); `reset()` puts every k back to 0 per method
@@ -568,13 +568,13 @@ per-family max mean 0.725.
   unaffected (the condensed figures draw declared argmax / random once, at b = 3, `BUDGETLESS`, `scripts/condensed_figs.py`; the four never-probing arms are `B_INVARIANT`).
   For the verified MIDIAN variants (MIDIAN and MIDIAN w/o audits) the build splits b into `b0 = b − 1` level-0 probes and verification probes
   `e = (b − b0)·n / C` (`rte/methods/midian.py`); at **b = 1, b0 = 1 and e = 0, so verification is unfunded:
-  MIDIAN w/o audits ≡ MIDIAN w/o defenses and MIDIAN ≡ MIDIAN w/o verification** (also stated at `configs/grid.yaml`). The condensed A/B
+  MIDIAN w/o audits ≡ MIDIAN w/o defenses and MIDIAN ≡ MIDIAN w/o verification** (also stated at `configs/grids/`). The condensed A/B
   b = 1 bars inherit this.
 - Budget-less arms still carry a `b` value in their row and a distinct row id per b.
 
 ---
 
-### 1.6 The experimental unit and grid mechanics (`rte/run.py`, `configs/grid.yaml`)
+### 1.6 The experimental unit and grid mechanics (`rte/run.py`, `configs/grids/`)
 
 #### 1.6.1 Cell, unit, row
 
@@ -596,7 +596,7 @@ per-family max mean 0.725.
 #### 1.6.2 Grid resolution
 
 `blocks(cfg, grid)` (`rte/run.py`): `defaults` < `mirror_of` source (chains allowed) < the grid's own keys <
-each `blocks:` entry. Defaults (`configs/grid.yaml`): backend bernoulli, K 16, liar_select random, collude true,
+each `blocks:` entry. Defaults (`configs/grids/`): backend bernoulli, K 16, liar_select random, collude true,
 declared_source programmatic, lie_mode inflate, demand uniform, b 3, Q 1000, seeds 1–5, methods `all` + six paired
 variants. `methods: all` = every method file except LLM-only ones off the llm backend (`rte/run.py`);
 `allow_llm_methods: true` lets framework arms run on routereval. Seeds spec `"1-10"` → `[1..10]` (`rte/run.py`).
@@ -656,7 +656,7 @@ are superseded by the `_norep_cal` grids and read by no figure. The `routereval5
 ones (the unshuffled first attempt is quarantined, §1.4.4).
 
 The `pool_fill_*` grids hold only the candidates of "best learned/declared router" / "best bandit" that no other grid ran in
-that cell at that b, so that every b of a cell has the same pool (comment at `configs/grid.yaml`). Their
+that cell at that b, so that every b of a cell has the same pool (comment at `configs/grids/`). Their
 method lists differ per grid and per b block. `pool_seeds_n1000` gives the seven live 10^3 b = 3
 candidates that `live_f1_n1000` ran on seeds 1–5 their seeds 6–10. `tuned_wsb_*` runs
 `warm_start_bandit[n0=0.5]` at b = 3; `linucb_fix_*` runs `linucb_honest[bonus=own]` and `trueskill_fix_*` post-fix
@@ -861,7 +861,7 @@ change outcomes (§2.8.1).
 | **cell** | one combination of the 12 CELL axes |
 | **unit** | (cell, seed): one world, one stream, all methods |
 | **seed** | replicate index; re-draws population, noise, liars, stream, probes (§1.6.4) |
-| **grid** | a named experiment in `configs/grid.yaml`; results in `$RTE_DATA/results/<grid>/` |
+| **grid** | a named experiment in `configs/grids/`; results in `$RTE_DATA/results/<grid>/` |
 | **row / rid** | one (cell, method, params, seed) result; rid = blake2b of those |
 | **regime** | beta0, beta{β}_random, beta{β}_cartel, cartel (= β .5 lsf) |
 | **b = 1 / 3 / 5 bars** | same arm at different probe budgets; never pooled |
@@ -915,7 +915,7 @@ change outcomes (§2.8.1).
     3,572 unit rows (it also lists `*_sota`, `*_em`, `*_verified*` and RouterEval-framework grids). Whether the tsv
     grew after the erratum was written is not determined. `pending_reruns()` drops every listed unit whose rerun rows are
     on disk, so the tsv's size does not matter for the figures.
-11. **Stale grid comment**: `fw_live_n1000` comment "(v2 0.4: 5 seeds, Q=1000 (was 3/300))" (`configs/grid.yaml`)
+11. **Stale grid comment**: `fw_live_n1000` comment "(v2 0.4: 5 seeds, Q=1000 (was 3/300))" (`configs/grids/`)
     vs actual `seeds: 1-10`.
 12. **`bernoulli.py` says bernoulli is "never a headline number"**, while the condensed figure B includes a
     bernoulli 10^7 bar and C/D include bernoulli cells. A policy question for the author, not a code error.
@@ -974,8 +974,7 @@ No condensed figure draws them; they are in the per-family bar figures (`figures
   `figures/bars/live.csv` (`scripts/condensed_figs.py`), which `scripts/bar_figs.py` writes from the grids in
   `LIVE_GRIDS` (`scripts/bar_figs.py`).
 - **Live, the same arms at b = 1 and b = 5.** From the `va_b_n*` grids (MIDIAN only) and the `rivals_b_n*` grids (the
-  budget-matched rivals) (`add_budgets`, `scripts/condensed_figs.py`; grids at `configs/grid.yaml` and
-  `1068-1071`).
+  budget-matched rivals) (`add_budgets`, `scripts/condensed_figs.py`; grids in `configs/grids/`).
 - **bernoulli 10^7, replay 10^6, RouterEval 5,000 and LLMRouterBench: every arm at every b, and the oracle.** All four
   have switched to their erratum-30 grids (§4.0.7), so `add_budgets` skips them  and `from_tables`
   (`condensed_figs.py`) fills each cell from its per-seed tables: mean and ±1 s.e. over seeds. The bar CSVs and
@@ -1437,9 +1436,9 @@ and charge n comparisons per fetch.
   under the cartel** than honest (live 10^4: 0.743 → 0.783; 10^5: 0.738 → 0.778). §8d calls the honest arm
   "under-tuned" and states that reported numbers keep the pre-registered n0 = 5.
 - **Tuned variant `n0 = 0.5`:**
-  - Chosen by `tune_wsb_n1000` (`configs/grid.yaml`): live, n = 1,000, specialist, β = 0, self-described,
+  - Chosen by `tune_wsb_n1000` (`configs/grids/`): live, n = 1,000, specialist, β = 0, self-described,
     b = 3, **seeds 11-15**, n0 ∈ {0.5, 1, 2, 5}.
-  - The grid comment (`configs/grid.yaml`) says seeds 11-15 are never reported (reported live 10^3 cells use
+  - The grid comment (`configs/grids/`) says seeds 11-15 are never reported (reported live 10^3 cells use
     seeds 1-10) and that the result was 0.762 for n0 = 0.5 against 0.745-0.750 for the others.
   - The tuned arm is run "beside" the pre-registered one in `tuned_wsb_n{100,1000,10k,100k}` at b = 3
      and in the live `rivals_b_n*` grids at b = 1 and 5.
@@ -1451,14 +1450,13 @@ and charge n comparisons per fetch.
   - The pre-registered n0 = 5 arm competes on live everywhere, and on bernoulli, replay, RouterEval and LLMRouterBench
     because all four have switched to their calibrated-claims rows (`CLAIM_KEY - SW` is empty, `condensed_figs.py`). On the old rows it was withheld, because its prior was then built on claims equal to true skill + 5 % noise.
     On calibrated claims it is the pick in every bernoulli 10^7 bandit bar (×100).
-  - §8d as written does **not** mention the tuning run. The "CHANGES 8d" citation in `grid.yaml` points at the
+  - §8d as written does **not** mention the tuning run. The "CHANGES 8d" citation in `configs/grids/` points at the
     motivation, not at a record of the tuning.
 
 ### 2.7.4 `linucb_honest` and `linucb_honest[bonus=own]` (`rte/methods/linucb_honest.py`)
 
 - **In the bandit pool** is only the fixed-bonus variant `linucb_honest[bonus=own]` (`POOLS`, `condensed_figs.py`), a
-  post-hoc fix (rivals audit F1, 2026-09-23). Its rows come from the `linucb_fix_*` grids (`configs/grid.yaml`,
-  `1145-1146`: live, RouterEval-5k and LLMRouterBench cells and bernoulli 10^7, b = 1 / 3 / 5) and the erratum-30 grids
+  post-hoc fix (rivals audit F1, 2026-09-23). Its rows come from the `linucb_fix_*` grids (`configs/grids/`: live, RouterEval-5k and LLMRouterBench cells and bernoulli 10^7, b = 1 / 3 / 5) and the erratum-30 grids
   (replay 10^6 gets it only from `replay_1e6_split_cal`). They have landed: it has every seed in every A / B pool table,
   and it is the majority best-bandit pick in 22 of the 54 bars (live 10^2 except honest b = 1, replay 10^6 except honest
   b = 1, every RouterEval 5,000 and LLMRouterBench bar).
@@ -1494,7 +1492,7 @@ and charge n comparisons per fetch.
   same (agent, family) several times, and `World._probe` used to give every occurrence the same instance. `World._probe`
   now gives each occurrence the next instances (`_occurrence`, `rte/world.py`); TrueSkill is the only
   arm that passes repeated cells, so only its rows change. `seed_tables.tables` counts TrueSkill only from
-  `trueskill_fix_n{100,1000,10k}` (`configs/grid.yaml`) and the erratum-30 grids (`seed_tables.py`).
+  `trueskill_fix_n{100,1000,10k}` (`configs/grids/`) and the erratum-30 grids (`seed_tables.py`).
   Those rows have landed (every seed at live 10^2–10^4, RouterEval 5,000 and LLMRouterBench, b = 1 / 3 / 5); the
   pre-fix rows in `LIVE_GRIDS`, `pool_fill_*` and the old RouterEval / LLMRouterBench grids are never read. Post-fix
   TrueSkill is the majority best-bandit pick in 3 bars (live 10^4 honest b = 1, 3 and cartel b = 1).
@@ -1541,7 +1539,7 @@ and charge n comparisons per fetch.
 - **Fetch:** predict for all n agents, then argmax (n comparisons).
 - **No online update.**
 - The one-hot input makes memory O(n²·K·b). The grids exclude it at n = 10,000 and at the 5,000-LLM pool
-  (`docs/archive/DEVIATIONS.md`; `configs/grid.yaml` comment). There is no guard in the code itself.
+  (`docs/archive/DEVIATIONS.md`; `configs/grids/` comment). There is no guard in the code itself.
 
 ### 2.8.3 `flat_nsw_router` (`rte/methods/flat_nsw_router.py`)
 
@@ -1662,7 +1660,7 @@ and charge n comparisons per fetch.
    marked on the figures (protocol audit F7).
 6. **CHANGES §8d does not record the tuning.** §8d (`docs/archive/CHANGES_AND_ERRATA.md`) says "Reported numbers are
    unchanged (the rival is as pre-registered)" and does not mention the n0 = 0.5 tuning or its 0.762 result. The only
-   record is the grid comment (`configs/grid.yaml`). I found no results file confirming 0.762.
+   record is the grid comment (`configs/grids/`). I found no results file confirming 0.762.
 7. **The "best learned/declared router" pool contains declaration-only and non-learned methods.** It includes
    `cluster_head_router` and `disrouter_cascade` (no probes, declared-only) and `flat_nsw_router` (an ANN over probe
    means). `flat_nsw_router` is the majority pick in 19 of the 54 A / B bars (every replay 10^6 bar, bernoulli 10^7 at
@@ -1895,8 +1893,8 @@ and has the same n :
 ## 3.3 The frameworks
 
 The code lists 13 `fw_*` classes (`rte/methods/frameworks/fw_*.py`).
-- The **ten grid frameworks** are the YAML set `frameworks` (`configs/grid.yaml`): LangGraph, CrewAI, AutoGen, Magentic-One, MAF, OpenAI Agents SDK, Google ADK, LlamaIndex, smolagents and CAMEL Workforce.
-- **AgentScope** appears only in the appendix grids `fw_appendix` and `fw_appendix_dd` (n = 100, specialist, beta ∈ {0, 0.25}, seeds 1-3, Q = 300; `grid.yaml`).
+- The **ten grid frameworks** are the YAML set `frameworks` (`configs/grids/`): LangGraph, CrewAI, AutoGen, Magentic-One, MAF, OpenAI Agents SDK, Google ADK, LlamaIndex, smolagents and CAMEL Workforce.
+- **AgentScope** appears only in the appendix grids `fw_appendix` and `fw_appendix_dd` (n = 100, specialist, beta ∈ {0, 0.25}, seeds 1-3, Q = 300; `configs/grids/`).
 - **MetaGPT** is `NotImplementedError` (`fw_metagpt.py`).
 - **Echo** is a protocol check that picks the first candidate (`fw_echo.py`, `workers/echo_worker.py`) and is never in a grid.
 
@@ -1920,9 +1918,9 @@ Notes that apply to all of them:
 - Every worker stops **before the chosen agent runs**, so the only LLM traffic is the supervisor's. The routed task is then executed by the benchmark world, not by the framework.
 - The agents inside the framework are placeholders; only the manager or router makes model calls.
 - Names such as `agent_000123` are already identifier-safe, so `sanitize` (`workers/_wk.py`) is a no-op on them.
-- **Magentic-One exclusions.** It is left out of every RouterEval framework grid and of `fw_live_n10k_cartel` and its `_dd`, `_em`, `_sota`, `_shapes` and `_verified_va` mirrors, "for time (18 s/task)" (`grid.yaml`, `528-540`; `docs/archive/DEVIATIONS.md` §"Frameworks on RouterEval's 5,000-LLM pool"). It **is** included in:
+- **Magentic-One exclusions.** It is left out of every RouterEval framework grid and of `fw_live_n10k_cartel` and its `_dd`, `_em`, `_sota`, `_shapes` and `_verified_va` mirrors, "for time (18 s/task)" (`configs/grids/`; `docs/archive/DEVIATIONS.md` §"Frameworks on RouterEval's 5,000-LLM pool"). It **is** included in:
   - `fw_live_n10k_cartel_backfill` (it inherits `*fw10_backfill`, all ten frameworks);
-  - `fw_live_n10k_cartel_magentic` (`grid.yaml`): Magentic-One alone at the 10^4 cartel, under TF-IDF, MiniLM,
+  - `fw_live_n10k_cartel_magentic` (`configs/grids/`): Magentic-One alone at the 10^4 cartel, under TF-IDF, MiniLM,
     fusion + reranker and the MIDIAN cohort, with the honest grids' params;
   - `lie_max_fw_n10k` (`*fw10_declared`);
   - every other live grid.
@@ -1968,14 +1966,14 @@ Display names come from `SOURCES` (`shortlist_figs.py`); short legend names come
   - RouterEval: they **can**. The query `"Tasks of family X"` matches every agent whose declared top 5 contains X. Inflation (+0.4, clipped to 1) pushes liars into many top-5s and, with ties broken by id, to the front. Check (routereval mmlu n = 1,000, strong_to_weak, beta 0.5 low_skill_first, seed 1, family 0): on the calibrated, shuffled world H reads, the TF-IDF top 10 holds **7 liars** (mean true skill 0.466 against a population mean of 0.428); on the old programmatic world it was 10 of 10 (mean 0.276). See 3.9 on the "degenerate" wording.
 
 ### 3.4.2 `dedup` (TF-IDF + `dedup: true`): computed but not drawn
-- **Params:** `{dedup: true}` (`&fw10_dd`, `grid.yaml`).
+- **Params:** `{dedup: true}` (`&fw10_dd`, `configs/grids/`).
 - **Grids:** `fw_live_n1000_dd`, `fw_live_n100_dd`, the `_lowskill_dd` pair, `fw_live_n10k_dd`, `fw_live_n100k_dd`, `fw_live_n10k_cartel_dd`, `fw_k_sensitivity_dd`, `fw_appendix_dd`, `budget_b10_fw_dd` and `churn_n1000_fw_dd`.
 - **Mechanism:** the same ranking, restricted to `_pool`, the lowest id per distinct description string (`_common.py`).
 - **Figures:** excluded by `source()`.
 - **Liars:** the same as TF-IDF. The one difference is which member of a clone group is offered: the lowest id, whatever its liar status.
 
 ### 3.4.3 `bm25` (label "BM25")
-- **Params:** `{retrieval: bm25, dedup: true}` (`&fw10_bm25`, `grid.yaml`).
+- **Params:** `{retrieval: bm25, dedup: true}` (`&fw10_bm25`, `configs/grids/`).
 - **Grids:**
   - `fw_live_n1000_sota` only, at n = 10^3, all 3 shapes × 4 random-liar betas, seeds 1-10. This is the "four-arm ablation".
   - Also `fw_live_n100k_lietext` (honest and lied text). The `GRIDS` filter excludes `lietext` grids, so these never reach the figures (`shortlist_figs.py`).
@@ -1984,7 +1982,7 @@ Display names come from `SOURCES` (`shortlist_figs.py`); short legend names come
 - **Liars:** text only, so the same as TF-IDF.
 
 ### 3.4.4 `embed`: MiniLM (label "MiniLM")
-- **Params:** `{retrieval: embed, dedup: true}`, with `embed_model` at its default `all-MiniLM-L6-v2` (`&fw10_em`, `grid.yaml`; `&fw9_em`, `grid.yaml`).
+- **Params:** `{retrieval: embed, dedup: true}`, with `embed_model` at its default `all-MiniLM-L6-v2` (`&fw10_em`, `configs/grids/`; `&fw9_em`, `configs/grids/`).
 - **Grids:**
   - `fw_live_n1000_em`, `fw_live_n100_em`, the `_lowskill_em` pair, `fw_live_n10k_em`, `fw_live_n100k_em`, `fw_live_n10k_cartel_em`
   - `fw_routereval_1k_em`, `_5k_em`, `_small_em`
@@ -1995,7 +1993,7 @@ Display names come from `SOURCES` (`shortlist_figs.py`); short legend names come
 - **Liars:** live text only. RouterEval rendered numbers, so manipulable as in 3.4.1.
 
 ### 3.4.5 `dense`: Qwen3-Embedding-8B with its stock instruction (condensed label "dense (Qwen3-8B)", appendix "dense (Qwen3-8B), no instr."; "Qwen3-8B dense" in `figures/shortlist/`)
-- **Params:** `{retrieval: embed, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B}` (`&fw10_dense`, `grid.yaml`).
+- **Params:** `{retrieval: embed, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B}` (`&fw10_dense`, `configs/grids/`).
 - **Grids:** `fw_live_n1000_sota` only (the 10^3 ablation). Not in Fig E's `MAIN`.
 - **Query side:**
   - With no `embed_instruct`, the family texts are encoded with `prompt_name="query"`. That is the model's shipped prompt `"Instruct: Given a web search query, retrieve relevant passages that answer the query\nQuery:"` (`$RTE_DATA/models/Qwen3-Embedding-8B/config_sentence_transformers.json`).
@@ -2003,15 +2001,15 @@ Display names come from `SOURCES` (`shortlist_figs.py`); short legend names come
 - **Hardware:** bf16 on GPU (`_learned.py`). A routing unit with no cached block and no GPU raises instead of computing (`_common.py`).
 
 ### 3.4.6 `dense_icomp` / `dense_idemo`: Qwen3 dense with a task instruction (appendix labels "dense, competence instr." / "dense, demonstration instr."; in the body figures the better of the variants is drawn as "dense (Qwen3-8B)"; "Qwen3-8B dense, I-competent" / "I-demonstrated" in `figures/shortlist/`)
-- **Exact instruction strings** (`grid.yaml`; each appears on 30 / 20 lines, plus 18× on each of the three flow-style `re_sl_embed_*` lines):
+- **Exact instruction strings** (`configs/grids/`; each appears on 30 / 20 lines, plus 18× on each of the three flow-style `re_sl_embed_*` lines):
   - **I-comp:** `"Given a task family, retrieve agents that are competent at solving tasks of that family"` (cache tag `_i0258be9d`)
   - **I-demo:** `"Given a task family, retrieve agents whose demonstrated skill at that family is highest"` (cache tag `_i06c7d226`)
 - **Query prompt:** `"Instruct: {embed_instruct}\nQuery:"` (`_common.py`). Only the K = 16 family vectors change (`families_<slug>_i<hash>.npy`); the n document vectors are reused.
-- **Params:** `{retrieval: embed, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, embed_instruct: <string>}` (`&fw10_dense_ic`, `&fw10_dense_id`, from `grid.yaml`).
+- **Params:** `{retrieval: embed, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, embed_instruct: <string>}` (`&fw10_dense_ic`, `&fw10_dense_id`, from `configs/grids/`).
 - **Grids:**
   - `fw_live_n100k_dense_instruct`
-  - the backfill grids `fw_live_n{100,1000}[_lowskill]_backfill`, `fw_live_n10k_backfill`, `fw_live_n10k_cartel_backfill` (`grid.yaml`)
-  - `re_sl_embed_{small,1k,5k}` (`grid.yaml`)
+  - the backfill grids `fw_live_n{100,1000}[_lowskill]_backfill`, `fw_live_n10k_backfill`, `fw_live_n10k_cartel_backfill` (`configs/grids/`)
+  - `re_sl_embed_{small,1k,5k}` (`configs/grids/`)
 - **Liars:** live text only. On RouterEval, rendered numbers (manipulable).
 
 ### 3.4.7 `hybrid`: RRF(BM25, Qwen3 dense), not drawn
@@ -2028,7 +2026,7 @@ Display names come from `SOURCES` (`shortlist_figs.py`); short legend names come
   4. Keep the top k = 10, padding with -1 if fewer.
 - **Setup:** `pool` is `_pool` because every grid sets `dedup: true`. The table is (K, k) and depends only on the population.
 - **Params:**
-  - Stock: `{retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B}` (`&fw10_sota`, `grid.yaml`).
+  - Stock: `{retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B}` (`&fw10_sota`, `configs/grids/`).
   - Instruct variants add `embed_instruct`. The instruction affects only the dense half's **query** vectors, and therefore the fused pool. The reranker never sees it.
 - **Grids:**
   - Stock: `fw_live_n1000_sota`, `fw_live_n100_sota`, `fw_live_n1000_lowskill_sota`, `fw_live_n100_lowskill_sota`, `fw_live_n10k_sota`, `fw_live_n100k_sota`, `fw_live_n10k_cartel_sota` (9 frameworks), and `re_sl_embed_*`.
@@ -2036,19 +2034,19 @@ Display names come from `SOURCES` (`shortlist_figs.py`); short legend names come
 - **Liars:** live text only. On RouterEval, rendered numbers (manipulable).
 
 ### 3.4.9 `declared`: declared top-k (condensed label "declared top-k"; "declared-claim top-k" in `figures/shortlist/`)
-- **Params:** `{retrieval: declared, dedup: true}` (`&fw10_declared`, `grid.yaml`).
+- **Params:** `{retrieval: declared, dedup: true}` (`&fw10_declared`, `configs/grids/`).
 - **Grids:**
   - `fw_live_n100k_declared`
   - the backfill grids
-  - `lie_max_fw_n1000`, `_n10k`, `_n100k` (`grid.yaml`, with `lie_mode: max`)
-  - `re_sl_declared_{small,1k,5k}` (`grid.yaml`)
+  - `lie_max_fw_n1000`, `_n10k`, `_n100k` (`configs/grids/`, with `lie_mode: max`)
+  - `re_sl_declared_{small,1k,5k}` (`configs/grids/`)
 - **Algorithm:** `view.declared[pool, f]`, stable-sorted descending, top 10 (`_common.py`). There is no text retrieval. The framework still receives the **text** descriptions of these 10.
 - **Setup:**
   - `_index` still builds a hashed-TF-IDF matrix, which is not used.
   - `dedup` restricts the ranking to one representative per distinct text, so liars who are not the lowest id of their text group are invisible to it.
-- **Interpretation.** This idealises agent-card or registry discovery: an A2A-style registry where each agent publishes a structured skill claim and the orchestrator shortlists by that claim (`grid.yaml` calls it "an idealized A2A Agent-Card registry").
+- **Interpretation.** This idealises agent-card or registry discovery: an A2A-style registry where each agent publishes a structured skill claim and the orchestrator shortlists by that claim (`configs/grids/` calls it "an idealized A2A Agent-Card registry").
 - **Liars: fully manipulable.**
-  - `inflate` (+0.4) moves liars up. The grid comment at `grid.yaml` reports 74 % liars in the top 10 at beta = 0.5 random, against a 50 % population rate.
+  - `inflate` (+0.4) moves liars up. The grid comment at `configs/grids/` reports 74 % liars in the top 10 at beta = 0.5 random, against a 50 % population rate.
   - `max` sets `D[liars] = 1` (`world.py`). Ties are broken by lowest id, so the shortlist is typically ten liars.
   - RouterEval check (m = 1,000, beta 0.5 low_skill_first, `inflate`, seed 1, family 0): 10 of 10 liars in the declared top 10 on the calibrated world H reads (and on the old programmatic one).
   - Honest agents' declared values: on live, `D_self_described` is the model's own self-rating (`llm.py`), so the live declared top-k (E–G) ranks by real, weakly informative claims. H reads the `re_sl_declared_*_norep_cal` reruns, whose claims are `calibrated` (drawn from the live self-rating's distribution given S, 11 values; §1.3.3), so the honest declared top-k is no longer close to an oracle ranking (it was on the old `programmatic` rows, S + N(0, 0.05)), and the rendered description text the frameworks read comes from the same calibrated claims. With 11 values many agents tie; `shuffle: true` makes the lowest-index tie-break random instead of weakest-first.
@@ -2072,12 +2070,12 @@ Display names come from `SOURCES` (`shortlist_figs.py`); short legend names come
 - **Liars:** they can distort the cohort only through the peer reports, which the audits and exclusion check, and through the fallback. Descriptions play no part in which agents are shortlisted.
 
 ### 3.4.11 `shuffle`: position control, not a shortlist source
-- **Params:** `{retrieval: midian, r: 10, shuffle: true}` (`midian_va` before the rename). Grid: `fw_live_n100k_verified_va_shuffled` (`grid.yaml`).
+- **Params:** `{retrieval: midian, r: 10, shuffle: true}` (`midian_va` before the rename). Grid: `fw_live_n100k_verified_va_shuffled` (`configs/grids/`).
 - **Mechanism:** the same members in a deterministic permutation seeded by (pick, "fw_shuffle", family) (`_common.py`). It separates "better material" from "the pick is first".
 - **Figures:** excluded by `source()`.
 
 ### 3.4.12 `lie_text` (erratum 27): not drawn
-- **Params:** `{retrieval: tfidf|bm25, dedup: true, lie_text: true}` in `fw_live_n100k_lietext`, which also holds the honest-text twins `{retrieval: tfidf|bm25, dedup: true}` (`grid.yaml`). `fw_live_n100k_lietext_th` adds `claim_threshold: 0.7` (`grid.yaml`).
+- **Params:** `{retrieval: tfidf|bm25, dedup: true, lie_text: true}` in `fw_live_n100k_lietext`, which also holds the honest-text twins `{retrieval: tfidf|bm25, dedup: true}` (`configs/grids/`). `fw_live_n100k_lietext_th` adds `claim_threshold: 0.7` (`configs/grids/`).
 - **Mechanism** (`_relabel`, `_common.py`), applied to **every** agent's description:
   1. Strip the trailing `Declared areas: ...` clause.
   2. Append `Declared areas: <families>.`, built from `view.declared`: the top 3 families, or with `claim_threshold > 0` every family with D > threshold (at least the argmax).
@@ -2112,7 +2110,7 @@ Display names come from `SOURCES` (`shortlist_figs.py`); short legend names come
 
 ## 3.5 Which (framework × shortlist × n × regime) combinations exist
 
-I resolved these with `rte.run.blocks` (mirror chains followed) on `configs/grid.yaml`. The field values are:
+I resolved these with `rte.run.blocks` (mirror chains followed) on `configs/grids/`. The field values are:
 - live `dist` ⊂ {specialist, heavy_tail, bimodal}
 - `declared_source = self_described` on every live framework grid
 - `b = 3` on all of them except `budget_b10_*`
@@ -2152,7 +2150,7 @@ I resolved these with `rte.run.blocks` (mirror chains followed) on `configs/grid
 | `fw_routereval_{small,1k,5k}_em` / `_va` | as above | | | | 9 × MiniLM / MIDIAN cohort | embed / va_cohort (H) |
 | `re_sl_declared_{small,1k}` / `_5k` | routereval | strong_to_weak / all | {0, .5} × low_skill_first | 1-5, 1000 / 1-3, 300 | 9 × declared | declared (H) |
 | `re_sl_embed_{small,1k}` / `_5k` | same | same | same | same | 9 × {dense-Ic, dense-Id, sota, sota-Ic, sota-Id} | dense_icomp, dense_idemo, sota, sota_icomp, sota_idemo (H) |
-| every RouterEval row above, as `<grid>_norep_cal` (`grid.yaml`) | routereval mmlu (`no_repeat`, `shuffle`) / leaderboard_mmlu 5,000 | strong_to_weak / all | {0, .5} × low_skill_first | 1-5, 300 / 1-3, 300 | same frameworks × shortlists, calibrated claims | **these are H's bars** (the rows above are no longer drawn) |
+| every RouterEval row above, as `<grid>_norep_cal` (`configs/grids/`) | routereval mmlu (`no_repeat`, `shuffle`) / leaderboard_mmlu 5,000 | strong_to_weak / all | {0, .5} × low_skill_first | 1-5, 300 / 1-3, 300 | same frameworks × shortlists, calibrated claims | **these are H's bars** (the rows above are no longer drawn) |
 | `fw_k_sensitivity[_dd]` | llm 10^3 | spec | {0, .25} random | 1-3, 300 | LangGraph and AutoGen × k ∈ {5, 10, 20} | not drawn |
 | `fw_appendix[_dd]` | llm 10^2 | spec | {0, .25} random | 1-3, 300 | AgentScope | not drawn |
 | `budget_b10_shapes` / `_fw_dd`, `churn_n1000` / `_fw_dd` | llm 10^3 | | | | LangGraph, AutoGen | not drawn |
@@ -2216,7 +2214,7 @@ I resolved these with `rte.run.blocks` (mirror chains followed) on `configs/grid
 ## 3.9 Discrepancies / open questions
 
 1. **Dedup is not a no-op on RouterEval.**
-   - `grid.yaml` says "dedup is a no-op there: every rendered description is unique". Erratum 25 says 1,000/1,000 and 5,000/5,000 unique.
+   - `configs/grids/` says "dedup is a no-op there: every rendered description is unique". Erratum 25 says 1,000/1,000 and 5,000/5,000 unique.
    - That held only for the old programmatic claims at beta = 0. Rendered texts coincide when two agents' top-5 families and two-decimal values agree: inflated liars whose top 5 all clip to `1.00` on the old rows, and, on the calibrated claims H now reads (11 values), honest agents too. Distinct texts from `_texts` at seed 1, low_skill_first:
 
      | pool | calibrated (H), beta 0 | calibrated (H), beta 0.5 cartel | old programmatic, beta 0.5 cartel | old programmatic, beta 0.5 random |
@@ -2226,7 +2224,7 @@ I resolved these with `rte.run.blocks` (mirror chains followed) on `configs/grid
      | n = 5,000 | 4,134/5,000 | 2,551/5,000 | 4,052/5,000 | 3,310/5,000 |
 
    - So every `dedup: true` arm in H (MiniLM, dense, rerank, declared top-k; not the MIDIAN cohort, which ignores dedup, and not TF-IDF) retrieves from a pool 7–17 % smaller than m honest and 12–49 % smaller under the cartel. The pre-registered TF-IDF rows (no dedup) are unaffected.
-2. **"TF-IDF is degenerate on rendered numbers" (`grid.yaml` fw_routereval_5k comment; `docs/archive/DEVIATIONS.md` §Frameworks on RouterEval (a)) is imprecise.**
+2. **"TF-IDF is degenerate on rendered numbers" (`configs/grids/` fw_routereval_5k comment; `docs/archive/DEVIATIONS.md` §Frameworks on RouterEval (a)) is imprecise.**
    - The query `"Tasks of family X"` matches the family-name tokens in each agent's declared top 5.
    - The retriever therefore shortlists agents that *claim* X among their top 5, and liars flood it: 100 % liars for one family in my 1k check.
    - It carries declared-channel signal, and adversarial signal. It is not a no-signal ranking.
@@ -2257,7 +2255,7 @@ I resolved these with `rte.run.blocks` (mirror chains followed) on `configs/grid
 9. **Some worker exceptions still count as infrastructure errors.** `INVALID_ACTION` (`_common.py`) covers four error classes: a tool named after the agent (ADK, OpenAI Agents), `ModelBehaviorError`, MAF's missing next speaker, and a `KeyError: 'agent_NNNNNN'` name lookup (MAF's orchestrator naming a non-candidate; erratum 29, CHANGES §8e). LlamaIndex selector parse failures, AgentScope JSON errors and any other worker exception still become `error`, count as `infra_errors` and can fail a unit past 2 %. Arguably they are framework behaviour (non-picks). This matters only if some framework's parse-failure rate is near 2 %.
 10. **`success_strict` after an error is scored as a non-pick.** Both error paths set `_picked = False` before routing by declared argmax (`_common.py`), so `observe` scores such a task 0 under the strict metric.
 11. **Erratum 28 wording and counts differ.** CHANGES_AND_ERRATA says "7 framework **conda** envs ... 240 dangling library symlinks each". `docs/operations.md` D2 says "98 dangling library symlinks each". The code-side comment (`_common.py`) says ~4,500 rows; the erratum says 4,269 rows were quarantined. The envs are venvs (`_bridge.py`).
-12. **Stale grid comment:** `fw_live_n1000`'s inline comment says "v2 0.4: 5 seeds, Q=1000", but the grid runs `seeds: 1-10` (`grid.yaml`).
+12. **Stale grid comment:** `fw_live_n1000`'s inline comment says "v2 0.4: 5 seeds, Q=1000", but the grid runs `seeds: 1-10` (`configs/grids/`).
 13. **The unused TF-IDF matrix** is built for `declared` and `bm25` (`_common.py`), which is harmless. Unknown `retrieval` strings silently run hashed TF-IDF. No current grid uses a misspelled value: every value I resolved is one of tfidf, bm25, embed, hybrid, sota, declared, midian or midian_wo_audit (the MIDIAN keys after the 2026-09-24 rename).
 14. **MiniLM family vectors are not on disk at 10^5.** `specialist_n100000_K16_seed1/` has `descriptions_minilm.npy` but no `families_minilm.npy`, even though `_embeddings` would write it. The `_em` rows there were probably produced before the family block was cached, or with a different family-cache name. It is harmless, since 16 MiniLM vectors cost nothing, but it is unexplained.
 15. **Open: the "Declared areas" clause on live gives the true specialty list.** It is structured metadata that no real agent card would guarantee honest. Every live text arm (and the supervisor) benefits from it; `lie_text` is the only condition that corrupts it.
@@ -2435,7 +2433,7 @@ Today only live's b = 3 single-arm bars come from here. `load()` still reads all
 #### 4.0.6 What "honest" and "β=0.5 cartel" mean here
 - **honest** = β = 0, no liars.
   - At b=3: `liar_select = random` rows (bar_figs; the matrices' "beta=0 (no liars)" cell).
-  - At b=1/5 (live/RouterEval/LLMRouterBench `va_b_*` / `rivals_b_*`): the rows are tagged `liar_select = low_skill_first, collude = True`, with `n_liars = 0`. The tag is inert at β = 0, as the `configs/grid.yaml` comment notes.
+  - At b=1/5 (live/RouterEval/LLMRouterBench `va_b_*` / `rivals_b_*`): the rows are tagged `liar_select = low_skill_first, collude = True`, with `n_liars = 0`. The tag is inert at β = 0, as the `configs/grids/` comment notes.
 - **β=0.5 cartel** = β = 0.5, `liar_select = low_skill_first`, `collude = True`, `lie_mode = inflate`. Half the agents lie, chosen low-skill first, and they collude.
   - live: `declared_source = self_described`.
   - bernoulli/replay/RouterEval/LLMRouterBench: `calibrated` claims in every drawn row that reads claims (the erratum-30 rows, 4.0.7). Bernoulli's non-claim-reading arms keep their `programmatic`-cell rows, which are bit-identical because nothing they use depends on `declared_source`.
@@ -2458,7 +2456,7 @@ The old non-live rows had three leaks (erratum 30, [errata.md](errata.md); found
 - **Replay probed and routed on the same prompts**, and S (oracle, liar selection, claims) was the in-sample accuracy over all of them.
 - **RouterEval / LLMRouterBench streams repeated test prompts** (repeat share 0.48 on mmlu, 0.20 on LLMRouterBench), which online learners that see the prompt could memorise (leakage audit L5 / L10). The RouterEval pools are also stored weak → strong, so on 11-valued calibrated claims every lowest-index tie-break picked the weakest tied agent; `shuffle: true` fixes that, and the unshuffled first attempt is quarantined (§1.4.4).
 
-The fixes are new cell values, so old rows are untouched on disk: `declared_source: calibrated` (§1.3.3), replay `split: true` (§1.4.3), and RouterEval / LLMRouterBench `no_repeat: true` with `shuffle: true` and Q = 300 (§1.4.4). The rerun grids (`configs/grid.yaml`) and the switch (`seed_tables.py`, `ERRATUM30`, `switched()`):
+The fixes are new cell values, so old rows are untouched on disk: `declared_source: calibrated` (§1.3.3), replay `split: true` (§1.4.3), and RouterEval / LLMRouterBench `no_repeat: true` with `shuffle: true` and Q = 300 (§1.4.4). The rerun grids (`configs/grids/`) and the switch (`seed_tables.py`, `ERRATUM30`, `switched()`):
 
 | family (B cell) | rows B draws now | what the switch replaced | seeds |
 |---|---|---|---|
@@ -2838,11 +2836,11 @@ Style, names, colours and saving come from `scripts/figspec.py` (docs/figures.md
 
 ### 5.1.4 Who contributes: frameworks, seeds, cell parameters
 
-- **The ten frameworks** (`configs/grid.yaml` `_sets.frameworks`, ABBR in `scripts/paper_figs.py`): autogen,
+- **The ten frameworks** (`configs/grids/` `_sets.frameworks`, ABBR in `scripts/paper_figs.py`): autogen,
   camel (CAMEL workforce), crewai, adk (Google ADK), langgraph, llama (LlamaIndex), maf, magentic (Magentic-One), openai
   (OpenAI Agents), smol (smolagents). Magentic-One is **excluded by design** from `fw_live_n10k_cartel` and its
-  mirrors (`grid.yaml`) and from every `fw_routereval_*` and `re_sl_*` grid (and their `_norep_cal` mirrors), so H
-  averages at most 9; at the 10^4 cartel it is supplied by `fw_live_n10k_cartel_magentic` (`grid.yaml`) and the
+  mirrors (`configs/grids/`) and from every `fw_routereval_*` and `re_sl_*` grid (and their `_norep_cal` mirrors), so H
+  averages at most 9; at the 10^4 cartel it is supplied by `fw_live_n10k_cartel_magentic` (`configs/grids/`) and the
   backfill grid, and it now counts in every 10^4 cartel E bar.
 - **Which frameworks enter a bar** is decided by the full-seed rule, not by the grid lists: a framework whose rows were
   quarantined (erratum 28) or refused (ADK's "Tool 'agent_…' not found", MAF's "KeyError: 'agent_…'", both now
@@ -2853,7 +2851,7 @@ Style, names, colours and saving come from `scripts/figspec.py` (docs/figures.md
   `_common.py`). **The one exception is the MIDIAN-cohort shortlist**, which adds `{"probe", "reports"}`  and
   builds an internal `Midian(r=10)` with the cell's budget. So the MIDIAN-cohort bars spend the same b = 3 probe
   budget as MIDIAN (1.03 × n·K·b); all other bars spend none, and E–H are not a budget-matched comparison.
-- **Cell parameters** (`configs/grid.yaml`; mirrors match their base grid cell for cell):
+- **Cell parameters** (`configs/grids/`; mirrors match their base grid cell for cell):
 
   | family / n | base grid (line) | backend | dist | K | b | Q | seeds | declared channel |
   |---|---|---|---|---|---|---|---|---|
@@ -3140,7 +3138,7 @@ names are synthetic.
 **Provenance.** `fw_routereval_small_norep_cal` (m = 10, 100), `fw_routereval_1k_norep_cal`, `fw_routereval_5k_norep_cal`
 (TF-IDF), each with `_em` (MiniLM) and `_va` (MIDIAN cohort) mirrors, `re_sl_declared_{small,1k,5k}_norep_cal` (declared
 top-k) and `re_sl_embed_{small,1k,5k}_norep_cal` (Qwen3 dense I-comp / I-demo, rerank stock / I-comp / I-demo)
-(`grid.yaml`): cells `dist: [strong_to_weak]` (the 5k grids `all`), β ∈ {0, 0.5}, `low_skill_first`,
+(`configs/grids/`): cells `dist: [strong_to_weak]` (the 5k grids `all`), β ∈ {0, 0.5}, `low_skill_first`,
 calibrated claims, `no_repeat`, `shuffle`, Q = 300. Magentic-One is excluded by design, so at most 9 frameworks; all 9 have
 full seeds in every slot. Seeds 1–5 at m ≤ 1,000 and 1–3 at 5,000. Reference lines from `routereval_mmlu_norep_cal` /
 `routereval5k_norep_cal` (§5.1.5); the oracle at m = 100 (0.787) is lower than at m = 10 (0.875) or 1,000 (0.876). The

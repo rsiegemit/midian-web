@@ -57,12 +57,15 @@ only non-live rows, and on the live backend nothing changes.
 
 ## Row ids of grids that name data files
 
-<!-- VERIFY-PATH: describes decision D1, implemented in rte/run.py and a one-time migration script (lane A) -->
 Eleven bernoulli grids pass a file under the data root in `backend_kwargs` (`calibrate_from: $RTE_DATA/populations/...`).
-Their row ids used to hash the **expanded** path, so the same row had a different id on every machine and the stored rows
-carried an absolute user path. The runner now hashes the unexpanded `$RTE_DATA/...` string, and a one-time migration
-re-keyed the stored rows of those eleven grids (with a sentinel and backups, values unchanged). No other grid's row ids
-changed; `tests/golden/grid_fingerprints.tsv` flags the eleven as `rte_data_dep`.
+Their row ids used to hash the **expanded** path, so the same row had a different id on every machine and every stored
+row carried an absolute path. `rte.run.row_id` now hashes `backend_kwargs` as the configuration writes them (the
+unexpanded `$RTE_DATA/...` string). `scripts/checks/migrate_rte_data_ids.py` rewrites the stored rows of those eleven
+grids once, dry run by default: each row gets the unexpanded `backend_kwargs` and its new row id, every other field is
+written back byte-identical, the originals are first copied to `_premigration_rte_data_v1/` in the results directory,
+and a sentinel prevents a second pass; it refuses to change anything if a stored id does not recompute or two rows would
+collide. No value changes and no other grid's ids move. `tests/golden/grid_fingerprints.tsv` flags the eleven grids as
+`rte_data_dep`, and `tests/golden/grid_fingerprints_d1.tsv` holds their new fingerprints.
 
 ## Reproducing stored rows exactly
 

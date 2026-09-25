@@ -71,25 +71,27 @@ inputs are, as aggregate CSVs (see [Reproducing the paper](#reproducing-the-pape
 
 ## Quickstart
 
-On a laptop CPU, about two minutes in total:
+On a laptop CPU, in about a minute (no data files, no GPU):
 
 ```bash
-pytest -q                                               # 393 tests, ~2 min (slow and fleet tests deselected)
-python -m rte.run --grid bernoulli_cost_smoke           # 99 rows: 10 arms + oracle x n = 10^2..10^4 x 3 seeds, ~30 s
-python -m rte.analyze --grid bernoulli_cost_smoke       # tables, paired deltas, cost exponents -> summary.md
+pytest -q                                          # ~400 tests, ~2 min (slow and fleet tests deselected)
+python -m rte.run --grid reviewer_bernoulli        # MIDIAN, its three ablations and four rivals, honest and cartel: 180 rows, ~15 s
+python -m rte.analyze --grid reviewer_bernoulli    # tables, paired deltas, cost exponents -> summary.md, ~15 s
 ```
 
-Results land in `$RTE_DATA/results/bernoulli_cost_smoke/` (see [Outputs](#outputs)). Then, in increasing cost:
-<!-- VERIFY-PATH: reviewer_bernoulli grid (lane A), scripts/figures/make_all.py (lane C) -->
+`reviewer_bernoulli` runs MIDIAN, MIDIAN w/o verification, MIDIAN w/o audits, MIDIAN w/o defenses, declared argmax,
+flat probe argmax, the warm-start bandit and random on the synthetic backend at n = 10<sup>2</sup> and 10<sup>3</sup>,
+honest and under the β = 0.5 low-skill cartel, 5 seeds. Results land in `$RTE_DATA/results/reviewer_bernoulli/`
+(see [Outputs](#outputs)). Then, in increasing cost:
 
+<!-- VERIFY-PATH: scripts/figures/make_all.py (lane C) -->
 ```bash
-python -m rte.run --grid reviewer_bernoulli              # the paper's arms on the calibrated synthetic backend
-python scripts/figures/make_all.py --from-csv            # redraw every paper figure from the shipped CSVs
+python scripts/figures/make_all.py --from-csv                   # redraw every paper figure from the shipped CSVs
+python -m rte.run --grid smoke                                  # every method on a small synthetic world
 python -m rte.run --grid live_f1_n1000 --only dist=specialist   # a live grid: needs the model fleet (docs/operations.md)
 ```
 
-A method is one file in `rte/methods/`; `python -m rte.run --grid smoke` runs every method on a small bernoulli world, and
-[docs/architecture.md](docs/architecture.md) shows the interface.
+A method is one file in `rte/methods/`, and [docs/architecture.md](docs/architecture.md) shows the interface.
 
 ## Reproducing the paper
 

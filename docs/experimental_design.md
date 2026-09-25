@@ -77,7 +77,7 @@ method, its params and the seed (`row_id` / `rid_of_row` in `rte/run.py`). The r
 unit whose rid is already on disk, so a grid can be sharded over many jobs (`--only k=v` filters cells, `--seeds`
 selects seeds) and any job can be killed and rerun. Rows are later folded into `rows.csv`. `backend_kwargs` values that
 name files under the data root are hashed in their unexpanded form (`$RTE_DATA/...`), so a row id does not depend on
-where the data root is mounted ([errata.md](errata.md#row-ids-of-grids-that-name-data-files)). <!-- VERIFY-PATH: D1 row-id change (lane A) -->
+where the data root is mounted ([errata.md](errata.md#row-ids-of-grids-that-name-data-files)).
 
 ## Aggregation
 
@@ -101,26 +101,31 @@ The paper figures use ±1 standard error over seeds instead of intervals, and tw
 ## Grids
 
 An experiment is a named **grid**: a set of axis lists whose cartesian product is the cells, a seed range and a list of
-methods. `python -m rte.run --grid <name>` runs one; `--dry-run` prints its units.
+methods. `python -m rte.run --grid <name>` runs one; `--dry-run` lists the units still to run.
 
-<!-- VERIFY-PATH: the configs/grids/ layout, loader name and set syntax follow the refactor plan (lane A) -->
-**Where grids live.** `configs/grids/*.yaml`, one file per family: `00_base.yaml` (defaults and the named method and axis
-sets), `live.yaml`, `synthetic.yaml`, `routereval.yaml`, `frameworks.yaml`, `erratum30.yaml` and `archive.yaml`
-(superseded grids, kept so their stored rows stay reproducible). `rte.run.load_config()` merges them into one mapping
-and rejects a grid name or key defined twice. Each grid carries a header tag saying what it is for: `FIG:<figure>` (read
-by a paper figure), `NUM` (a quoted number), `HIST` (a historical result), `SUPERSEDED-BY:<grid>`, or `PENDING`.
+**Where grids live.** `configs/grids/*.yaml`, one file per family: `00_base.yaml` (the axis `defaults` and the named
+`_sets`, and nothing else), `smoke.yaml`, `live.yaml`, `synthetic.yaml`, `routereval.yaml`, `frameworks.yaml`,
+`erratum30.yaml` and `archive.yaml` (grids no figure reads any more, kept because a grid's name is its results directory
+and part of every row id). `rte.run.load_config()` reads them in sorted file order into one mapping and raises on a grid
+name defined twice or a duplicate key anywhere. Every grid carries a one-line header, `# [TAGS] purpose; read by:
+scripts`, with tags `FIG:<letters>` (drawn in figures A-I), `NUM` (feeds a quoted number or table, no figure), `HIST`
+(historical, read by no current script), `SUPERSEDED-BY:<grid>`, `PENDING` (rows outstanding) and `SMOKE` (quick check);
+`00_base.yaml`'s header defines the vocabulary.
 
 **Grammar.**
 
 - `defaults:` gives every axis a default; a grid overrides any of them.
 - Lists are axes: `beta: [0, 0.25, 0.5]` makes three cells.
 - `seeds: 1-10` is a range.
-- `methods:` is a list of `name` or `{name, params}`, or a named set. `all` (every method file, with LLM-only methods
-  only on the live backend) is frozen into explicit lists, so adding a method file never changes an existing grid.
-- **Named sets** are defined once in the base file and used by name (`{set: frameworks}` / `use: frameworks`), so a
-  method list or an axis block is written in exactly one place.
-- `mirror_of: <grid>` copies another grid, then applies this grid's overrides. It is how every variant is paired cell
-  for cell with its source: a bernoulli twin of a live grid, a framework grid with another shortlist, a budget variant.
+- `methods:` is a list whose items are `name`, `{name, params}` or `{set: NAME}`; a set of methods is flattened into
+  the list. The former `methods: all` is frozen as the explicit set `all_arms`, so adding a method file never changes an
+  existing grid.
+- **Named sets** live once in `_sets` of `00_base.yaml`. A method set is referenced with `{set: NAME}`; a grid-level
+  `use: NAME` merges the mapping `_sets[NAME]` (for example the live axis block) under the grid's own keys. YAML
+  anchors are not used, because they cannot cross files.
+- `mirror_of: <grid>` copies another grid (from any file), then applies this grid's overrides. It is how every variant
+  is paired cell for cell with its source: a bernoulli twin of a live grid, a framework grid with another shortlist, a
+  budget variant.
 - `blocks:` puts several axis blocks into one grid (for example different seed counts per n).
 
 **Separate grids, never edits.** A new variant of an existing experiment is a new grid (usually a `mirror_of`), never an
@@ -130,12 +135,12 @@ count and row-id hash; `tests/test_golden_fingerprints.py` fails if a configurat
 
 ### Catalogue
 
-197 grids, 183,793 units and 4,520,534 method rows (the golden fingerprint file). Each grid is counted once, in the
+197 grids, 183,793 units and 4,520,534 method rows in the golden fingerprint file, plus `reviewer_bernoulli`. Each grid is counted once, in the
 first family it matches:
 
 | family | grids | what they are |
 |---|---|---|
-| `smoke`, `bernoulli_cost_smoke` | 2 | CPU checks in seconds; `reviewer_bernoulli` (the paper's arms on a laptop) is added by the refactor <!-- VERIFY-PATH --> |
+| `smoke`, `bernoulli_cost_smoke` (+ `reviewer_bernoulli`) | 2 (+1) | CPU checks in seconds; `reviewer_bernoulli` (MIDIAN, its ablations and the main rivals on a laptop) was added after the golden file |
 | `*_cal`, `*_norep_cal`, `rivals5_*` | 26 | erratum 30: calibrated claims, split probe / task prompts, no repeated prompts, shuffled pools (non-live backends and their framework mirrors) |
 | `fw_live_*` | 51 | the ten frameworks on the live population, one grid per (n, regime, shortlist source): `_dd` deduplicated TF-IDF, `_em` MiniLM, `_sota` BM25 / dense / fusion / reranker, `_verified*` MIDIAN cohorts, `_declared`, `_lietext`, `_backfill` |
 | `live_*` | 12 | live LLM population, every self-contained rival, n = 10<sup>2</sup> to 10<sup>5</sup> |
