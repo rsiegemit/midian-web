@@ -14,22 +14,19 @@ from __future__ import annotations
 
 import json
 import os
-import sys
 import threading
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import numpy as np
 
-from .. import llm_client                      # module-level: __init__ reads llm_client.CONCURRENCY (methods re-import lazily; harmless)
+from .. import llm_client
 from ..config import RTE_DATA, count, flag
 from ..stable_hash import stable_seed_32
-from . import families, prompts, tools
+from . import families, noisy_declared, prompts, tools
 from .population import bands, draw_profiles, ladder, signature
 
 _OUTCOMES: dict = {}                           # RTE_OUTCOME_CACHE: (population, agent, family, instance) -> outcome
-from .prompts import build as build_prompt, extract_answer, find_tool_call, parse_rating  # re-export
-
 POP_DIR = Path(os.environ.get("RTE_POPULATIONS", RTE_DATA / "populations"))
 
 
@@ -75,17 +72,10 @@ class LLMBackend:
         for i, prof in zip(ids, new): self.profiles[int(i)] = {**prof, "id": int(i)}
         self.dir, self._S, self._desc = self._dir0 / f"churn_{tag}", None, None
 
-    def _by_model(self) -> dict[str, list[int]]:
-        g: dict[str, list[int]] = {}
-        for a, p in enumerate(self.profiles):
-            g.setdefault(p["model"], []).append(a)
-        return g
-
     def _ask(self, jobs: dict, prompt, max_tokens: int) -> dict:
         """`jobs` maps a job key to the model that must answer it; returns {key: text}, batched
         per model. Self-rating keys on the SIGNATURE (the answer depends only on model, tool and
         family), self-description keys on the agent (it names the agent's own specialty list)."""
-        from .. import llm_client
         by_model: dict[str, list] = {}
         for k, model in jobs.items():
             by_model.setdefault(model, []).append(k)
@@ -100,7 +90,6 @@ class LLMBackend:
         """items = [(agent, family_idx, instance)] -> answers, in order. Grouped by
         (model, max_tokens): the budget is part of the memo key, so a capped agent must never
         ride on an uncapped agent's batch."""
-        from .. import llm_client
         out: list[str] = [""] * len(items)
         groups: dict[tuple, list[int]] = {}
         for i, (a, f, _) in enumerate(items):
@@ -220,9 +209,7 @@ class LLMBackend:
 
     def declared(self, source: str = "programmatic") -> np.ndarray:
         if source == "programmatic":
-            S = self.true_skill()
-            rng = np.random.default_rng(stable_seed_32(self.seed, "declared"))
-            return np.clip(S + rng.normal(0, self.declared_noise, S.shape), 0, 1).astype(np.float32)
+            return noisy_declared(self.true_skill(), self.seed, self.declared_noise)
         if source != "self_described":
             raise ValueError(source)
         path = self.dir / "D_self_described.npy"
@@ -273,7 +260,6 @@ class LLMBackend:
         return families.question(self.families[int(f)], int(inst))
 
     def stats(self) -> dict:
-        from .. import llm_client
         s = llm_client.stats()
         return {"llm_executions": self._counts["executions"],
                 "llm_tool_calls": self._counts["tool_calls"],
@@ -288,8 +274,3 @@ def current_backend() -> LLMBackend | None:
     exposes no backend handle; this is how llm_supervisor and the framework rivals reach the agent
     descriptions, the family descriptions and the concrete task text."""
     return _CURRENT
-
-
-if __name__ == "__main__":                    # python -m rte.backends.llm --measure --dist ...
-    from ..measure import main
-    sys.exit(main())

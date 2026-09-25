@@ -1,7 +1,6 @@
 """Build one population, MEASURE its true skill, write both declared channels, apply the gate.
 
-    python -m rte.backends.llm --measure --dist specialist --n 100 --K 16 --seed 1
-    python -m rte.measure                --dist specialist --n 100 --K 16 --seed 1
+    python -m rte.measure --dist specialist --n 100 --K 16 --seed 1
 
 Writes S.npy, profiles.json, D_programmatic.npy, D_self_described.npy, descriptions.json and
 summary.json under $RTE_DATA/populations/<dist>_n<n>_K<K>_seed<seed>/. Exits 3 if the population
