@@ -1,9 +1,42 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "rte"
 version = "0.1.0"
+description = "MIDIAN / RTE: routing tasks to experts when some agents lie -- a paired, cost-accounted benchmark of routing mechanisms and agent frameworks"
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [{ name = "Anonymous Authors" }]
 requires-python = ">=3.12"
-dependencies = ["numpy>=1.26", "pyyaml", "pandas", "scipy"]
+classifiers = ["License :: OSI Approved :: MIT License", "Programming Language :: Python :: 3"]
+# Lower bounds are the versions every reported number was produced with (requirements.txt pins them exactly).
+dependencies = ["numpy>=2.3", "pandas>=3.0", "scipy>=1.18", "pyyaml>=6.0"]
+
+[project.optional-dependencies]
+learned = ["torch>=2.11", "sentence-transformers>=6.0", "scikit-learn>=1.9", "hnswlib>=0.8", "trueskill>=0.4.5"]
+llm = ["openai>=3.7", "reasoning-gym>=0.1.25", "requests>=2.34", "huggingface_hub>=1.29"]
+figures = ["matplotlib>=3.11"]
+test = ["pytest>=9.1"]
+dev = ["ruff>=0.6"]
+all = ["rte[learned,llm,figures,test,dev]"]
+
 [tool.setuptools.packages.find]
-include = ["rte*"]
+include = ["rte*"]          # namespaces on: also picks up rte/methods/frameworks/workers (no __init__.py)
+
+[tool.setuptools.package-data]
+"rte.methods.frameworks" = ["NOTES_*.md"]
+
+[tool.ruff]
+line-length = 120
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+addopts = "-m 'not slow and not fleet'"
+markers = [
+    "slow: minutes per test (kNN / MLP routers with MiniLM embeddings); run with -m slow",
+    "data: needs staged datasets or populations under $RTE_DATA; skipped when absent",
+    "fleet: needs a served vLLM fleet (endpoints.json); deselected by default",
+    "fwenv: needs a framework virtual environment under $RTE_DATA/env; skipped when absent",
+]
