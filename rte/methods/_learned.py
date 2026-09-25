@@ -3,7 +3,8 @@
 The routers train on exactly MIDIAN's probe budget (b probes per agent per family), but keep the prompt text of every
 probe: a router "on our terms" learns a map (prompt, agent) -> outcome from the probes it paid for, then scores every
 agent on the incoming task's text. Embeddings are all-MiniLM-L6-v2 on CPU (the encoder with which RouterBench's own
-routers were run on this benchmark); the embedding arithmetic is not in the ledger, like the frameworks' TF-IDF shortlist.
+routers were run on this benchmark); the embedding arithmetic is not in the ledger, like the frameworks' TF-IDF
+shortlist.
 `embed(texts, model=...)` also serves the frameworks' SOTA retrieval stack, which passes a strong Qwen3 embedder."""
 import os, numpy as np
 from ..config import RTE_DATA, count, flag
