@@ -1,5 +1,5 @@
 """SPEC §6A rows 1-4 (LangGraph, CrewAI, AutoGen, Magentic-One) end to end against
-`scripts/mock_openai_server.py`, so no GPU is needed.
+`scripts/checks/mock_openai_server.py`, so no GPU is needed.
 
 The mock always answers with the FIRST agent named in the request, so a worker that really drives its
 framework's selection primitive returns candidate 0 of the retrieved top-k on every call. Asserting that
@@ -35,7 +35,7 @@ def mock_url():
     with socket.socket() as s:
         s.bind(("127.0.0.1", 0))
         port = s.getsockname()[1]
-    proc = subprocess.Popen([sys.executable, os.path.join(REPO, "scripts", "mock_openai_server.py"), str(port)],
+    proc = subprocess.Popen([sys.executable, os.path.join(REPO, "scripts", "checks", "mock_openai_server.py"), str(port)],
                             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     for _ in range(200):
         try:

@@ -1,6 +1,6 @@
 # The agent model ladder (SPEC §1). THE ONLY PLACE A MODEL ID IS WRITTEN, besides
 # `SUPERVISOR` in rte/methods/frameworks/_common.py. Read by rte.backends.llm (population
-# building) and by scripts/serve_fleet.sbatch (which GPU, which port, how much HBM).
+# building) and by cluster/slurm/serve_fleet.sbatch (which GPU, which port, how much HBM).
 # Swapping the ladder = editing this file. Nothing in the code changes.
 #
 # gpu_share is the fraction of one GPU's HBM given to that server; shares on the same gpu

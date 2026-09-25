@@ -5,6 +5,9 @@ __pycache__/
 *.egg-info/
 slurm-*.out
 slurm-*.err
+cluster/cluster.env
+figures/bars/
+figures/shortlist/
 .claude/
 context_files/
 *.log

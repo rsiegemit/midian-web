@@ -1,8 +1,11 @@
-"""The figure legend rule (scripts/extra_figs.py): entries ranked best first by what they plot, read row-major."""
+"""The exploratory figures' legend rule (scripts/figures/lib/legend_rank.py): entries ranked best first by what they
+plot, read row-major."""
 import os, sys
 import matplotlib; matplotlib.use("Agg"); import matplotlib.pyplot as plt
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "scripts"))
-from extra_figs import _rowmajor  # noqa: E402  (import also installs the rule)
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from scripts.figures.lib.legend_rank import _rowmajor, install  # noqa: E402
+
+install()                                   # opt-in: importing the module changes nothing
 
 
 def _grid(leg, ncol):

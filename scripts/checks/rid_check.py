@@ -8,6 +8,7 @@ current row_id) and are skipped unless --all.
 
     PYTHONPATH=. python scripts/checks/rid_check.py [--results $RTE_DATA/results] [--n 30] [--seed 0]
 """
+
 import argparse
 import json
 import os
@@ -28,7 +29,7 @@ def sample_rows_d(path, n, rng):
         try:
             with open(f"{path}/{names[i]}") as fh:
                 out.append((names[i][:-5], json.load(fh)))
-        except (FileNotFoundError, json.JSONDecodeError):    # merged-and-pruned or mid-write under a live job
+        except (FileNotFoundError, json.JSONDecodeError):  # merged-and-pruned or mid-write under a live job
             pass
     return out
 
@@ -39,7 +40,7 @@ def sample_rows_csv(path, n, rng):
         lines = sum(1 for _ in fh) - 1
     if lines <= 0:
         return []
-    keep = {int(i) + 1 for i in rng.choice(lines, min(n, lines), replace=False)}    # +1: skip the header line
+    keep = {int(i) + 1 for i in rng.choice(lines, min(n, lines), replace=False)}  # +1: skip the header line
     df = pd.read_csv(path, skiprows=lambda i: i != 0 and i not in keep, low_memory=False)
     if "rid" not in df.columns:
         return [(None, r) for _, r in df.iterrows()]

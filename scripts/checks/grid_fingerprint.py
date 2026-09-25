@@ -7,15 +7,14 @@ print one TSV line: grid, units, method_rows, sha256 of the sorted row ids (firs
 rte_data_dep = 1 when some backend_kwargs string changes under $RTE_DATA / env-var expansion, i.e. the grid's row ids
 depend on where RTE_DATA points (decision D1 changes exactly these ids).
 
-    PYTHONPATH=. python scripts/checks/grid_fingerprint.py [--config configs/grid.yaml] [--grids a,b] > fp.tsv
+    PYTHONPATH=. python scripts/checks/grid_fingerprint.py [--config configs/grids] [--grids a,b] > fp.tsv
     PYTHONPATH=. python scripts/checks/grid_fingerprint.py --compare tests/golden/grid_fingerprints.tsv
 """
+
 import argparse
 import hashlib
 import os
 import sys
-
-import yaml
 
 from rte import run
 
@@ -56,19 +55,24 @@ def read_tsv(path) -> dict:
 
 def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("--config", default=os.path.join(os.path.dirname(run.__file__), "..", "configs", "grid.yaml"))
+    p.add_argument(
+        "--config", help="a config directory or single YAML file (default: rte.run.load_config's configs/grids)"
+    )
     p.add_argument("--grids", help="comma-separated subset (default: all)")
     p.add_argument("--compare", metavar="TSV", help="diff against a golden TSV; exit 1 on any difference")
     a = p.parse_args(argv)
-    cfg = yaml.safe_load(open(a.config))
+    cfg = run.load_config(a.config)
     names = a.grids.split(",") if a.grids else grid_names(cfg)
     rows = [fingerprint(cfg, g) for g in names]
     print("\t".join(COLUMNS))
     for r in rows:
         print("\t".join(str(r[c]) for c in COLUMNS), flush=True)
     dep = [r["grid"] for r in rows if r["rte_data_dep"]]
-    print(f"# {len(rows)} grids, {sum(r['units'] for r in rows):,} units, {sum(r['method_rows'] for r in rows):,} "
-          f"method rows; {len(dep)} RTE_DATA-dependent: {','.join(dep)}", file=sys.stderr)
+    print(
+        f"# {len(rows)} grids, {sum(r['units'] for r in rows):,} units, {sum(r['method_rows'] for r in rows):,} "
+        f"method rows; {len(dep)} RTE_DATA-dependent: {','.join(dep)}",
+        file=sys.stderr,
+    )
     if a.compare:
         gold = read_tsv(a.compare)
         bad = [r["grid"] for r in rows if any(str(r[c]) != gold.get(r["grid"], {}).get(c) for c in COLUMNS)]

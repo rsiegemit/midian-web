@@ -1,5 +1,5 @@
-"""Framework rivals whose venvs `scripts/fw_envs/{maf,openai_agents,google_adk,llamaindex}.sh` build, driven
-against `scripts/mock_openai_server.py` -- no GPU, no vLLM. The mock always routes to the FIRST agent named in
+"""Framework rivals whose venvs `scripts/setup/fw_envs/{maf,openai_agents,google_adk,llamaindex}.sh` build, driven
+against `scripts/checks/mock_openai_server.py` -- no GPU, no vLLM. The mock always routes to the FIRST agent named in
 the request, so asserting the pick IS the first retrieved candidate proves we intercept the framework's real
 selection rather than any default. The fallback test needs no venv: it drives `FrameworkMethod` directly."""
 from __future__ import annotations
@@ -31,13 +31,13 @@ CASES = [("fw_maf", {}, True), ("fw_maf", {"mode": "handoff"}, False), ("fw_open
 
 def _built(name):
     py = os.path.join(RTE_DATA, "env", load_method(name).env, "bin", "python")
-    return py if os.path.exists(py) else pytest.skip(f"venv for {name} not built (scripts/fw_envs/*.sh)")
+    return py if os.path.exists(py) else pytest.skip(f"venv for {name} not built (scripts/setup/fw_envs/*.sh)")
 
 
 @pytest.fixture(scope="module")
 def mock_url():
     port = next(p for p in range(8200, 8300) if socket.socket().connect_ex(("127.0.0.1", p)) != 0)
-    proc = subprocess.Popen([sys.executable, os.path.join(REPO, "scripts", "mock_openai_server.py"), str(port)],
+    proc = subprocess.Popen([sys.executable, os.path.join(REPO, "scripts", "checks", "mock_openai_server.py"), str(port)],
                             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     url = f"http://127.0.0.1:{port}/v1"
     for _ in range(100):

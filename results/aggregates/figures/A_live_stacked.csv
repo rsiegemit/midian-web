@@ -1,0 +1,81 @@
+group,regime,arm,key,b,chosen,value,ci_lo,ci_hi,b_invariant
+n = 100,honest,MIDIAN,midian,5,midian,0.8121,0.8037834168340866,0.8204165831659135,False
+n = 100,honest,MIDIAN,midian,3,midian,0.7816,0.7694818776665322,0.7937181223334677,False
+n = 100,honest,MIDIAN,midian,1,midian,0.7104999999999999,0.6986347847329543,0.7223652152670456,False
+n = 100,β=0.5 cartel,MIDIAN,midian,5,midian,0.8121,0.8037834168340866,0.8204165831659135,False
+n = 100,β=0.5 cartel,MIDIAN,midian,3,midian,0.768,0.7560055568421595,0.7799944431578405,False
+n = 100,β=0.5 cartel,MIDIAN,midian,1,midian,0.6972,0.6858345552953995,0.7085654447046006,False
+n = 100,honest,MIDIAN w/o defenses,midian_wo_defenses,3,midian_wo_defenses,0.77705,0.7673958197286412,0.7865375136046922,False
+n = 100,β=0.5 cartel,MIDIAN w/o defenses,midian_wo_defenses,3,midian_wo_defenses,0.7405,0.7321078740608963,0.7488921259391038,False
+n = 100,honest,flat probe argmax,flat_probe_argmax_online,3,flat_probe_argmax_online,0.7805,0.773182972674037,0.7878170273259629,False
+n = 100,β=0.5 cartel,flat probe argmax,flat_probe_argmax_online,3,flat_probe_argmax_online,0.7805,0.773182972674037,0.7878170273259629,False
+n = 100,honest,best learned/declared router,best_learned,3,knn_router_online x10,0.7375999999999999,0.7261571953709862,0.7490428046290136,False
+n = 100,β=0.5 cartel,best learned/declared router,best_learned,3,knn_router_online x10,0.7375999999999999,0.7261571953709862,0.7490428046290136,False
+n = 100,honest,best bandit,best_bandit,3,linucb_honest[bonus=own] x10,0.7524,0.7438739614513342,0.7609260385486657,False
+n = 100,β=0.5 cartel,best bandit,best_bandit,3,linucb_honest[bonus=own] x10,0.7524,0.7438739614513342,0.7609260385486657,False
+n = 100,honest,declared argmax,declared_argmax,-,declared_argmax,0.5991000000000002,0.5887834006464233,0.6094165993535771,True
+n = 100,β=0.5 cartel,declared argmax,declared_argmax,-,declared_argmax,0.5181,0.5001863490910176,0.5360136509089825,True
+n = 100,honest,best framework,best_framework,-,fw_magentic_one | embed x10,0.6111,0.5975759884320927,0.6246240115679073,False
+n = 100,β=0.5 cartel,best framework,best_framework,-,fw_magentic_one | sota x10,0.5660999999999999,0.5548133805868285,0.5773866194131714,False
+n = 100,honest,random,random,-,random,0.4258,0.41670445774629744,0.4348955422537026,True
+n = 100,β=0.5 cartel,random,random,-,random,0.4258,0.41670445774629744,0.4348955422537026,True
+"n = 1,000",honest,MIDIAN,midian,5,midian,0.8376999999999999,0.8340301528944957,0.8413698471055041,False
+"n = 1,000",honest,MIDIAN,midian,3,midian,0.8134,0.809151601608972,0.817648398391028,False
+"n = 1,000",honest,MIDIAN,midian,1,midian,0.6913,0.685524476935665,0.6970755230643351,False
+"n = 1,000",β=0.5 cartel,MIDIAN,midian,5,midian,0.8375,0.8338599450553598,0.8411400549446403,False
+"n = 1,000",β=0.5 cartel,MIDIAN,midian,3,midian,0.8074,0.8018859774715328,0.8129140225284672,False
+"n = 1,000",β=0.5 cartel,MIDIAN,midian,1,midian,0.6914,0.6843917508923016,0.6984082491076984,False
+"n = 1,000",honest,MIDIAN w/o defenses,midian_wo_defenses,3,midian_wo_defenses,0.7889833333333334,0.7876861353493857,0.791060531317281,False
+"n = 1,000",β=0.5 cartel,MIDIAN w/o defenses,midian_wo_defenses,3,midian_wo_defenses,0.7379166666666667,0.7312038058756178,0.7446295274577155,False
+"n = 1,000",honest,flat probe argmax,flat_probe_argmax_online,3,flat_probe_argmax_online,0.7871000000000001,0.7836650250288141,0.790434974971186,False
+"n = 1,000",β=0.5 cartel,flat probe argmax,flat_probe_argmax_online,3,flat_probe_argmax_online,0.7869,0.7836189093954059,0.7901810906045942,False
+"n = 1,000",honest,best learned/declared router,best_learned,3,knn_router_online x10,0.7656,0.7595571897634001,0.7716428102365998,False
+"n = 1,000",β=0.5 cartel,best learned/declared router,best_learned,3,knn_router_online x10,0.7656,0.7595571897634001,0.7716428102365998,False
+"n = 1,000",honest,best bandit,best_bandit,3,warm_start_bandit[n0=0.5] x10,0.7737,0.7702776875913759,0.7771223124086242,False
+"n = 1,000",β=0.5 cartel,best bandit,best_bandit,3,warm_start_bandit x7; warm_start_bandit[n0=0.5] x3,0.7636000000000001,0.7602427524501296,0.7669572475498705,False
+"n = 1,000",honest,declared argmax,declared_argmax,-,declared_argmax,0.6154499999999999,0.6036454469932191,0.6272878863401141,True
+"n = 1,000",β=0.5 cartel,declared argmax,declared_argmax,-,declared_argmax,0.5202000000000001,0.5057694767939621,0.5346305232060381,True
+"n = 1,000",honest,best framework,best_framework,-,fw_magentic_one | embed x10,0.6315,0.6196450900935988,0.6433549099064011,False
+"n = 1,000",β=0.5 cartel,best framework,best_framework,-,fw_magentic_one | embed x10,0.5598,0.5496021788819594,0.5699978211180405,False
+"n = 1,000",honest,random,random,-,random,0.43215,0.42732177317979575,0.436944893486871,True
+"n = 1,000",β=0.5 cartel,random,random,-,random,0.43215,0.4273080249667907,0.43699197503320936,True
+"n = 10,000",honest,MIDIAN,midian,5,midian,0.8355555555555556,0.8144444444444445,0.8566666666666667,False
+"n = 10,000",honest,MIDIAN,midian,3,midian,0.8111111111111112,0.7883130171903521,0.8339092050318704,False
+"n = 10,000",honest,MIDIAN,midian,1,midian,0.6677777777777778,0.6555555555555556,0.68,False
+"n = 10,000",β=0.5 cartel,MIDIAN,midian,5,midian,0.831111111111111,0.8155555555555555,0.8466666666666666,False
+"n = 10,000",β=0.5 cartel,MIDIAN,midian,3,midian,0.81,0.788311976337841,0.8316880236621591,False
+"n = 10,000",β=0.5 cartel,MIDIAN,midian,1,midian,0.6699999999999999,0.6573802036759994,0.6826197963240005,False
+"n = 10,000",honest,MIDIAN w/o defenses,midian_wo_defenses,3,midian_wo_defenses,0.785,0.763955366162476,0.8056742634671535,False
+"n = 10,000",β=0.5 cartel,MIDIAN w/o defenses,midian_wo_defenses,3,midian_wo_defenses,0.7522222222222222,0.7241790456352801,0.7802653988091643,False
+"n = 10,000",honest,flat probe argmax,flat_probe_argmax_online,3,flat_probe_argmax_online,0.7744444444444444,0.7413651656867754,0.8075237232021134,False
+"n = 10,000",β=0.5 cartel,flat probe argmax,flat_probe_argmax_online,3,flat_probe_argmax_online,0.7744444444444444,0.741709066971875,0.8071798219170138,False
+"n = 10,000",honest,best learned/declared router,best_learned,3,flat_nsw_router x3,0.7455555555555554,0.726278498252336,0.7648326128587748,False
+"n = 10,000",β=0.5 cartel,best learned/declared router,best_learned,3,flat_nsw_router x3,0.7455555555555554,0.726278498252336,0.7648326128587748,False
+"n = 10,000",honest,best bandit,best_bandit,3,trueskill_per_family x2; warm_start_bandit[n0=0.5] x1,0.7622222222222224,0.7427539828134054,0.7816904616310393,False
+"n = 10,000",β=0.5 cartel,best bandit,best_bandit,3,warm_start_bandit x3,0.7833333333333333,0.7496133535433478,0.8170533131233189,False
+"n = 10,000",honest,declared argmax,declared_argmax,-,declared_argmax,0.6577777777777777,0.6213984321250112,0.6941571234305441,True
+"n = 10,000",β=0.5 cartel,declared argmax,declared_argmax,-,declared_argmax,0.5322222222222223,0.49229945728172964,0.5721449871627149,True
+"n = 10,000",honest,best framework,best_framework,-,fw_magentic_one | dense_idemo x3,0.62,0.6149082492278268,0.6250917507721732,False
+"n = 10,000",β=0.5 cartel,best framework,best_framework,-,fw_magentic_one | dense_icomp x3,0.6233333333333332,0.611627051385719,0.6350396152809473,False
+"n = 10,000",honest,random,random,-,random,0.4166666666666667,0.3912079128058009,0.44212542052753245,True
+"n = 10,000",β=0.5 cartel,random,random,-,random,0.4166666666666667,0.3912079128058009,0.44212542052753245,True
+"n = 100,000",honest,MIDIAN,midian,5,midian,0.8533333333333334,0.8356949912595695,0.8709716754070973,False
+"n = 100,000",honest,MIDIAN,midian,3,midian,0.8355555555555556,0.8224911377596613,0.8486199733514499,False
+"n = 100,000",honest,MIDIAN,midian,1,midian,0.64,0.6111324865405188,0.6688675134594813,False
+"n = 100,000",β=0.5 cartel,MIDIAN,midian,5,midian,0.8522222222222222,0.8354080600550872,0.8690363843893573,False
+"n = 100,000",β=0.5 cartel,MIDIAN,midian,3,midian,0.8277777777777778,0.8204917349729979,0.8350638205825578,False
+"n = 100,000",β=0.5 cartel,MIDIAN,midian,1,midian,0.6177777777777778,0.5948178018669201,0.6407377536886354,False
+"n = 100,000",honest,MIDIAN w/o defenses,midian_wo_defenses,3,midian_wo_defenses,0.7522222222222222,0.7300834901720319,0.7743609542724126,False
+"n = 100,000",β=0.5 cartel,MIDIAN w/o defenses,midian_wo_defenses,3,midian_wo_defenses,0.7055555555555556,0.6847982870085896,0.7263128241025216,False
+"n = 100,000",honest,flat probe argmax,flat_probe_argmax_online,3,flat_probe_argmax_online,0.7488888888888888,0.7184395786532339,0.7793381991245437,False
+"n = 100,000",β=0.5 cartel,flat probe argmax,flat_probe_argmax_online,3,flat_probe_argmax_online,0.7488888888888888,0.7184395786532339,0.7793381991245437,False
+"n = 100,000",honest,best learned/declared router,best_learned,3,knn_router_online x3,0.7411111111111112,0.721738226917597,0.7604839953046253,False
+"n = 100,000",β=0.5 cartel,best learned/declared router,best_learned,3,knn_router_online x3,0.7411111111111112,0.721738226917597,0.7604839953046253,False
+"n = 100,000",honest,best bandit,best_bandit,3,warm_start_bandit[n0=0.5] x3,0.7544444444444446,0.7321390445556838,0.7767498443332054,False
+"n = 100,000",β=0.5 cartel,best bandit,best_bandit,3,warm_start_bandit x3,0.7777777777777777,0.7556390457275873,0.799916509827968,False
+"n = 100,000",honest,declared argmax,declared_argmax,-,declared_argmax,0.6222222222222222,0.596594305345176,0.6478501390992685,True
+"n = 100,000",β=0.5 cartel,declared argmax,declared_argmax,-,declared_argmax,0.5777777777777778,0.5575628828903776,0.5979926726651781,True
+"n = 100,000",honest,best framework,best_framework,-,fw_magentic_one | dense_icomp x2; fw_magentic_one | dense_idemo x1,0.6166666666666667,0.5981074521238999,0.6352258812094335,False
+"n = 100,000",β=0.5 cartel,best framework,best_framework,-,fw_magentic_one | dense_icomp x3,0.6088888888888889,0.5960749304503659,0.621702847327412,False
+"n = 100,000",honest,random,random,-,random,0.4422222222222222,0.42619754988682673,0.45824689455761775,True
+"n = 100,000",β=0.5 cartel,random,random,-,random,0.4422222222222222,0.42619754988682673,0.45824689455761775,True

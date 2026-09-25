@@ -127,12 +127,6 @@ def test_repo_config_resolves(cfg):
             assert run.method_specs(blk), g
 
 
-def test_flat_grid_yaml_in_sync(cfg):
-    """configs/grid.yaml is generated from configs/grids/ (python configs/export_grid_yaml.py)."""
-    flat = run.load_config(os.path.join(ROOT, "configs", "grid.yaml"))
-    assert flat["grids"] == cfg["grids"] and flat["defaults"] == cfg["defaults"]
-
-
 def test_every_grid_has_a_header_tag():
     first = r"(FIG:[A-I](,[A-I])*|NUM|HIST|SUPERSEDED-BY:\w+|PENDING|SMOKE)"
     tag = re.compile(r"^  # \[" + first + r"( \| [^\]]+)?\] .+; read by: .+")

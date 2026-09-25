@@ -136,7 +136,8 @@ _sets:
     - flat_nsw_router
     - cnp_self_bid
     - random
-  # 2026-09-17 coverage fill (COVERAGE.md §6): rivals that were cheap and simply never scheduled on the sweeps
+  # 2026-09-17 coverage fill (docs/archive/COVERAGE.md §6): rivals that were cheap and simply never scheduled on the
+  # sweeps
   fill_arms:
     - linucb_honest
     - disrouter_cascade
