@@ -1295,8 +1295,7 @@ it. Routing a task walks down the tree from the root, about log_r n steps, inste
 ### 2.3.8 Hyperparameters
 
 - r = 10 and δ = 1/3 are the tree's defaults.
-- The audit rate 0.05 is `AUDIT_RATE` (`midian.py`, used when `audit=True`), and `STRIKES = 2` is marked "work order
-  1.2".
+- The audit rate 0.05 is `AUDIT_RATE` (`midian.py`, used when `audit=True`), and `STRIKES = 2` comes from the v2 plan (item 1.2).
 - `b0 = b − 1` and `observers = r − 1` are defaults.
 - None of these was tuned on reported seeds, as far as the code and grid comments show.
 
