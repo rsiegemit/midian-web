@@ -16,8 +16,10 @@ differs from today's rerun ("stale"). So the gate for a refactor is --baseline: 
 made on the base tree and require the fresh rows to be identical to the base tree's fresh rows (exact, every
 non-wall_clock column), while still reporting each row against the stored one.
 
-Re-running one method alone is faithful: run_method re-seeds the world from the method's own key (world.reset) and the
-oracle line is replayed first exactly as in the original unit, so a unit's rows do not depend on its other methods.
+Re-running one method alone is faithful: world.reset() zeroes the ledger and the probe index and undoes churn before
+every method, a method's only random stream is its View's rng (seeded by the world seed and the method's `needs`, never
+by which methods ran before it), and the oracle line is replayed first exactly as in the original unit, so a unit's
+rows do not depend on its other methods.
 
 Exempt, and why:
   * fw_* (framework rivals, even on routereval): each task is a request to an LLM supervisor endpoint with no memo that
