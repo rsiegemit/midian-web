@@ -17,13 +17,13 @@ n,regime,shortlist,mean,best,k,star,name
 100,cartel,sota_idemo,0.5235333333333333,0.573,10,False,"fusion + reranker, demonstration instr."
 100,cartel,tfidf,0.46699999999999997,0.4844,10,False,hashed TF-IDF
 100,cartel,va_cohort,0.55974,0.6103,10,False,MIDIAN shortlist
-1000,beta0,bm25,0.4229444444444444,0.5321,9,False,BM25
+1000,beta0,bm25,0.41895,0.5321,10,False,BM25
 1000,beta0,declared,0.6131666666666666,0.6263333333333333,10,False,declared top-k
 1000,beta0,dense,0.46293999999999996,0.5947,10,False,"dense (Qwen3-8B), no instr."
 1000,beta0,dense_icomp,0.5032333333333334,0.6086666666666667,10,False,"dense, competence instr."
 1000,beta0,dense_idemo,0.4963666666666667,0.6163333333333333,10,False,"dense, demonstration instr."
 1000,beta0,embed,0.50883,0.6315,10,False,MiniLM
-1000,beta0,sota,0.47484444444444446,0.5131,9,False,"fusion + reranker, no instr."
+1000,beta0,sota,0.48602999999999996,0.5867,10,False,"fusion + reranker, no instr."
 1000,beta0,sota_icomp,0.5024,0.593,10,False,"fusion + reranker, competence instr."
 1000,beta0,sota_idemo,0.49759999999999993,0.5903333333333333,10,False,"fusion + reranker, demonstration instr."
 1000,beta0,tfidf,0.38462,0.4313,10,False,hashed TF-IDF
