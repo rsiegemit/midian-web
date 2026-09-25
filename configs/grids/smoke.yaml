@@ -1,0 +1,26 @@
+# quick checks: CPU-only, minutes (README quickstart, reviewer grid)
+grids:
+  # [SMOKE] 5-minute CPU pipeline check (README quickstart); read by: analyze
+  smoke:            {n: [100], dist: [specialist], beta: [0, 0.25], Q: 200, seeds: 1-2, methods: {set: all_arms}}
+
+  # [SMOKE] cost-curve smoke on CPU in seconds (README quickstart); read by: none
+  bernoulli_cost_smoke:
+    {n: [100, 1000, 10000], dist: [specialist], beta: [0.25], Q: 500, seeds: 1-3, methods: {set: cost_curve}}
+
+  # [SMOKE] laptop reviewer check: MIDIAN + ablations vs main rivals, honest / cartel, n = 10^2, 10^3; read by: none
+  reviewer_bernoulli:
+    n: [100, 1000]
+    dist: [specialist]
+    beta: [0, 0.5]
+    liar_select: [low_skill_first]
+    b: [3]
+    seeds: 1-5
+    methods:
+      - midian
+      - {name: midian, params: {verify: false}}
+      - {name: midian, params: {audit: false}}
+      - {name: midian, params: {audit: false, verify: false}}
+      - declared_argmax
+      - {name: flat_probe_argmax, params: {online: true}}
+      - warm_start_bandit
+      - random

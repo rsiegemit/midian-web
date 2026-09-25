@@ -1,0 +1,56 @@
+# superseded or historical grids, read by no current figure (kept: a name is a results dir)
+grids:
+  # [SUPERSEDED-BY:live_n10k_v2] first live n = 10^4 row (b = 1, programmatic); read by: none
+  live_n10k:
+    backend: llm
+    n: [10000]
+    dist: [specialist]
+    beta: [0, 0.25]
+    b: [1]
+    exclude: [trueskill_per_family]
+    methods: {set: all_arms}
+
+  # ---- bernoulli twins of every live grid: exercise the pipeline before the fleet is up (never headline numbers)
+  # [HIST] bernoulli twin (pipeline check before the fleet, never headline) on live_core_n100; read by: none
+  bernoulli_mirror_live_core_n100:   {mirror_of: live_core_n100,   backend: bernoulli, seeds: 1-10, Q: 2000}
+
+  # [HIST] bernoulli twin (pipeline check before the fleet, never headline) on live_f1_n1000; read by: none
+  bernoulli_mirror_live_f1_n1000:    {mirror_of: live_f1_n1000,    backend: bernoulli, seeds: 1-10, Q: 2000}
+
+  # [HIST] bernoulli twin (pipeline check before the fleet, never headline) on live_extra_n1000; read by: none
+  bernoulli_mirror_live_extra_n1000: {mirror_of: live_extra_n1000, backend: bernoulli, seeds: 1-10, Q: 2000}
+
+  # [HIST] bernoulli twin (pipeline check before the fleet, never headline) on live_n10k; read by: none
+  bernoulli_mirror_live_n10k:        {mirror_of: live_n10k,        backend: bernoulli, seeds: 1-10, Q: 2000}
+
+  # [HIST] bernoulli twin (pipeline check before the fleet, never headline) on budget_sweep; read by: none
+  bernoulli_mirror_budget_sweep:     {mirror_of: budget_sweep,     backend: bernoulli, seeds: 1-10, Q: 2000}
+
+  # [HIST] bernoulli twin (pipeline check before the fleet, never headline) on midian_internals; read by: none
+  bernoulli_mirror_midian_internals: {mirror_of: midian_internals, backend: bernoulli, seeds: 1-10, Q: 2000}
+
+  # replay has no self-description channel
+  # [HIST] replay twin (RouterBench outcomes, K = 64) on live_extra_n1000; read by: none
+  replay_mirror_live_extra_n1000:
+    mirror_of: live_extra_n1000
+    backend: replay
+    K: [64]
+    seeds: 1-10
+    Q: 2000
+    declared_source: [programmatic]
+
+  # [SUPERSEDED-BY:routereval5k_norep_cal] erratum 30 (a), repeated prompts; never run; read by: none
+  routereval5k_cal:
+    mirror_of: va_b_routereval5k
+    backend_kwargs: {dataset: leaderboard_mmlu, shuffle: true}
+    declared_source: [calibrated]
+    methods: {set: cal_arms}
+    blocks: [{b: [1, 5]}, {b: [3], methods: [{set: cal_arms}, declared_argmax]}]
+
+  # [SUPERSEDED-BY:llmrouterbench_norep_cal] erratum 30 (a), repeated prompts; never run; read by: none
+  llmrouterbench_cal:
+    mirror_of: va_b_llmrouterbench
+    backend_kwargs: {dataset: llmrouterbench, shuffle: true}
+    declared_source: [calibrated]
+    methods: {set: cal_arms}
+    blocks: [{b: [1, 5]}, {b: [3], methods: [{set: cal_arms}, declared_argmax]}]

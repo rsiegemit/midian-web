@@ -1,0 +1,511 @@
+# configs/grids/ -- named grids for `python -m rte.run --grid <name>`, read by rte.run.load_config() in sorted file
+# order: this file holds `defaults` and `_sets`; every other file holds only `grids:` (a name defined twice raises; so
+# does a duplicate key anywhere). Axes: backend n K dist beta liar_select collude declared_source lie_mode demand b Q
+# (lists = cartesian product). methods: an explicit list of `name` | {name, params} | {set: NAME} (a set of methods
+# flattens into the list). `mirror_of: <grid>` copies that grid (any file), then overrides; `use: NAME` merges the
+# mapping _sets[NAME] under the grid's own keys. `blocks:` = several axis blocks in one grid. The runner always adds
+# an `oracle` row per (cell, seed). YAML anchors/aliases are not used: they cannot cross files.
+# Every grid carries one header line: [tags] purpose; read by: scripts. Tags: FIG:<letters> = drawn in condensed
+# figure(s) A-I (docs/FIGURE_DATA_GUIDE.md); NUM = feeds numbers/tables but no figure; HIST = historical, read by no
+# current script; SUPERSEDED-BY:<grid> = a later grid replaces it in the figures; PENDING = defined, rows outstanding;
+# SMOKE = quick check. Grids are never deleted: a name is its results directory and part of every row id.
+defaults:
+  backend: bernoulli
+  K: [16]
+  liar_select: [random]
+  collude: [true]
+  declared_source: [programmatic]
+  lie_mode: [inflate]
+  demand: [uniform]
+  b: [3]
+  Q: 1000
+  seeds: 1-5
+  exclude: []
+_sets:
+  live: {backend: llm, n: [1000], dist: [specialist, heavy_tail, bimodal], beta: [0, 0.1, 0.25, 0.5],
+         liar_select: [random, low_skill_first], declared_source: [programmatic, self_described]}   # grid: `use: live`
+  core4:
+    - {name: midian, params: {audit: false, verify: false}}
+    - {name: midian, params: {audit: false, verify: false, r: 5}}
+    - {name: midian, params: {audit: false}}
+    - {name: midian, params: {audit: false, r: 5}}
+    - random
+    - declared_argmax
+    - flat_probe_argmax
+  budget:
+    - {name: midian, params: {audit: false, verify: false}}
+    - {name: midian, params: {audit: false, verify: false, r: 5}}
+    - {name: midian, params: {audit: false}}
+    - {name: midian, params: {audit: false, r: 5}}
+    - flat_probe_argmax
+    - ucb_per_family
+    - thompson_per_family
+    - sequential_halving
+    - verify_on_claim
+    - warm_start_bandit
+    - referral_network
+    - gossip_reputation_greedy
+    - declared_argmax
+    - random
+    - {name: midian, params: {verify: false}}
+    - midian
+  midian_variants:
+    - flat_probe_argmax
+    - {name: midian, params: {audit: false, verify: false, r: 5, delta: 0.0}}
+    - {name: midian, params: {audit: false, verify: false, r: 5, delta: 0.3333333333333333}}
+    - {name: midian, params: {audit: false, verify: false, r: 10, delta: 0.0}}
+    - {name: midian, params: {audit: false, verify: false, r: 10, delta: 0.3333333333333333}}
+    - {name: midian, params: {audit: false, verify: false, r: 20, delta: 0.0}}
+    - {name: midian, params: {audit: false, verify: false, r: 20, delta: 0.3333333333333333}}
+    # MIDIAN w/o audits at r=5: half the reports, equal quality on bernoulli
+    - {name: midian, params: {audit: false, r: 5}}
+    - {name: midian, params: {audit: false, r: 20}}
+    - {name: midian, params: {audit: false, r: 10}}      # added 2026-09-02 16:10 to complete the w/o-audits r-sweep
+  # SPEC §6A: the frameworks are the paper's HEADLINE comparison, so they ride the core grid too
+  frameworks: [fw_langgraph, fw_crewai, fw_autogen, fw_magentic_one, fw_maf, fw_openai_agents, fw_google_adk,
+               fw_llamaindex, fw_smolagents, fw_camel_workforce]
+  # same frameworks, shortlist = the leaf cohort of MIDIAN w/o audits instead of TF-IDF over self-descriptions
+  frameworks_verified:
+    - {name: fw_langgraph, params: {retrieval: midian_wo_audit, r: 10}}
+    - {name: fw_langgraph, params: {retrieval: midian_wo_audit, r: 5}}
+    - {name: fw_crewai, params: {retrieval: midian_wo_audit, r: 10}}
+    - {name: fw_crewai, params: {retrieval: midian_wo_audit, r: 5}}
+    - {name: fw_autogen, params: {retrieval: midian_wo_audit, r: 10}}
+    - {name: fw_autogen, params: {retrieval: midian_wo_audit, r: 5}}
+    - {name: fw_magentic_one, params: {retrieval: midian_wo_audit, r: 10}}
+    - {name: fw_magentic_one, params: {retrieval: midian_wo_audit, r: 5}}
+    - {name: fw_maf, params: {retrieval: midian_wo_audit, r: 10}}
+    - {name: fw_maf, params: {retrieval: midian_wo_audit, r: 5}}
+    - {name: fw_openai_agents, params: {retrieval: midian_wo_audit, r: 10}}
+    - {name: fw_openai_agents, params: {retrieval: midian_wo_audit, r: 5}}
+    - {name: fw_google_adk, params: {retrieval: midian_wo_audit, r: 10}}
+    - {name: fw_google_adk, params: {retrieval: midian_wo_audit, r: 5}}
+    - {name: fw_llamaindex, params: {retrieval: midian_wo_audit, r: 10}}
+    - {name: fw_llamaindex, params: {retrieval: midian_wo_audit, r: 5}}
+    - {name: fw_smolagents, params: {retrieval: midian_wo_audit, r: 10}}
+    - {name: fw_smolagents, params: {retrieval: midian_wo_audit, r: 5}}
+    - {name: fw_camel_workforce, params: {retrieval: midian_wo_audit, r: 10}}
+    - {name: fw_camel_workforce, params: {retrieval: midian_wo_audit, r: 5}}
+  fw_paired:
+    - {name: midian, params: {audit: false, verify: false}}
+    - {name: midian, params: {audit: false, verify: false, r: 5}}
+    - {name: midian, params: {audit: false}}
+    - {name: midian, params: {audit: false, r: 5}}
+    - random
+    - declared_argmax
+    - flat_probe_argmax
+    - llm_supervisor
+    - {name: midian, params: {verify: false}}
+    - midian
+  scale_arms:                       # v5 (2026-09-10): the FULL comparison set for the many-seed scale sweeps.
+                                    # Frameworks are absent by construction: these backends declare on the PROGRAMMATIC
+                                    # channel, so there are no self-descriptions to shortlist over -- and the live 10^5
+                                    # run shows the framework shortlist going degenerate at that scale anyway.
+                                    # knn/mlp_router are absent too: they embed n*K*b prompts through MiniLM, which is
+                                    # 1.6e8 at n = 10^7.
+    - {name: midian, params: {audit: false, verify: false}}
+    - {name: midian, params: {audit: false, verify: false, r: 5}}
+    - {name: midian, params: {audit: false}}
+    - {name: midian, params: {audit: false, r: 5}}
+    - {name: midian, params: {verify: false}}
+    - midian
+    - flat_probe_argmax
+    - {name: flat_probe_argmax, params: {online: true}}
+    - flat_nsw_router
+    - declared_argmax
+    - declared_softmax
+    - ucb_per_family
+    - thompson_per_family
+    - warm_start_bandit
+    - sequential_halving
+    - {name: sequential_halving, params: {peer_reported: true}}
+    - cnp_self_bid
+    - cluster_head_router
+    - route_to_k_majority
+    - verify_on_claim
+    - random
+
+  cost_curve:
+    - {name: midian, params: {audit: false, verify: false}}
+    - {name: midian, params: {audit: false, verify: false, r: 5}}
+    - {name: midian, params: {audit: false}}
+    - {name: midian, params: {audit: false, r: 5}}
+    - flat_probe_argmax
+    - declared_argmax
+    - ucb_per_family
+    - flat_nsw_router
+    - cnp_self_bid
+    - random
+  # 2026-09-17 coverage fill (COVERAGE.md §6): rivals that were cheap and simply never scheduled on the sweeps
+  fill_arms:
+    - linucb_honest
+    - disrouter_cascade
+    - referral_network
+    - gossip_reputation_greedy
+    # pure-Python TrueSkill: <= 10^4 only (NotImplemented at >= 10^5 by the file itself)
+    - trueskill_per_family
+  # v4: the three non-random cohort modes crossed with MIDIAN w/o defenses / w/o verification / MIDIAN, plus the
+  # random baseline and the pre-existing stratify arm on identical cells.
+  cohort_arms:
+    - {name: midian, params: {audit: false, verify: false}}
+    - {name: midian, params: {audit: false, verify: false, stratify: true}}
+    - {name: midian, params: {audit: false, verify: false, cohort: block}}
+    - {name: midian, params: {audit: false, verify: false, cohort: specialty}}
+    - {name: midian, params: {audit: false, verify: false, cohort: declared}}
+    - {name: midian, params: {verify: false}}
+    - {name: midian, params: {verify: false, cohort: block}}
+    - {name: midian, params: {verify: false, cohort: specialty}}
+    - {name: midian, params: {verify: false, cohort: declared}}
+    - midian
+    - {name: midian, params: {cohort: block}}
+    - {name: midian, params: {cohort: specialty}}
+    - {name: midian, params: {cohort: declared}}
+  fw10_dd:
+    - {name: fw_langgraph, params: {dedup: true}}
+    - {name: fw_crewai, params: {dedup: true}}
+    - {name: fw_autogen, params: {dedup: true}}
+    - {name: fw_magentic_one, params: {dedup: true}}
+    - {name: fw_maf, params: {dedup: true}}
+    - {name: fw_openai_agents, params: {dedup: true}}
+    - {name: fw_google_adk, params: {dedup: true}}
+    - {name: fw_llamaindex, params: {dedup: true}}
+    - {name: fw_smolagents, params: {dedup: true}}
+    - {name: fw_camel_workforce, params: {dedup: true}}
+  fw14b_dd: {name: fw_magentic_one, params: {dedup: true, supervisor: Qwen/Qwen2.5-14B-Instruct}}
+  fw10_em:
+    - {name: fw_langgraph, params: {retrieval: embed, dedup: true}}
+    - {name: fw_crewai, params: {retrieval: embed, dedup: true}}
+    - {name: fw_autogen, params: {retrieval: embed, dedup: true}}
+    - {name: fw_magentic_one, params: {retrieval: embed, dedup: true}}
+    - {name: fw_maf, params: {retrieval: embed, dedup: true}}
+    - {name: fw_openai_agents, params: {retrieval: embed, dedup: true}}
+    - {name: fw_google_adk, params: {retrieval: embed, dedup: true}}
+    - {name: fw_llamaindex, params: {retrieval: embed, dedup: true}}
+    - {name: fw_smolagents, params: {retrieval: embed, dedup: true}}
+    - {name: fw_camel_workforce, params: {retrieval: embed, dedup: true}}
+  fw14b_em: {name: fw_magentic_one, params: {retrieval: embed, dedup: true, supervisor: Qwen/Qwen2.5-14B-Instruct}}
+  fw10_bm25:
+    - {name: fw_langgraph, params: {retrieval: bm25, dedup: true}}
+    - {name: fw_crewai, params: {retrieval: bm25, dedup: true}}
+    - {name: fw_autogen, params: {retrieval: bm25, dedup: true}}
+    - {name: fw_magentic_one, params: {retrieval: bm25, dedup: true}}
+    - {name: fw_maf, params: {retrieval: bm25, dedup: true}}
+    - {name: fw_openai_agents, params: {retrieval: bm25, dedup: true}}
+    - {name: fw_google_adk, params: {retrieval: bm25, dedup: true}}
+    - {name: fw_llamaindex, params: {retrieval: bm25, dedup: true}}
+    - {name: fw_smolagents, params: {retrieval: bm25, dedup: true}}
+    - {name: fw_camel_workforce, params: {retrieval: bm25, dedup: true}}
+  fw10_dense:
+    - {name: fw_langgraph, params: {retrieval: embed, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B}}
+    - {name: fw_crewai, params: {retrieval: embed, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B}}
+    - {name: fw_autogen, params: {retrieval: embed, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B}}
+    - {name: fw_magentic_one, params: {retrieval: embed, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B}}
+    - {name: fw_maf, params: {retrieval: embed, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B}}
+    - {name: fw_openai_agents, params: {retrieval: embed, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B}}
+    - {name: fw_google_adk, params: {retrieval: embed, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B}}
+    - {name: fw_llamaindex, params: {retrieval: embed, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B}}
+    - {name: fw_smolagents, params: {retrieval: embed, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B}}
+    - {name: fw_camel_workforce, params: {retrieval: embed, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B}}
+  fw10_hybrid:
+    - {name: fw_langgraph, params: {retrieval: hybrid, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B}}
+    - {name: fw_crewai, params: {retrieval: hybrid, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B}}
+    - {name: fw_autogen, params: {retrieval: hybrid, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B}}
+    - {name: fw_magentic_one, params: {retrieval: hybrid, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B}}
+    - {name: fw_maf, params: {retrieval: hybrid, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B}}
+    - {name: fw_openai_agents, params: {retrieval: hybrid, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B}}
+    - {name: fw_google_adk, params: {retrieval: hybrid, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B}}
+    - {name: fw_llamaindex, params: {retrieval: hybrid, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B}}
+    - {name: fw_smolagents, params: {retrieval: hybrid, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B}}
+    - {name: fw_camel_workforce, params: {retrieval: hybrid, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B}}
+  fw10_sota:
+    - name: fw_langgraph
+      params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B}
+    - name: fw_crewai
+      params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B}
+    - name: fw_autogen
+      params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B}
+    - name: fw_magentic_one
+      params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B}
+    - name: fw_maf
+      params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B}
+    - name: fw_openai_agents
+      params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B}
+    - name: fw_google_adk
+      params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B}
+    - name: fw_llamaindex
+      params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B}
+    - name: fw_smolagents
+      params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B}
+    - name: fw_camel_workforce
+      params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B}
+  fw10_sota_ic:
+    - name: fw_langgraph
+      params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B,
+        embed_instruct: 'Given a task family, retrieve agents that are competent at solving tasks of that family'}
+    - name: fw_crewai
+      params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B,
+        embed_instruct: 'Given a task family, retrieve agents that are competent at solving tasks of that family'}
+    - name: fw_autogen
+      params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B,
+        embed_instruct: 'Given a task family, retrieve agents that are competent at solving tasks of that family'}
+    - name: fw_magentic_one
+      params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B,
+        embed_instruct: 'Given a task family, retrieve agents that are competent at solving tasks of that family'}
+    - name: fw_maf
+      params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B,
+        embed_instruct: 'Given a task family, retrieve agents that are competent at solving tasks of that family'}
+    - name: fw_openai_agents
+      params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B,
+        embed_instruct: 'Given a task family, retrieve agents that are competent at solving tasks of that family'}
+    - name: fw_google_adk
+      params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B,
+        embed_instruct: 'Given a task family, retrieve agents that are competent at solving tasks of that family'}
+    - name: fw_llamaindex
+      params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B,
+        embed_instruct: 'Given a task family, retrieve agents that are competent at solving tasks of that family'}
+    - name: fw_smolagents
+      params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B,
+        embed_instruct: 'Given a task family, retrieve agents that are competent at solving tasks of that family'}
+    - name: fw_camel_workforce
+      params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B,
+        embed_instruct: 'Given a task family, retrieve agents that are competent at solving tasks of that family'}
+  fw10_sota_id:
+    - name: fw_langgraph
+      params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B,
+        embed_instruct: 'Given a task family, retrieve agents whose demonstrated skill at that family is highest'}
+    - name: fw_crewai
+      params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B,
+        embed_instruct: 'Given a task family, retrieve agents whose demonstrated skill at that family is highest'}
+    - name: fw_autogen
+      params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B,
+        embed_instruct: 'Given a task family, retrieve agents whose demonstrated skill at that family is highest'}
+    - name: fw_magentic_one
+      params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B,
+        embed_instruct: 'Given a task family, retrieve agents whose demonstrated skill at that family is highest'}
+    - name: fw_maf
+      params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B,
+        embed_instruct: 'Given a task family, retrieve agents whose demonstrated skill at that family is highest'}
+    - name: fw_openai_agents
+      params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B,
+        embed_instruct: 'Given a task family, retrieve agents whose demonstrated skill at that family is highest'}
+    - name: fw_google_adk
+      params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B,
+        embed_instruct: 'Given a task family, retrieve agents whose demonstrated skill at that family is highest'}
+    - name: fw_llamaindex
+      params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B,
+        embed_instruct: 'Given a task family, retrieve agents whose demonstrated skill at that family is highest'}
+    - name: fw_smolagents
+      params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B,
+        embed_instruct: 'Given a task family, retrieve agents whose demonstrated skill at that family is highest'}
+    - name: fw_camel_workforce
+      params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B, rerank_model: Qwen/Qwen3-Reranker-4B,
+        embed_instruct: 'Given a task family, retrieve agents whose demonstrated skill at that family is highest'}
+  fw10_dense_ic:
+    - name: fw_langgraph
+      params: {retrieval: embed, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B,
+        embed_instruct: 'Given a task family, retrieve agents that are competent at solving tasks of that family'}
+    - name: fw_crewai
+      params: {retrieval: embed, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B,
+        embed_instruct: 'Given a task family, retrieve agents that are competent at solving tasks of that family'}
+    - name: fw_autogen
+      params: {retrieval: embed, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B,
+        embed_instruct: 'Given a task family, retrieve agents that are competent at solving tasks of that family'}
+    - name: fw_magentic_one
+      params: {retrieval: embed, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B,
+        embed_instruct: 'Given a task family, retrieve agents that are competent at solving tasks of that family'}
+    - name: fw_maf
+      params: {retrieval: embed, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B,
+        embed_instruct: 'Given a task family, retrieve agents that are competent at solving tasks of that family'}
+    - name: fw_openai_agents
+      params: {retrieval: embed, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B,
+        embed_instruct: 'Given a task family, retrieve agents that are competent at solving tasks of that family'}
+    - name: fw_google_adk
+      params: {retrieval: embed, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B,
+        embed_instruct: 'Given a task family, retrieve agents that are competent at solving tasks of that family'}
+    - name: fw_llamaindex
+      params: {retrieval: embed, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B,
+        embed_instruct: 'Given a task family, retrieve agents that are competent at solving tasks of that family'}
+    - name: fw_smolagents
+      params: {retrieval: embed, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B,
+        embed_instruct: 'Given a task family, retrieve agents that are competent at solving tasks of that family'}
+    - name: fw_camel_workforce
+      params: {retrieval: embed, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B,
+        embed_instruct: 'Given a task family, retrieve agents that are competent at solving tasks of that family'}
+  fw10_dense_id:
+    - name: fw_langgraph
+      params: {retrieval: embed, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B,
+        embed_instruct: 'Given a task family, retrieve agents whose demonstrated skill at that family is highest'}
+    - name: fw_crewai
+      params: {retrieval: embed, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B,
+        embed_instruct: 'Given a task family, retrieve agents whose demonstrated skill at that family is highest'}
+    - name: fw_autogen
+      params: {retrieval: embed, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B,
+        embed_instruct: 'Given a task family, retrieve agents whose demonstrated skill at that family is highest'}
+    - name: fw_magentic_one
+      params: {retrieval: embed, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B,
+        embed_instruct: 'Given a task family, retrieve agents whose demonstrated skill at that family is highest'}
+    - name: fw_maf
+      params: {retrieval: embed, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B,
+        embed_instruct: 'Given a task family, retrieve agents whose demonstrated skill at that family is highest'}
+    - name: fw_openai_agents
+      params: {retrieval: embed, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B,
+        embed_instruct: 'Given a task family, retrieve agents whose demonstrated skill at that family is highest'}
+    - name: fw_google_adk
+      params: {retrieval: embed, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B,
+        embed_instruct: 'Given a task family, retrieve agents whose demonstrated skill at that family is highest'}
+    - name: fw_llamaindex
+      params: {retrieval: embed, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B,
+        embed_instruct: 'Given a task family, retrieve agents whose demonstrated skill at that family is highest'}
+    - name: fw_smolagents
+      params: {retrieval: embed, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B,
+        embed_instruct: 'Given a task family, retrieve agents whose demonstrated skill at that family is highest'}
+    - name: fw_camel_workforce
+      params: {retrieval: embed, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B,
+        embed_instruct: 'Given a task family, retrieve agents whose demonstrated skill at that family is highest'}
+  fw10_declared:
+    - {name: fw_langgraph, params: {retrieval: declared, dedup: true}}
+    - {name: fw_crewai, params: {retrieval: declared, dedup: true}}
+    - {name: fw_autogen, params: {retrieval: declared, dedup: true}}
+    - {name: fw_magentic_one, params: {retrieval: declared, dedup: true}}
+    - {name: fw_maf, params: {retrieval: declared, dedup: true}}
+    - {name: fw_openai_agents, params: {retrieval: declared, dedup: true}}
+    - {name: fw_google_adk, params: {retrieval: declared, dedup: true}}
+    - {name: fw_llamaindex, params: {retrieval: declared, dedup: true}}
+    - {name: fw_smolagents, params: {retrieval: declared, dedup: true}}
+    - {name: fw_camel_workforce, params: {retrieval: declared, dedup: true}}
+  fw10_va:
+    - {name: fw_langgraph, params: {retrieval: midian, r: 10}}
+    - {name: fw_crewai, params: {retrieval: midian, r: 10}}
+    - {name: fw_autogen, params: {retrieval: midian, r: 10}}
+    - {name: fw_magentic_one, params: {retrieval: midian, r: 10}}
+    - {name: fw_maf, params: {retrieval: midian, r: 10}}
+    - {name: fw_openai_agents, params: {retrieval: midian, r: 10}}
+    - {name: fw_google_adk, params: {retrieval: midian, r: 10}}
+    - {name: fw_llamaindex, params: {retrieval: midian, r: 10}}
+    - {name: fw_smolagents, params: {retrieval: midian, r: 10}}
+    - {name: fw_camel_workforce, params: {retrieval: midian, r: 10}}
+  fw9_em:
+    - {name: fw_langgraph, params: {retrieval: embed, dedup: true}}
+    - {name: fw_crewai, params: {retrieval: embed, dedup: true}}
+    - {name: fw_autogen, params: {retrieval: embed, dedup: true}}
+    - {name: fw_maf, params: {retrieval: embed, dedup: true}}
+    - {name: fw_openai_agents, params: {retrieval: embed, dedup: true}}
+    - {name: fw_google_adk, params: {retrieval: embed, dedup: true}}
+    - {name: fw_llamaindex, params: {retrieval: embed, dedup: true}}
+    - {name: fw_smolagents, params: {retrieval: embed, dedup: true}}
+    - {name: fw_camel_workforce, params: {retrieval: embed, dedup: true}}
+  fw9_va:
+    - {name: fw_langgraph, params: {retrieval: midian, r: 10}}
+    - {name: fw_crewai, params: {retrieval: midian, r: 10}}
+    - {name: fw_autogen, params: {retrieval: midian, r: 10}}
+    - {name: fw_maf, params: {retrieval: midian, r: 10}}
+    - {name: fw_openai_agents, params: {retrieval: midian, r: 10}}
+    - {name: fw_google_adk, params: {retrieval: midian, r: 10}}
+    - {name: fw_llamaindex, params: {retrieval: midian, r: 10}}
+    - {name: fw_smolagents, params: {retrieval: midian, r: 10}}
+    - {name: fw_camel_workforce, params: {retrieval: midian, r: 10}}
+  fw10_backfill:
+    - {set: fw10_dense_ic}
+    - {set: fw10_dense_id}
+    - {set: fw10_sota_ic}
+    - {set: fw10_sota_id}
+    - {set: fw10_declared}
+  lie_max_arms:
+    - declared_argmax
+    - midian
+    - {name: midian, params: {audit: false, verify: false}}
+    - {name: flat_probe_argmax, params: {online: true}}
+    - warm_start_bandit
+    - {name: warm_start_bandit, params: {n0: 0.5}}
+    - {name: knn_router, params: {online: true}}
+    - random
+  cal_arms:
+    - cluster_head_router
+    - disrouter_cascade
+    - warm_start_bandit
+    - {name: warm_start_bandit, params: {n0: 0.5}}
+  replay_arms:
+    - midian
+    - {name: midian, params: {audit: false, verify: false}}
+    - {name: flat_probe_argmax, params: {online: true}}
+    - flat_nsw_router
+    - cluster_head_router
+    - disrouter_cascade
+    - ucb_per_family
+    - thompson_per_family
+    - warm_start_bandit
+    - {name: warm_start_bandit, params: {n0: 0.5}}
+    - {name: linucb_honest, params: {bonus: own}}
+  re5k_arms:
+    - midian
+    - {name: midian, params: {audit: false, verify: false}}
+    - {name: flat_probe_argmax, params: {online: true}}
+    - knn_router
+    - {name: knn_router, params: {online: true}}
+    - flat_nsw_router
+    - cluster_head_router
+    - disrouter_cascade
+    - ucb_per_family
+    - thompson_per_family
+    - warm_start_bandit
+    - {name: warm_start_bandit, params: {n0: 0.5}}
+    - {name: linucb_honest, params: {bonus: own}}
+    - trueskill_per_family
+  lrb_arms:
+    - midian
+    - {name: midian, params: {audit: false, verify: false}}
+    - {name: flat_probe_argmax, params: {online: true}}
+    - knn_router
+    - {name: knn_router, params: {online: true}}
+    - mlp_router
+    - flat_nsw_router
+    - cluster_head_router
+    - disrouter_cascade
+    - ucb_per_family
+    - thompson_per_family
+    - warm_start_bandit
+    - {name: warm_start_bandit, params: {n0: 0.5}}
+    - {name: linucb_honest, params: {bonus: own}}
+    - trueskill_per_family
+  rivals5:
+    - verify_on_claim
+    - route_to_k_majority
+    - gossip_reputation_greedy
+    - cnp_self_bid
+    - referral_network
+  # `methods: all` frozen 2026-09-24 (so no grid depends on the files in rte/methods): every method file in pkgutil
+  # order, the three MIDIAN ablations and the former defaults.extra paired variants (flat_probe_argmax online vs
+  # frozen, MIDIAN w/o audits, r = 5 cohorts, halving through MIDIAN's report channel). Off the llm backend the
+  # runner drops the LLM-only llm_supervisor and midian_llm_descent (requires_llm), exactly as `all` did.
+  all_arms:
+    - cluster_head_router
+    - cnp_self_bid
+    - declared_argmax
+    - declared_softmax
+    - disrouter_cascade
+    - flat_nsw_router
+    - flat_probe_argmax
+    - gossip_reputation_greedy
+    - knn_router
+    - linucb_honest
+    - llm_supervisor
+    - midian
+    - midian_llm_descent
+    - mlp_router
+    - random
+    - referral_network
+    - route_to_k_majority
+    - sequential_halving
+    - thompson_per_family
+    - trueskill_per_family
+    - ucb_per_family
+    - verify_on_claim
+    - warm_start_bandit
+    - {name: midian, params: {verify: false}}
+    - {name: midian, params: {audit: false}}
+    - {name: midian, params: {audit: false, verify: false}}
+    - {name: flat_probe_argmax, params: {online: true}}
+    - {name: midian, params: {audit: false, verify: false, online: false}}
+    - {name: midian, params: {audit: false, verify: false, r: 5}}
+    - {name: midian, params: {audit: false, r: 5}}
+    - {name: sequential_halving, params: {peer_reported: true}}

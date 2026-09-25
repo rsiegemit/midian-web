@@ -1,0 +1,555 @@
+# the agent frameworks on live populations: shortlists, cohorts, lie conditions
+grids:
+  # Headline comparison (SPEC §6A): the 10 frameworks vs MIDIAN, paired with core4 + llm_supervisor. Each framework
+  # fetch is a real supervisor call (~1-2 s, serial per framework), so: ecological channel only, 3 seeds, Q=300, one
+  # process per method. v2 0.4: 5 seeds, Q=1000 (was 3/300); 14B orchestrator arm is asymmetric (0.2)
+  # [FIG:A,D,E] headline: ten frameworks vs MIDIAN, live n = 10^3, self-described channel; read by: bar_figs +11
+  fw_live_n1000:
+    backend: llm
+    n: [1000]
+    dist: [specialist, heavy_tail, bimodal]
+    beta: [0, 0.1, 0.25, 0.5]
+    declared_source: [self_described]
+    seeds: 1-10
+    Q: 1000
+    methods:
+      - {set: frameworks}
+      - {name: fw_magentic_one, params: {supervisor: Qwen/Qwen2.5-14B-Instruct}}
+      - {set: fw_paired}
+
+  # [FIG:A,E] headline frameworks grid at n = 100; read by: bar_figs, dedup_compare, doc_tables, extra_figs +5
+  fw_live_n100:     {mirror_of: fw_live_n1000, n: [100]}
+
+  # labeled variant: verified shortlist
+  # [NUM] cohort of MIDIAN w/o audits as shortlist of fw_live_n1000; read by: doc_tables, fw_variant_numbers +3
+  fw_live_n1000_verified: {mirror_of: fw_live_n1000, methods: {set: frameworks_verified}}
+
+  # [NUM] cohort of MIDIAN w/o audits as shortlist of fw_live_n1000; read by: doc_tables, fw_variant_numbers +1
+  fw_live_n100_verified:  {mirror_of: fw_live_n1000, n: [100], methods: {set: frameworks_verified}}
+
+  # [NUM] framework shortlist size k in {5, 10, 20}; read by: dedup_compare, extra_figs
+  fw_k_sensitivity:
+    backend: llm
+    n: [1000]
+    dist: [specialist]
+    beta: [0, 0.25]
+    declared_source: [self_described]
+    seeds: 1-3
+    Q: 300
+    methods:
+      - {name: fw_langgraph, params: {k: 5}}
+      - {name: fw_langgraph, params: {k: 10}}
+      - {name: fw_langgraph, params: {k: 20}}
+      - {name: fw_autogen, params: {k: 5}}
+      - {name: fw_autogen, params: {k: 10}}
+      - {name: fw_autogen, params: {k: 20}}
+
+  # fw_metagpt: NotImplemented, see NOTES_metagpt.md
+  # [NUM] AgentScope appendix framework; read by: dedup_compare
+  fw_appendix:
+    backend: llm
+    n: [100]
+    dist: [specialist]
+    beta: [0, 0.25]
+    declared_source: [self_described]
+    seeds: 1-3
+    Q: 300
+    methods: [fw_agentscope, {name: midian, params: {audit: false, verify: false}}, random]
+
+  # the regime where the report channel matters most; frameworks + paired arms
+  # [FIG:A,E] beta = 0.5 low-skill cartel cell of fw_live_n1000; read by: bar_figs, dedup_compare, doc_tables +5
+  fw_live_n1000_lowskill: {mirror_of: fw_live_n1000, beta: [0.5], liar_select: [low_skill_first]}
+
+  # [FIG:A,E] beta = 0.5 low-skill cartel cell of fw_live_n100; read by: bar_figs, dedup_compare, doc_tables +3
+  fw_live_n100_lowskill:  {mirror_of: fw_live_n100,  beta: [0.5], liar_select: [low_skill_first]}
+
+  # POST-HOC (2026-09-05): the missing cell of live_n10k_v2 — the ten frameworks at n = 10,000
+  # [FIG:A,E] frameworks at n = 10^4 under the beta = 0.5 cartel; read by: bar_figs, dedup_compare, doc_tables +3
+  fw_live_n10k_cartel:
+                                    # under the low-skill colluding cartel. live_n10k_v2 ran beta in {0, 0.25} with
+                                    # random liars only, so the framework band stops at 10^3 in the scale figure's
+                                    # cartel panel. Cells here are identical to learned_n10k's beta = 0.5 low-skill
+                                    # cells, so these rows pair directly with the MIDIAN-side arms already measured
+                                    # there (specialist, b = 3, Q = 300, seeds 1-3).
+    mirror_of: live_n10k_v2
+    beta: [0.5]
+    liar_select: [low_skill_first]
+    methods: [fw_langgraph, fw_crewai, fw_autogen, fw_maf, fw_openai_agents, fw_google_adk,
+              fw_llamaindex, fw_smolagents, fw_camel_workforce]   # Magentic-One dropped for time (18 s/task);
+                                            # NOTE it was the TOP of the beta=0 range at this n (0.367), so the beta=0
+                                            # range must be recomputed over these same nine before the two are compared
+
+  # [FIG:A,E] frameworks on the MIDIAN leaf cohort (r = 10), n = 10^3; read by: doc_tables, fw_variant_numbers +3
+  fw_live_n1000_verified_va:        # frameworks given MIDIAN's leaf cohort as the shortlist (labeled variant, r = 10)
+    mirror_of: fw_live_n1000
+    methods:
+      - {name: fw_langgraph, params: {retrieval: midian, r: 10}}
+      - {name: fw_crewai, params: {retrieval: midian, r: 10}}
+      - {name: fw_autogen, params: {retrieval: midian, r: 10}}
+      - {name: fw_magentic_one, params: {retrieval: midian, r: 10}}
+      - {name: fw_maf, params: {retrieval: midian, r: 10}}
+      - {name: fw_openai_agents, params: {retrieval: midian, r: 10}}
+      - {name: fw_google_adk, params: {retrieval: midian, r: 10}}
+      - {name: fw_llamaindex, params: {retrieval: midian, r: 10}}
+      - {name: fw_smolagents, params: {retrieval: midian, r: 10}}
+      - {name: fw_camel_workforce, params: {retrieval: midian, r: 10}}
+
+  # ---- 2026-09-14: DEDUPLICATED framework shortlist (labeled variant `dedup: true`; CHANGES_AND_ERRATA #25). The
+  # pre-registered adapter ranks agents by TF-IDF over self-descriptions, but agents sharing a prompt signature share a
+  # memoized description AND memoized answers, so its top-k fills with clones once n exceeds the number of distinct
+  # prompts (~3,900 specialist; 5 heavy_tail; 2 bimodal at ANY n) and the framework's pick stops mattering. `dedup`
+  # ranks distinct description texts and offers one agent per text. Every grid below MIRRORS its pre-registered source
+  # cell for cell; separate grid => separate results dir and rids, so old and new rows are never mixed. Verified-
+  # shortlist grids (retrieval: midian_wo_audit) and the RouterEval framework grids (all descriptions unique) are
+  # unaffected and not rerun.
+  # [NUM] dedup TF-IDF shortlist (erratum 25) of fw_live_n1000; read by: dedup_compare, doc_tables +2
+  fw_live_n1000_dd:
+    mirror_of: fw_live_n1000
+    methods: [{set: fw10_dd},
+              {set: fw14b_dd}]
+
+  # [NUM] dedup TF-IDF shortlist (erratum 25) of fw_live_n100; read by: dedup_compare, doc_tables, fw_variant_numbers +1
+  fw_live_n100_dd:          {mirror_of: fw_live_n100,          methods: [{set: fw10_dd}, {set: fw14b_dd}]}
+
+  # [NUM] dedup TF-IDF shortlist (erratum 25) of fw_live_n1000_lowskill; read by: dedup_compare, doc_tables +2
+  fw_live_n1000_lowskill_dd: {mirror_of: fw_live_n1000_lowskill, methods: [{set: fw10_dd}, {set: fw14b_dd}]}
+
+  # [NUM] dedup TF-IDF shortlist (erratum 25) of fw_live_n100_lowskill; read by: dedup_compare, doc_tables +2
+  fw_live_n100_lowskill_dd:  {mirror_of: fw_live_n100_lowskill,  methods: [{set: fw10_dd}, {set: fw14b_dd}]}
+
+  # the ten framework arms of live_n10k_v2
+  # [NUM] dedup TF-IDF shortlist (erratum 25) of live_n10k_v2; read by: dedup_compare, doc_tables, fw_variant_numbers +1
+  fw_live_n10k_dd:          {mirror_of: live_n10k_v2,          methods: {set: fw10_dd}}
+
+  # the ten framework arms of live_n100k (the WITHHELD row)
+  # [NUM] dedup TF-IDF shortlist (erratum 25) of live_n100k; read by: dedup_compare, doc_tables, fw_variant_numbers +2
+  fw_live_n100k_dd:         {mirror_of: live_n100k,            methods: {set: fw10_dd}}
+
+  # [NUM] dedup TF-IDF shortlist (erratum 25) of fw_live_n10k_cartel; read by: dedup_compare, doc_tables +2
+  fw_live_n10k_cartel_dd:
+    mirror_of: fw_live_n10k_cartel
+    methods:
+      - {name: fw_langgraph, params: {dedup: true}}
+      - {name: fw_crewai, params: {dedup: true}}
+      - {name: fw_autogen, params: {dedup: true}}
+      - {name: fw_maf, params: {dedup: true}}
+      - {name: fw_openai_agents, params: {dedup: true}}
+      - {name: fw_google_adk, params: {dedup: true}}
+      - {name: fw_llamaindex, params: {dedup: true}}
+      - {name: fw_smolagents, params: {dedup: true}}
+      - {name: fw_camel_workforce, params: {dedup: true}}
+
+  # [NUM] dedup TF-IDF shortlist (erratum 25) of fw_k_sensitivity; read by: dedup_compare
+  fw_k_sensitivity_dd:
+    mirror_of: fw_k_sensitivity
+    methods:
+      - {name: fw_langgraph, params: {k: 5, dedup: true}}
+      - {name: fw_langgraph, params: {k: 10, dedup: true}}
+      - {name: fw_langgraph, params: {k: 20, dedup: true}}
+      - {name: fw_autogen, params: {k: 5, dedup: true}}
+      - {name: fw_autogen, params: {k: 10, dedup: true}}
+      - {name: fw_autogen, params: {k: 20, dedup: true}}
+
+  # [NUM] dedup TF-IDF shortlist (erratum 25) of fw_appendix; read by: dedup_compare
+  fw_appendix_dd:           {mirror_of: fw_appendix,           methods: [{name: fw_agentscope, params: {dedup: true}}]}
+
+  # ---- 2026-09-15: DENSE-RETRIEVAL framework shortlist (labeled variant `retrieval: embed, dedup: true`): cosine over
+  # all-MiniLM-L6-v2 embeddings of the same self-descriptions (knn_router's encoder) instead of hashed TF-IDF -- the
+  # retriever a deployed stack would put in front of a framework. Same cells/seeds/frameworks as the _dd grids; separate
+  # results dirs and rids. Answers "would a real retriever recover the shortlist?" (the TF-IDF top-10's mean true skill
+  # is 0.31 at 10^5 against a population mean of 0.43: the smallest model's descriptions parrot the family vocabulary).
+  # [FIG:A,E] MiniLM shortlist of fw_live_n1000; read by: doc_tables, fw_variant_numbers, shortlist_figs
+  fw_live_n1000_em:
+    mirror_of: fw_live_n1000
+    methods: [{set: fw10_em},
+              {set: fw14b_em}]
+
+  # [FIG:A,E] MiniLM shortlist of fw_live_n100; read by: doc_tables, fw_variant_numbers, shortlist_figs
+  fw_live_n100_em:          {mirror_of: fw_live_n100,          methods: [{set: fw10_em}, {set: fw14b_em}]}
+
+  # [FIG:A,E] MiniLM shortlist of fw_live_n1000_lowskill; read by: doc_tables, fw_variant_numbers, shortlist_figs
+  fw_live_n1000_lowskill_em: {mirror_of: fw_live_n1000_lowskill, methods: [{set: fw10_em}, {set: fw14b_em}]}
+
+  # [FIG:A,E] MiniLM shortlist of fw_live_n100_lowskill; read by: doc_tables, fw_variant_numbers, shortlist_figs
+  fw_live_n100_lowskill_em:  {mirror_of: fw_live_n100_lowskill,  methods: [{set: fw10_em}, {set: fw14b_em}]}
+
+  # [FIG:A,E] MiniLM shortlist of live_n10k_v2; read by: doc_tables, fw_variant_numbers, shortlist_figs
+  fw_live_n10k_em:          {mirror_of: live_n10k_v2,          methods: {set: fw10_em}}
+
+  # [FIG:A,E,F,G] MiniLM shortlist of live_n100k; read by: doc_tables, fw_variant_numbers, shortlist_figs
+  fw_live_n100k_em:         {mirror_of: live_n100k,            methods: {set: fw10_em}}
+
+  # [FIG:A,E] MiniLM shortlist of fw_live_n10k_cartel; read by: doc_tables, fw_variant_numbers, shortlist_figs
+  fw_live_n10k_cartel_em:
+    mirror_of: fw_live_n10k_cartel
+    methods:
+      - {name: fw_langgraph, params: {retrieval: embed, dedup: true}}
+      - {name: fw_crewai, params: {retrieval: embed, dedup: true}}
+      - {name: fw_autogen, params: {retrieval: embed, dedup: true}}
+      - {name: fw_maf, params: {retrieval: embed, dedup: true}}
+      - {name: fw_openai_agents, params: {retrieval: embed, dedup: true}}
+      - {name: fw_google_adk, params: {retrieval: embed, dedup: true}}
+      - {name: fw_llamaindex, params: {retrieval: embed, dedup: true}}
+      - {name: fw_smolagents, params: {retrieval: embed, dedup: true}}
+      - {name: fw_camel_workforce, params: {retrieval: embed, dedup: true}}
+
+  # ---- 2026-09-17: the SOTA retrieval stack in front of the frameworks (METHODS.md 5a). The pre-registered adapter is
+  # hashed TF-IDF and the _em mirrors are all-MiniLM-L6-v2; neither is what a deployed system puts in front of a
+  # framework, so the frameworks have only ever been measured with weak retrieval. These arms are the production
+  # stack: BM25 alone, Qwen3-Embedding-8B alone (top of MTEB), reciprocal-rank fusion of the two, and fusion + a
+  # Qwen3-Reranker-4B cross-encoder over the top 50. A shortlist depends only on the population, so the dense block
+  # and the reranked table are precomputed by `scripts/embed_populations.py --sota` and every job here is CPU-only.
+  # Four-arm ablation at 10^3 (which PART of the stack buys what); sota + hybrid elsewhere (the headline comparison).
+  # [FIG:A,E] Qwen3 fusion (+ rerank) shortlists of fw_live_n1000; read by: shortlist_figs
+  fw_live_n1000_sota:
+    mirror_of: fw_live_n1000
+    methods: [{set: fw10_bm25},
+              {set: fw10_dense},
+              {set: fw10_hybrid},
+              {set: fw10_sota}]
+
+  # [FIG:A,E] Qwen3 fusion (+ rerank) shortlists of fw_live_n100; read by: shortlist_figs
+  fw_live_n100_sota:           {mirror_of: fw_live_n100,           methods: [{set: fw10_hybrid}, {set: fw10_sota}]}
+
+  # [FIG:A,E] Qwen3 fusion (+ rerank) shortlists of fw_live_n1000_lowskill; read by: shortlist_figs
+  fw_live_n1000_lowskill_sota: {mirror_of: fw_live_n1000_lowskill, methods: [{set: fw10_hybrid}, {set: fw10_sota}]}
+
+  # [FIG:A,E] Qwen3 fusion (+ rerank) shortlists of fw_live_n100_lowskill; read by: shortlist_figs
+  fw_live_n100_lowskill_sota:  {mirror_of: fw_live_n100_lowskill,  methods: [{set: fw10_hybrid}, {set: fw10_sota}]}
+
+  # [FIG:A,E] Qwen3 fusion (+ rerank) shortlists of live_n10k_v2; read by: shortlist_figs
+  fw_live_n10k_sota:           {mirror_of: live_n10k_v2,           methods: [{set: fw10_hybrid}, {set: fw10_sota}]}
+
+  # [FIG:A,E,F,G] Qwen3 fusion (+ rerank) shortlists of live_n100k; read by: shortlist_figs
+  fw_live_n100k_sota:          {mirror_of: live_n100k,             methods: [{set: fw10_hybrid}, {set: fw10_sota}]}
+
+  # nine frameworks, as the other 10^4 cartel grids
+  # [FIG:A,E] Qwen3 fusion (+ rerank) shortlists of fw_live_n10k_cartel; read by: shortlist_figs
+  fw_live_n10k_cartel_sota:
+    mirror_of: fw_live_n10k_cartel
+    methods:
+      -
+        - {name: fw_langgraph, params: {retrieval: hybrid, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B}}
+        - {name: fw_crewai, params: {retrieval: hybrid, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B}}
+        - {name: fw_autogen, params: {retrieval: hybrid, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B}}
+        - {name: fw_maf, params: {retrieval: hybrid, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B}}
+        - {name: fw_openai_agents, params: {retrieval: hybrid, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B}}
+        - {name: fw_google_adk, params: {retrieval: hybrid, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B}}
+        - {name: fw_llamaindex, params: {retrieval: hybrid, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B}}
+        - {name: fw_smolagents, params: {retrieval: hybrid, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B}}
+        - {name: fw_camel_workforce, params: {retrieval: hybrid, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B}}
+      -
+        - name: fw_langgraph
+          params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B,
+            rerank_model: Qwen/Qwen3-Reranker-4B}
+        - name: fw_crewai
+          params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B,
+            rerank_model: Qwen/Qwen3-Reranker-4B}
+        - name: fw_autogen
+          params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B,
+            rerank_model: Qwen/Qwen3-Reranker-4B}
+        - name: fw_maf
+          params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B,
+            rerank_model: Qwen/Qwen3-Reranker-4B}
+        - name: fw_openai_agents
+          params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B,
+            rerank_model: Qwen/Qwen3-Reranker-4B}
+        - name: fw_google_adk
+          params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B,
+            rerank_model: Qwen/Qwen3-Reranker-4B}
+        - name: fw_llamaindex
+          params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B,
+            rerank_model: Qwen/Qwen3-Reranker-4B}
+        - name: fw_smolagents
+          params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B,
+            rerank_model: Qwen/Qwen3-Reranker-4B}
+        - name: fw_camel_workforce
+          params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B,
+            rerank_model: Qwen/Qwen3-Reranker-4B}
+
+  # ---- 2026-09-17: instruction probe for the SOTA dense half. Qwen3-Embedding is instruction-tuned and asymmetric;
+  # the main sota grids use its STOCK instruction ("Given a web search query, retrieve relevant passages..."), which a
+  # reviewer could fairly call untuned. Only the K = 16 family (query) texts depend on the instruction, so a probe
+  # re-embeds 16 texts per population and reuses the n document embeddings untouched. Two wordings, so the probe can
+  # tell "the wording matters" apart from "an instruction does not help here". 10^5 only: that is where the dense
+  # arms lose to MiniLM, so it is where a tuned instruction would have to show up.
+  # [FIG:A,E,F,G] fusion (+ reranker) Qwen3 shortlists under two task instructions, n = 10^5; read by: shortlist_figs
+  fw_live_n100k_sota_instruct:
+    mirror_of: live_n100k
+    methods:
+      -
+        - name: fw_langgraph
+          params: {retrieval: hybrid, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B,
+            embed_instruct: 'Given a task family, retrieve agents that are competent at solving tasks of that family'}
+        - name: fw_crewai
+          params: {retrieval: hybrid, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B,
+            embed_instruct: 'Given a task family, retrieve agents that are competent at solving tasks of that family'}
+        - name: fw_autogen
+          params: {retrieval: hybrid, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B,
+            embed_instruct: 'Given a task family, retrieve agents that are competent at solving tasks of that family'}
+        - name: fw_magentic_one
+          params: {retrieval: hybrid, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B,
+            embed_instruct: 'Given a task family, retrieve agents that are competent at solving tasks of that family'}
+        - name: fw_maf
+          params: {retrieval: hybrid, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B,
+            embed_instruct: 'Given a task family, retrieve agents that are competent at solving tasks of that family'}
+        - name: fw_openai_agents
+          params: {retrieval: hybrid, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B,
+            embed_instruct: 'Given a task family, retrieve agents that are competent at solving tasks of that family'}
+        - name: fw_google_adk
+          params: {retrieval: hybrid, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B,
+            embed_instruct: 'Given a task family, retrieve agents that are competent at solving tasks of that family'}
+        - name: fw_llamaindex
+          params: {retrieval: hybrid, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B,
+            embed_instruct: 'Given a task family, retrieve agents that are competent at solving tasks of that family'}
+        - name: fw_smolagents
+          params: {retrieval: hybrid, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B,
+            embed_instruct: 'Given a task family, retrieve agents that are competent at solving tasks of that family'}
+        - name: fw_camel_workforce
+          params: {retrieval: hybrid, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B,
+            embed_instruct: 'Given a task family, retrieve agents that are competent at solving tasks of that family'}
+      - {set: fw10_sota_ic}
+      - {set: fw10_sota_id}
+
+  # ---- 2026-09-18: dense-alone WITH a tuned instruction. The shortlist-skill diagnostic (jobs/shortlist_skill.py)
+  # shows this is the best text retriever at 10^5 -- top-10 true skill 0.485 against MiniLM 0.455, random 0.428 and
+  # the stock-instruction dense arm 0.407 -- while FUSING BM25 in drags it to 0.370 and the cross-encoder to 0.428.
+  # The first probe grid ran hybrid and sota under the instructions but not dense alone, i.e. it omitted the
+  # configuration that actually wins; this grid is that omission.
+  # [FIG:A,E,F,G] Qwen3 dense shortlist under two task instructions, n = 10^5; read by: shortlist_figs
+  fw_live_n100k_dense_instruct:
+    mirror_of: live_n100k
+    methods: [{set: fw10_dense_ic},
+              {set: fw10_dense_id}]
+
+  # ---- 2026-09-18: the declared-claim shortlist, the cheap baseline every text retriever should be measured against.
+  # Diagnostics (jobs/shortlist_skill.py, jobs/declared_cohort.py) at 10^5 show the declared top-10 has the HIGHEST
+  # shortlist mean of any source (0.615 honest, 0.526-0.572 under liars) while its best member is only 0.66-0.75
+  # against the MIDIAN cohort's 0.838 -- and frameworks recover just 15-35 % of the mean->best gap, so the mean is what
+  # they mostly get. That predicts the declared top-10 BEATS the MIDIAN cohort as a framework shortlist in three of five
+  # regimes, losing only under the beta = 0.25 cartel. Prediction from a linear fit, hence this grid.
+  # It also concentrates liars: 74 % of the declared top-10 at beta = 0.5 random, against a 50 % population rate.
+  # [FIG:A,E,F,G] frameworks on the declared-claim top-k, n = 10^5; read by: shortlist_figs
+  fw_live_n100k_declared:
+    mirror_of: live_n100k
+    methods: [{set: fw10_declared}]
+
+  # ---- 2026-09-18: POSITION CONTROL for the MIDIAN cohort. The midian modes hand the framework [MIDIAN's pick] + its
+  # leaf cohort, so the best agent sits in position 1. Frameworks recover 35 % of the mean->best gap on that cohort
+  # against 15-28 % on every text shortlist (jobs/shortlist_skill.py, jobs/cohort_skill.py), and position bias is the
+  # obvious confound: the MIDIAN cohort's mean true skill is only 0.447 against a population mean of 0.426, so its
+  # advantage is NOT that the members are better -- it is that one excellent member (0.832) is present, and first.
+  # shuffle=true permutes the same members deterministically. If success falls to the text-shortlist recovery rate,
+  # the frameworks were reading position, not descriptions, and the whole framework comparison measures ordering.
+  # [NUM] position control: MIDIAN cohort shuffled, n = 10^5; read by: shortlist_figs
+  fw_live_n100k_verified_va_shuffled:
+    mirror_of: live_n100k
+    methods: [[{name: fw_langgraph, params: {retrieval: midian, r: 10, shuffle: true}},
+              {name: fw_crewai, params: {retrieval: midian, r: 10, shuffle: true}},
+              {name: fw_autogen, params: {retrieval: midian, r: 10, shuffle: true}},
+              {name: fw_magentic_one, params: {retrieval: midian, r: 10, shuffle: true}},
+              {name: fw_maf, params: {retrieval: midian, r: 10, shuffle: true}},
+              {name: fw_openai_agents, params: {retrieval: midian, r: 10, shuffle: true}},
+              {name: fw_google_adk, params: {retrieval: midian, r: 10, shuffle: true}},
+              {name: fw_llamaindex, params: {retrieval: midian, r: 10, shuffle: true}},
+              {name: fw_smolagents, params: {retrieval: midian, r: 10, shuffle: true}},
+              {name: fw_camel_workforce, params: {retrieval: midian, r: 10, shuffle: true}}]]
+
+  # ---- 2026-09-21: the LYING-TEXT condition (erratum 27). The benchmark's lie inflates the declared MATRIX but
+  # leaves the self-description TEXT stating the agent's true specialty, so every text retriever reads a channel the
+  # adversary never attacks -- which is why dense+I-competent scores 0.523 in BOTH the honest and cartel cells.
+  # lie_text rederives the "Declared areas:" clause from the declared channel for EVERY agent (the method never
+  # learns who lies). The LLM prose is untouched, so this is a PARTIAL text lie and a LOWER BOUND on the damage.
+  # Paired within one grid: TF-IDF and BM25, honest text vs lied text, so the contrast needs no cross-grid join.
+  # Both retrievers compute from text inside the job -- no embedding cache, so the condition costs nothing extra.
+  # [NUM] lying-text condition (erratum 27), TF-IDF / BM25, n = 10^5; read by: shortlist_figs
+  fw_live_n100k_lietext:
+    mirror_of: live_n100k
+    methods: [[{name: fw_langgraph, params: {retrieval: tfidf, dedup: true}},
+              {name: fw_crewai, params: {retrieval: tfidf, dedup: true}},
+              {name: fw_autogen, params: {retrieval: tfidf, dedup: true}},
+              {name: fw_magentic_one, params: {retrieval: tfidf, dedup: true}},
+              {name: fw_maf, params: {retrieval: tfidf, dedup: true}},
+              {name: fw_openai_agents, params: {retrieval: tfidf, dedup: true}},
+              {name: fw_google_adk, params: {retrieval: tfidf, dedup: true}},
+              {name: fw_llamaindex, params: {retrieval: tfidf, dedup: true}},
+              {name: fw_smolagents, params: {retrieval: tfidf, dedup: true}},
+              {name: fw_camel_workforce, params: {retrieval: tfidf, dedup: true}}],
+              [{name: fw_langgraph, params: {retrieval: tfidf, dedup: true, lie_text: true}},
+              {name: fw_crewai, params: {retrieval: tfidf, dedup: true, lie_text: true}},
+              {name: fw_autogen, params: {retrieval: tfidf, dedup: true, lie_text: true}},
+              {name: fw_magentic_one, params: {retrieval: tfidf, dedup: true, lie_text: true}},
+              {name: fw_maf, params: {retrieval: tfidf, dedup: true, lie_text: true}},
+              {name: fw_openai_agents, params: {retrieval: tfidf, dedup: true, lie_text: true}},
+              {name: fw_google_adk, params: {retrieval: tfidf, dedup: true, lie_text: true}},
+              {name: fw_llamaindex, params: {retrieval: tfidf, dedup: true, lie_text: true}},
+              {name: fw_smolagents, params: {retrieval: tfidf, dedup: true, lie_text: true}},
+              {name: fw_camel_workforce, params: {retrieval: tfidf, dedup: true, lie_text: true}}],
+              [{name: fw_langgraph, params: {retrieval: bm25, dedup: true}},
+              {name: fw_crewai, params: {retrieval: bm25, dedup: true}},
+              {name: fw_autogen, params: {retrieval: bm25, dedup: true}},
+              {name: fw_magentic_one, params: {retrieval: bm25, dedup: true}},
+              {name: fw_maf, params: {retrieval: bm25, dedup: true}},
+              {name: fw_openai_agents, params: {retrieval: bm25, dedup: true}},
+              {name: fw_google_adk, params: {retrieval: bm25, dedup: true}},
+              {name: fw_llamaindex, params: {retrieval: bm25, dedup: true}},
+              {name: fw_smolagents, params: {retrieval: bm25, dedup: true}},
+              {name: fw_camel_workforce, params: {retrieval: bm25, dedup: true}}],
+              [{name: fw_langgraph, params: {retrieval: bm25, dedup: true, lie_text: true}},
+              {name: fw_crewai, params: {retrieval: bm25, dedup: true, lie_text: true}},
+              {name: fw_autogen, params: {retrieval: bm25, dedup: true, lie_text: true}},
+              {name: fw_magentic_one, params: {retrieval: bm25, dedup: true, lie_text: true}},
+              {name: fw_maf, params: {retrieval: bm25, dedup: true, lie_text: true}},
+              {name: fw_openai_agents, params: {retrieval: bm25, dedup: true, lie_text: true}},
+              {name: fw_google_adk, params: {retrieval: bm25, dedup: true, lie_text: true}},
+              {name: fw_llamaindex, params: {retrieval: bm25, dedup: true, lie_text: true}},
+              {name: fw_smolagents, params: {retrieval: bm25, dedup: true, lie_text: true}},
+              {name: fw_camel_workforce, params: {retrieval: bm25, dedup: true, lie_text: true}}]]
+
+  # ---- 2026-09-22: the lying-text condition, done properly. The first version (fw_live_n100k_lietext) listed the
+  # top-3 declared families, which barely carries the lie: `inflate` adds +0.4 to every family and so preserves an
+  # agent's ranking -- only 14% of cartel liars' top-3 changed. claim_threshold = 0.7 lists EVERY family rated above
+  # 0.7, so a cartel liar claims ~15 of 16 families against ~3 honestly ("I can do everything"). The honest-text
+  # TF-IDF / BM25 arms are already on disk in fw_live_n100k_lietext and pair with these.
+  # [NUM] lying-text condition with claim_threshold 0.7, n = 10^5; read by: shortlist_figs
+  fw_live_n100k_lietext_th:
+    mirror_of: live_n100k
+    methods:
+      -
+        - {name: fw_langgraph, params: {retrieval: tfidf, dedup: true, lie_text: true, claim_threshold: 0.7}}
+        - {name: fw_crewai, params: {retrieval: tfidf, dedup: true, lie_text: true, claim_threshold: 0.7}}
+        - {name: fw_autogen, params: {retrieval: tfidf, dedup: true, lie_text: true, claim_threshold: 0.7}}
+        - {name: fw_magentic_one, params: {retrieval: tfidf, dedup: true, lie_text: true, claim_threshold: 0.7}}
+        - {name: fw_maf, params: {retrieval: tfidf, dedup: true, lie_text: true, claim_threshold: 0.7}}
+        - {name: fw_openai_agents, params: {retrieval: tfidf, dedup: true, lie_text: true, claim_threshold: 0.7}}
+        - {name: fw_google_adk, params: {retrieval: tfidf, dedup: true, lie_text: true, claim_threshold: 0.7}}
+        - {name: fw_llamaindex, params: {retrieval: tfidf, dedup: true, lie_text: true, claim_threshold: 0.7}}
+        - {name: fw_smolagents, params: {retrieval: tfidf, dedup: true, lie_text: true, claim_threshold: 0.7}}
+        - {name: fw_camel_workforce, params: {retrieval: tfidf, dedup: true, lie_text: true, claim_threshold: 0.7}}
+      -
+        - {name: fw_langgraph, params: {retrieval: bm25, dedup: true, lie_text: true, claim_threshold: 0.7}}
+        - {name: fw_crewai, params: {retrieval: bm25, dedup: true, lie_text: true, claim_threshold: 0.7}}
+        - {name: fw_autogen, params: {retrieval: bm25, dedup: true, lie_text: true, claim_threshold: 0.7}}
+        - {name: fw_magentic_one, params: {retrieval: bm25, dedup: true, lie_text: true, claim_threshold: 0.7}}
+        - {name: fw_maf, params: {retrieval: bm25, dedup: true, lie_text: true, claim_threshold: 0.7}}
+        - {name: fw_openai_agents, params: {retrieval: bm25, dedup: true, lie_text: true, claim_threshold: 0.7}}
+        - {name: fw_google_adk, params: {retrieval: bm25, dedup: true, lie_text: true, claim_threshold: 0.7}}
+        - {name: fw_llamaindex, params: {retrieval: bm25, dedup: true, lie_text: true, claim_threshold: 0.7}}
+        - {name: fw_smolagents, params: {retrieval: bm25, dedup: true, lie_text: true, claim_threshold: 0.7}}
+        - {name: fw_camel_workforce, params: {retrieval: bm25, dedup: true, lie_text: true, claim_threshold: 0.7}}
+
+  # ---- 2026-09-16: the missing cartel cell for the frameworks on the MIDIAN cohort (the verified-cohort grids ran
+  # random liars only). Same ten frameworks holding MIDIAN's leaf cohort (r = 10), beta = 0.5 low-skill-first, 3 shapes,
+  # seeds 1-10.
+  # [FIG:A,E] MIDIAN-cohort shortlist of fw_live_n1000_verified_va; read by: doc_tables, fw_variant_numbers +1
+  fw_live_n1000_verified_va_lowskill:
+    mirror_of: fw_live_n1000_verified_va
+    beta: [0.5]
+    liar_select: [low_skill_first]
+
+  # ---- 2026-09-16: the frameworks on the MIDIAN cohort at scale. The verified-cohort grids stopped at 10^3; these hand
+  # the same ten frameworks MIDIAN's leaf cohort (r = 10) on live_n10k_v2's, fw_live_n10k_cartel's and live_n100k's
+  # exact cells, so rows pair with the TF-IDF / dedup / MiniLM framework rows and with MIDIAN's own row there. A 10^5
+  # unit rebuilds MIDIAN (15-20 h on memo hits) before its 300 supervisor calls.
+  # [FIG:A,E] MIDIAN-cohort shortlist of live_n10k_v2; read by: doc_tables, fw_variant_numbers, shortlist_figs
+  fw_live_n10k_verified_va:
+    mirror_of: live_n10k_v2
+    methods: [{set: fw10_va}]
+
+  # [FIG:A,E,F,G] MIDIAN-cohort shortlist of live_n100k; read by: doc_tables, fw_variant_numbers, shortlist_figs
+  fw_live_n100k_verified_va:      {mirror_of: live_n100k, methods: {set: fw10_va}}
+
+  # [FIG:A,E] MIDIAN-cohort shortlist of fw_live_n10k_cartel; read by: doc_tables, fw_variant_numbers, shortlist_figs
+  fw_live_n10k_cartel_verified_va:
+    mirror_of: fw_live_n10k_cartel
+    methods:
+      - {name: fw_langgraph, params: {retrieval: midian, r: 10}}
+      - {name: fw_crewai, params: {retrieval: midian, r: 10}}
+      - {name: fw_autogen, params: {retrieval: midian, r: 10}}
+      - {name: fw_maf, params: {retrieval: midian, r: 10}}
+      - {name: fw_openai_agents, params: {retrieval: midian, r: 10}}
+      - {name: fw_google_adk, params: {retrieval: midian, r: 10}}
+      - {name: fw_llamaindex, params: {retrieval: midian, r: 10}}
+      - {name: fw_smolagents, params: {retrieval: midian, r: 10}}
+      - {name: fw_camel_workforce, params: {retrieval: midian, r: 10}}
+
+  # 2026-09-16: the MIDIAN cohort at n = 100 (honest + random liars)
+  # [FIG:A,E] MIDIAN-cohort shortlist of fw_live_n100; read by: doc_tables, fw_variant_numbers, shortlist_figs
+  fw_live_n100_verified_va:          {mirror_of: fw_live_n100,          methods: {set: fw10_va}}
+
+  # ... and its cartel cell
+  # [FIG:A,E] MIDIAN-cohort shortlist of fw_live_n100_lowskill; read by: doc_tables, fw_variant_numbers, shortlist_figs
+  fw_live_n100_verified_va_lowskill: {mirror_of: fw_live_n100_lowskill, methods: {set: fw10_va}}
+
+  # [FIG:A,E] frameworks at n = 10^4, beta = 0.1; read by: shortlist_figs
+  fw_live_n10k_beta01:      {mirror_of: live_n10k_v2,      beta: [0.1], methods: {set: frameworks}}
+
+  # [FIG:A,E] frameworks at n = 10^4 on heavy_tail / bimodal; read by: shortlist_figs
+  fw_live_n10k_shapes:      {mirror_of: live_n10k_v2,      dist: [heavy_tail, bimodal], methods: {set: frameworks}}
+
+  # [FIG:A,E] heavy_tail / bimodal cells of fw_live_n10k_cartel; read by: shortlist_figs
+  fw_live_n10k_cartel_shapes: {mirror_of: fw_live_n10k_cartel, dist: [heavy_tail, bimodal]}
+
+  # ---- 2026-09-22 BACKFILL (post-hoc): the five shortlists that existed only at 10^5 -- Qwen3 dense and fusion +
+  # reranker under both task instructions, and the declared-claim top-k -- at 10^2 / 10^3 / 10^4, in the two headline
+  # cells only (specialist; beta = 0 and the beta = 0.5 low-skill cartel), seeds 1-3 as at 10^4 / 10^5. Mirrors keep Q
+  # and b. The instruction caches are pre-warmed by scripts/embed_populations.py --instruct ... --sota (GPU), so every
+  # job is CPU-only.
+  # [FIG:A,E] backfill: Qwen3 + declared shortlists of fw_live_n100; read by: shortlist_figs
+  fw_live_n100_backfill:
+    mirror_of: fw_live_n100
+    dist: [specialist]
+    beta: [0]
+    seeds: 1-3
+    methods: {set: fw10_backfill}
+
+  # [FIG:A,E] backfill: Qwen3 + declared shortlists of fw_live_n100_lowskill; read by: shortlist_figs
+  fw_live_n100_lowskill_backfill:
+    mirror_of: fw_live_n100_lowskill
+    dist: [specialist]
+    seeds: 1-3
+    methods: {set: fw10_backfill}
+
+  # [FIG:A,E] backfill: Qwen3 + declared shortlists of fw_live_n1000; read by: shortlist_figs
+  fw_live_n1000_backfill:
+    mirror_of: fw_live_n1000
+    dist: [specialist]
+    beta: [0]
+    seeds: 1-3
+    methods: {set: fw10_backfill}
+
+  # [FIG:A,E] backfill: Qwen3 + declared shortlists of fw_live_n1000_lowskill; read by: shortlist_figs
+  fw_live_n1000_lowskill_backfill:
+    mirror_of: fw_live_n1000_lowskill
+    dist: [specialist]
+    seeds: 1-3
+    methods: {set: fw10_backfill}
+
+  # [FIG:A,E] backfill: Qwen3 + declared shortlists of live_n10k_v2; read by: shortlist_figs
+  fw_live_n10k_backfill:          {mirror_of: live_n10k_v2,          beta: [0], methods: {set: fw10_backfill}}
+
+  # [FIG:A,E] backfill: Qwen3 + declared shortlists of fw_live_n10k_cartel; read by: shortlist_figs
+  fw_live_n10k_cartel_backfill:   {mirror_of: fw_live_n10k_cartel,   methods: {set: fw10_backfill}}
+
+  # [FIG:I] declared top-k under lie_mode max on lie_max_n1000; read by: none
+  lie_max_fw_n1000: {mirror_of: lie_max_n1000, methods: {set: fw10_declared}}
+
+  # [FIG:I] declared top-k under lie_mode max on lie_max_n10k; read by: none
+  lie_max_fw_n10k:  {mirror_of: lie_max_n10k,  methods: {set: fw10_declared}}
+
+  # [FIG:I] declared top-k under lie_mode max on lie_max_n100k; read by: none
+  lie_max_fw_n100k: {mirror_of: lie_max_n100k, methods: {set: fw10_declared}}
+
+  # 10^4 cartel: Magentic-One was dropped "for time" from fw_live_n10k_cartel and its _em / _sota / _verified_va mirrors
+  # but is in every honest 10^4 grid, so E's honest and cartel bars averaged different framework sets (the best 10^4
+  # framework only on the honest side). Its four drawn shortlists under the cartel, params as the honest grids.
+  # [FIG:A,E] Magentic-One's four shortlists under the 10^4 cartel; read by: shortlist_figs
+  fw_live_n10k_cartel_magentic:
+    mirror_of: fw_live_n10k_cartel
+    methods:
+      - {name: fw_magentic_one, params: {}}
+      - {name: fw_magentic_one, params: {retrieval: embed, dedup: true}}
+      - name: fw_magentic_one
+        params: {retrieval: sota, dedup: true, embed_model: Qwen/Qwen3-Embedding-8B,
+          rerank_model: Qwen/Qwen3-Reranker-4B}
+      - {name: fw_magentic_one, params: {retrieval: midian, r: 10}}
