@@ -12,12 +12,16 @@ Permanent exclusions:
     other arm.
   - midian_llm_descent: the SPEC section 9 descent ablation (appendix only).
 """
+
 from __future__ import annotations
 
 import re
 
-DO_NOT_ADD = {"route_to_k_majority", "midian_llm_descent",
-              "midian[audit=False,online=False,verify=False]"}   # online updates off: internals ablation
+DO_NOT_ADD = {
+    "route_to_k_majority",
+    "midian_llm_descent",
+    "midian[audit=False,online=False,verify=False]",
+}  # online updates off: internals ablation
 _R = re.compile(r"(?:\[|,)r=(\d+)|_r(\d+)$")
 _DELTA = re.compile(r"delta=([0-9.]+)")
 _VARIANT = re.compile(r"cohort=|stratify=True|churn_mode=|online=False")

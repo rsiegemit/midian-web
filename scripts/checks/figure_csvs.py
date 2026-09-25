@@ -8,6 +8,7 @@ Exit 1 on any of them.
 
     python scripts/checks/figure_csvs.py base/figures new/figures [--atol 1e-12] [--ignore cost_by_n.csv]
 """
+
 import argparse
 import os
 import sys
@@ -43,15 +44,18 @@ def diff_cells(a, b, atol):
 def compare(root_a, root_b, atol, ignore=()):
     """List of report lines; empty when the trees agree."""
     a, b = csvs(root_a), csvs(root_b)
-    lines = [f"MISSING {p} (only in {'A' if p in a else 'B'})"
-             for p in sorted(a ^ b) if os.path.basename(p) not in ignore]
+    lines = [
+        f"MISSING {p} (only in {'A' if p in a else 'B'})" for p in sorted(a ^ b) if os.path.basename(p) not in ignore
+    ]
     for p in sorted(a & b):
         if os.path.basename(p) in ignore:
             continue
         x, y = pd.read_csv(os.path.join(root_a, p)), pd.read_csv(os.path.join(root_b, p))
         if set(x.columns) != set(y.columns):
-            lines.append(f"COLUMNS {p}: only A {sorted(set(x.columns) - set(y.columns))}, "
-                         f"only B {sorted(set(y.columns) - set(x.columns))}")
+            lines.append(
+                f"COLUMNS {p}: only A {sorted(set(x.columns) - set(y.columns))}, "
+                f"only B {sorted(set(y.columns) - set(x.columns))}"
+            )
             continue
         if len(x) != len(y):
             lines.append(f"DIFF {p}: {len(x)} vs {len(y)} rows")

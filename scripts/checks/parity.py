@@ -1,6 +1,7 @@
 """Golden parity harness (refactor invariant G3): re-run stored rows and demand identical output.
 
-Generalises scripts/checks/equivalence.py from a fixed MIDIAN fingerprint to every stored arm. For each (backend, method,
+Generalises scripts/checks/equivalence.py from a fixed MIDIAN fingerprint to every stored arm. For each (backend,
+method,
 params) present in the stored rows of the non-LLM backends (bernoulli, replay, routereval) it picks up to --per rows
 (cheap cells n <= 10^4 first, then the most recently written rows.csv, smallest n, rid; one row per directory before
 a second from the same one: recent grids are the ones today's code should reproduce; the sample moves with file mtimes,
@@ -39,6 +40,7 @@ error or a baseline mismatch (and on a stored-row diff with --strict).
         [--only-method midian,random] [--per 3] [--max-n 1000000]          # on the base tree
     PYTHONPATH=. python scripts/checks/parity.py --out new.json --baseline base.json       # on the refactored tree
 """
+
 import argparse
 import json
 import math
@@ -69,14 +71,14 @@ def load_index(results, backends):
         if not set(INDEX_COLS) <= set(head.columns) or head.backend[0] not in backends:
             continue
         df = pd.read_csv(f, usecols=list(INDEX_COLS), low_memory=False)
-        frames.append(df.assign(dir=d, line=np.arange(len(df)) + 1, mtime=os.path.getmtime(f)))   # line 0: header
+        frames.append(df.assign(dir=d, line=np.arange(len(df)) + 1, mtime=os.path.getmtime(f)))  # line 0: header
     df = pd.concat(frames, ignore_index=True)
     return df[(df.method != "oracle") & df.backend.isin(backends) & df.rid.notna()]
 
 
 def pick(index, per, max_n, max_n_embed):
     """{(backend, method, params): [index rows]}, up to `per` each, in the preference order of the module docstring."""
-    out, index = {}, index.assign(big=index.n > 10 ** 4, age=-index.mtime)
+    out, index = {}, index.assign(big=index.n > 10**4, age=-index.mtime)
     for key, g in index.sort_values(["big", "age", "n", "rid"]).groupby(["backend", "method", "params"], sort=True):
         g = g[g.n < max_n] if key[1] not in EMBED_METHODS else g[g.n <= max_n_embed]
         first = g.drop_duplicates("dir")
@@ -92,8 +94,12 @@ def stored_row(results, ref):
         with open(j) as fh:
             return {**json.load(fh), "rid": ref.rid}, "rows.d"
     line = int(ref.line)
-    df = pd.read_csv(f"{results}/{ref.dir}/rows.csv", skiprows=lambda i: i not in (0, line),
-                     low_memory=False, float_precision="round_trip")
+    df = pd.read_csv(
+        f"{results}/{ref.dir}/rows.csv",
+        skiprows=lambda i: i not in (0, line),
+        low_memory=False,
+        float_precision="round_trip",
+    )
     row = df.iloc[0].to_dict()
     assert row["rid"] == ref.rid, f"{ref.dir}: line {line} holds {row['rid']}, expected {ref.rid}"
     return row, "rows.csv"
@@ -143,8 +149,18 @@ def rerun(results, ref, base=None):
     params = json.loads(row["params"]) if isinstance(row["params"], str) else row["params"]
     cell, seed = cell_of(row), int(row["seed"])
     rid = run.row_id(cell, row["method"], params, seed)
-    entry = {"dir": ref.dir, "rid": ref.rid, "line": int(ref.line), "source": src, "backend": cell["backend"],
-             "method": row["method"], "params": row["params"], "n": cell["n"], "Q": cell["Q"], "seed": seed}
+    entry = {
+        "dir": ref.dir,
+        "rid": ref.rid,
+        "line": int(ref.line),
+        "source": src,
+        "backend": cell["backend"],
+        "method": row["method"],
+        "params": row["params"],
+        "n": cell["n"],
+        "Q": cell["Q"],
+        "seed": seed,
+    }
     if rid != ref.rid:
         return {**entry, "status": "error", "error": f"rebuilt cell gives rid {rid}"}
     batch = row["method"] in EMBED_METHODS and row["grid"] in EMBED_BATCH_GRIDS
@@ -165,7 +181,7 @@ def rerun(results, ref, base=None):
             os.environ["RTE_EMBED_BATCH"] = old
     fresh = {k: v for k, v in fresh.items() if not k.startswith("wall_clock_")}
     diffs = compare(row, fresh, rtol=1e-12 if src == "rows.csv" else 0.0)
-    new_cols = all(norm(row.get(d["col"])) is None for d in diffs)       # only columns the stored row predates
+    new_cols = all(norm(row.get(d["col"])) is None for d in diffs)  # only columns the stored row predates
     status = "equal" if not diffs else "new_cols" if new_cols else "diff"
     entry.update(embed_batch=batch, seconds=round(time.perf_counter() - t0, 2), status=status, diffs=diffs, fresh=fresh)
     if base is not None:
@@ -176,8 +192,17 @@ def rerun(results, ref, base=None):
 
 def stub(ref, status, error):
     """A report entry for a row that was not compared."""
-    return {"dir": ref.dir, "rid": ref.rid, "line": int(ref.line), "n": int(ref.n), "backend": ref.backend,
-            "method": ref.method, "params": ref.params, "status": status, "error": error}
+    return {
+        "dir": ref.dir,
+        "rid": ref.rid,
+        "line": int(ref.line),
+        "n": int(ref.n),
+        "backend": ref.backend,
+        "method": ref.method,
+        "params": ref.params,
+        "status": status,
+        "error": error,
+    }
 
 
 def main(argv=None):
@@ -186,7 +211,7 @@ def main(argv=None):
     p.add_argument("--out", required=True, help="JSON report path")
     p.add_argument("--per", type=int, default=3, help="stored rows re-run per (backend, method, params)")
     p.add_argument("--max-seconds", type=float, default=float("inf"), help="stop starting new reruns after this")
-    p.add_argument("--max-n", type=int, default=10 ** 6, help="skip cells with n >= this")
+    p.add_argument("--max-n", type=int, default=10**6, help="skip cells with n >= this")
     p.add_argument("--max-n-embed", type=int, default=1000, help="skip knn/mlp_router cells with n > this")
     p.add_argument("--only-backend", help="comma-separated subset of " + ",".join(BACKENDS))
     p.add_argument("--only-method", help="comma-separated method names")
@@ -199,8 +224,9 @@ def main(argv=None):
     if a.baseline:
         with open(a.baseline) as fh:
             base = {e["rid"]: e for e in json.load(fh)["rows"] if "line" in e}
-        index = pd.DataFrame([{k: e[k] for k in ("dir", "line", "rid", "backend", "n", "method", "params")}
-                              for e in base.values()]).assign(mtime=0.0)
+        index = pd.DataFrame(
+            [{k: e[k] for k in ("dir", "line", "rid", "backend", "n", "method", "params")} for e in base.values()]
+        ).assign(mtime=0.0)
         backends = tuple(sorted(set(index.backend)))
     else:
         index = load_index(a.results, backends)
@@ -210,7 +236,7 @@ def main(argv=None):
     picks = pick(index, len(index) if a.baseline else a.per, a.max_n, a.max_n_embed)
     print(f"[parity] index {len(index):,} rows, {len(picks)} arms, {time.perf_counter() - t0:.0f}s", file=sys.stderr)
     depth = max(map(len, picks.values()), default=0)
-    order = [(k, i) for i in range(depth) for k in picks if i < len(picks[k])]     # round-robin over arms
+    order = [(k, i) for i in range(depth) for k in picks if i < len(picks[k])]  # round-robin over arms
     report = []
     for j, (key, i) in enumerate(order, 1):
         ref = picks[key][i]
@@ -219,22 +245,34 @@ def main(argv=None):
             continue
         try:
             e = rerun(a.results, ref, base.get(ref.rid) if a.baseline else None)
-        except Exception as ex:                                  # report and keep going: one arm must not stop the rest
+        except Exception as ex:  # report and keep going: one arm must not stop the rest
             e = stub(ref, "error", f"{type(ex).__name__}: {ex}")
         report.append(e)
-        print(f"[{j}/{len(order)}] {e['status']:6} {e.get('baseline_status', '')} {key[0]} {key[1]} {key[2]} "
-              f"n={ref.n} {ref.dir} {e.get('seconds', '')}s " + " ".join(d["col"] for d in e.get("diffs", [])),
-              file=sys.stderr, flush=True)
+        print(
+            f"[{j}/{len(order)}] {e['status']:6} {e.get('baseline_status', '')} {key[0]} {key[1]} {key[2]} "
+            f"n={ref.n} {ref.dir} {e.get('seconds', '')}s " + " ".join(d["col"] for d in e.get("diffs", [])),
+            file=sys.stderr,
+            flush=True,
+        )
     status = pd.Series([e["status"] for e in report]).value_counts().to_dict()
     vs_base = pd.Series([e.get("baseline_status", "-") for e in report]).value_counts().to_dict()
     uncovered = sorted(" ".join(k) for k, v in picks.items() if not v)
-    summary = {"arms": len(picks), "arms_rerun": len({(e["backend"], e["method"], e["params"]) for e in report
-                                                      if e["status"] in ("equal", "new_cols", "diff")}),
-               "rows": len(report), "status": status, "baseline_status": vs_base,
-               "seconds": round(time.perf_counter() - t0, 1),
-               "uncovered_arms": uncovered, "max_n": a.max_n, "max_n_embed": a.max_n_embed, "per": a.per,
-               "backends": list(backends),
-               "exempt": "fw_* methods and the llm backend (no offline-reproducible LLM responses)"}
+    summary = {
+        "arms": len(picks),
+        "arms_rerun": len(
+            {(e["backend"], e["method"], e["params"]) for e in report if e["status"] in ("equal", "new_cols", "diff")}
+        ),
+        "rows": len(report),
+        "status": status,
+        "baseline_status": vs_base,
+        "seconds": round(time.perf_counter() - t0, 1),
+        "uncovered_arms": uncovered,
+        "max_n": a.max_n,
+        "max_n_embed": a.max_n_embed,
+        "per": a.per,
+        "backends": list(backends),
+        "exempt": "fw_* methods and the llm backend (no offline-reproducible LLM responses)",
+    }
     with open(a.out, "w") as fh:
         json.dump({"summary": summary, "rows": report}, fh, indent=1, default=str)
     print(json.dumps(summary, indent=1), file=sys.stderr)

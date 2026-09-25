@@ -8,6 +8,7 @@ Prints one line per family and a PASS/FAIL summary. No GPU, no endpoints needed.
     python scripts/data/probe_families.py            # the K=64 list
     python scripts/data/probe_families.py --all      # every generator reasoning-gym registers
 """
+
 from __future__ import annotations
 
 import argparse
@@ -15,7 +16,7 @@ import sys
 
 sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parents[2]))
 
-from rte.backends import families   # noqa: E402
+from rte.backends import families  # noqa: E402
 
 
 def check(name: str) -> tuple[bool, str]:
@@ -27,7 +28,7 @@ def check(name: str) -> tuple[bool, str]:
         junk = families.correct(name, 7, "zzz_not_an_answer")
         det = families.question(name, 7) == families.question(name, 7)
         return bool(gold == 1 and junk == 0 and det), f"gold={gold} junk={junk} deterministic={det}"
-    except Exception as ex:                                   # noqa: BLE001
+    except Exception as ex:  # noqa: BLE001
         return False, f"{type(ex).__name__}: {str(ex)[:120]}"
 
 
@@ -37,6 +38,7 @@ def main() -> int:
     args = ap.parse_args()
     if args.all:
         from reasoning_gym.factory import DATASETS
+
         names = sorted(DATASETS)
     else:
         names = families.FAMILIES_64

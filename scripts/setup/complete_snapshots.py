@@ -14,6 +14,7 @@ what the snapshot lacks. Then it verifies each repo with the same offline call v
 
     python scripts/setup/complete_snapshots.py [--repo Qwen/Qwen2.5-7B-Instruct]
 """
+
 from __future__ import annotations
 
 import argparse
@@ -23,11 +24,12 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from rte.config import RTE_DATA  # noqa: E402
+
 os.environ.setdefault("HF_HOME", str(RTE_DATA / "hf_cache"))
 
 from rte.backends.population import bands, ladder  # noqa: E402
 
-REPOS = bands(ladder())[0]        # configs/models.yaml is the one source of truth
+REPOS = bands(ladder())[0]  # configs/models.yaml is the one source of truth
 
 
 def token() -> str | None:
@@ -54,7 +56,7 @@ def main() -> int:
     headers = {"Authorization": f"Bearer {tok}"} if tok else {}
     bad = []
 
-    for repo in (args.repo or REPOS):
+    for repo in args.repo or REPOS:
         info = api.model_info(repo)
         sha = info.sha
         root = Path(HF_HUB_CACHE) / f"models--{repo.replace('/', '--')}"
@@ -87,7 +89,7 @@ def main() -> int:
         try:
             p = snapshot_download(repo, local_files_only=True)
             print(f"COMPLETE {repo} (+{added} files) -> {p}", flush=True)
-        except Exception as e:                                   # noqa: BLE001
+        except Exception as e:  # noqa: BLE001
             print(f"INCOMPLETE {repo}: {type(e).__name__}: {str(e)[:250]}", flush=True)
             bad.append(repo)
 

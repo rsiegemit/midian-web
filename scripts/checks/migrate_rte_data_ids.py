@@ -18,6 +18,7 @@ nothing, if: the sentinel exists; a stored rid differs from rid_of_row of its st
 neither the grid's expanded nor its unexpanded form; two stored rows would get one new rid; the CSV does not
 round-trip byte-identically.
 """
+
 import argparse
 import csv
 import glob
@@ -34,8 +35,15 @@ from rte import run
 
 SENTINEL = ".rte_data_ids_v1"
 BACKUP = "_premigration_rte_data_v1"
-CSV_TYPES = {"n": int, "K": int, "b": int, "Q": int, "beta": float, "seed": int,
-             "collude": lambda s: {"True": True, "False": False}[s]}
+CSV_TYPES = {
+    "n": int,
+    "K": int,
+    "b": int,
+    "Q": int,
+    "beta": float,
+    "seed": int,
+    "collude": lambda s: {"True": True, "False": False}[s],
+}
 
 
 def dependent_grids(cfg):
@@ -68,9 +76,10 @@ class Plan:
 
     def __init__(self, d, bkmap):
         self.d, self.bkmap = d, bkmap
-        self.bad, self.new_of = [], {}              # new_of: new rid -> old rid (collision check)
-        self.counts = dict.fromkeys(("csv_rows", "csv_rewritten", "csv_no_rid", "files", "files_rewritten",
-                                     "already_unexpanded"), 0)
+        self.bad, self.new_of = [], {}  # new_of: new rid -> old rid (collision check)
+        self.counts = dict.fromkeys(
+            ("csv_rows", "csv_rewritten", "csv_no_rid", "files", "files_rewritten", "already_unexpanded"), 0
+        )
 
     def remap(self, row, stored_rid, where):
         """(new backend_kwargs string, new rid) of a stored row; records refusal reasons."""

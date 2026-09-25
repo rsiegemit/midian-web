@@ -3,8 +3,10 @@
     python scripts/figures/make_all.py [--out DIR] [--from-csv] [--scale-matrix] [--only STEP ...]
 
 Full run (needs $RTE_DATA):
-  [scale_matrix]      scripts/analysis/scale_matrix.py for the bernoulli / replay sweeps (--scale-matrix; only when their
-                      rows changed: it rewrites $RTE_DATA/results/<grid>/matrix_success.csv, which bar_figs and A / B read)
+  [scale_matrix]      scripts/analysis/scale_matrix.py for the bernoulli / replay sweeps (--scale-matrix; only when
+  their
+                      rows changed: it rewrites $RTE_DATA/results/<grid>/matrix_success.csv, which bar_figs and A / B
+                      read)
   bar_figs            -> results/aggregates/bars/<family>.csv
   shortlist_figs      -> results/aggregates/shortlist/<family>.csv
   condensed_figs      A, B          (reads bars/, shortlist rows; writes the A / B display lists)
@@ -15,6 +17,7 @@ Full run (needs $RTE_DATA):
 bars/ and shortlist/ are the inputs of A / B and E-H, cost_by_n.csv of C, figures/*.csv + *.draw.csv + refs.csv of
 A / B / D / I. Output: <out> = --out, else $RTE_FIG_OUT, else figures/paper.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -25,7 +28,15 @@ import time
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 FIG = "scripts/figures"
-STEPS = ["scale_matrix", "bar_figs", "shortlist_figs", "condensed_figs", "shortlist_condensed", "efficiency_figs", "lie_max_fig"]
+STEPS = [
+    "scale_matrix",
+    "bar_figs",
+    "shortlist_figs",
+    "condensed_figs",
+    "shortlist_condensed",
+    "efficiency_figs",
+    "lie_max_fig",
+]
 FROM_CSV = ["condensed_figs", "shortlist_condensed", "efficiency_figs", "lie_max_fig"]
 
 
@@ -35,6 +46,7 @@ def commands(step, out, from_csv):
     if step == "scale_matrix":
         sys.path.insert(0, ROOT)
         from scripts.figures.lib.grids import MATRICES
+
         return [py + ["scripts/analysis/scale_matrix.py", g] for g in MATRICES.values()]
     if step in ("bar_figs", "shortlist_figs"):
         return [py + [f"{FIG}/{step}.py"]]
@@ -55,7 +67,7 @@ def main(argv=None):
     steps = [s for s in steps if not a.only or s in a.only]
     env = {**os.environ, "PYTHONPATH": ROOT, "MPLBACKEND": "Agg"}
     if a.from_csv:
-        env["RTE_DATA"] = os.path.join(out, ".no_rte_data")          # anything that still reads rows fails loudly
+        env["RTE_DATA"] = os.path.join(out, ".no_rte_data")  # anything that still reads rows fails loudly
     for step in steps:
         for cmd in commands(step, out, a.from_csv):
             t = time.time()

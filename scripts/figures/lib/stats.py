@@ -5,9 +5,11 @@
     se(x)            mean -/+ 1 standard error over seeds (or over the units of x)
     crossfit(T, pool)  winner's-curse-free best of a pool in a seed x arm table
 
-ci and bootstrap_ci are kept apart on purpose: they draw the same resamples when x is finite with >= 2 values, but differ
+ci and bootstrap_ci are kept apart on purpose: they draw the same resamples when x is finite with >= 2 values, but
+differ
 on NaN and on a single value, and stored numbers depend on each.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -15,15 +17,19 @@ import pandas as pd
 
 
 def ci(x, B=2000):
-    """95% bootstrap CI of the mean. If `x` is indexed by seed (cells x seeds), resample SEEDS: each seed's mean over the
-    fixed cells is the unit, so the bar is sampling error over seeds, not the between-shape spread of the pooled cells."""
+    """95% bootstrap CI of the mean. If `x` is indexed by seed (cells x seeds), resample SEEDS: each seed's mean over
+    the
+    fixed cells is the unit, so the bar is sampling error over seeds, not the between-shape spread of the pooled
+    cells."""
     rng = np.random.default_rng(0)
     if isinstance(x, pd.Series) and "seed" in (x.index.names or []):
         x = x.dropna()
         per_seed = x.groupby(level="seed").mean().to_numpy()
         if not len(per_seed):
             return (np.nan, np.nan)
-        return np.percentile([per_seed[rng.integers(0, len(per_seed), len(per_seed))].mean() for _ in range(B)], [2.5, 97.5])
+        return np.percentile(
+            [per_seed[rng.integers(0, len(per_seed), len(per_seed))].mean() for _ in range(B)], [2.5, 97.5]
+        )
     x = np.asarray(x, float)
     x = x[np.isfinite(x)]
     return np.percentile([rng.choice(x, len(x)).mean() for _ in range(B)], [2.5, 97.5]) if len(x) else (np.nan, np.nan)
@@ -58,7 +64,7 @@ def crossfit(T, pool):
     T = T[[a for a in pool if a in T.columns]].dropna(how="all")
     vals, picks = {}, {}
     for s in T.index:
-        rest = T.drop(s).mean()                              # skipna: an arm is judged on the other seeds it has
+        rest = T.drop(s).mean()  # skipna: an arm is judged on the other seeds it has
         rest = rest[T.loc[s].notna() & rest.notna()]
         if rest.empty:
             continue

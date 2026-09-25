@@ -9,6 +9,7 @@ same offline `snapshot_download` call vLLM makes at load time.
 Gemma is `gated=manual` on the Hub; if the token lacks access the model is SKIPPED and printed
 in the final summary so the caller can record the fallback in DEVIATIONS.md.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -19,11 +20,12 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from rte.config import RTE_DATA  # noqa: E402
+
 os.environ.setdefault("HF_HOME", str(RTE_DATA / "hf_cache"))
 
-from rte.backends.population import bands, ladder      # noqa: E402
+from rte.backends.population import bands, ladder  # noqa: E402
 
-LADDER = bands(ladder())[0]                            # configs/models.yaml, the only model list
+LADDER = bands(ladder())[0]  # configs/models.yaml, the only model list
 
 # Download COMPLETE snapshots. An allow_patterns list looks tidy but breaks serving: vLLM calls
 # `snapshot_download(repo, local_files_only=True)` with NO patterns, and huggingface_hub then
@@ -63,14 +65,13 @@ def main() -> int:
         t0 = time.time()
         print(f"\n=== {repo} ===", flush=True)
         try:
-            path = snapshot_download(repo, ignore_patterns=IGNORE,
-                                     token=token, max_workers=args.workers)
+            path = snapshot_download(repo, ignore_patterns=IGNORE, token=token, max_workers=args.workers)
             # the exact call vLLM makes at load time -- fail here, not on the GPU node
             snapshot_download(repo, local_files_only=True)
             gb = du_bytes(Path(path)) / 2**30
             print(f"OK {repo}  {gb:.2f} GiB  {time.time() - t0:.0f}s  -> {path}", flush=True)
             done.append((repo, gb))
-        except Exception as e:                                    # noqa: BLE001
+        except Exception as e:  # noqa: BLE001
             print(f"SKIP {repo}  {type(e).__name__}: {str(e)[:300]}", flush=True)
             skipped.append((repo, f"{type(e).__name__}: {str(e)[:200]}"))
 

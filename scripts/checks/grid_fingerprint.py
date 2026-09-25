@@ -10,6 +10,7 @@ depend on where RTE_DATA points (decision D1 changes exactly these ids).
     PYTHONPATH=. python scripts/checks/grid_fingerprint.py [--config configs/grids] [--grids a,b] > fp.tsv
     PYTHONPATH=. python scripts/checks/grid_fingerprint.py --compare tests/golden/grid_fingerprints.tsv
 """
+
 import argparse
 import hashlib
 import os
@@ -54,7 +55,9 @@ def read_tsv(path) -> dict:
 
 def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("--config", help="a config directory or single YAML file (default: rte.run.load_config's configs/grids)")
+    p.add_argument(
+        "--config", help="a config directory or single YAML file (default: rte.run.load_config's configs/grids)"
+    )
     p.add_argument("--grids", help="comma-separated subset (default: all)")
     p.add_argument("--compare", metavar="TSV", help="diff against a golden TSV; exit 1 on any difference")
     a = p.parse_args(argv)
@@ -65,8 +68,11 @@ def main(argv=None):
     for r in rows:
         print("\t".join(str(r[c]) for c in COLUMNS), flush=True)
     dep = [r["grid"] for r in rows if r["rte_data_dep"]]
-    print(f"# {len(rows)} grids, {sum(r['units'] for r in rows):,} units, {sum(r['method_rows'] for r in rows):,} "
-          f"method rows; {len(dep)} RTE_DATA-dependent: {','.join(dep)}", file=sys.stderr)
+    print(
+        f"# {len(rows)} grids, {sum(r['units'] for r in rows):,} units, {sum(r['method_rows'] for r in rows):,} "
+        f"method rows; {len(dep)} RTE_DATA-dependent: {','.join(dep)}",
+        file=sys.stderr,
+    )
     if a.compare:
         gold = read_tsv(a.compare)
         bad = [r["grid"] for r in rows if any(str(r[c]) != gold.get(r["grid"], {}).get(c) for c in COLUMNS)]

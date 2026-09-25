@@ -21,6 +21,7 @@ plus os.replace, which is atomic. endpoints.json is regenerated from the directo
 change -- a concurrent regeneration can briefly publish a stale merge, which the next registration
 repairs, and `rte.llm_client` reads the directory in preference to the merged file anyway.
 """
+
 from __future__ import annotations
 
 import json
@@ -63,7 +64,7 @@ def read_dir() -> dict[str, str]:
             if d.get("model") and d.get("url"):
                 out[d["model"]] = d["url"]
         except (OSError, json.JSONDecodeError):
-            continue                      # a half-written file cannot happen (atomic replace), but be safe
+            continue  # a half-written file cannot happen (atomic replace), but be safe
     return out
 
 

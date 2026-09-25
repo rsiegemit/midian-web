@@ -8,6 +8,7 @@ MONOTONE. This answers both for whatever is served, before a full measurement is
 
     $RTE_DATA/env/rte/bin/python scripts/data/calibrate_families.py --probes 20 [--tools]
 """
+
 from __future__ import annotations
 
 import argparse
@@ -16,10 +17,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-import numpy as np                                                          # noqa: E402
+import numpy as np  # noqa: E402
 
-from rte import llm_client                                                  # noqa: E402
-from rte.backends import families, llm, population                          # noqa: E402
+from rte import llm_client  # noqa: E402
+from rte.backends import families, llm, population  # noqa: E402
 
 
 def main() -> int:
@@ -31,7 +32,7 @@ def main() -> int:
     a = ap.parse_args()
 
     model = a.model or llm_client.served_models()[0]
-    fams = a.names.split(",") if a.names else families.names(16)[:a.families]
+    fams = a.names.split(",") if a.names else families.names(16)[: a.families]
     cfg = population.pinned_cfg([model])
     llm.ladder = population.ladder = lambda: cfg
     print(f"model: {model}\nfamilies: {fams}\nprobes per cell: {a.probes}\n")
@@ -47,8 +48,7 @@ def main() -> int:
     print(f"{'family':24s}" + "".join(f"{x:>14s}" for x in arms))
     acc = np.zeros((len(fams), len(arms)))
     for f, fam in enumerate(fams):
-        out = b.execute_many(np.arange(len(arms)), np.full(len(arms), f), a.probes,
-                             np.random.default_rng(1000 + f))
+        out = b.execute_many(np.arange(len(arms)), np.full(len(arms), f), a.probes, np.random.default_rng(1000 + f))
         acc[f] = out.mean(axis=1)
         print(f"{fam:24s}" + "".join(f"{v:14.2f}" for v in acc[f]), flush=True)
 
@@ -56,8 +56,10 @@ def main() -> int:
     band = [f for f, v in zip(fams, acc[:, 0]) if 0.70 <= v <= 0.95]
     print(f"\nspecialty families in the 0.70-0.95 band ({len(band)}/{len(fams)}): {band}")
     gap = acc[:, 0] - acc[:, 1]
-    print(f"handicap gap (specialty - handicapped): mean {gap.mean():+.3f}, min {gap.min():+.3f} "
-          f"-- a NEGATIVE min means the handicap helps somewhere")
+    print(
+        f"handicap gap (specialty - handicapped): mean {gap.mean():+.3f}, min {gap.min():+.3f} "
+        f"-- a NEGATIVE min means the handicap helps somewhere"
+    )
     print(f"stats: {b.stats()}")
     return 0
 

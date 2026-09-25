@@ -5,17 +5,20 @@
     python cluster/ops/progress.py --memo               # memo stats alone (cheap; use while a build is running)
     python cluster/ops/progress.py --memo --rows        # add row counts (SLOW: full scan; avoid while jobs write)
     python cluster/ops/progress.py --merge --prune g1 g2       # fold rows.d into rows.csv once, deleting what it folded
-    python cluster/ops/progress.py --merge --prune --every=900 # ... and keep doing it, for a sweep writing millions of rows
+    python cluster/ops/progress.py --merge --prune --every=900 # ... and keep doing it, for a sweep writing millions of
+    rows
 
 Replaces the ad-hoc row counters and `du`-based progress guesses used during the 10^5 build. Two lessons are baked in:
 `du` on the cache is useless as a progress signal (SQLite grows in page chunks, so short windows read as stalls), and a
 live shard must be opened read-only with nolock -- its row count is then a slight UNDER-count while a writer is active,
 so treat single samples as a floor and compare over long windows.
 """
+
 import glob, json, os, sqlite3, sys, time
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 from rte.config import RTE_DATA  # noqa: E402
+
 RESULTS = f"{RTE_DATA}/results"
 
 
@@ -63,14 +66,19 @@ def merge(grids: list[str], prune: bool, every: int = 0) -> None:
     A million-row sweep writes a million one-row files, which makes both consolidation and the resume scan slow. The
     CSV carries each row's `rid`, so a pruned row still counts as done -- see rte.run.consolidate / the resume set."""
     from rte.run import consolidate
+
     while True:
         for g in grids:
             d = f"{RESULTS}/{g}"
             if not os.path.isdir(f"{d}/rows.d"):
                 continue
-            t = time.time(); n = consolidate(d, prune=prune, force=True)   # the merger IS the owner
-            print(f"[merge {time.strftime('%H:%M')}] {g}: {n:,} rows in csv, "
-                  f"rows.d {len(os.listdir(f'{d}/rows.d')):,} files ({time.time() - t:.0f}s)", flush=True)
+            t = time.time()
+            n = consolidate(d, prune=prune, force=True)  # the merger IS the owner
+            print(
+                f"[merge {time.strftime('%H:%M')}] {g}: {n:,} rows in csv, "
+                f"rows.d {len(os.listdir(f'{d}/rows.d')):,} files ({time.time() - t:.0f}s)",
+                flush=True,
+            )
         if not every:
             return
         time.sleep(every)
@@ -78,6 +86,7 @@ def merge(grids: list[str], prune: bool, every: int = 0) -> None:
 
 def main(argv=None) -> None:
     import argparse
+
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("grids", nargs="*")
     ap.add_argument("--memo", action="store_true", help="memo stats alone")
@@ -92,20 +101,31 @@ def main(argv=None) -> None:
             grids = sorted(d for d in os.listdir(RESULTS) if os.path.isdir(f"{RESULTS}/{d}/rows.d"))
         return merge(grids, prune=a.prune, every=a.every)
     m = memo_stats(count_rows=a.rows)
-    rows = (f"; rows: {m['compact_rows']:,} compacted + {m['shard_rows']:,} new" if m["compact_rows"] is not None else "")
-    print(f"memo: compacted {m['compact_bytes'] / 1e9:.1f} GB, {m['shards']} new shard(s) "
-          f"{m['shard_bytes'] / 1e9:.2f} GB, total {(m['compact_bytes'] + m['shard_bytes']) / 1e9:.1f} GB{rows}"
-          + ("" if m["compact_rows"] is not None else "   (--rows to count rows; slow, and slower still under write load)"))
+    rows = f"; rows: {m['compact_rows']:,} compacted + {m['shard_rows']:,} new" if m["compact_rows"] is not None else ""
+    print(
+        f"memo: compacted {m['compact_bytes'] / 1e9:.1f} GB, {m['shards']} new shard(s) "
+        f"{m['shard_bytes'] / 1e9:.2f} GB, total {(m['compact_bytes'] + m['shard_bytes']) / 1e9:.1f} GB{rows}"
+        + (
+            ""
+            if m["compact_rows"] is not None
+            else "   (--rows to count rows; slow, and slower still under write load)"
+        )
+    )
     if a.memo:
         return
     if not grids:
-        grids = sorted(d for d in os.listdir(RESULTS) if os.path.isdir(f"{RESULTS}/{d}/rows.d") and os.listdir(f"{RESULTS}/{d}/rows.d"))
+        grids = sorted(
+            d
+            for d in os.listdir(RESULTS)
+            if os.path.isdir(f"{RESULTS}/{d}/rows.d") and os.listdir(f"{RESULTS}/{d}/rows.d")
+        )
     for g in grids:
         c = grid_rows(g)
         if not c:
-            print(f"\n{g}: no rows"); continue
+            print(f"\n{g}: no rows")
+            continue
         print(f"\n{g}: {sum(c.values()):,} rows, {len(c)} arms")
-        if len(grids) <= 4:                                    # per-method detail only when the caller asked for few grids
+        if len(grids) <= 4:  # per-method detail only when the caller asked for few grids
             for k, v in sorted(c.items(), key=lambda kv: (-kv[1], kv[0])):
                 print(f"   {v:5d}  {k}")
 

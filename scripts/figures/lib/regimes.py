@@ -1,17 +1,22 @@
 """Liar regimes: (beta, liar_select) -> a key, and the key's names in every place that prints one.
 
-    tag(beta, ls)    beta0 | cartel (beta 0.5 low-skill-first) | beta<x>_random | beta<x>_cartel     (every beta)
-    ab(beta, ls)     beta0 | cartel | None: the two regimes the condensed A / B figures draw
-    matrix_title(beta, ls)  the regime title a scale matrix (scripts/analysis/scale_matrix.py) writes
+tag(beta, ls)    beta0 | cartel (beta 0.5 low-skill-first) | beta<x>_random | beta<x>_cartel     (every beta)
+ab(beta, ls)     beta0 | cartel | None: the two regimes the condensed A / B figures draw
+matrix_title(beta, ls)  the regime title a scale matrix (scripts/analysis/scale_matrix.py) writes
 """
+
 from __future__ import annotations
 
-REGIMES = [("beta0", 0.0, "random", "honest (β = 0)"), ("beta01_random", 0.1, "random", "β = 0.1, random liars"),
-           ("beta025_random", 0.25, "random", "β = 0.25, random liars"),
-           ("beta025_cartel", 0.25, "low_skill_first", "β = 0.25, low-skill cartel"),
-           ("beta05_random", 0.5, "random", "β = 0.5, random liars"), ("cartel", 0.5, "low_skill_first", "β = 0.5, low-skill cartel")]
+REGIMES = [
+    ("beta0", 0.0, "random", "honest (β = 0)"),
+    ("beta01_random", 0.1, "random", "β = 0.1, random liars"),
+    ("beta025_random", 0.25, "random", "β = 0.25, random liars"),
+    ("beta025_cartel", 0.25, "low_skill_first", "β = 0.25, low-skill cartel"),
+    ("beta05_random", 0.5, "random", "β = 0.5, random liars"),
+    ("cartel", 0.5, "low_skill_first", "β = 0.5, low-skill cartel"),
+]
 NAME = {k: title for k, _, _, title in REGIMES}
-AB = {"beta0": "honest", "cartel": "β=0.5 cartel"}          # the two regimes of A / B, as their CSVs name them
+AB = {"beta0": "honest", "cartel": "β=0.5 cartel"}  # the two regimes of A / B, as their CSVs name them
 
 
 def tag(beta, ls):
@@ -35,4 +40,6 @@ def matrix_title(beta, ls):
     return f"beta={beta:g} {'CARTEL (low-skill-first)' if ls == 'low_skill_first' else 'random liars'}"
 
 
-MATRIX_REGIME = {k: matrix_title(b, ls) for k, b, ls, _ in REGIMES if k != "beta01_random"}   # the matrices have no beta 0.1
+MATRIX_REGIME = {
+    k: matrix_title(b, ls) for k, b, ls, _ in REGIMES if k != "beta01_random"
+}  # the matrices have no beta 0.1
