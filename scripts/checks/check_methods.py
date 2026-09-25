@@ -9,9 +9,9 @@ import math
 
 import numpy as np
 
-from rte.budget import Budget
-from rte.methods import load_method
-from rte.world import World
+from midian.budget import Budget
+from midian.methods import load_method
+from midian.world import World
 
 K, B, Q = 16, 3, 400
 
@@ -112,7 +112,7 @@ if __name__ == "__main__":
     import argparse
 
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("methods", nargs="+", help="method names (rte/methods)")
+    ap.add_argument("methods", nargs="+", help="method names (midian/methods)")
     for name in ap.parse_args().methods:
         for n in (100, 1000):
             M, w, build, fetch, succ, rnd = run(name, n)

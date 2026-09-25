@@ -11,9 +11,9 @@ import time
 import numpy as np
 import pytest
 
-from rte.budget import Budget
-from rte.methods import load_method
-from rte.world import World
+from midian.budget import Budget
+from midian.methods import load_method
+from midian.world import World
 
 RTE_DATA = os.environ.get("RTE_DATA", "/scratch/rte")
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

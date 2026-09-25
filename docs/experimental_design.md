@@ -73,7 +73,7 @@ S itself.
 ### Rows and row ids
 
 The row id is a 128-bit BLAKE2b hash of the canonical JSON of the cell, its `backend_kwargs` (and churn, if any), the
-method, its params and the seed (`row_id` / `rid_of_row` in `rte/run.py`). The runner writes each row atomically to `rows.d/<rid>.json` and skips any
+method, its params and the seed (`row_id` / `rid_of_row` in `midian/run.py`). The runner writes each row atomically to `rows.d/<rid>.json` and skips any
 unit whose rid is already on disk, so a grid can be sharded over many jobs (`--only k=v` filters cells, `--seeds`
 selects seeds) and any job can be killed and rerun. Rows are later folded into `rows.csv`. `backend_kwargs` values that
 name files under the data root are hashed in their unexpanded form (`$RTE_DATA/...`), so a row id does not depend on
@@ -81,7 +81,7 @@ where the data root is mounted ([errata.md](errata.md#row-ids-of-grids-that-name
 
 ## Aggregation
 
-`python -m rte.analyze --grid G` (package `rte/analysis/`) writes, per grid:
+`python -m midian.analyze --grid G` (package `midian/analysis/`) writes, per grid:
 
 - per-arm tables by cell and by method class, with **95% percentile-bootstrap intervals over seeds**;
 - **paired deltas** of every arm against the reference arm, MIDIAN w/o defenses (the pre-registered tree), with sign
@@ -101,12 +101,12 @@ The paper figures use ±1 standard error over seeds instead of intervals, and tw
 ## Grids
 
 An experiment is a named **grid**: a set of axis lists whose cartesian product is the cells, a seed range and a list of
-methods. `python -m rte.run --grid <name>` runs one; `--dry-run` lists the units still to run.
+methods. `python -m midian.run --grid <name>` runs one; `--dry-run` lists the units still to run.
 
 **Where grids live.** `configs/grids/*.yaml`, one file per family: `00_base.yaml` (the axis `defaults` and the named
 `_sets`, and nothing else), `smoke.yaml`, `live.yaml`, `synthetic.yaml`, `routereval.yaml`, `frameworks.yaml`,
 `erratum30.yaml` and `archive.yaml` (grids no figure reads any more, kept because a grid's name is its results directory
-and part of every row id). `rte.run.load_config()` reads them in sorted file order into one mapping and raises on a grid
+and part of every row id). `midian.run.load_config()` reads them in sorted file order into one mapping and raises on a grid
 name defined twice or a duplicate key anywhere. Every grid carries a one-line header, `# [TAGS] purpose; read by:
 scripts`, with tags `FIG:<letters>` (drawn in figures A-I), `NUM` (feeds a quoted number or table, no figure), `HIST`
 (historical, read by no current script), `SUPERSEDED-BY:<grid>`, `PENDING` (rows outstanding) and `SMOKE` (quick check);

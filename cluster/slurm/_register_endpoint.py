@@ -19,7 +19,7 @@ So instead of one shared file guarded by a lock, each server owns ONE file:
 Single-writer-per-file means no lock is needed; every write lands via a same-directory temp file
 plus os.replace, which is atomic. endpoints.json is regenerated from the directory after each
 change -- a concurrent regeneration can briefly publish a stale merge, which the next registration
-repairs, and `rte.llm_client` reads the directory in preference to the merged file anyway.
+repairs, and `midian.llm_client` reads the directory in preference to the merged file anyway.
 """
 
 from __future__ import annotations

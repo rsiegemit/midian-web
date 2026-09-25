@@ -17,10 +17,10 @@ import time
 import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-from rte.backends import families
-from rte.config import RTE_DATA  # noqa: E402
-from rte.methods._learned import embed, resolve
-from rte.methods.frameworks._common import _bm25, sota_cache_name, sota_shortlist
+from midian.backends import families
+from midian.config import RTE_DATA  # noqa: E402
+from midian.methods._learned import embed, resolve
+from midian.methods.frameworks._common import _bm25, sota_cache_name, sota_shortlist
 
 POP = f"{RTE_DATA}/populations"
 

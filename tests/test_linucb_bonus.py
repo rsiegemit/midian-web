@@ -4,7 +4,7 @@ import os
 
 import pytest
 
-from rte.methods import load_method
+from midian.methods import load_method
 
 
 def test_default_params_unchanged():
@@ -14,8 +14,8 @@ def test_default_params_unchanged():
 
 @pytest.mark.skipif(not os.environ.get("RTE_DATA"), reason="needs RTE_DATA populations")
 def test_own_bonus_beats_context_bonus_at_1e4():
-    from rte.run import run_method
-    from rte.world import World
+    from midian.run import run_method
+    from midian.world import World
     C = f"{os.environ['RTE_DATA']}/populations/specialist_n1000_K16_seed1/S.npy"
     w = World(10000, 16, "specialist", 0.0, seed=1, backend="bernoulli", backend_kwargs={"calibrate_from": C})
     st = w.tasks(1000)

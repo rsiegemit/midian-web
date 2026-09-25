@@ -10,9 +10,9 @@ import os
 import numpy as np
 import pytest
 
-from rte.backends import CAL_VALUES, calibrated_declared
-from rte.run import run_method
-from rte.world import World, apply_lying
+from midian.backends import CAL_VALUES, calibrated_declared
+from midian.run import run_method
+from midian.world import World, apply_lying
 
 DATA = os.environ.get("RTE_DATA", os.path.expanduser("~/rte_data"))
 REPLAY_NPZ = f"{DATA}/data/routerbench_cells.npz"
@@ -244,7 +244,7 @@ def test_no_repeat_llmrouterbench():
 
 # ------------------------------------------------------------ probe index with repeated cells in one call (audit F4)
 def test_probe_call_without_duplicates_unchanged(tmp):
-    from rte.world import probe_seed
+    from midian.world import probe_seed
     w = World(**worlds(tmp)["bernoulli"])
     w._probe_idx[3, 2] = 7
     a, f = np.array([3, 4, 5]), np.array([2, 2, 0])
@@ -307,7 +307,7 @@ def test_shuffle_makes_declared_argmax_ties_random():
 
 def _probe_index_reference(idx, K, agents, families, reps):
     """The first post-fix bookkeeping (np.add.at on every call): the fast path must match it exactly."""
-    from rte.world import _occurrence
+    from midian.world import _occurrence
     agents, families = np.broadcast_arrays(np.asarray(agents, np.int64), np.asarray(families, np.int64))
     k0 = idx[agents, families].astype(np.int64)
     np.add.at(idx, (agents, families), reps)
@@ -317,7 +317,7 @@ def _probe_index_reference(idx, K, agents, families, reps):
 
 
 def test_probe_fast_path_matches_reference(tmp):
-    from rte.world import probe_seed
+    from midian.world import probe_seed
     w = World(**worlds(tmp)["bernoulli"])
     rng = np.random.default_rng(0)
     ref = w._probe_idx.copy()

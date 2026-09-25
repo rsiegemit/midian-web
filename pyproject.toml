@@ -3,9 +3,9 @@ requires = ["setuptools>=69"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "rte"
+name = "midian"
 version = "0.1.0"
-description = "MIDIAN / RTE: routing tasks to experts when some agents lie -- a paired, cost-accounted benchmark of routing mechanisms and agent frameworks"
+description = "MIDIAN: routing tasks to experts when some agents lie -- a paired, cost-accounted benchmark of routing mechanisms and agent frameworks"
 readme = "README.md"
 license = { file = "LICENSE" }
 authors = [{ name = "Anonymous Authors" }]
@@ -20,10 +20,10 @@ llm = ["openai>=3.7", "reasoning-gym>=0.1.25", "requests>=2.34", "huggingface_hu
 figures = ["matplotlib>=3.11"]
 test = ["pytest>=9.1"]
 dev = ["ruff>=0.6"]
-all = ["rte[learned,llm,figures,test,dev]"]
+all = ["midian[learned,llm,figures,test,dev]"]
 
 [tool.setuptools.packages.find]
-include = ["rte*"]          # namespaces on: also picks up rte/methods/frameworks/workers (no __init__.py)
+include = ["midian*"]       # namespaces on: also picks up midian/methods/frameworks/workers (no __init__.py)
 
 [tool.ruff]
 line-length = 120

@@ -77,7 +77,7 @@ _done = {}
 def planned(grid):
     """The set of (n, b, dist, beta, liar_select, seed, arm label) rows the grid loader plans for `grid` (oracle rows
     excluded)."""
-    from rte.run import blocks, cells, method_specs, seeds
+    from midian.run import blocks, cells, method_specs, seeds
 
     cfg = grids.config()
     return {

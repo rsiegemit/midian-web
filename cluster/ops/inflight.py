@@ -14,7 +14,7 @@ import sys
 from collections import defaultdict
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-from rte.config import RTE_DATA  # noqa: E402
+from midian.config import RTE_DATA  # noqa: E402
 
 L = f"{RTE_DATA}/logs"
 

@@ -38,7 +38,7 @@ JOBS = []
 
 
 def rows(g):
-    from rte.analyze import load as _load
+    from midian.analyze import load as _load
 
     if g not in _mem:
         try:

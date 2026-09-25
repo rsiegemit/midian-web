@@ -1,4 +1,4 @@
-# configs/grids/ -- named grids for `python -m rte.run --grid <name>`, read by rte.run.load_config() in sorted file
+# configs/grids/ -- named grids for `python -m midian.run --grid <name>`, read by midian.run.load_config() in sorted file
 # order: this file holds `defaults` and `_sets`; every other file holds only `grids:` (a name defined twice raises; so
 # does a duplicate key anywhere). Axes: backend n K dist beta liar_select collude declared_source lie_mode demand b Q
 # (lists = cartesian product). methods: an explicit list of `name` | {name, params} | {set: NAME} (a set of methods
@@ -477,7 +477,7 @@ _sets:
     - gossip_reputation_greedy
     - cnp_self_bid
     - referral_network
-  # `methods: all` frozen 2026-09-24 (so no grid depends on the files in rte/methods): every method file in pkgutil
+  # `methods: all` frozen 2026-09-24 (so no grid depends on the files in midian/methods): every method file in pkgutil
   # order, the three MIDIAN ablations and the former defaults.extra paired variants (flat_probe_argmax online vs
   # frozen, MIDIAN w/o audits, r = 5 cohorts, halving through MIDIAN's report channel). Off the llm backend the
   # runner drops the LLM-only llm_supervisor and midian_llm_descent (requires_llm), exactly as `all` did.

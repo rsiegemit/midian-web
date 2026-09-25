@@ -3,7 +3,7 @@ grids:
   # ---- 2026-09-23 ERRATUM 30 reruns (defined, NOT launched). Three opt-in fixes, each a new cell value, so no existing
   # row id moves:
   # declared_source: calibrated  -- realistic declarations on the non-live backends (live self-rating pattern,
-  # rte/backends/__init__.py CAL_P, fitted by scripts/data/fit_declared_calibration.py) instead of clip(S + N(0, .05)),
+  # midian/backends/__init__.py CAL_P, fitted by scripts/data/fit_declared_calibration.py) instead of clip(S + N(0, .05)),
   # an answer key;
   # backend_kwargs split: true   -- replay: probes and S on 70 % of each category's prompts, routed tasks on the other
   # 30 %;

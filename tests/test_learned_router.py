@@ -3,11 +3,11 @@ import re
 
 import numpy as np
 
-import rte.methods._learned as L
-from rte.budget import Budget
-from rte.methods.flat_probe_argmax import FlatProbeArgmax
-from rte.methods.knn_router import KNNRouter
-from rte.world import World
+import midian.methods._learned as L
+from midian.budget import Budget
+from midian.methods.flat_probe_argmax import FlatProbeArgmax
+from midian.methods.knn_router import KNNRouter
+from midian.world import World
 
 
 def test_knn_router_equals_flat_with_family_embedding(monkeypatch):

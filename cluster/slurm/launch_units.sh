@@ -4,7 +4,7 @@
 #   ONLY_MISSING=1: plan only the units with a row still missing (the runner's own rid check), not every unit of the grid
 #   Needs RTE_DATA, RTE_ACCOUNT, RTE_CPU_PARTITIONS (cluster/cluster.env.example). scripts/launch_units.sh is a symlink here.
 # Enforces OPS_RULES.md:
-#   R1  units come from the GRID LOADER (rte.run), never a hand-written filter list (a hand list dropped a regime once)
+#   R1  units come from the GRID LOADER (midian.run), never a hand-written filter list (a hand list dropped a regime once)
 #   R2  1 CPU: a unit only waits on HTTP to the fleet (2 CPUs ran at ~5% efficiency)
 #   R3  walltime = cluster/slurm/job_time.py (1.5 x measured p95 per size x framework), never a flat multi-day limit
 #   R4  resumable: the log IS the state; re-run to continue, never start over with a fresh log
@@ -18,7 +18,7 @@ PY="$RTE_DATA/env/rte/bin/python"; LOG="$RTE_DATA/logs/launch_${G}.txt"; mkdir -
 cd "$(dirname "$(readlink -f "$0")")/../.."; export PYTHONPATH="$PWD"
 "$PY" - "$G" <<'PY' > "$LOG.plan"
 import os, sys
-from rte.run import RTE_DATA, blocks, cells, method_specs, row_id, seeds
+from midian.run import RTE_DATA, blocks, cells, method_specs, row_id, seeds
 from cluster.slurm.job_time import minutes, slurm
 from scripts.figures.lib.grids import config
 g = sys.argv[1]; cfg = config(); out = f"{RTE_DATA}/results/{g}"

@@ -1,9 +1,9 @@
 """LinUCB-honest: needs only probes, its context is a function of observed outcomes alone, budget and validity."""
 import numpy as np
 
-from rte.budget import Budget
-from rte.methods.linucb_honest import LinUcbHonest
-from rte.world import AccessError, World
+from midian.budget import Budget
+from midian.methods.linucb_honest import LinUcbHonest
+from midian.world import AccessError, World
 
 
 def test_linucb_no_oracle_features():

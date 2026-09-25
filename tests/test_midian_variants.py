@@ -1,4 +1,4 @@
-"""MIDIAN's defenses as parameters (audit, verify; both on by default) and the old-key mapping (rte.methods.keys):
+"""MIDIAN's defenses as parameters (audit, verify; both on by default) and the old-key mapping (midian.methods.keys):
 budgets, exclusion of caught liars, the undefended accounting when the defenses are off, the cost of the full method
 against MIDIAN w/o audits, and the bernoulli sanity checks."""
 import json
@@ -7,10 +7,10 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from rte.budget import Budget
-from rte.methods import keys
-from rte.methods.midian import Midian
-from rte.world import World
+from midian.budget import Budget
+from midian.methods import keys
+from midian.methods.midian import Midian
+from midian.world import World
 
 OFF = dict(audit=False, verify=False)                     # MIDIAN w/o defenses
 
@@ -89,7 +89,7 @@ def test_full_method_costs_like_wo_audit():
     assert out["full"]["probes"] <= 1.05 * out["wo_audit"]["probes"] + 1
 
 
-# ---------------------------------------------------------------- rte.methods.keys: the old keys
+# ---------------------------------------------------------------- midian.methods.keys: the old keys
 OLD = [("midian_va", {}, ("midian", {})),
        ("midian_a", {}, ("midian", {"verify": False})),
        ("midian_v", {}, ("midian", {"audit": False})),

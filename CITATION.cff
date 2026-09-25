@@ -1,6 +1,6 @@
 cff-version: 1.2.0
 message: "If you use this benchmark or MIDIAN, please cite the paper below."
-title: "RTE / MIDIAN: a benchmark for routing tasks among agents that may misreport their skill"
+title: "MIDIAN: a benchmark for routing tasks among agents that may misreport their skill"
 authors:
   - name: "Anonymous Authors"
 license: MIT

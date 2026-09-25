@@ -1,11 +1,11 @@
 """Reading stored result rows, and the per-row helpers every figure / number script shares.
 
-    read_rows(grid)           rows.d/*.json + rows.csv of one grid under the current method keys (rte.methods.keys)
+    read_rows(grid)           rows.d/*.json + rows.csv of one grid under the current method keys (midian.methods.keys)
     load_fw(grid)             read_rows de-duplicated the way the framework-shortlist scripts count (every row, b
-    included) label(method, params)     the arm's label, as rte.analyze builds it stat(df, key)             one number
+    included) label(method, params)     the arm's label, as midian.analyze builds it stat(df, key)          one number
     per row from the method_stats JSON column pending_reruns()          {(grid, framework, dist, regime)} whose
     erratum-28 rerun is outstanding
-RESULTS is $RTE_DATA/results (rte.config).
+RESULTS is $RTE_DATA/results (midian.config).
 """
 
 from __future__ import annotations
@@ -17,9 +17,9 @@ import os
 import numpy as np
 import pandas as pd
 
-from rte.analyze import ALIAS
-from rte.config import RTE_DATA
-from rte.methods import keys
+from midian.analyze import ALIAS
+from midian.config import RTE_DATA
+from midian.methods import keys
 from scripts.figures.lib import grids
 from scripts.figures.lib.regimes import tag
 
@@ -107,7 +107,7 @@ def pending_reruns():
 def landed(grid, method, dist, beta, ls, seed, _c={}):
     """True when every param variant of `method` in `grid` has a row for (dist, beta, liar_select, seed)."""
     if grid not in _c:
-        from rte.run import blocks, method_specs
+        from midian.run import blocks, method_specs
 
         cfg = grids.config()
         want = {}

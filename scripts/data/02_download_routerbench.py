@@ -1,5 +1,5 @@
 """Download RouterBench (withmartian/routerbench, 0-shot pickle) and normalize it into a compact cell table for
-`rte.backends.replay`.   python scripts/data/02_download_routerbench.py      (login node: needs internet)
+`midian.backends.replay`.   python scripts/data/02_download_routerbench.py      (login node: needs internet)
 
 Category definition (as the reference implementation's `_normalize_routerbench`): category = the raw `eval_name`
 (each MMLU subject is its own eval_name, e.g. "mmlu-abstract-algebra"); keep categories with >= MIN_CATEGORY_SAMPLES
@@ -26,7 +26,7 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-from rte.config import RTE_DATA  # noqa: E402
+from midian.config import RTE_DATA  # noqa: E402
 
 DATA_DIR = os.path.join(RTE_DATA, "data")
 PICKLE_URL = "https://huggingface.co/datasets/withmartian/routerbench/resolve/main/routerbench_0shot.pkl"

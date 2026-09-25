@@ -5,7 +5,7 @@ Per (n, regime, shortlist source), live specialist populations, seeds 1-3, top-1
 and seeds, from the MEASURED S (read for measurement only; no method ever sees it):
   list mean   S of a uniform pick from the list        best in list   the ceiling a competent consumer reaches
   position 1  S of the list's first entry               liar frac      fraction of the list that is a liar
-Lists are built exactly as the framework adapter builds them (rte/methods/frameworks/_common.py retrieve): TF-IDF
+Lists are built exactly as the framework adapter builds them (midian/methods/frameworks/_common.py retrieve): TF-IDF
 without dedup (pre-registered), every other source over the dedup pool; declared = top-k by the regime's lied-to D;
 dense / rerank from the cached Qwen3 files. The MIDIAN cohort is MIDIAN's pick + its leaf cohort, rebuilt on a bernoulli
 world carrying the population's exact S (as scripts/analysis/diagnostics/declared_cohort.py), so it is a reconstruction.
@@ -21,13 +21,13 @@ import pandas as pd
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 sys.path.insert(0, ROOT)
-from rte.backends import families
-from rte.budget import Budget
-from rte.methods._learned import embed
-from rte.methods.frameworks._common import _hash_tfidf
-from rte.methods.midian import Midian
-from rte.stable_hash import stable_seed_32
-from rte.world import DELTA_INFLATE, World, apply_lying, select_liars
+from midian.backends import families
+from midian.budget import Budget
+from midian.methods._learned import embed
+from midian.methods.frameworks._common import _hash_tfidf
+from midian.methods.midian import Midian
+from midian.stable_hash import stable_seed_32
+from midian.world import DELTA_INFLATE, World, apply_lying, select_liars
 
 RD = os.environ["RTE_DATA"]
 K, TOPK = 16, 10

@@ -6,11 +6,11 @@ import time
 import numpy as np
 import pytest
 
-from rte.budget import Budget
-from rte.methods import load_method
-from rte.methods.midian import Midian
-from rte.methods.random import RandomMethod
-from rte.world import Task, World
+from midian.budget import Budget
+from midian.methods import load_method
+from midian.methods.midian import Midian
+from midian.methods.random import RandomMethod
+from midian.world import Task, World
 
 NS, RS = [100, 1000, 1234], [5, 10]
 
@@ -29,7 +29,7 @@ def built(n=100, K=16, r=10, b=3, beta=0.0, delta=1 / 3, seed=1, exact=None, **w
     w = World(n, K, "specialist", beta, seed=seed, **wkw)
     m = Midian(r=r, delta=delta, audit=False, verify=False)
     if exact is not None:
-        exact.setattr("rte.methods.midian.peer_reported_estimates", lambda *a, **k: w.S.copy())
+        exact.setattr("midian.methods.midian.peer_reported_estimates", lambda *a, **k: w.S.copy())
     before = w.ledger.snapshot()
     m.build(w.view(m.needs), Budget(b))
     return w, m, w.ledger.diff(before)
@@ -166,12 +166,12 @@ def test_timing_at_1e5(capsys):
 # ------------------------------------------------------------------ the LLM-descent ablation
 def test_llm_descent_falls_back_to_the_arithmetic_argmax(monkeypatch):
     """Same tree, same estimates, same ledger; on an unparseable answer it routes as MIDIAN w/o defenses."""
-    from rte.methods.midian_llm_descent import MidianLLMDescent
+    from midian.methods.midian_llm_descent import MidianLLMDescent
     w1, m1, _ = built(n=500, r=10, b=1, seed=3)
     w2 = World(500, 16, "specialist", 0.0, seed=3)
     m2 = MidianLLMDescent(r=10)
     m2.build(w2.view(m2.needs), Budget(1))
-    monkeypatch.setattr("rte.llm_client.complete", lambda *a, **k: "no idea")
+    monkeypatch.setattr("midian.llm_client.complete", lambda *a, **k: "no idea")
     assert np.array_equal(m1.est, m2.est) and np.array_equal(m1.leaves, m2.leaves)
     assert [m1.fetch(Task(0, f, 0)) for f in range(16)] == [m2.fetch(Task(0, f, 0)) for f in range(16)]
     assert w1.ledger.snapshot() == w2.ledger.snapshot()          # identical cost, quality-only ablation
@@ -179,11 +179,11 @@ def test_llm_descent_falls_back_to_the_arithmetic_argmax(monkeypatch):
 
 
 def test_llm_descent_follows_a_parseable_answer(monkeypatch):
-    from rte.methods.midian_llm_descent import MidianLLMDescent
+    from midian.methods.midian_llm_descent import MidianLLMDescent
     w = World(500, 16, "specialist", 0.0, seed=3)
     m = MidianLLMDescent(r=10)
     m.build(w.view(m.needs), Budget(1))
-    monkeypatch.setattr("rte.llm_client.complete", lambda *a, **k: "1")   # always answer "child 1"
+    monkeypatch.setattr("midian.llm_client.complete", lambda *a, **k: "1")   # always answer "child 1"
     for f in range(16):
         node, a = 0, m.fetch(Task(0, f, 0))
         for l in range(m.depth - 1, -1, -1):
@@ -225,7 +225,7 @@ def test_stratified_cohorts_take_one_member_per_stratum(monkeypatch):
     M = load_method("midian")(stratify=True, audit=False, verify=False)
     v = w.view(M.needs)
     monkeypatch.setattr(
-        "rte.methods.midian.probe_outcomes",
+        "midian.methods.midian.probe_outcomes",
         lambda view, b: np.broadcast_to(w.S[:, :, None], (100, 16, b)).astype(np.float32),
     )
     s0 = w.ledger.snapshot()

@@ -19,8 +19,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 import numpy as np  # noqa: E402
 
-from rte import llm_client  # noqa: E402
-from rte.backends import families, llm, population  # noqa: E402
+from midian import llm_client  # noqa: E402
+from midian.backends import families, llm, population  # noqa: E402
 
 
 def main() -> int:

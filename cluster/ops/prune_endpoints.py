@@ -9,7 +9,7 @@ import subprocess
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-from rte.config import RTE_DATA  # noqa: E402
+from midian.config import RTE_DATA  # noqa: E402
 
 D = str(RTE_DATA)
 q = subprocess.run(["squeue", "-u", os.environ["USER"], "-h", "-o", "%i"], capture_output=True, text=True)

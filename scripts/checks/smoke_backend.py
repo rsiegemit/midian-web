@@ -17,9 +17,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 import numpy as np  # noqa: E402
 
-from rte import llm_client  # noqa: E402
-from rte.backends import llm, population  # noqa: E402
-from rte.world import Task  # noqa: E402
+from midian import llm_client  # noqa: E402
+from midian.backends import llm, population  # noqa: E402
+from midian.world import Task  # noqa: E402
 
 N, K = 5, 4
 FAMILIES = ["basic_arithmetic", "gcd", "leg_counting", "spell_backward"]

@@ -1,6 +1,6 @@
 """v6.* entries: the framework shortlist variants (pre-registered TF-IDF, dedup, MiniLM embed, MIDIAN cohort) and the
 live 10^5 peer-halving cells. Read straight from each grid's rows.csv / rows.d (<= 1,500 rows per grid; never through
-rte.analyze.load).
+midian.analyze.load).
     python scripts/analysis/fw_variant_numbers.py   # standalone: prints the entries
     from fw_variant_numbers import collect; collect(N)   # from paper_numbers.py
 Keys: v6.<variant>.n<n>.<dist>.<regime>.<framework|frameworks_mean|frameworks_best>  and

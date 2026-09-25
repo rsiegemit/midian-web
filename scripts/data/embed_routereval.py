@@ -13,10 +13,10 @@ import sys
 import time
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-from rte.methods import load_method
-from rte.methods.frameworks import _common as C
-from rte.run import CELL, blocks, cells, expand, jkey, load_config, method_specs, seeds
-from rte.world import World
+from midian.methods import load_method
+from midian.methods.frameworks import _common as C
+from midian.run import CELL, blocks, cells, expand, jkey, load_config, method_specs, seeds
+from midian.world import World
 
 ap = argparse.ArgumentParser()
 ap.add_argument("grids", nargs="+")
@@ -65,7 +65,7 @@ for stage in ("embed", "rerank") if not a.check else ("check",):
     if stage == "embed":
         import torch
 
-        from rte.methods._learned import _models
+        from midian.methods._learned import _models
 
         _models.clear()
         torch.cuda.empty_cache()

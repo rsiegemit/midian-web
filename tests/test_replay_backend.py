@@ -1,4 +1,4 @@
-"""Protocol tests for rte.backends.replay against a tiny fake cell table (no
+"""Protocol tests for midian.backends.replay against a tiny fake cell table (no
 download). Mirrors the 6-member protocol checked implicitly by bernoulli.py's
 usage in World. A second test, skipped unless the real npz exists, loads it
 and reports the measured S summary at n=1000."""
@@ -9,8 +9,8 @@ import os
 import numpy as np
 import pytest
 
-from rte.backends.replay import ReplayBackend
-from rte.world import Task, World
+from midian.backends.replay import ReplayBackend
+from midian.world import Task, World
 
 REAL_CELLS_PATH = os.path.join(
     os.environ.get("RTE_DATA", os.path.expanduser("~/rte_data")), "data", "routerbench_cells.npz")

@@ -48,10 +48,10 @@ per-seed tables and cross-fitted pools are built from the rows of every grid lis
 Every bernoulli, replay, RouterEval and LLMRouterBench grid runs on CPU:
 
 ```bash
-python -m rte.run --grid reviewer_bernoulli                              # the paper's arms, laptop-sized
-RTE_WORKERS=16 python -m rte.run --grid replay_1e6_split_cal --seeds 1-3  # a Figure 2 family, a few seeds
-python -m rte.run --grid bernoulli_scale_v5 --only n=100000 --seeds 1-10  # one slice of the scale grid
-python -m rte.analyze --grid replay_1e6_split_cal
+python -m midian.run --grid reviewer_bernoulli                              # the paper's arms, laptop-sized
+RTE_WORKERS=16 python -m midian.run --grid replay_1e6_split_cal --seeds 1-3  # a Figure 2 family, a few seeds
+python -m midian.run --grid bernoulli_scale_v5 --only n=100000 --seeds 1-10  # one slice of the scale grid
+python -m midian.analyze --grid replay_1e6_split_cal
 ```
 
 - **Data.** replay needs RouterBench (`scripts/data/02_download_routerbench.py`); `routereval` needs RouterEval's and
@@ -75,12 +75,12 @@ and the framework arms call a Qwen2.5-7B supervisor through each framework's own
 replicas, memo, sharding, and the rules for running a campaign) is [operations.md](operations.md). In short:
 
 ```bash
-bash scripts/setup/00_build_env.sh                  # vLLM + reasoning-gym environment under $RTE_DATA/env/rte
-python scripts/setup/01_download_weights.py         # the model ladder (internet access needed)
-bash scripts/setup/fw_envs/<framework>.sh           # one isolated venv per framework
+bash scripts/setup/00_build_env.sh                     # vLLM + reasoning-gym environment under $RTE_DATA/env/rte
+python scripts/setup/01_download_weights.py            # the model ladder (internet access needed)
+bash scripts/setup/fw_envs/<framework>.sh              # one isolated venv per framework
 # serve the fleet (docs/operations.md), then:
-python -m rte.measure --dist specialist --n 1000 --K 16 --seed 1   # build a population and measure its S
-python -m rte.run --grid live_f1_n1000 --only dist=specialist --seeds 1
+python -m midian.measure --dist specialist --n 1000 --K 16 --seed 1   # build a population and measure its S
+python -m midian.run --grid live_f1_n1000 --only dist=specialist --seeds 1
 ```
 
 - **Memo.** Every model answer is memoised by a content hash of the full request (model, messages, max tokens; decoding is greedy) in a sharded SQLite

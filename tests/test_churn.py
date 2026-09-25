@@ -2,10 +2,10 @@
 non-churn cells unchanged, halving rebuild cost, runner integration."""
 import numpy as np
 
-from rte.budget import Budget
-from rte.methods import load_method
-from rte.run import CELL, row_id, run_method
-from rte.world import World
+from midian.budget import Budget
+from midian.methods import load_method
+from midian.run import CELL, row_id, run_method
+from midian.world import World
 
 W = dict(n=100, K=8, dist="specialist", beta=0.25, seed=3)
 
@@ -94,7 +94,7 @@ def test_runner_churn_row():
 
 
 def test_llm_backend_redraw_is_offline_and_restorable():
-    from rte.backends.llm import LLMBackend
+    from midian.backends.llm import LLMBackend
     be = LLMBackend(n=20, K=16, dist="specialist", seed=1)               # no fleet needed until S is asked for
     snap = be.snapshot()
     ids = np.array([2, 5])

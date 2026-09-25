@@ -9,8 +9,8 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from rte.ledger import COUNTERS, Ledger
-from rte.world import World
+from midian.ledger import COUNTERS, Ledger
+from midian.world import World
 
 SITES = {"probes": "probe", "reports": "report", "messages": "message",
          "hops": "hop", "comparisons": "compare", "tasks": "task"}

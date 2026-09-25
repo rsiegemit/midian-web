@@ -20,7 +20,7 @@ from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
 from sklearn.neural_network import MLPRegressor
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-from rte.config import RTE_DATA  # noqa: E402
+from midian.config import RTE_DATA  # noqa: E402
 
 R = str(RTE_DATA)
 OUT = f"{R}/results/routerbench_terms"

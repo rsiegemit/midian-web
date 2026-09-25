@@ -3,11 +3,12 @@ backends.   $RTE_DATA/env/rte/bin/python scripts/data/fit_declared_calibration.p
 
 Model: D | S ~ the empirical distribution of the live self-rating D_self_described given S's decile (10 equal-width S
 bins x the 11 rating values the live models emit), i.i.d. per (agent, family). Fitted on the pooled live specialist n =
-100 and n = 1,000 populations (all seeds). Prints the table to paste into rte/backends/__init__.py (CAL_P), then
-validates the IN-CODE table (rte.backends.calibrated_declared) against live: mean, spread, corr(S, D), mass at 0 and 1,
-and the one number declared argmax depends on, E[S of argmax_a D[a, f]] in random sub-populations of n = 100 / 1,000.
-The rejected alternative, a censored-normal (Tobit) linear model D = clip(a + c S + N(0, s)), is fitted and validated
-beside it, and both are applied to the heavy_tail / bimodal populations as an out-of-sample transfer check."""
+100 and n = 1,000 populations (all seeds). Prints the table to paste into midian/backends/__init__.py (CAL_P), then
+validates the IN-CODE table (midian.backends.calibrated_declared) against live: mean, spread, corr(S, D), mass at 0
+and 1, and the one number declared argmax depends on, E[S of argmax_a D[a, f]] in random sub-populations of
+n = 100 / 1,000. The rejected alternative, a censored-normal (Tobit) linear model D = clip(a + c S + N(0, s)), is fitted
+and validated beside it, and both are applied to the heavy_tail / bimodal populations as an out-of-sample transfer
+check."""
 
 import glob
 import os
@@ -17,8 +18,8 @@ import numpy as np
 from scipy import optimize, stats
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-from rte.backends import CAL_P, CAL_VALUES, cal_bin, calibrated_declared
-from rte.config import RTE_DATA  # noqa: E402
+from midian.backends import CAL_P, CAL_VALUES, cal_bin, calibrated_declared
+from midian.config import RTE_DATA  # noqa: E402
 
 POP = os.path.join(RTE_DATA, "populations")
 
@@ -67,7 +68,7 @@ for k in range(10):
     print("    [" + ", ".join(f"{p:.4f}" for p in P[k]) + "],")
 print("])")
 if not np.allclose(P, CAL_P, atol=5e-5):
-    print("!! the table in rte/backends/__init__.py differs from this fit: paste the one above")
+    print("!! the table in midian/backends/__init__.py differs from this fit: paste the one above")
 
 
 # ---- the rejected alternative: censored-normal linear model, fitted by maximum likelihood

@@ -9,7 +9,7 @@
 #SBATCH --output=slurm-serve_smoke-%j.out
 #SBATCH --error=slurm-serve_smoke-%j.err
 #
-# One GPU, one model, one hour: the end-to-end check that env + weights + vLLM + rte.llm_client +
+# One GPU, one model, one hour: the end-to-end check that env + weights + vLLM + midian.llm_client +
 # LLMBackend line up before the real fleet. Defaults to the SMALLEST model in configs/models.yaml;
 # override with RTE_SMOKE_MODEL.
 #

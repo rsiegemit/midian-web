@@ -17,7 +17,7 @@ import sys
 import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-from rte.analyze import load
+from midian.analyze import load
 from scripts.figures.lib.rows import label
 from scripts.figures.lib.stats import ci
 
@@ -41,7 +41,7 @@ BASES = [
 ]
 arm = lambda *p: label(
     "midian", json.dumps({k: v for d in p for k, v in d.items()})
-)  # the arm's label, as rte.analyze builds it
+)  # the arm's label, as midian.analyze builds it
 
 
 def delta(df, base, lab, b, beta, ls):

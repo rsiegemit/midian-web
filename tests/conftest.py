@@ -27,7 +27,7 @@ DATA = {"test_default_bit_identical", "test_calibrated_reproduces_live_stats",
 
 
 def _echo_env_missing():
-    from rte.methods.frameworks._bridge import venv_python
+    from midian.methods.frameworks._bridge import venv_python
     try:
         venv_python("rte")
         return False

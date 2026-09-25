@@ -1,4 +1,4 @@
-"""Stored-row id check (refactor invariant G2): rte.run.rid_of_row(row) must equal the rid the row is stored under.
+"""Stored-row id check (refactor invariant G2): midian.run.rid_of_row(row) must equal the rid the row is stored under.
 
 For every results directory holding rows.d/ and/or rows.csv, sample up to --n rows from each source (seeded, so the
 sample is reproducible): a rows.d row's rid is its file name, a rows.csv row's rid is its `rid` column (CSV rows with
@@ -17,7 +17,7 @@ import sys
 import numpy as np
 import pandas as pd
 
-from rte.run import RTE_DATA, rid_of_row
+from midian.run import RTE_DATA, rid_of_row
 
 
 def sample_rows_d(path, n, rng):

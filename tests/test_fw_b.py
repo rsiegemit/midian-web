@@ -14,9 +14,9 @@ import urllib.request
 import numpy as np
 import pytest
 
-from rte.budget import Budget
-from rte.methods import load_method
-from rte.world import World
+from midian.budget import Budget
+from midian.methods import load_method
+from midian.world import World
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _picks = lambda st: {k: st[k] for k in ("picks", "fallbacks", "bad_name")}

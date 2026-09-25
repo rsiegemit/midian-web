@@ -1,4 +1,4 @@
-"""Generic contract + correctness checks, auto-discovered over every file in `rte/methods/`.
+"""Generic contract + correctness checks, auto-discovered over every file in `midian/methods/`.
 
 Six properties, applied identically to every method (CONTRACT "Correctness checks"):
   1. builds inside its probe budget and charges only the counters its `needs` allow;
@@ -21,10 +21,10 @@ import traceback
 import numpy as np
 import pytest
 
-import rte.methods as methods_pkg
-from rte.budget import Budget
-from rte.methods import load_method
-from rte.world import AccessError, World
+import midian.methods as methods_pkg
+from midian.budget import Budget
+from midian.methods import load_method
+from midian.world import AccessError, World
 
 N, K, DIST, BETA, SEED, N_TASKS = 100, 16, "specialist", 0.25, 1, 100
 BUDGET = Budget(3)
@@ -34,7 +34,7 @@ DUMMY_URL = "http://127.0.0.1:9/v1"    # fw_echo never calls it; it exercises th
 
 
 def discover() -> list[str]:
-    """Every method module under rte/methods/, one level into subpackages (frameworks/)."""
+    """Every method module under midian/methods/, one level into subpackages (frameworks/)."""
     names = []
     for m in pkgutil.iter_modules(methods_pkg.__path__):
         if m.name in EXCLUDE or m.name.startswith("_"):
@@ -42,7 +42,7 @@ def discover() -> list[str]:
         if not m.ispkg:
             names.append(m.name)
             continue
-        sub = importlib.import_module(f"rte.methods.{m.name}")
+        sub = importlib.import_module(f"midian.methods.{m.name}")
         names += [s.name for s in pkgutil.iter_modules(sub.__path__)
                   if not s.ispkg and not s.name.startswith("_")]
     return sorted(names)
@@ -175,7 +175,7 @@ def test_method_uses_every_need_it_declares(name, world):
 
 @pytest.mark.parametrize("name", NAMES)
 def test_method_name_matches_its_file(name):
-    assert _cls(name).name == name, f"rte/methods/{name}.py defines a Method named {_cls(name).name!r}"
+    assert _cls(name).name == name, f"midian/methods/{name}.py defines a Method named {_cls(name).name!r}"
 
 
 # --------------------------------------------------------------- 5: a router must beat random

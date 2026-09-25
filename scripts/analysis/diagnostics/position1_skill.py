@@ -9,9 +9,9 @@ import sys
 import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
-from rte.backends import families
-from rte.methods._learned import embed
-from rte.methods.frameworks._common import _bm25, _hash_tfidf, _rrf
+from midian.backends import families
+from midian.methods._learned import embed
+from midian.methods.frameworks._common import _bm25, _hash_tfidf, _rrf
 
 RD = os.environ["RTE_DATA"]
 K = 16

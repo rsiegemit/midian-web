@@ -4,11 +4,11 @@ The LLM is mocked by a `confidence` method on the bernoulli backend that rates e
 import numpy as np
 import pytest
 
-from rte.backends.prompts import CONF_MAX, build, rate_again, rate_task
-from rte.budget import Budget
-from rte.methods import load_method
-from rte.methods.verbal_confidence import parse_confidence
-from rte.world import AccessError, World
+from midian.backends.prompts import CONF_MAX, build, rate_again, rate_task
+from midian.budget import Budget
+from midian.methods import load_method
+from midian.methods.verbal_confidence import parse_confidence
+from midian.world import AccessError, World
 
 K, B = 8, Budget(3)
 
@@ -196,7 +196,7 @@ ALL_AT_0570629 = [
 @pytest.mark.parametrize("backend", ["llm", "bernoulli"])
 def test_methods_all_expansion_unchanged(backend):
     """`methods: all` grids must not grow a verbal_confidence arm: their stored units stay complete."""
-    from rte.run import all_methods
+    from midian.run import all_methods
     want = [m for m in ALL_AT_0570629 if backend == "llm" or m not in ("llm_supervisor", "midian_llm_descent")]
     assert all_methods(backend) == want
 
@@ -212,9 +212,9 @@ def test_rejects_unknown_shortlist_and_params():
 def test_llm_backend_asks_each_agent_its_own_model_and_prompt_deduplicated(monkeypatch, tmp_path):
     """The real path below the World: LLMBackend.confidence -> llm_client.complete_batch, with only the network
     stubbed."""
-    from rte import llm_client
-    from rte.backends import families
-    from rte.backends import llm as L
+    from midian import llm_client
+    from midian.backends import families
+    from midian.backends import llm as L
     monkeypatch.setattr(L, "_CURRENT", L._CURRENT)  # restored after: other tests read current_backend()
     shard = type("Shard", (), {"execute": lambda *a: None, "executemany": lambda *a: None, "commit": lambda *a: None})()
     memo = {}

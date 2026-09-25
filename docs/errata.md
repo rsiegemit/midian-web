@@ -36,9 +36,9 @@ rerun under the new keys are bit-identical.
 | framework shortlist "VA cohort" | `retrieval: midian_va` | MIDIAN cohort | `retrieval: midian` | source key `va_cohort` (unchanged) |
 | framework shortlist "V cohort" | `retrieval: midian` | cohort of MIDIAN w/o audits | `retrieval: midian_wo_audit` | not drawn |
 
-- One class, `rte/methods/midian.py`, with two flags: `Midian(audit=True, verify=True)` is MIDIAN; each flag switches one
+- One class, `midian/methods/midian.py`, with two flags: `Midian(audit=True, verify=True)` is MIDIAN; each flag switches one
   defense off.
-- `rte/methods/keys.py` is the one place that knows the old keys; every loader reads stored rows through it, and the
+- `midian/methods/keys.py` is the one place that knows the old keys; every loader reads stored rows through it, and the
   runner seeds a world with the legacy key so a rerun reproduces the stored rows.
 - The stored rows were re-keyed once (1,049,487 CSV rows and 35,407 row files); every changed or removed original was
   first copied to a `_premigration_v2/` backup in its results directory, and a sentinel file prevents a second pass. The
@@ -59,7 +59,7 @@ only non-live rows, and on the live backend nothing changes.
 
 Eleven bernoulli grids pass a file under the data root in `backend_kwargs` (`calibrate_from: $RTE_DATA/populations/...`).
 Their row ids used to hash the **expanded** path, so the same row had a different id on every machine and every stored
-row carried an absolute path. `rte.run.row_id` now hashes `backend_kwargs` as the configuration writes them (the
+row carried an absolute path. `midian.run.row_id` now hashes `backend_kwargs` as the configuration writes them (the
 unexpanded `$RTE_DATA/...` string). `scripts/checks/migrate_rte_data_ids.py` rewrites the stored rows of those eleven
 grids once, dry run by default: each row gets the unexpanded `backend_kwargs` and its new row id, every other field is
 written back byte-identical, the originals are first copied to `_premigration_rte_data_v1/` in the results directory,

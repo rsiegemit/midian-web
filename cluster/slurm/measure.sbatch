@@ -14,4 +14,4 @@ export RTE_DATA
 unset http_proxy https_proxy HTTP_PROXY HTTPS_PROXY ALL_PROXY all_proxy NODE_USE_ENV_PROXY
 unset SSL_CERT_FILE SSL_CERT_DIR REQUESTS_CA_BUNDLE CURL_CA_BUNDLE NODE_EXTRA_CA_CERTS
 cd "${RTE_REPO:-$HOME/rte}"
-"$RTE_DATA/env/rte/bin/python" -m rte.measure --dist "$1" --n "$2" --K 16 --seed "${3:-1}"
+"$RTE_DATA/env/rte/bin/python" -m midian.measure --dist "$1" --n "$2" --K 16 --seed "${3:-1}"

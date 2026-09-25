@@ -6,10 +6,10 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from rte.budget import Budget
-from rte.methods._learned import embed
-from rte.methods.frameworks._common import FrameworkMethod, _rrf
-from rte.world import World
+from midian.budget import Budget
+from midian.methods._learned import embed
+from midian.methods.frameworks._common import FrameworkMethod, _rrf
+from midian.world import World
 
 N, K, Q = 300, 16, 8
 
@@ -146,7 +146,7 @@ def test_preregistered_and_embed_paths_are_untouched(mode):
 def test_embed_instruct_changes_only_the_query_side_cache_names():
     """The instruction is a QUERY-side prefix: it must change the family and sota cache names (so a probe cannot read
     a stock-instruction cache) and must NOT change the document cache name (the n descriptions are reused as-is)."""
-    from rte.methods.frameworks._common import sota_cache_name
+    from midian.methods.frameworks._common import sota_cache_name
     E, R2 = "Qwen/Qwen3-Embedding-8B", "Qwen/Qwen3-Reranker-4B"
     assert sota_cache_name(E, R2, 10, 50, True) != sota_cache_name(E, R2, 10, 50, True, "some task instruction")
     a = _built(dedup=True, retrieval="embed")
@@ -171,8 +171,8 @@ def test_shuffle_permutes_the_midian_cohort_without_changing_its_members():
     """The position control: shuffle must keep the SAME shortlist (so only ordering differs from the reported arm),
     move MIDIAN's pick off position 1 for most families, and be deterministic across calls and instances."""
 
-    from rte.budget import Budget
-    from rte.world import World
+    from midian.budget import Budget
+    from midian.world import World
 
     class _M(_Fw):
         needs = frozenset({"declared", "probe", "reports"})

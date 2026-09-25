@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import numpy as np
 
-from rte.budget import Budget
-from rte.methods.frameworks._common import FrameworkMethod
-from rte.world import World
+from midian.budget import Budget
+from midian.methods.frameworks._common import FrameworkMethod
+from midian.world import World
 
 N, K, Q = 300, 16, 12
 
@@ -50,7 +50,7 @@ def test_plain_topk_is_unchanged_and_clone_filled():
 
 def test_embed_retrieval_ranks_by_minilm_cosine():
     """retrieval='embed' ranks the deduped pool by cosine over MiniLM embeddings of the same descriptions."""
-    from rte.methods._learned import embed
+    from midian.methods._learned import embed
     m = _built(dedup=True, retrieval="embed")
     Ea, Ef = embed(m.desc), embed(m.fdesc)
     for task in World(N, K, "specialist", 0.0, seed=1).tasks(4):

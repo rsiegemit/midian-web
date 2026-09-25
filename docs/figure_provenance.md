@@ -4,7 +4,7 @@ A reference for anyone writing about, or checking, the paper figures A-I in `fig
 every bar, line and marker it says what the number is, which grids, cells and seeds it comes from, how it is averaged,
 and how each method and backend behind it is implemented. It was written from the code; where code and prose documents
 disagreed, the code was taken as correct and the disagreement is listed in the part's "Discrepancies" section. Code is
-cited by file and function (`rte/world.py`, `Midian.build`), not by line. Value tables are read from the figure CSVs
+cited by file and function (`midian/world.py`, `Midian.build`), not by line. Value tables are read from the figure CSVs
 (`figures/paper/*.csv`), and seed counts and grid provenance from the figure scripts' own table builders run read-only on
 the same rows. Every slot of A-I is filled and no pool is incomplete (`figure_status.py` reports no `INCOMPLETE` in any
 CSV).
@@ -22,7 +22,7 @@ the exploratory per-family figures (generated, not tracked); their CSVs are in `
 **Names.** Method names follow the 2026-09-24 rename ([errata.md](errata.md)): **MIDIAN** is the full method with both
 defenses (formerly MIDIAN-VA, key `midian_va`); **MIDIAN w/o defenses** is the plain, pre-registered tree (formerly
 MIDIAN); **MIDIAN w/o audits** and **MIDIAN w/o verification** are the single-defense ablations (formerly MIDIAN-V and
-MIDIAN-A). All four are one class in `rte/methods/midian.py`. Grid and directory names (`va_b_*`, `*_verified_va*`, the
+MIDIAN-A). All four are one class in `midian/methods/midian.py`. Grid and directory names (`va_b_*`, `*_verified_va*`, the
 `va_cohort` shortlist key, ...) are identifiers and keep their old spelling. The figures follow
 [figures.md](figures.md) through `figspec.py`: serif fonts, fixed legend order, the specified names, no titles and no
 incompleteness marks. The rename changed no value: the figure CSVs regenerated on the renamed rows match those of tag
@@ -214,38 +214,38 @@ Numbers quoted "from data" were computed read-only from the files named next to 
 
 ---
 
-### 1.1 The world (`rte/world.py`)
+### 1.1 The world (`midian/world.py`)
 
 #### 1.1.1 Objects
 
 | Object | What it is | Code |
 |---|---|---|
-| **agents** | integer ids `0..n-1`. What an agent *is* depends on the backend (§1.4). | `rte/world.py` |
-| **families** | `K` task categories, indexed `0..K-1`, with a name list `world.families`. A task always belongs to exactly one family. | `rte/world.py` |
-| **true skill `S[n,K]`** | float32 in [0,1]: the probability (bernoulli), measured accuracy (live), recorded accuracy (replay, RouterEval) of agent *a* on family *f*. Supplied by the backend's `true_skill()`. **Runner-only**: used for the oracle, liar selection (`low_skill_first`) and offline diagnostics; no method can read it (§1.1.6). | `rte/world.py` |
-| **declared `D[n,K]`** | what agents *claim* about themselves. `D_honest = backend.declared(declared_source)`, then liars' rows are overwritten by `apply_lying`. Read-only copy `D_view` is what methods see. | `rte/world.py` |
-| **liars** | bool mask `[n]`, chosen once per world by `select_liars` (§1.3). Runner-only. | `rte/world.py` |
-| **demand** | probability vector over families used to draw the task stream: `uniform` (1/K) or `skewed` (Zipf(1)). Every grid behind figures A–H uses `uniform`. | `rte/world.py` |
-| **ledger** | six counters `probes, reports, messages, hops, comparisons, tasks`; each has exactly one increment method. | `rte/ledger.py` |
+| **agents** | integer ids `0..n-1`. What an agent *is* depends on the backend (§1.4). | `midian/world.py` |
+| **families** | `K` task categories, indexed `0..K-1`, with a name list `world.families`. A task always belongs to exactly one family. | `midian/world.py` |
+| **true skill `S[n,K]`** | float32 in [0,1]: the probability (bernoulli), measured accuracy (live), recorded accuracy (replay, RouterEval) of agent *a* on family *f*. Supplied by the backend's `true_skill()`. **Runner-only**: used for the oracle, liar selection (`low_skill_first`) and offline diagnostics; no method can read it (§1.1.6). | `midian/world.py` |
+| **declared `D[n,K]`** | what agents *claim* about themselves. `D_honest = backend.declared(declared_source)`, then liars' rows are overwritten by `apply_lying`. Read-only copy `D_view` is what methods see. | `midian/world.py` |
+| **liars** | bool mask `[n]`, chosen once per world by `select_liars` (§1.3). Runner-only. | `midian/world.py` |
+| **demand** | probability vector over families used to draw the task stream: `uniform` (1/K) or `skewed` (Zipf(1)). Every grid behind figures A–H uses `uniform`. | `midian/world.py` |
+| **ledger** | six counters `probes, reports, messages, hops, comparisons, tasks`; each has exactly one increment method. | `midian/ledger.py` |
 
 #### 1.1.2 Construction and seeding
 
 `World(n, K, dist, beta, liar_select, collude, seed, backend, lie_mode, declared_source, demand, backend_kwargs)`
-(`rte/world.py`). All randomness goes through `stable_seed_32(*parts)` (blake2b of the `repr` of the parts,
-masked to 32 bits; `rte/stable_hash.py`), so it is identical across processes. The streams:
+(`midian/world.py`). All randomness goes through `stable_seed_32(*parts)` (blake2b of the `repr` of the parts,
+masked to 32 bits; `midian/stable_hash.py`), so it is identical across processes. The streams:
 
 | RNG | seeded by | used for |
 |---|---|---|
-| world rng | `(seed, "world", n, K, dist, backend)` `rte/world.py` | handed to the backend: bernoulli skill draws / calibrated row resampling, replay profile draws. The llm and routereval backends ignore it. |
-| liar rng | `(seed, "liars")` `rte/world.py` | `liar_select="random"` only |
-| honest-declaration noise | `(seed, "declared")` `rte/backends/__init__.py`, `rte/backends/llm.py` | `D = clip(S + N(0, 0.05))` (programmatic) |
-| calibrated declarations | `(seed, "declared_calibrated")` `rte/backends/__init__.py` | non-live `declared_source: calibrated` only (erratum 30) |
-| RouterEval agent order | `(seed, "agent_order")` `rte/backends/routereval.py` (`shuffle: true` only) | per-seed permutation of the pool (erratum 30) |
-| task stream | `(seed, "stream", K, demand)` `rte/world.py` | which family each task is from |
-| task instance | `(seed, "inst", i, f)` `rte/world.py` | the concrete instance of task *i* |
-| probe salt | `(seed, "probes")` `rte/world.py` | index-seeded probe instances (§1.5) |
-| method view rng | `(seed, "view", sorted(needs))` `rte/world.py` | a method's own randomness (two methods with the same `needs` get the same stream) |
-| llm population | `(seed, "profiles", n, K, dist)` `rte/backends/population.py` | live agent profiles |
+| world rng | `(seed, "world", n, K, dist, backend)` `midian/world.py` | handed to the backend: bernoulli skill draws / calibrated row resampling, replay profile draws. The llm and routereval backends ignore it. |
+| liar rng | `(seed, "liars")` `midian/world.py` | `liar_select="random"` only |
+| honest-declaration noise | `(seed, "declared")` `midian/backends/__init__.py`, `midian/backends/llm.py` | `D = clip(S + N(0, 0.05))` (programmatic) |
+| calibrated declarations | `(seed, "declared_calibrated")` `midian/backends/__init__.py` | non-live `declared_source: calibrated` only (erratum 30) |
+| RouterEval agent order | `(seed, "agent_order")` `midian/backends/routereval.py` (`shuffle: true` only) | per-seed permutation of the pool (erratum 30) |
+| task stream | `(seed, "stream", K, demand)` `midian/world.py` | which family each task is from |
+| task instance | `(seed, "inst", i, f)` `midian/world.py` | the concrete instance of task *i* |
+| probe salt | `(seed, "probes")` `midian/world.py` | index-seeded probe instances (§1.5) |
+| method view rng | `(seed, "view", sorted(needs))` `midian/world.py` | a method's own randomness (two methods with the same `needs` get the same stream) |
+| llm population | `(seed, "profiles", n, K, dist)` `midian/backends/population.py` | live agent profiles |
 
 Consequences worth knowing:
 - The **task stream does not depend on n, dist, beta, liar_select or declared_source** — only on (seed, K, demand, Q),
@@ -254,14 +254,14 @@ Consequences worth knowing:
   instance seeds. `rng.choice(size=Q)` is prefix-consistent (verified: the first 300 draws of a Q = 1000 stream equal a
   Q = 300 stream), so Q = 300 cells see the first 300 tasks of the Q = 1000 stream.
 - The **liar set, lies, probes and tasks do not depend on the order in which methods run** (§1.1.5).
-- Because `select_liars` returns an empty mask for `round(beta*n) = 0` (`rte/world.py`) and no other RNG uses
+- Because `select_liars` returns an empty mask for `round(beta*n) = 0` (`midian/world.py`) and no other RNG uses
   `liar_select`, **β = 0 cells with `random` and `low_skill_first` are the same world**. The grid comment at
   `configs/grids/` states they were verified bit-identical over 690 cells.
 
-#### 1.1.3 Tasks (`rte/world.py`)
+#### 1.1.3 Tasks (`midian/world.py`)
 
 `Task(id, family, instance)`. With `no_repeat` (RouterEval / LLMRouterBench erratum-30 grids) `World._tasks_no_repeat`
-(`rte/world.py`) instead visits each (family, test prompt) at most once: families are drawn by the demand vector
+(`midian/world.py`) instead visits each (family, test prompt) at most once: families are drawn by the demand vector
 renormalised over the families with prompts left, each family's prompts in a per-stream random order, and the task
 instance is the prompt's index in the family's test rows; Q above the test pool raises. Otherwise `World.tasks(Q)` draws `Q` family indices from `demand` and gives task *i* the instance
 seed `stable_seed_32(seed, "inst", i, f)`. The backend regenerates the concrete problem from `(family, instance)`
@@ -269,17 +269,17 @@ seed `stable_seed_32(seed, "inst", i, f)`. The backend regenerates the concrete 
 `Task` in `fetch(task)`**, so they always know the task's family index (and its instance seed, and can read its text,
 §1.1.6). Routing is therefore "pick an agent for a task of known family f".
 
-#### 1.1.4 `execute` and the oracle (`rte/world.py`)
+#### 1.1.4 `execute` and the oracle (`midian/world.py`)
 
 - `execute(a, task)` charges `ledger.tasks += 1` and returns the backend's 0/1 outcome of agent *a* on that task
   (plus the churn epoch rule, irrelevant for A–H because no grid behind A–H has churn — all resolved `churn=None`).
-  **Liars execute at their true skill**; lying only touches declarations and reports (`rte/world.py`).
+  **Liars execute at their true skill**; lying only touches declarations and reports (`midian/world.py`).
 - `oracle(task) = argmax_a S[a, task.family]` (numpy `argmax`: ties go to the lowest agent id). The oracle row is a
-  *realised* success on the same stream (`rte/run.py`), not `max S`. It is computed once per unit, before any
+  *realised* success on the same stream (`midian/run.py`), not `max S`. It is computed once per unit, before any
   method. Because S is an expectation (bernoulli), a measurement on a different instance set (live) or a train-split
   mean (RouterEval), a method can occasionally beat the oracle on a finite stream (negative regret).
 
-#### 1.1.5 Pairing: one world, one stream, every method (`rte/run.py`, `rte/world.py`)
+#### 1.1.5 Pairing: one world, one stream, every method (`midian/run.py`, `midian/world.py`)
 
 `run_unit(cell, seed, specs)` builds **one** `World` and **one** stream (`world.tasks(Q)`), runs the oracle line, then
 for each method: `world.reset()` (zero the ledger, forget reporters' memories, set every probe index back to 0, undo
@@ -289,11 +289,11 @@ sequence, and — because probe index k of (a, f) always maps to the same instan
 Differences between methods in a unit are therefore paired. Caveats on pairing *across* units/grids are in §1.10
 (RouterEval family-order and live drift items).
 
-#### 1.1.6 What a method can see (`rte/world.py`, `rte/methods/base.py`)
+#### 1.1.6 What a method can see (`midian/world.py`, `midian/methods/base.py`)
 
 A method gets a `View` constructed from its declared `needs ⊆ {"declared", "probe", "reports", "bus"}`
-(`rte/world.py`). Any access outside `needs` raises `AccessError`; any attribute not defined on `View` raises
-("S and liars are never exposed", `rte/world.py`).
+(`midian/world.py`). Any access outside `needs` raises `AccessError`; any attribute not defined on `View` raises
+("S and liars are never exposed", `midian/world.py`).
 
 | Always available | `n`, `K`, `families` (names), `ledger`, `rng`, `text(f, inst, probe)` (prompt text of an instance), `embedding(f, inst, probe)` (backend-supplied embedding or None) |
 |---|---|
@@ -304,21 +304,21 @@ A method gets a `View` constructed from its declared `needs ⊆ {"declared", "pr
 | via the runner | `fetch(task)` gets the `Task` (family + instance); `observe(task, agent, outcome)` gets the **realised 0/1 outcome** of every task it routed — the online-learning channel. |
 
 Never visible to a method: `S`, the liar mask, `beta`, `liar_select`. Two honest caveats: (a) this is enforced by
-Python attribute access, not a sandbox (`View._w` is the world object); a grep of `rte/methods/` finds no method
+Python attribute access, not a sandbox (`View._w` is the world object); a grep of `midian/methods/` finds no method
 touching `_w`, `true_skill`, `.liars` or `._S`. (b) The framework adapters reach the llm backend through
-`rte.backends.llm.current_backend()` (`rte/methods/frameworks/_common.py`) to read the agents'
-self-descriptions, family descriptions and task text — the only out-of-View access in `rte/methods/`.
+`midian.backends.llm.current_backend()` (`midian/methods/frameworks/_common.py`) to read the agents'
+self-descriptions, family descriptions and task text — the only out-of-View access in `midian/methods/`.
 
-#### 1.1.7 Ledger and what "communication" means (`rte/ledger.py`, `rte/run.py`)
+#### 1.1.7 Ledger and what "communication" means (`midian/ledger.py`, `midian/run.py`)
 
 `probes` and `tasks` are charged by the world on every probe/execution, `reports` by the report channel, and
 `messages / hops / comparisons` by methods themselves. "Total communication" is defined as
-`probes + reports + messages + tasks` (`rte/run.py`); `hops` and `comparisons` are recorded but not summed into it.
+`probes + reports + messages + tasks` (`midian/run.py`); `hops` and `comparisons` are recorded but not summed into it.
 
 #### 1.1.8 Churn (brief; not used by A–H)
 
 `World.churn(frac)` replaces `round(frac*n)` agents in place, re-draws their liar status at rate β, recomputes D, and
-the first task routed to a replaced, never-re-observed agent scores 0 (`rte/world.py`).
+the first task routed to a replaced, never-re-observed agent scores 0 (`midian/world.py`).
 `reset()` restores the original population for the next method. Only `churn_n1000*` grids use it.
 
 ---
@@ -327,11 +327,11 @@ the first task routed to a replaced, never-re-observed agent scores 0 (`rte/worl
 
 The `dist` axis names the *population shape*. Its meaning is backend-specific:
 
-#### 1.2.1 bernoulli, uncalibrated (`rte/world.py`)
+#### 1.2.1 bernoulli, uncalibrated (`midian/world.py`)
 
 | dist | S draw |
 |---|---|
-| `specialist` | each agent has exactly 3 random "good" families: U(0.70, 0.95) there, U(0.05, 0.30) elsewhere (`_profiles.pick_k_per_agent`, `rte/backends/_profiles.py`) |
+| `specialist` | each agent has exactly 3 random "good" families: U(0.70, 0.95) there, U(0.05, 0.30) elsewhere (`_profiles.pick_k_per_agent`, `midian/backends/_profiles.py`) |
 | `heavy_tail` | `0.05 + 0.90 * Beta(0.5, 3)` i.i.d. per cell |
 | `bimodal` | 20 % of agents U(0.75, 0.95) everywhere, 80 % U(0.20, 0.40) everywhere |
 | `correlated` | 4 family groups (`f % 4`): one U(0.15, 0.90) per (agent, group) + N(0, 0.05), clipped |
@@ -339,12 +339,12 @@ The `dist` axis names the *population shape*. Its meaning is backend-specific:
 
 **Every bernoulli grid behind the figures passes `calibrate_from`, which overrides `dist` entirely**: each agent's
 S-row is a uniformly resampled (with replacement) row of the measured live matrix
-`$RTE_DATA/populations/specialist_n1000_K16_seed1/S.npy` (`rte/backends/bernoulli.py`). The `dist` column then
+`$RTE_DATA/populations/specialist_n1000_K16_seed1/S.npy` (`midian/backends/bernoulli.py`). The `dist` column then
 still reads `specialist` but is only a label. That source matrix (1000 × 16) has 887 distinct rows, mean 0.419 and a
 mean-over-families of the per-family max of 0.845 (its `summary.json`), which is why the bernoulli oracle sits at
 ≈0.845 for n ≥ 10^3 (`bernoulli_scale_v5/matrix_success.csv`: 0.845–0.846).
 
-#### 1.2.2 live / llm (`rte/backends/population.py`, `configs/models.yaml`)
+#### 1.2.2 live / llm (`midian/backends/population.py`, `configs/models.yaml`)
 
 The shape is realised by how **profiles** `{model, specialty, tool}` are drawn; S is then *measured* (§1.4.1). The
 ladder (`configs/models.yaml`, ascending size): Qwen2.5-0.5B, Qwen2.5-1.5B, Gemma-2-2B, Qwen2.5-3B, Qwen2.5-7B,
@@ -361,12 +361,12 @@ tool only for models ≥ 3B (`population.py`).
 | `iid_uniform` | model uniform; each family a specialty with prob 0.5 |
 
 On a non-specialty ("handicapped") family the agent's prompt has no family description, no worked example and no tool
-(`rte/backends/prompts.py`, `population.py`). An agent's behaviour on family f is fully determined by
+(`midian/backends/prompts.py`, `population.py`). An agent's behaviour on family f is fully determined by
 its **signature** `(model, handicapped?, tool, max_tokens)`: at most 7 × 2 = 14 distinct behaviours per family
 whatever n is. Measured on `seed1`, n = 1000 populations: specialist 887 distinct S-rows (mean S 0.419),
 heavy_tail 5 distinct rows (mean 0.261), bimodal 2 distinct rows (mean 0.237).
 
-#### 1.2.3 replay (`rte/backends/replay.py`; docs/archive/DEVIATIONS.md 2026-09-02)
+#### 1.2.3 replay (`midian/backends/replay.py`; docs/archive/DEVIATIONS.md 2026-09-02)
 
 An agent = one of the 11 RouterBench models + a per-category mask; a masked category executes as the category's
 *weakest* model. Models are ranked by mean accuracy over the K used categories; "strong half" = top 6, "weak half" =
@@ -383,7 +383,7 @@ With K = 64 the specialist mask leaves 61 of 64 categories at the weakest model,
 seed-independent draw checked) while the per-family max is 0.790 (gpt-4). Replay results in B/C are "all shapes
 pooled" = the per-seed mean over specialist, heavy_tail and bimodal.
 
-#### 1.2.4 RouterEval / LLMRouterBench (`rte/backends/routereval.py`)
+#### 1.2.4 RouterEval / LLMRouterBench (`midian/backends/routereval.py`)
 
 Here `dist` is not a shape but the **name of the pool**: `pool = pool or dist` (`routereval.py`). For
 `dataset: mmlu` it selects RouterEval's hard-setting pool config `strong_to_weak | all_strong | all_weak`
@@ -394,7 +394,7 @@ The population is the real pool itself and is **the same for every seed** (§1.6
 
 ### 1.3 Liars
 
-#### 1.3.1 How many and who (`rte/world.py`)
+#### 1.3.1 How many and who (`midian/world.py`)
 
 `m = round(beta * n)` liars.
 - `liar_select = random`: `m` agents uniformly without replacement (rng `(seed,"liars")`).
@@ -402,26 +402,26 @@ The population is the real pool itself and is **the same for every seed** (§1.6
   (`argsort(S.mean(1), kind="stable")[:m]`; ties → lowest ids). Deterministic given S. At β = 0.5 on the live
   specialist n = 1000 seed-1 population the liar half has mean S 0.274 vs 0.565 for the honest half.
 
-#### 1.3.2 The declared-channel lie (`rte/world.py`)
+#### 1.3.2 The declared-channel lie (`midian/world.py`)
 
 `apply_lying(D_honest, liars, lie_mode)`; honest rows are untouched.
 - `inflate` (**every grid behind A–H**): `D[liar] = clip(D_honest[liar] + 0.4, 0, 1)` (`DELTA_INFLATE = 0.4`,
-  `rte/world.py`). Preserves the liar's ranking of its own families and adds 0.4.
+  `midian/world.py`). Preserves the liar's ranking of its own families and adds 0.4.
 - `max`: `D[liar] = 1` everywhere (only the `lie_max_*` grids, 2026-09-23).
 - `squat`: `D[liar, top-3-demand families] = 1` (unused by the figure grids).
 
 #### 1.3.3 What honest declarations look like (`declared_source`)
 
 - `programmatic`: `clip(S + N(0, 0.05))` — an honest, slightly noisy copy of true skill
-  (`rte/backends/__init__.py`; llm version `rte/backends/llm.py`). bernoulli, replay, RouterEval and
-  LLMRouterBench use this for both `programmatic` and `self_described` (`declared_for`, `rte/backends/__init__.py`; called at
+  (`midian/backends/__init__.py`; llm version `midian/backends/llm.py`). bernoulli, replay, RouterEval and
+  LLMRouterBench use this for both `programmatic` and `self_described` (`declared_for`, `midian/backends/__init__.py`; called at
   `bernoulli.py`, `replay.py`, `routereval.py`). On these backends it is an answer key: corr(S, D)
   about 0.99 (erratum 30). The older bernoulli / replay / RouterEval / LLMRouterBench grids (`bernoulli_scale_v5`,
   `replay_scale_v5`, `routereval_mmlu*`, `llmrouterbench_pool`, the `va_b_` / `rivals_b_` / `pool_fill_` twins, the old
   `fw_routereval_*` / `re_sl_*` framework grids) use it; A–H no longer draw a claim-reading arm from those rows.
 - `calibrated` (non-live only, erratum 30; the llm backend rejects it): D is drawn i.i.d. per (agent, family) from
   P(D | decile of S), the live self-rating's empirical distribution over its 11 values (`CAL_VALUES`, `CAL_P`,
-  `rte/backends/__init__.py`, fitted by `scripts/data/fit_declared_calibration.py` on the 40 live specialist n = 100 /
+  `midian/backends/__init__.py`, fitted by `scripts/data/fit_declared_calibration.py` on the 40 live specialist n = 100 /
   1,000 populations). It reproduces live mean 0.688 and corr 0.354–0.357 (CHANGES §8f). The draws ignore the per-agent
   component of live self-ratings (25 % of their residual variance) and the specialist fit is applied to every shape, so
   on heavy_tail / bimodal the claims are less informative than live (DEVIATIONS "Erratum 30"). Used by the `*_cal`,
@@ -433,10 +433,10 @@ The population is the real pool itself and is **the same for every seed** (§1.6
   {0, .2, .5, .6, .7, .75, .8, .85, .9, .95, 1}, mean 0.686 vs mean S 0.419, corr(S, D) = 0.36
   (heavy_tail: mean 0.526 vs S 0.261; bimodal 0.581 vs 0.237). After `inflate` a specialist liar's mean D is ≈ 0.882.
 - Self-description *text* (llm): one ≤ 70-word paragraph per agent written by its own model, plus the appended clause
-  "Declared areas: <its TRUE specialty list>" (`rte/backends/llm.py`). It is generated once per population
+  "Declared areas: <its TRUE specialty list>" (`midian/backends/llm.py`). It is generated once per population
   (`descriptions.json`, path has no β) and **is not touched by the lie** — erratum 27 (§1.8).
 
-#### 1.3.4 The report channel and collusion (`rte/world.py`)
+#### 1.3.4 The report channel and collusion (`midian/world.py`)
 
 Decentralised methods learn through reports: a method passes `(reporter j, agent a, outcome)` and gets back the value
 j reports. If `collude` is **False**, or j is honest, the true outcome comes back. If `collude` is True and j is a liar:
@@ -460,7 +460,7 @@ the best-observed 20 % of honest agents; (iii) executes tasks honestly at its tr
 
 #### 1.3.6 `lie_text` (framework parameter, erratum 27)
 
-Not a world axis: a framework-adapter flag (`rte/methods/frameworks/_common.py`). When on, the
+Not a world axis: a framework-adapter flag (`midian/methods/frameworks/_common.py`). When on, the
 trailing "Declared areas:" clause of *every* agent's description is re-derived from `view.declared` (top 3 families, or
 all above `claim_threshold`), so liars' text claims match their inflated D. The LLM prose is unchanged (partial text
 lie). It appears only in `fw_live_n100k_lietext*` grids, which `shortlist_figs.GRIDS` (`shortlist_figs.py`) explicitly excludes.
@@ -470,14 +470,14 @@ lie). It appears only in `fw_live_n100k_lietext*` grids, which `shortlist_figs.G
 ### 1.4 Backends
 
 A backend supplies `n, K, families, true_skill(), declared(source), execute(a, task), execute_many(agents, fams,
-inst), stats()` (+ churn hooks) (`rte/backends/__init__.py`); `make()` dispatches on
-`bernoulli | replay | llm | routereval` (`rte/backends/__init__.py`). The grid axis value for the live backend
+inst), stats()` (+ churn hooks) (`midian/backends/__init__.py`); `make()` dispatches on
+`bernoulli | replay | llm | routereval` (`midian/backends/__init__.py`). The grid axis value for the live backend
 is `llm`; figure scripts call that family "live".
 
-#### 1.4.1 live (`backend: llm`) — `rte/backends/llm.py`, `prompts.py`, `families.py`, `tools.py`, `rte/llm_client.py`
+#### 1.4.1 live (`backend: llm`) — `midian/backends/llm.py`, `prompts.py`, `families.py`, `tools.py`, `midian/llm_client.py`
 
 - **Agent**: a profile (model from the 7-model ladder, specialty set, tool) — §1.2.2. Real vLLM-served models,
-  temperature 0, `seed=0` (`rte/llm_client.py`). n = 10^5 means 10^5 agent ids mapped onto ≤ 14 behaviours per
+  temperature 0, `seed=0` (`midian/llm_client.py`). n = 10^5 means 10^5 agent ids mapped onto ≤ 14 behaviours per
   family and (specialist) at most 7 × C(16,3) = 3,920 distinct self-description prompts (erratum 25's count).
 - **Families / tasks**: K = 16 Reasoning-Gym generators (`families.py`: basic_arithmetic, chain_sum,
   letter_counting, syllogism, family_relationships, gcd, lcm, prime_factorization, number_sorting, simple_equations,
@@ -491,16 +491,16 @@ is `llm`; figure scripts call that family "live".
   `$RTE_DATA/populations/<dist>_n<n>_K<K>_seed<seed>/S.npy`. Available populations (dir count): specialist n = 100 and
   1,000 seeds 1–20, 10^4 seeds 1–5, 10^5 seeds 1–3; heavy_tail / bimodal n = 100, 1,000 seeds 1–20 and 10^4 seeds 1–3;
   correlated / iid_uniform n = 1,000 seeds 1–5.
-- **LLM cache / memo** (`rte/llm_client.py`): every request is keyed by blake2b of
+- **LLM cache / memo** (`midian/llm_client.py`): every request is keyed by blake2b of
   `(model, messages, max_tokens)`; answers are stored in per-process SQLite shards under `$RTE_DATA/cache/` and every
   process reads all shards. Agents sharing a signature send byte-identical prompts, so they get identical answers on
   the same instance: **same-signature agents are exact clones**. This is what makes n = 10^5 affordable (the probe
   build for a (n, dist, seed) costs `n·K·b` lookups, not new generations, once warmed) and is also the root of
   erratum 25.
 - **Supervisor**: framework arms (not agents) call a supervisor LLM, `SUPERVISOR = "Qwen/Qwen2.5-7B-Instruct"`
-  (`rte/methods/frameworks/_common.py`), over a top-k shortlist; covered in the frameworks part.
+  (`midian/methods/frameworks/_common.py`), over a top-k shortlist; covered in the frameworks part.
 
-#### 1.4.2 bernoulli — `rte/backends/bernoulli.py`
+#### 1.4.2 bernoulli — `midian/backends/bernoulli.py`
 
 Synthetic: outcome ~ Bernoulli(S[a, f]) from a hash of (seed, agent, family, instance) (`bernoulli.py`). Agents
 are rows of S; with `calibrate_from` (all figure grids) each row is resampled from the live specialist n = 1000 seed-1
@@ -508,7 +508,7 @@ S (§1.2.1), so a bernoulli agent is "a clone of a random live specialist agent'
 outcomes". Declared = `clip(S + N(0, 0.05))` for `programmatic` / `self_described`, the live-like draw for `calibrated`. n goes up to 10^7 (`bernoulli_scale_v5`, K = 16).
 Note the module docstring's own policy: "Never a headline number" (`bernoulli.py`).
 
-#### 1.4.3 replay (RouterBench) — `rte/backends/replay.py`
+#### 1.4.3 replay (RouterBench) — `midian/backends/replay.py`
 
 Data: `$RTE_DATA/data/routerbench_cells.npz`, built by `scripts/data/02_download_routerbench.py` from RouterBench's 0-shot
 pickle: category = `eval_name`, categories with ≥ 60 prompts kept (67 survive), score binarised at ≥ 0.5; 11 models,
@@ -523,7 +523,7 @@ rows; routed tasks (`execute`) read only task rows. The oracle therefore picks b
 rows, so it is not an exact ceiling (a method can beat it; none does in B today). Only `replay_1e6_split_cal` sets it, and
 B's replay group reads that grid.
 
-#### 1.4.4 RouterEval (`dataset: mmlu`, `leaderboard_mmlu`) and LLMRouterBench (`dataset: llmrouterbench`) — `rte/backends/routereval.py`
+#### 1.4.4 RouterEval (`dataset: mmlu`, `leaderboard_mmlu`) and LLMRouterBench (`dataset: llmrouterbench`) — `midian/backends/routereval.py`
 
 All three are recorded per-prompt 0/1 scores of **real, distinct LLMs**; n must equal the pool size (asserted); no
 resampling of agents.
@@ -551,62 +551,62 @@ per-family max mean 0.725.
 
 ### 1.5 The probe budget `b`
 
-- **Formula**: `Budget(b).total_probes(n, K) = n · K · b` (`rte/budget.py`) — "b probes per (agent, family)" on
+- **Formula**: `Budget(b).total_probes(n, K) = n · K · b` (`midian/budget.py`) — "b probes per (agent, family)" on
   average. Every probing method receives the same `Budget(b)`; `b` is the grid's `b` axis (default 3,
   `configs/grids/`). Examples: live 10^5 at b = 3 → 4.8 M probes; bernoulli 10^7 at b = 1 → 1.6 × 10^8.
 - **What a probe is**: executing agent *a* on a *fresh* instance of family *f* and returning 0/1, charged
-  `ledger.probes += 1` (`rte/world.py`). The k-th probe of (a, f) uses instance seed
-  `probe_seed(salt, a, f, k)` (`rte/world.py`); `reset()` puts every k back to 0 per method
-  (`rte/world.py`), so **every method sees the same outcome for the k-th probe of (a, f)** (and on live they share
+  `ledger.probes += 1` (`midian/world.py`). The k-th probe of (a, f) uses instance seed
+  `probe_seed(salt, a, f, k)` (`midian/world.py`); `reset()` puts every k back to 0 per method
+  (`midian/world.py`), so **every method sees the same outcome for the k-th probe of (a, f)** (and on live they share
   memoised generations). `probe_text` also returns the instance seeds (so a router can read the probe prompt via
   `view.text(f, inst, probe=True)`); `probe_at(a, f, k)` re-runs a past instance for audits, charged as a probe, index
-  untouched (`rte/world.py`). Live probe instances, measurement instances and task instances are three
+  untouched (`midian/world.py`). Live probe instances, measurement instances and task instances are three
   different seed families; RouterEval probes are train prompts.
 - **How it is checked**: only in `run_method`, after `build`: if `build_probes > n·K·b` a `[WARNING]` is **logged**;
-  nothing is enforced and the row is written (`rte/run.py`). Run-time probes (during `fetch/observe`) are not
+  nothing is enforced and the row is written (`midian/run.py`). Run-time probes (during `fetch/observe`) are not
   checked at all; they appear in `probes_per_task`. From data (build_probes / nKb): flat probe argmax, KNN/MLP routers,
   LinUCB, warm-start bandit, MIDIAN w/o defenses and MIDIAN w/o audits spend exactly 1.000; peer/trusted sequential halving 0.833 on
   LLMRouterBench; **MIDIAN w/o verification (and the since-withdrawn audited successive-halving variant) ≈ 1.04–1.06; MIDIAN 1.03–1.07: per-cell means 1.048–1.050 / 1.029–1.033 / 1.038–1.041 at b = 1 / 3 / 5 on live, RouterEval 5k and LLMRouterBench, maximum 1.070 (LLMRouterBench, b = 1; protocol audit F3), but a mean of 0.92–0.96 at b = 3 on the scale sweeps and RouterEval-mmlu (max ≈ 1.04)**. On the erratum-30 rows B and H draw: `replay_1e6_split_cal` 1.050 / 1.033 / 1.040, `routereval5k_norep_cal` 1.049 / 1.033 / 1.039, `llmrouterbench_norep_cal` 1.050 / 1.033 / 1.041 (max 1.070 at b = 1), and `routereval_mmlu_norep_cal` (H's m ≤ 1,000 line, b = 3) a mean of 0.92 (0.69–1.03, small pools) (the 5 % audit re-probes, documented in
-  the old `rte/methods/midian_a.py` as "≤ 1.05×"; observed up to 1.0625 on `routereval_mmlu`); `verify_on_claim` spends 0 at
+  the old `midian/methods/midian_a.py` as "≤ 1.05×"; observed up to 1.0625 on `routereval_mmlu`); `verify_on_claim` spends 0 at
   build and ≈ 2.4 probes per task at run time on live 10^5 (range 1.4–4.1 across cells); declared argmax and random spend 0.
 - **What changing b does**: more probes per cell → sharper estimates for probe users; declaration-only arms are
   unaffected (the condensed figures draw declared argmax / random once, at b = 3, `BUDGETLESS`, `scripts/figures/condensed_figs.py`; the four never-probing arms are `B_INVARIANT`).
   For the verified MIDIAN variants (MIDIAN and MIDIAN w/o audits) the build splits b into `b0 = b − 1` level-0 probes and verification probes
-  `e = (b − b0)·n / C` (`rte/methods/midian.py`); at **b = 1, b0 = 1 and e = 0, so verification is unfunded:
+  `e = (b − b0)·n / C` (`midian/methods/midian.py`); at **b = 1, b0 = 1 and e = 0, so verification is unfunded:
   MIDIAN w/o audits ≡ MIDIAN w/o defenses and MIDIAN ≡ MIDIAN w/o verification** (also stated at `configs/grids/`). The condensed A/B
   b = 1 bars inherit this.
 - Budget-less arms still carry a `b` value in their row and a distinct row id per b.
 
 ---
 
-### 1.6 The experimental unit and grid mechanics (`rte/run.py`, `configs/grids/`)
+### 1.6 The experimental unit and grid mechanics (`midian/run.py`, `configs/grids/`)
 
 #### 1.6.1 Cell, unit, row
 
-- **CELL axes** (`rte/run.py`): `backend, n, K, dist, beta, liar_select, collude, declared_source, lie_mode,
-  demand, b, Q`. A **cell** is one point of their Cartesian product (`rte/run.py`); `backend_kwargs` (e.g.
+- **CELL axes** (`midian/run.py`): `backend, n, K, dist, beta, liar_select, collude, declared_source, lie_mode,
+  demand, b, Q`. A **cell** is one point of their Cartesian product (`midian/run.py`); `backend_kwargs` (e.g.
   `calibrate_from`, `dataset`) and `churn` ride along.
 - A **unit** = (cell, seed): one `World`, one stream, the oracle line, then every requested method (§1.1.5)
-  (`rte/run.py`). A method that raises is logged and skipped; the unit continues.
-- **row_id** = blake2b-128 of the CELL values + backend_kwargs + method + params + seed (+ churn) (`rte/run.py`).
+  (`midian/run.py`). A method that raises is logged and skipped; the unit continues.
+- **row_id** = blake2b-128 of the CELL values + backend_kwargs + method + params + seed (+ churn) (`midian/run.py`).
   It does not include the grid name; results are separated by directory `$RTE_DATA/results/<grid>/`. Each row is
-  written atomically as `rows.d/<rid>.json` (`rte/run.py`); a rerun of the same unit overwrites the same files.
-- **Resume**: a (cell, seed, method) is skipped if its rid is in `rows.d` or `rows.csv` (`rte/run.py`).
-- **Consolidation** (`rte/run.py`): `rows.d/*.json` are merged into `rows.csv` (additive, dedup on `rid`,
-  keep last), optional prune; skipped if `.merge_owner` exists unless forced. Note `rte.analyze.load` calls
-  `consolidate` (`rte/analyze.py`), so figure scripts that use it rewrite `rows.csv`;
+  written atomically as `rows.d/<rid>.json` (`midian/run.py`); a rerun of the same unit overwrites the same files.
+- **Resume**: a (cell, seed, method) is skipped if its rid is in `rows.d` or `rows.csv` (`midian/run.py`).
+- **Consolidation** (`midian/run.py`): `rows.d/*.json` are merged into `rows.csv` (additive, dedup on `rid`,
+  keep last), optional prune; skipped if `.merge_owner` exists unless forced. Note `midian.analyze.load` calls
+  `consolidate` (`midian/analyze.py`), so figure scripts that use it rewrite `rows.csv`;
   `fw_variant_numbers.load` (`scripts/analysis/fw_variant_numbers.py`) instead reads `rows.d` + `rows.csv` directly and dedups on `rid` and then on
   `(n, b, dist, beta, liar_select, seed, method, params)` (`fw_variant_numbers.py`).
 
 #### 1.6.2 Grid resolution
 
-`blocks(cfg, grid)` (`rte/run.py`): `defaults` < `mirror_of` source (chains allowed) < the grid's own keys <
+`blocks(cfg, grid)` (`midian/run.py`): `defaults` < `mirror_of` source (chains allowed) < the grid's own keys <
 each `blocks:` entry. Defaults (`configs/grids/`): backend bernoulli, K 16, liar_select random, collude true,
 declared_source programmatic, lie_mode inflate, demand uniform, b 3, Q 1000, seeds 1–5, methods `all` + six paired
-variants. `methods: all` = every method file except LLM-only ones off the llm backend (`rte/run.py`);
-`allow_llm_methods: true` lets framework arms run on routereval. Seeds spec `"1-10"` → `[1..10]` (`rte/run.py`).
+variants. `methods: all` = every method file except LLM-only ones off the llm backend (`midian/run.py`);
+`allow_llm_methods: true` lets framework arms run on routereval. Seeds spec `"1-10"` → `[1..10]` (`midian/run.py`).
 
-#### 1.6.3 Resolved grids behind figures A–H (exact values from `rte.run.blocks`)
+#### 1.6.3 Resolved grids behind figures A–H (exact values from `midian.run.blocks`)
 
 All rows: `K = 16` unless noted, `collude = true`, `lie_mode = inflate`, `demand = uniform`, no churn.
 
@@ -687,7 +687,7 @@ the pool). On live, the self-rating and the measured S of a *signature* are the 
 population (fixed measurement set), so seeds change which signatures are present and in what proportion. Seeds with the
 same number but different n are different populations (the profile seed includes n).
 
-#### 1.6.5 The metrics row (`rte/run.py`)
+#### 1.6.5 The metrics row (`midian/run.py`)
 
 Cell columns + `seed, grid, method, params, backend_kwargs, n_agents, n_liars`, world summary columns prefixed
 `skill_` (`skill_mean`, `skill_per_agent_std`, `skill_p90_p10`, `skill_family_max_mean`, `skill_excess_ratio`,
@@ -695,14 +695,14 @@ Cell columns + `seed, grid, method, params, backend_kwargs, n_agents, n_liars`, 
 
 | column | definition |
 |---|---|
-| `success` | mean 0/1 outcome over the Q routed tasks. Route-to-many (a list from `fetch`): majority of the executed agents' outcomes, ties → 0 (`rte/run.py`) |
+| `success` | mean 0/1 outcome over the Q routed tasks. Route-to-many (a list from `fetch`): majority of the executed agents' outcomes, ties → 0 (`midian/run.py`) |
 | `success_late`, `n_late` | mean over the last `min(500, max(1, Q//4))` tasks (250 at Q = 1000, 75 at Q = 300) |
 | `success_by_block` | per-100-task means |
 | `oracle_success` | the unit's oracle-line success; `regret = oracle_success − success` |
 | `misroute_to_liar` | fraction of tasks whose (first) routed agent is a liar |
 | `build_{probes,reports,messages,hops,comparisons}`, `build_total_comm` | ledger after `build` (`total_comm` = probes + reports + messages) |
 | `{probes,reports,messages,hops,comparisons,tasks}_per_task`, `total_comm_per_task` | run-phase ledger / Q |
-| `wall_clock_build`, `wall_clock_per_task`, `wall_clock_per_task_total` | seconds; memo-dependent, not used as costs (`rte/analyze.py`) |
+| `wall_clock_build`, `wall_clock_per_task`, `wall_clock_per_task_total` | seconds; memo-dependent, not used as costs (`midian/analyze.py`) |
 | `method_stats` | JSON of the method's `stats` (e.g. framework picks / fallbacks) |
 
 The oracle row has zero build/run communication except `tasks_per_task = 1`.
@@ -711,7 +711,7 @@ The oracle row has zero build/run communication except `tasks_per_task = 1`.
 
 ### 1.7 Aggregation conventions (general machinery)
 
-- **Labels** (`rte/analyze.py`): `label = method` if params are `{}`, else `method[k=v,…]` (sorted, floats
+- **Labels** (`midian/analyze.py`): `label = method` if params are `{}`, else `method[k=v,…]` (sorted, floats
   `%.3g`), then `ALIAS`: `flat_probe_argmax → flat_probe_argmax_frozen`, `flat_probe_argmax[online=True] →
   flat_probe_argmax_online`, `knn_router[online=True] → knn_router_online`, `midian[verify=False] →
   midian_wo_verify`, `midian[audit=False] → midian_wo_audit`, `midian[audit=False,verify=False] → midian_wo_defenses`,
@@ -731,14 +731,14 @@ The oracle row has zero build/run communication except `tasks_per_task = 1`.
 - **Other intervals in the pipeline are 95 % percentile bootstraps over seeds, B = 2000**: `stats.ci`
   (`scripts/figures/lib/stats.py`, rng 0; resamples seeds when the series is seed-indexed) in the bar CSVs
   (`results/aggregates/bars/`) and scale matrices, `fw_variant_numbers.ci` (`fw_variant_numbers.py`, rng 0) in the paper
-  numbers, `rte.analyze.boot` (`rte/analyze.py`, rng 12345). With 3 seeds the bootstrap has only 10 distinct
+  numbers, `midian.analyze.boot` (`midian/analyze.py`, rng 12345). With 3 seeds the bootstrap has only 10 distinct
   resamples, and its 2.5 / 97.5 percentiles are the smallest and largest seed mean (about 73 % coverage for normal data;
   figures audit F5).
 - **Regimes** (`fw_variant_numbers.regime`, `bar_figs.REGIMES`): β = 0 is one regime (`beta0`); for bar CSVs the β = 0
   row set is filtered to `liar_select = random` when present (`bar_figs.py`), because the two liar selections are
   the same world at β = 0.
-- **Paired comparisons**: `rte.analyze.paired` (`rte/analyze.py`) — per cell, pivot seed × label, delta
-  `ref − rival` per seed, bootstrap CI + sign test, `WITHIN_FLOOR` if |mean delta| ≤ the reference's seed envelope (the reference `REF` is MIDIAN w/o defenses, `rte/analyze.py`).
+- **Paired comparisons**: `midian.analyze.paired` (`midian/analyze.py`) — per cell, pivot seed × label, delta
+  `ref − rival` per seed, bootstrap CI + sign test, `WITHIN_FLOOR` if |mean delta| ≤ the reference's seed envelope (the reference `REF` is MIDIAN w/o defenses, `midian/analyze.py`).
   `paired_gaps.py` (pre-refactor, since removed; b = 3 only, not a condensed figure): per condition, `midian − rival` (MIDIAN minus the rival) per unit (unit =
   seed, or seed|shape where shapes are not pooled), 95 % bootstrap CI of that difference, "win/loss/tie" by CI sign;
   requires ≥ 2 shared units.
@@ -773,7 +773,7 @@ figure draws either (protocol audit F1: peer halving beats MIDIAN in every hones
 #### 1.8.3 Erratum 27 — the lie does not touch description text (`docs/archive/CHANGES_AND_ERRATA.md`)
 
 `apply_lying` edits only the D matrix; `descriptions.json` is per population with no β in its path, and its
-"Declared areas:" clause lists the agent's true specialty (`rte/backends/llm.py`). Therefore every
+"Declared areas:" clause lists the agent's true specialty (`midian/backends/llm.py`). Therefore every
 text-retrieval shortlist (TF-IDF, dedup, BM25, MiniLM, dense, hybrid, sota) is **identical across all liar regimes**;
 its only β-dependence is the declared-argmax fallback when a framework fails to pick. Cross-regime robustness of text
 arms is an artefact of the threat model; only declared-channel arms are attacked by the lie. `lie_text` (§1.3.6) is
@@ -879,7 +879,7 @@ change outcomes (§2.8.1).
 
 1. **Older RouterEval MMLU rows come from one of two family orders (affects `dataset: mmlu` only).**
    `RouterEvalBackend._families` ranks the subjects by train-prompt count and breaks ties by subject name
-   (`rte/backends/routereval.py`; test `tests/test_routereval_family_order.py`). "High school biology" and
+   (`midian/backends/routereval.py`; test `tests/test_routereval_family_order.py`). "High school biology" and
    "philosophy" tie at 248 train prompts, at family indices 9 / 10. Rows written before the tie-break took their order
    from Python set iteration, which varies with `PYTHONHASHSEED` (under hash seeds 0–11 the order flips for 6, 8, 9 and
    11), so about half of them come from the other order. The subject set is the same either way; only the two indices
@@ -901,12 +901,12 @@ change outcomes (§2.8.1).
 3. **Build-budget contract vs code.** `docs/architecture.md` says probing methods spend "AT MOST" n·K·b in build; MIDIAN w/o verification /
    -SHA spend up to 1.0625× and MIDIAN up to ≈ 1.04× per cell (audit re-probes; mean 1.033× at b = 3 on LLMRouterBench), and `run.py` only logs a warning. The
    old `midian_a.py` docstring's "≤ 1.05×" was also exceeded on small pools (1.0625 on `routereval_mmlu`).
-4. **README / docstrings say three backends** (`README.md`, `rte/world.py`); there are four (`routereval`).
+4. **README / docstrings say three backends** (`README.md`, `midian/world.py`); there are four (`routereval`).
 5. **README: "bernoulli: synthetic S with five population shapes, calibrated to the measured live S"** — with
    `calibrate_from` the shape is ignored; every figure grid resamples rows of one live specialist population.
 6. **README: "S is measured per signature (200 probes)"** — 60 for the ≥ 9B models (`llm.py`,
    `models.yaml`).
-7. **`View` docstring says `dist` is always available** (`rte/world.py`); `View.__init__` never sets it and
+7. **`View` docstring says `dist` is always available** (`midian/world.py`); `View.__init__` never sets it and
    `view.dist` would raise `AccessError`.
 8. **`_common.py` comment** says honest agents' declared "is true skill plus 0.05 noise"; on the live
    `self_described` channel (where `lie_text` is used) honest D is the model's coarse self-rating (mean 0.686 vs S
@@ -951,8 +951,8 @@ and the framework arm), in that legend order, plus A's framework arm. Names and 
 | key in code | legend label | colour | what the key resolves to |
 |---|---|---|---|
 | `midian` | MIDIAN | green `#2ecc71` | method `midian`, params `{}` (both defenses; formerly `midian_va`; §2.3) |
-| `midian_wo_defenses` | MIDIAN w/o defenses | red `#c0392b` | method `midian`, params `{"audit": false, "verify": false}` (formerly the plain `midian`; §2.2). The label comes from `rte/analyze.py` (`ALIAS`) |
-| `flat_probe_argmax_online` | flat probe argmax | blue `#3498db` | method `flat_probe_argmax`, params `{online: true}`. The alias comes from `rte/analyze.py` (`FLAT_ON`, `ALIAS`) |
+| `midian_wo_defenses` | MIDIAN w/o defenses | red `#c0392b` | method `midian`, params `{"audit": false, "verify": false}` (formerly the plain `midian`; §2.2). The label comes from `midian/analyze.py` (`ALIAS`) |
+| `flat_probe_argmax_online` | flat probe argmax | blue `#3498db` | method `flat_probe_argmax`, params `{online: true}`. The alias comes from `midian/analyze.py` (`FLAT_ON`, `ALIAS`) |
 | `best_learned` | best learned/declared router | orange `#ff7f0e` | the cross-fitted best of the learned-router pool in this cell, regime and b (§2.1.3); "declared" because two of its members read only declarations |
 | `best_bandit` | best bandit | purple `#9467bd` | the cross-fitted best of the bandit pool in this cell, regime and b (§2.1.3) |
 | `declared_argmax` | declared argmax | slate `#5d6d7e` | method `declared_argmax`, params `{}` (not cached) |
@@ -1050,31 +1050,31 @@ What is picked in the current A / B CSVs (full tables in §4.1, §4.2):
 
 ### 2.1.4 Shared machinery every method uses
 
-- **Interface** (`rte/methods/base.py`):
+- **Interface** (`midian/methods/base.py`):
   - `needs` is a subset of {declared, probe, reports, bus}. The `View` raises `AccessError` on any other access
-    (`rte/world.py`), and it never exposes S or the liar set.
+    (`midian/world.py`), and it never exposes S or the liar set.
   - `build(view, budget)` is the pre-emptive phase.
   - `fetch(task)` returns an agent id.
   - `observe(task, agent, outcome)` is the online update. The runner passes the **true executed outcome** directly
-    (`rte/run.py`), so every online method learns from trusted outcomes, not from reports.
-- **Budget** (`rte/budget.py`): `total_probes(n, K) = n·K·b`, with b = `probes_per_agent_family`. The runner does
-  **not** enforce it. It only logs a warning when build probes exceed it (`rte/run.py`).
-- **Probes are index-seeded** (`rte/world.py`). The k-th probe of (agent, family) is the same instance for every
-  method. `World.reset` zeroes the probe index before each method (`rte/world.py`), so two methods probing the
+    (`midian/run.py`), so every online method learns from trusted outcomes, not from reports.
+- **Budget** (`midian/budget.py`): `total_probes(n, K) = n·K·b`, with b = `probes_per_agent_family`. The runner does
+  **not** enforce it. It only logs a warning when build probes exceed it (`midian/run.py`).
+- **Probes are index-seeded** (`midian/world.py`). The k-th probe of (agent, family) is the same instance for every
+  method. `World.reset` zeroes the probe index before each method (`midian/world.py`), so two methods probing the
   same cell see identical outcomes. The runner resets the world with the method's **pre-rename** key
-  (`keys.legacy`, `rte/run.py`), so a MIDIAN arm reruns bit-identically to the rows stored under its old key.
+  (`keys.legacy`, `midian/run.py`), so a MIDIAN arm reruns bit-identically to the rows stored under its old key.
 - **Method randomness** comes from `view.rng = default_rng(stable_seed_32(seed, "view", sorted(needs)))`
-  (`rte/world.py`). It depends only on the world seed and the method's `needs`. Methods with the same `needs`
+  (`midian/world.py`). It depends only on the world seed and the method's `needs`. Methods with the same `needs`
   therefore start from the same RNG stream. Checked: MIDIAN w/o defenses, MIDIAN w/o audits and MIDIAN build **identical leaf cohorts** at
   a given seed (n = 100 and 1,000, b = 1, 3, 5).
-- **Declared-channel helpers** (`rte/methods/_decl.py`):
+- **Declared-channel helpers** (`midian/methods/_decl.py`):
   - `declared(view)` charges n messages once, for collecting the registry.
   - `scan` charges n comparisons per read of one family's column.
 - **What liars do.** The world layer is described in Part 1; summarised here so each method's liar behaviour reads
   on its own.
-  - Declared lie (`rte/world.py`): `inflate` sets D = clip(D_honest + 0.4). `max` sets D = 1 everywhere.
+  - Declared lie (`midian/world.py`): `inflate` sets D = clip(D_honest + 0.4). `max` sets D = 1 everywhere.
     `squat` sets D = 1 on the top-3 demand families.
-  - Report lie, when `collude` is on (`rte/world.py`): a liar reporter says 1 about any liar, and 0 about
+  - Report lie, when `collude` is on (`midian/world.py`): a liar reporter says 1 about any liar, and 0 about
     the top 20% (by its observed mean in this batch) of the honest agents it reports on. Otherwise it reports the
     truth.
   - Liars **execute at their true skill**.
@@ -1083,12 +1083,12 @@ What is picked in the current A / B CSVs (full tables in §4.1, §4.2):
 
 ## 2.2 MIDIAN w/o defenses (`midian{"audit": false, "verify": false}`, label "MIDIAN w/o defenses")
 
-**File:** `rte/methods/midian.py`, class `Midian` (one class for MIDIAN and every ablation; renamed 2026-09-24,
+**File:** `midian/methods/midian.py`, class `Midian` (one class for MIDIAN and every ablation; renamed 2026-09-24,
 CHANGES_AND_ERRATA §8g). **Needs:** `{probe, reports}`. **Params used in A/B:** `audit=False, verify=False`, and
 the defaults `r=10, delta=1/3, online=True, top=1, cohort="random"`; `cached` defaults to `verify`, so it is off
 . Before the rename this was the plain `midian` with params `{}` (the pre-registered tree, SPEC §5); stored rows
-were rewritten to the new key and reproduce bit for bit (the world is seeded with the legacy key, `rte/run.py`,
-`rte/methods/keys.py`). The parameters r = 10 and δ = 1/3 are defaults, not tuned. `exclusions.excluded` drops any
+were rewritten to the new key and reproduce bit for bit (the world is seeded with the legacy key, `midian/run.py`,
+`midian/methods/keys.py`). The parameters r = 10 and δ = 1/3 are defaults, not tuned. `exclusions.excluded` drops any
 MIDIAN with r ≠ 10 or δ ≠ 1/3 (`scripts/figures/lib/exclusions.py`).
 
 ### 2.2.1 The idea
@@ -1107,7 +1107,7 @@ it. Routing a task walks down the tree from the root, about log_r n steps, inste
   ids above). `self.parent[l]` maps a node to its parent.
 - **Depth.** `depth = len(children)`. Checked: depth = 2 at n = 100 (10 leaf cohorts, 1 root) and 3 at n = 1,000.
 
-### 2.2.3 Level-0 estimation (`peer_reported_estimates`, `rte/methods/_est.py`)
+### 2.2.3 Level-0 estimation (`peer_reported_estimates`, `midian/methods/_est.py`)
 
 - **Probes.** Every agent is probed b times on every family. That is n·K·b probes, exactly `Budget.total_probes`.
 - **Reports.** Every probe outcome is reported by **every other member of the agent's cohort** (s − 1 reporters). That is
@@ -1179,7 +1179,7 @@ it. Routing a task walks down the tree from the root, about log_r n steps, inste
     `verify`, so the root caches its pick (§2.3.5).
 - The ablations switch a flag off: `midian{"verify": false}` = **MIDIAN w/o verification** (label `midian_wo_verify`),
   `midian{"audit": false}` = **MIDIAN w/o audits** (`midian_wo_audit`), both off = **MIDIAN w/o defenses** (§2.2).
-  Labels come from `rte.analyze.ALIAS` (`rte/analyze.py`).
+  Labels come from `midian.analyze.ALIAS` (`midian/analyze.py`).
 - **Level 0 keeps the engine each variant had before the rename** (`_level0`): with audits,
   `_level0_audited` (per-peer means, trimmed over peers, audits); without audits,
   `_est.peer_reported_estimates` with `by_reporter=verify` (per-peer trim for MIDIAN w/o audits, per-report trim for MIDIAN
@@ -1192,7 +1192,7 @@ it. Routing a task walks down the tree from the root, about log_r n steps, inste
 ### 2.3.2 MIDIAN w/o audits for reference
 
 - It is `Midian(audit=False)`: verification and the cached root pick, no audits. The ALIAS `midian[audit=False]` maps to
-  `midian_wo_audit` (`rte/analyze.py`).
+  `midian_wo_audit` (`midian/analyze.py`).
 - It is not drawn in A or B (it is not in `ARMS`); it is in the per-family bar figures (`figures/bars/`).
 - It differs from MIDIAN only in level 0: `peer_reported_estimates` with `by_reporter=True` (per-peer trim), and no
   audits.
@@ -1224,7 +1224,7 @@ it. Routing a task walks down the tree from the root, about log_r n steps, inste
        9 per-peer means are averaged.
 5. **Audit during the build** (`_audit`, `midian.py`).
    - For every level-0 probe instance, the auditor draws uniformly with rate 0.05.
-   - Each drawn instance is **re-run on the same index-seeded instance** with `view.probe_at` (`rte/world.py`,
+   - Each drawn instance is **re-run on the same index-seeded instance** with `view.probe_at` (`midian/world.py`,
      charged as a probe, probe index untouched). The true outcome is compared with **every** peer's report about that
      instance.
    - Each mismatch is a strike (`_strike`). A reporter with `STRIKES = 2` mismatches  is excluded from
@@ -1262,7 +1262,7 @@ it. Routing a task walks down the tree from the root, about log_r n steps, inste
 - The floor in `e` makes the verification slightly under-spend.
 - This matches DEVIATIONS: "Audited builds exceed the n*K*b cap by the audit rate by design" (2026-09-03, variants fork),
   and the "build spent 49380 probes > budget 48000" warning (2026-09-16 entry, recorded, not corrected).
-- The runner only warns (`rte/run.py`, `run_method`), so these rows are kept.
+- The runner only warns (`midian/run.py`, `run_method`), so these rows are kept.
 
 ### 2.3.5 Routing (`fetch` with `cached=True`, `midian.py`)
 
@@ -1308,7 +1308,7 @@ it. Routing a task walks down the tree from the root, about log_r n steps, inste
 ### 2.3.9 The "leaf cohort" and the MIDIAN-cohort shortlist (used by the frameworks' `va_cohort` source)
 
 - With `retrieval="midian"` (before the rename `"midian_va"`), `FrameworkMethod.build` builds its own `Midian(r=self.r)`
-  inside the framework unit (`rte/methods/frameworks/_common.py`). That instance spends its own probes, including
+  inside the framework unit (`midian/methods/frameworks/_common.py`). That instance spends its own probes, including
   the audit overspend. (`retrieval="midian_wo_audit"`, formerly `"midian"`, builds `Midian(audit=False)` instead; that
   cohort is not drawn.)
 - `retrieve` then returns MIDIAN's pick first, followed by the other members of **that pick's leaf cohort**,
@@ -1338,16 +1338,16 @@ it. Routing a task walks down the tree from the root, about log_r n steps, inste
 
 ## 2.4 The oracle (dotted line in A, B, E, F and H; the normaliser in B)
 
-- `World.oracle(task) = argmax_a S[a, task.family]` (`rte/world.py`). It is the **only** routing rule that reads
+- `World.oracle(task) = argmax_a S[a, task.family]` (`midian/world.py`). It is the **only** routing rule that reads
   true skill S. Ties go to the lowest agent id (`np.argmax`).
-- The runner runs it once per (cell, seed) in `oracle_line` (`rte/run.py`). It executes the chosen agent on the
+- The runner runs it once per (cell, seed) in `oracle_line` (`midian/run.py`). It executes the chosen agent on the
   same task stream as every method (`world.execute`), so **oracle success is the realised success** of the best-S agent
   on these task instances, not max S itself.
-- After a churn event it re-picks using the new S (`rte/run.py`); A/B cells have no churn.
-- It is written as the row `method="oracle"`, with a zero build ledger (`rte/run.py`), and used as the regret
+- After a churn event it re-picks using the new S (`midian/run.py`); A/B cells have no churn.
+- It is written as the row `method="oracle"`, with a zero build ledger (`midian/run.py`), and used as the regret
   baseline.
 - **Liars do not affect it.** Liars execute at true skill, S and the task stream do not depend on β, and the liar RNG is
-  separate (`rte/world.py`). The world seed does not include b either, so the oracle is also
+  separate (`midian/world.py`). The world seed does not include b either, so the oracle is also
   independent of b.
 - In B, each group divides **both regimes'** bars by the **honest** cell's oracle mean
   (`scripts/figures/condensed_figs.py`), for all b. For live it comes from the b = 3 bar CSV; for the four switched families
@@ -1360,8 +1360,8 @@ it. Routing a task walks down the tree from the root, about log_r n steps, inste
 
 ## 2.5 Flat probe argmax, online (label "flat probe argmax")
 
-**File:** `rte/methods/flat_probe_argmax.py`. **Needs:** `{probe}`. **Params:** `online=True`, `cached=False`
-(ALIAS `rte/analyze.py`). docs/methods.md (SPEC §6) calls it "the key control": MIDIAN's probes without the tree or the
+**File:** `midian/methods/flat_probe_argmax.py`. **Needs:** `{probe}`. **Params:** `online=True`, `cached=False`
+(ALIAS `midian/analyze.py`). docs/methods.md (SPEC §6) calls it "the key control": MIDIAN's probes without the tree or the
 reports.
 
 - **Build** : `probe_successes(view, b)` (`_est.py`), i.e. n·K·b probes, observed directly by the router
@@ -1386,7 +1386,7 @@ reports.
 
 ### 2.6.1 `declared_argmax`
 
-**File:** `rte/methods/declared_argmax.py`. **Needs:** `{declared}`. **Params:** `cached=False`.
+**File:** `midian/methods/declared_argmax.py`. **Needs:** `{declared}`. **Params:** `cached=False`.
 
 - **Build:** collect D, charged n messages (`_decl.py`).
 - **Fetch:** `argmax_a D[a, f]`, with an O(n) comparison scan. Ties go to the lowest id.
@@ -1397,7 +1397,7 @@ reports.
 
 ### 2.6.2 `random`
 
-**File:** `rte/methods/random.py`. **Needs:** none.
+**File:** `midian/methods/random.py`. **Needs:** none.
 
 - **Fetch:** `view.rng.integers(0, n)`. No build, no cost charged.
 - It is the floor, and is drawn once.
@@ -1409,7 +1409,7 @@ reports.
 All of them spend exactly n·K·b warm-up probes as trusted observations (checked: ratio 1.000, except TrueSkill), learn online,
 and charge n comparisons per fetch.
 
-### 2.7.1 `ucb_per_family` (UCB1; `rte/methods/ucb_per_family.py`)
+### 2.7.1 `ucb_per_family` (UCB1; `midian/methods/ucb_per_family.py`)
 
 - **Needs:** `{probe}`. **Default:** c = √2.
 - **Build:** probe means, `cnt = b`, and per-family pull count `t[f] = n·b`.
@@ -1418,7 +1418,7 @@ and charge n comparisons per fetch.
 - **Observe:** running mean, with cnt and t incremented.
 - **Declarations:** ignored.
 
-### 2.7.2 `thompson_per_family` (`rte/methods/thompson_per_family.py`, via `_est.BetaBandit`, `_est.py`)
+### 2.7.2 `thompson_per_family` (`midian/methods/thompson_per_family.py`, via `_est.BetaBandit`, `_est.py`)
 
 - **Needs:** `{probe}`.
 - **Prior:** Beta(1, 1) + b probes, so α = 1 + s and β = 1 + b − s.
@@ -1427,7 +1427,7 @@ and charge n comparisons per fetch.
 
 ### 2.7.3 `warm_start_bandit` (label `warm_start_bandit`, n0 = 5; and `warm_start_bandit[n0=0.5]`)
 
-**File:** `rte/methods/warm_start_bandit.py`. **Needs:** `{declared, probe}`.
+**File:** `midian/methods/warm_start_bandit.py`. **Needs:** `{declared, probe}`.
 
 - **Prior** :
   - Charges n messages, for collecting the declarations.
@@ -1458,7 +1458,7 @@ and charge n comparisons per fetch.
   - §8d as written does **not** mention the tuning run. The "CHANGES 8d" citation in `configs/grids/` points at the
     motivation, not at a record of the tuning.
 
-### 2.7.4 `linucb_honest` and `linucb_honest[bonus=own]` (`rte/methods/linucb_honest.py`)
+### 2.7.4 `linucb_honest` and `linucb_honest[bonus=own]` (`midian/methods/linucb_honest.py`)
 
 - **In the bandit pool** is only the fixed-bonus variant `linucb_honest[bonus=own]` (`POOLS`, `condensed_figs.py`), a
   post-hoc fix (rivals audit F1, 2026-09-23). Its rows come from the `linucb_fix_*` grids (`configs/grids/`: live, RouterEval-5k and LLMRouterBench cells and bernoulli 10^7, b = 1 / 3 / 5) and the erratum-30 grids
@@ -1480,7 +1480,7 @@ and charge n comparisons per fetch.
 - **Observe:** updates A, b, the count and the mean.
 - **Declarations:** ignored.
 
-### 2.7.5 `trueskill_per_family` (`rte/methods/trueskill_per_family.py`)
+### 2.7.5 `trueskill_per_family` (`midian/methods/trueskill_per_family.py`)
 
 - **Needs:** `{probe}`. Uses the `trueskill` package's default environment.
 - **Build**, for each family:
@@ -1488,14 +1488,14 @@ and charge n comparisons per fetch.
     the budget. Checked: ratio 0.989-0.999.
   - Probe each agent of a pair once and apply a 1-vs-1 update: a win, a loss, or a draw when the outcomes are equal.
   - The docstring says both are probed "on the same instance". **The code probes each agent at its own index-seeded
-    instance**, because instance seeds depend on the agent id (`rte/world.py`).
+    instance**, because instance seeds depend on the agent id (`midian/world.py`).
 - **Fetch:** argmax μ.
 - **No online update**.
 - It raises `NotImplementedError` at n ≥ 100,000, so it is absent from live 10^5, bernoulli 10^7 and
   replay 10^6.
 - **Probe-duplicate fix (erratum 30).** Its random pairs draw agents with replacement, so one probe call often held the
   same (agent, family) several times, and `World._probe` used to give every occurrence the same instance. `World._probe`
-  now gives each occurrence the next instances (`_occurrence`, `rte/world.py`); TrueSkill is the only
+  now gives each occurrence the next instances (`_occurrence`, `midian/world.py`); TrueSkill is the only
   arm that passes repeated cells, so only its rows change. `seed_tables.tables` counts TrueSkill only from
   `trueskill_fix_n{100,1000,10k}` (`configs/grids/`) and the erratum-30 grids (`seed_tables.py`).
   Those rows have landed (every seed at live 10^2–10^4, RouterEval 5,000 and LLMRouterBench, b = 1 / 3 / 5); the
@@ -1506,14 +1506,14 @@ and charge n comparisons per fetch.
 
 ## 2.8 The "learned router" pool (candidates for "best learned/declared router")
 
-### 2.8.1 `knn_router` and `knn_router_online` (`rte/methods/knn_router.py`)
+### 2.8.1 `knn_router` and `knn_router_online` (`midian/methods/knn_router.py`)
 
 - **Needs:** `{probe}`. The code docstring calls it "RouterBench's KNN predictive router (Hu et al. 2024) on our terms".
 - **Build:** `probe_set` (`_learned.py`) probes every agent b times per family, n·K·b probes, **keeping the prompt
   of every probe**.
   - Each probe prompt is embedded with the backend's own vectors when it ships them (RouterEval RoBERTa), otherwise with
     all-MiniLM-L6-v2 on the prompt text (`_learned.py`).
-  - Bernoulli has no real text: its "text" is `"A task of family X (instance i)."` (`rte/world.py`).
+  - Bernoulli has no real text: its "text" is `"A task of family X (instance i)."` (`midian/world.py`).
   - The embedding arithmetic is not charged in the ledger (`_learned.py`).
 - **Predicted success of agent a** = the mean outcome of a's **k nearest** probes by cosine to the task's embedding.
   k defaults to b, so k = 1 at b = 1.
@@ -1530,12 +1530,12 @@ and charge n comparisons per fetch.
   `RTE_TEXT_PROCS=N` (probe prompts generated in N forked processes, identical texts, `_learned.py`),
   `RTE_OUTCOME_CACHE=1` (each (population, agent, family, instance) probe scored once per process, forked over
   `RTE_TEXT_PROCS`; identical outcomes, only the `llm_executions` diagnostic counts fewer calls,
-  `rte/backends/llm.py`) and `RTE_RG_CACHE=1` (Reasoning-Gym's word-corpus read and regex scan cached for
-  letter_counting / word_sequence_reversal; identical problems and scores, `rte/backends/families.py`). Outcomes and
+  `midian/backends/llm.py`) and `RTE_RG_CACHE=1` (Reasoning-Gym's word-corpus read and regex scan cached for
+  letter_counting / word_sequence_reversal; identical problems and scores, `midian/backends/families.py`). Outcomes and
   texts are identical; batched vs per-prompt embeddings differ at float level (≤ 2.4e-7) and gave identical top-10
   neighbour sets on 300 queries.
 
-### 2.8.2 `mlp_router` (`rte/methods/mlp_router.py`)
+### 2.8.2 `mlp_router` (`midian/methods/mlp_router.py`)
 
 - **Needs:** `{probe}`. The code cites RouterBench's MLP router (Hu et al. 2024).
 - **Model:** one sklearn `MLPRegressor(hidden=128, max_iter=30, random_state=0)` on the input
@@ -1546,7 +1546,7 @@ and charge n comparisons per fetch.
 - The one-hot input makes memory O(n²·K·b). The grids exclude it at n = 10,000 and at the 5,000-LLM pool
   (`docs/archive/DEVIATIONS.md`; `configs/grids/` comment). There is no guard in the code itself.
 
-### 2.8.3 `flat_nsw_router` (`rte/methods/flat_nsw_router.py`)
+### 2.8.3 `flat_nsw_router` (`midian/methods/flat_nsw_router.py`)
 
 - **Needs:** `{probe}`. docs/methods.md calls it the "E7 flat rival".
 - **Build:** the same trusted probe means as `flat_probe_argmax`, inserted into an hnswlib inner-product index
@@ -1554,7 +1554,7 @@ and charge n comparisons per fetch.
 - **Fetch:** a one-hot(f) query, i.e. an approximate argmax of `est[:, f]`, charged ⌈log2 n⌉ hops and ef comparisons. Which of the tied top agents it returns depends on the index seed (`docs/archive/DEVIATIONS.md`).
 - **No online update.**
 
-### 2.8.4 `cluster_head_router` (`rte/methods/cluster_head_router.py`): declared-only, no probes
+### 2.8.4 `cluster_head_router` (`midian/methods/cluster_head_router.py`): declared-only, no probes
 
 - **Needs:** `{declared}`. docs/methods.md describes it as "AgentNet++-style prior art".
 - **Build** :
@@ -1568,7 +1568,7 @@ and charge n comparisons per fetch.
 - **Liars:** it **trusts declarations completely**.
 - b does not affect it. Its b = 1 and 5 "bars" are the same method re-run under the b = 1 and 5 grids.
 
-### 2.8.5 `disrouter_cascade` (`rte/methods/disrouter_cascade.py`): declared-only, no probes
+### 2.8.5 `disrouter_cascade` (`midian/methods/disrouter_cascade.py`): declared-only, no probes
 
 - **Needs:** `{declared, bus}`.
 - **Order:** agents sorted by **ascending** mean declared skill ("cheap first").
@@ -1592,7 +1592,7 @@ and charge n comparisons per fetch.
 | `midian[cohort=...]`, `stratify=True` | `midian.py` | `_VARIANT` regex | budget-neutral cohort modes (`block`, `specialty`, `declared`; `declared` adds needs `declared`) |
 | `midian_llm_descent` | `midian_llm_descent.py` | `DO_NOT_ADD` | an LLM chooses among children at each level; argmax fallback |
 | `sequential_halving`, `sequential_halving_peer` | `sequential_halving.py` | every halving label is excluded (`scripts/figures/lib/exclusions.py`, since 2026-09-22); the plain trusted-observer arm is also in `DO_NOT_ADD` | per-family fixed-budget best-arm identification, n·b probes per family. `peer_reported` scores through r − 1 random peer reports, per-reporter trimmed |
-| `route_to_k_majority` | `route_to_k_majority.py` | `DO_NOT_ADD`: executes 3 agents per task | top-3 by D; the runner majority-votes (`rte/run.py`) |
+| `route_to_k_majority` | `route_to_k_majority.py` | `DO_NOT_ADD`: executes 3 agents per task | top-3 by D; the runner majority-votes (`midian/run.py`) |
 | `verify_on_claim` | `verify_on_claim.py` | not in any A/B pool; appears in D | rank by D, then at **fetch time** probe the top unverdicted candidate k = 3 times, accept if mean ≥ D − 0.15, up to 5 new verifications per fetch; verdicts cached. It spends **run-time** probes and no build probes |
 | `declared_softmax` | `declared_softmax.py` | not in `ARMS`; appears in D | sample ∝ exp(D/0.1) |
 | `cnp_self_bid` | `cnp_self_bid.py` | not in `ARMS`; appears in D | Contract Net: broadcast, bids D + N(0, 0.02), argmax; 2n messages |
@@ -1654,7 +1654,7 @@ and charge n comparisons per fetch.
    online audit charges s − 1 reports on 5% of routed outcomes (`midian.py`), and the observe path recompute is
    charged too.
 3. **MIDIAN overspend** is 5% of the level-0 probes, i.e. 5% / 3.3% / 4% of the budget at b = 1 / 3 / 5. It is not a
-   flat "+5%" and not "≤ 5% of build" in the usual sense. The runner only warns (`rte/run.py`). A/B bars compare
+   flat "+5%" and not "≤ 5% of build" in the usual sense. The runner only warns (`midian/run.py`). A/B bars compare
    MIDIAN at up to 1.05 n·K·b against rivals at ≤ n·K·b.
 4. **At b = 1, MIDIAN has no promotion verification** (e = 0), so its b = 1 bar is "MIDIAN w/o verification + cached root". This
    matches DEVIATIONS Erratum 22. Paper text should not describe MIDIAN's b = 1 bars as "verified".
@@ -1725,7 +1725,7 @@ A framework arm does not route over the whole population. Per task it does four 
 1. It builds a **shortlist** of about k = 10 agents with a retriever (`FrameworkMethod.retrieve`).
 2. It sends the **task text** plus the shortlist's `{name, description}` pairs to a real agent-framework library. That library runs in its own venv, as a JSON-lines subprocess.
 3. It lets that library's own delegation primitive (the supervisor, manager, router or triage agent) name one agent. The run stops before the named agent executes.
-4. It maps the name back to an agent id (`rte/methods/frameworks/_common.py`).
+4. It maps the name back to an agent id (`midian/methods/frameworks/_common.py`).
 
 The supervisor LLM is `Qwen/Qwen2.5-7B-Instruct` (`_common.py`), served by the vLLM fleet. The arm never probes, never
 reads reports, and never learns from outcomes, except when the shortlist itself is a MIDIAN cohort (3.4.10). When the
@@ -1733,11 +1733,11 @@ framework names no valid candidate, the adapter falls back to declared argmax wi
 
 ---
 
-## 3.2 The shared pipeline (`rte/methods/frameworks/_common.py`)
+## 3.2 The shared pipeline (`midian/methods/frameworks/_common.py`)
 
 ### 3.2.1 Class and constructor
 - `FrameworkMethod(Method)` (`_common.py`) has `needs = {"declared"}`  and `requires_llm = True`. The View
-  therefore raises `AccessError` on any probe, report or bus access (`rte/world.py`). The one exception is the MIDIAN
+  therefore raises `AccessError` on any probe, report or bus access (`midian/world.py`). The one exception is the MIDIAN
   retrieval modes, which add `{"probe", "reports"}` (`_common.py`).
 - Constructor defaults (`_common.py`):
   - `k = 10`
@@ -1745,14 +1745,14 @@ framework names no valid candidate, the adapter falls back to declared argmax wi
   - `retrieval = "tfidf"`
   - `r = 10`
   - `dedup = False`
-  - `embed_model = all-MiniLM-L6-v2` (`MINILM`, `rte/methods/_learned.py`)
+  - `embed_model = all-MiniLM-L6-v2` (`MINILM`, `midian/methods/_learned.py`)
   - `rerank_model = Qwen/Qwen3-Reranker-4B`
   - `rerank_pool = 50`
   - `embed_instruct = ""`
   - `shuffle = False`
   - `lie_text = False`
   - `claim_threshold = 0.0`
-- Only `k, supervisor, retrieval, r` and any extra `**params` go into `self.params` (`rte/methods/base.py`).
+- Only `k, supervisor, retrieval, r` and any extra `**params` go into `self.params` (`midian/methods/base.py`).
   Those are what the worker receives in `req["params"]` (`_common.py`), which is how `mode=` reaches the MAF and
   LlamaIndex workers. The retrieval settings (`dedup`, `embed_model`, ...) are not forwarded to the worker. They are still
   recorded in the row's `params` JSON, because the runner writes the grid spec's params.
@@ -1781,15 +1781,15 @@ framework names no valid candidate, the adapter falls back to declared argmax wi
 
 ### 3.2.4 What text the supervisor and the retriever see (`_texts`, `_common.py`)
 
-**Live backend (`backend: llm`).** `_texts` returns the backend's own texts when `rte.backends.llm.current_backend()` is set
+**Live backend (`backend: llm`).** `_texts` returns the backend's own texts when `midian.backends.llm.current_backend()` is set
 and has the same n :
-- **Agent descriptions** come from `LLMBackend.descriptions()` (`rte/backends/llm.py`) and are cached in
+- **Agent descriptions** come from `LLMBackend.descriptions()` (`midian/backends/llm.py`) and are cached in
   `$RTE_DATA/populations/<dist>_n<n>_K16_seed<s>/descriptions.json`.
-  - Each is written by the agent's own base model. The system prompt asks for "one short paragraph (<=70 words) describing yourself as a service in an agent marketplace". The user prompt is `Your base model is {model}. Your tool is: {tool}. You are equipped for these task families: {specialty}...` (`rte/backends/prompts.py`).
+  - Each is written by the agent's own base model. The system prompt asks for "one short paragraph (<=70 words) describing yourself as a service in an agent marketplace". The user prompt is `Your base model is {model}. Your tool is: {tool}. You are equipped for these task families: {specialty}...` (`midian/backends/prompts.py`).
   - The adapter then appends ` Declared areas: {true specialty list}.` (`llm.py`).
   - The text is generated per agent from its profile (true model, tool, specialty). **It does not depend on beta or on who lies.**
   - Descriptions can name the base model, for example "As an agent in the Qwen/Qwen2.5-0.5B-Instruct model ...", as seen in `specialist_n1000_K16_seed1/descriptions.json`. The text therefore carries a model-size signal.
-- **Family descriptions** (the retrieval queries) are `families.describe(f)`, which returns `"<family name> problems. Example question: <one example question, ≤240 chars>"` (`rte/backends/families.py`).
+- **Family descriptions** (the retrieval queries) are `families.describe(f)`, which returns `"<family name> problems. Example question: <one example question, ≤240 chars>"` (`midian/backends/families.py`).
 - **Task text** (what the supervisor is asked to route) is the real task question, `families.question(family, instance)` (`llm.py`).
 
 **Every other backend, including RouterEval.** `_texts` falls back to text rendered from the declaration matrix (`_common.py`):
@@ -1838,7 +1838,7 @@ and has the same n :
    - The row's `success` is **lenient**: the fallback agent is executed and scored.
    - `success_strict` counts an outcome only when `_picked` is true (`observe`).
    - `fallback_rate = 1 - picks/(picks+fallbacks+failures+bad_name+invalid_action)`. `infra_errors` is excluded from the denominator.
-   - All of these go in the row's `method_stats` JSON (`rte/run.py`).
+   - All of these go in the row's `method_stats` JSON (`midian/run.py`).
 9. **What "fallback rows" or "contamination" means (erratum 28).**
    - Before 2026-09-22, broken venvs made workers crash. `choice=None` then fell through to declared argmax, and the row looked normal while actually measuring declared argmax under the framework's name.
    - `cluster/archive/quarantine_fallback_rows.py` moved such rows to `results/<grid>/quarantine/`. The criterion was fallback > 0.05 for CrewAI and ADK, and ≥ 0.9 for every other framework. The units were then rerun.
@@ -1857,7 +1857,7 @@ and has the same n :
   - It sends every task's request concurrently through a `ThreadPoolExecutor`.
   - It stores the responses by `id(task)`.
   - `fetch` then consumes them in order and falls back to a live call on an error.
-- `rte/run.py` calls it before the task loop, except on churn grids. Its wall time is charged to routing.
+- `midian/run.py` calls it before the task loop, except on churn grids. Its wall time is charged to routing.
 - It is sound because each request is stateless and uses temperature 0.
 - `tests/test_fw_sota_retrieval.py` shows identical picks, stats and ledger at 1 and 8 for tfidf, bm25 and declared. That test uses a mock endpoint.
 - Against real vLLM, results are only as reproducible as greedy decoding:
@@ -1878,7 +1878,7 @@ and has the same n :
   - `VLLM_USE_FLASHINFER_SAMPLER=0`.
 - **Temperature 0 is set client-side in every worker**: LangGraph `ChatOpenAI(temperature=0)`, CrewAI `LLM(temperature=0)`, AutoGen `OpenAIChatCompletionClient(temperature=0)`, MAF `default_options.temperature=0.0`, OpenAI Agents `ModelSettings(temperature=0.0)`, ADK `LiteLlm(temperature=0.0)`, LlamaIndex `OpenAILike(temperature=0.0)`, smolagents `OpenAIServerModel(temperature=0.0)`, CAMEL `model_config_dict={"temperature": 0.0}`, AgentScope `Parameters(temperature=0.0)`.
 
-### 3.2.10 The Bridge subprocess protocol (`rte/methods/frameworks/_bridge.py`)
+### 3.2.10 The Bridge subprocess protocol (`midian/methods/frameworks/_bridge.py`)
 - **Protocol**, one JSON object per line.
   - Request: `{"id", "task", "candidates": [{"name","description"}], "model", "base_url", "api_key", "params"}`.
   - Response: `{"id", "choice": str|null, "error": str|null, "raw"}`.
@@ -1897,7 +1897,7 @@ and has the same n :
 
 ## 3.3 The frameworks
 
-The code lists 12 `fw_*` classes (`rte/methods/frameworks/fw_*.py`).
+The code lists 12 `fw_*` classes (`midian/methods/frameworks/fw_*.py`).
 - The **ten grid frameworks** are the YAML set `frameworks` (`configs/grids/`): LangGraph, CrewAI, AutoGen, Magentic-One, MAF, OpenAI Agents SDK, Google ADK, LlamaIndex, smolagents and CAMEL Workforce.
 - **AgentScope** appears only in the appendix grids `fw_appendix` and `fw_appendix_dd` (n = 100, specialist, beta ∈ {0, 0.25}, seeds 1-3, Q = 300; `configs/grids/`).
 - **Echo** is a protocol check that picks the first candidate (`fw_echo.py`, `workers/echo_worker.py`) and is never in a grid.
@@ -2114,7 +2114,7 @@ Display names come from `SOURCES` (`shortlist_figs.py`); short legend names come
 
 ## 3.5 Which (framework × shortlist × n × regime) combinations exist
 
-I resolved these with `rte.run.blocks` (mirror chains followed) on `configs/grids/`. The field values are:
+I resolved these with `midian.run.blocks` (mirror chains followed) on `configs/grids/`. The field values are:
 - live `dist` ⊂ {specialist, heavy_tail, bimodal}
 - `declared_source = self_described` on every live framework grid
 - `b = 3` on all of them except `budget_b10_*`
@@ -2269,7 +2269,7 @@ I resolved these with `rte.run.blocks` (mirror chains followed) on `configs/grid
 ## 4. Figures A and B: where every bar, line, colour and number comes from
 
 Scope: `figures/paper/A_live_allb.{png,pdf,csv}`, `A_live_stacked.*`, `B_families_allb.*` and `B_families_stacked.*`, written by `python scripts/figures/condensed_figs.py`. Figures C and D (efficiency) are written by `scripts/figures/efficiency_figs.py` and covered in Part 6.
-Code, repo-relative to the repository root: `scripts/figures/condensed_figs.py`, `scripts/figures/lib/figspec.py` (canvas, fonts, colours, names, legend order, drawing helpers) and `scripts/figures/lib/seed_tables.py`. They import `scripts/figures/lib/exclusions.py` (`excluded`) and `scripts/figures/lib/stats.py` (`se`), `scripts/analysis/fw_variant_numbers.py` (`load`, `regime`) and `rte/analyze.py` (`ALIAS`). `condensed_figs.py` also reads the CSVs that `scripts/figures/bar_figs.py` wrote.
+Code, repo-relative to the repository root: `scripts/figures/condensed_figs.py`, `scripts/figures/lib/figspec.py` (canvas, fonts, colours, names, legend order, drawing helpers) and `scripts/figures/lib/seed_tables.py`. They import `scripts/figures/lib/exclusions.py` (`excluded`) and `scripts/figures/lib/stats.py` (`se`), `scripts/analysis/fw_variant_numbers.py` (`load`, `regime`) and `midian/analyze.py` (`ALIAS`). `condensed_figs.py` also reads the CSVs that `scripts/figures/bar_figs.py` wrote.
 Data root: `RTE_DATA=$RTE_DATA`, with results under `$RTE_DATA/results/<grid>/`.
 
 **How this section was checked (read-only).** Every value, whisker, `chosen` string and `b_invariant` flag in the tables below is read from `A_live_allb.csv` / `B_families_allb.csv` as written at 2026-09-24 11:35 (144 / 170 rows; the `_stacked` CSVs hold 80 / 90: every arm's b = 3 bar plus MIDIAN's b = 1 and 5). Seed counts and source grids come from running `seed_tables.switched()` and `seed_tables.tables()` read-only on the same rows (`switched()` returns all four non-live families). The live b = 3 values of the single arms are the `results/aggregates/bars/live.csv` numbers (`LIVE_GRIDS`, self_described, specialist, per-seed means): MIDIAN w/o defenses (`midian_wo_defenses`) n = 100 / 1,000 / 10^4 / 10^5: 0.7770 / 0.7890 / 0.7850 / 0.7522 honest and 0.7405 / 0.7379 / 0.7522 / 0.7056 cartel; `oracle` 0.8449 / 0.8612 / 0.8589 / 0.8622. The per-seed tables give the same oracle means, and `narrow()` asserts that every drawn single-arm mean agrees with its table within 0.01.
@@ -2300,7 +2300,7 @@ A per-seed table whose cell has no b = 3 bar row is dropped (`if key in C`). Thi
 #### 4.0.2 Where the b = 3 numbers come from (`scripts/figures/bar_figs.py`)
 Today only live's b = 3 single-arm bars come from here. `load()` still reads all five bar CSVs, and `cells()` needs each family's b = 3 oracle row to create the cell, but `from_tables` then replaces every bar and the oracle of the four switched families (4.0.7). The non-live bullets below describe what those CSVs hold, not what B draws.
 - **live** (`family_live`, `bar_figs.py`):
-  - Rows are the concatenation of `LIVE_GRIDS[n]` (`bar_figs.py`), loaded through `rte.analyze.load`, which first runs `consolidate` to merge `rows.d` into `rows.csv` (`analyze.py`, `run.py`).
+  - Rows are the concatenation of `LIVE_GRIDS[n]` (`bar_figs.py`), loaded through `midian.analyze.load`, which first runs `consolidate` to merge `rows.d` into `rows.csv` (`analyze.py`, `run.py`).
   - Filtered to `declared_source == "self_described"`  and `dist == dist`.
   - Per-regime statistics come from `stats_from_rows` :
     - Filter `beta` ≈ β and `liar_select == liar`.
@@ -2331,7 +2331,7 @@ Today only live's b = 3 single-arm bars come from here. `load()` still reads all
   - `bernoulli_1e7` → `("bernoulli","specialist",1e7)`
   - `replay_1e6` → `("replay","all shapes pooled",1e6)`
 - **Row loading.** Rows come from `fw_variant_numbers.load` (`fw_variant_numbers.py`): it reads `rows.d/*.json` plus `rows.csv` directly, with **no consolidate** and no write. Each `rows.d` row gets `rid` = its file name, so unmerged rows keep distinct ids; then `drop_duplicates("rid")`, then `drop_duplicates` on `(n, b, dist, beta, liar_select, seed, method, params)`.
-- **Labels.** `label(method, params)` (`seed_tables.py`, imported at `condensed_figs.py`) rebuilds the same label string as `rte.analyze.prepare` (`analyze.py`), then applies `ALIAS` (`analyze.py`). For example, `flat_probe_argmax{"online":true}` becomes `flat_probe_argmax_online`, and `linucb_honest{"bonus":"own"}` becomes `linucb_honest[bonus=own]`.
+- **Labels.** `label(method, params)` (`seed_tables.py`, imported at `condensed_figs.py`) rebuilds the same label string as `midian.analyze.prepare` (`analyze.py`), then applies `ALIAS` (`analyze.py`). For example, `flat_probe_argmax{"online":true}` becomes `flat_probe_argmax_online`, and `linucb_honest{"bonus":"own"}` becomes `linucb_honest[bonus=own]`.
 - **Grouping** : `groupby(["n","b","beta","liar_select","label"])`, mapped to a regime by `fw_variant_numbers.regime(beta, ls)` (`fw_variant_numbers.py`): β = 0 → `beta0`, whatever `liar_select` is; β = 0.5 with `low_skill_first` → `cartel`.
 - **Rows kept** : only if the key already exists in `C` (so the b = 3 bar CSV must have that cell), b ∈ {1, 5}, the label is not `oracle`, and `excluded(l)` is false.
 - **Aggregation**:
@@ -3279,7 +3279,7 @@ Scope: `figures/paper/C_routing_work_vs_n.{png,pdf,csv}` and `D_energy_per_query
 by `python scripts/figures/efficiency_figs.py`. The script reuses the ledger cache `cost_by_n.csv` when it exists
 (§6.1.1). It imports `scripts/figures/lib/figspec.py` for canvas, fonts, colours, names and legends, `scripts/analysis/energy.py`
 for the energy model and the framework numbers (in `draw_D`), `label` from `scripts/figures/lib/rows.py`,
-`rte.methods.keys` (every row is read through `keys.normalize`, so rows stored under the old MIDIAN keys load under
+`midian.methods.keys` (every row is read through `keys.normalize`, so rows stored under the old MIDIAN keys load under
 the new ones), and `BANDIT`, `LEARNED`, `NOT_RUNNABLE`, `OUT`, `POOLS` from `scripts/figures/condensed_figs.py`. Line
 citations in this part are to `efficiency_figs.py` unless another file is named.
 
@@ -3290,7 +3290,7 @@ citations in this part are to `efficiency_figs.py` unless another file is named.
 - The `va_build` inputs were re-read from the five grids, with row counts per source, and `va_build` itself was called on
   the current cache. It returns the nine values of D's CSV, all tagged `ledger`.
 - `energy.table()` was re-run with its row loader swapped for a read-only one (rows.csv plus rows.d, deduplicated on
-  `rid`). The stock loader, `rte.analyze.load`, runs `consolidate`, which writes rows.csv (`rte/analyze.py`). The band
+  `rid`). The stock loader, `midian.analyze.load`, runs `consolidate`, which writes rows.csv (`midian/analyze.py`). The band
   edges came out the same: 20.600235 and 219.754123 J.
 
 ---
@@ -3544,7 +3544,7 @@ Everything is estimated from call counts, not measured on a power meter. The mod
 - **A probe** is one call by the probed agent's own model, using that model's measured token means (`PROBE_TOK`,
   `energy.py`, "measured per-server lifetime means"). 7B and 14B use the 3B means as a proxy (294 prompt / 86
   generated tokens, the tool-enabled prompt). The expected cost per probe is the mix-weighted mean over the population's
-  models (`MIX`, `energy.py`; `probe_cost`, `energy.py`). The mixes follow `draw_profiles` (`rte/backends/population.py`):
+  models (`MIX`, `energy.py`; `probe_cost`, `energy.py`). The mixes follow `draw_profiles` (`midian/backends/population.py`):
 
   | shape | model mix | GPU-s per probe | J at 700 W |
   |---|---|---|---|
@@ -3690,10 +3690,10 @@ queries per agent at b = 1 / 3 / 5 against AutoGen, and 0.31 / 0.91 / 1.53 again
     C this does not matter, because they are deterministic. A cache written before the `b` column was added would fail in
     `draw_C` (`d.b`), so an old file has to be deleted. A cache written before the rename would carry old labels
     (`midian_va`, plain `midian`): the current one (11:03) carries `midian` and `midian_wo_defenses`.
-12. **Running `efficiency_figs.py` writes to result directories.** `energy.table()` loads through `rte.analyze.load`,
-    which consolidates rows.d into rows.csv for `live_f1_n1000`, `variants_f1` and `fw_live_n1000` (`rte/analyze.py`),
-    unless a grid has a `.merge_owner` file (`rte/run.py`). Without `RTE_DATA`, the default
-    `/scratch/rte/results`  holds no grids. The script then stops with an error (`rte/analyze.py`) and draws
+12. **Running `efficiency_figs.py` writes to result directories.** `energy.table()` loads through `midian.analyze.load`,
+    which consolidates rows.d into rows.csv for `live_f1_n1000`, `variants_f1` and `fw_live_n1000` (`midian/analyze.py`),
+    unless a grid has a `.merge_owner` file (`midian/run.py`). Without `RTE_DATA`, the default
+    `/scratch/rte/results`  holds no grids. The script then stops with an error (`midian/analyze.py`) and draws
     nothing.
 13. **C adds unlike units.** A message and a comparison each count 1 in C, although the energy model prices them 1e5 apart.
     In messages alone, the flat arms send 0 per query and MIDIAN sends 2 + depth.

@@ -1,7 +1,7 @@
 """Every number the paper quotes, recomputed from the result grids -> paper/NUMBERS.json ({"value", "grid", "units",
 "ci"} per entry).
     PAPER_CACHE=<dir of <grid>.pkl>  python scripts/analysis/paper_numbers.py        (without the cache every grid is
-    read through rte.analyze.load)
+    read through midian.analyze.load)
 Means are over (shape, β, liar-selection, seed) units; CIs are the 95% bootstrap over seeds (paired over seeds for
 differences)."""
 
@@ -14,8 +14,8 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-from rte.analyze import FLAT, FLAT_ON, RTE_DATA
-from rte.analyze import load as _load
+from midian.analyze import FLAT, FLAT_ON, RTE_DATA
+from midian.analyze import load as _load
 from scripts.figures.lib import ROOT
 from scripts.figures.lib.rows import stat
 from scripts.figures.lib.stats import ci as _ci
@@ -554,7 +554,7 @@ V4_POOLS = {
 }
 from scripts.analysis.cohort_table import (
     BASES as V4_BASES,
-)  # MIDIAN base arms x cohort modes, labelled as rte.analyze does
+)  # MIDIAN base arms x cohort modes, labelled as midian.analyze does
 from scripts.analysis.cohort_table import (
     MODES as V4_MODES,
 )
@@ -607,7 +607,7 @@ v4_cohort_deltas()
 # ------------------------------------------------------------------------------------------------ (v5) scale and
 # budget sweeps
 # Read from the per-grid artefacts (matrix_success.csv from scripts/analysis/scale_matrix.py, cost_exponents.csv from
-# rte.analyze),
+# midian.analyze),
 # NOT through rows(): these grids hold 1.2-2.2 M rows each and the login node's memory cgroup kills the frame.
 def v5_sweeps():
     """v5.<grid>.<label>_n<n>_b<b>_<regime> = success mean/CI/seeds; v5.<grid>.exp_<metric>_<label>_b<b> = cost

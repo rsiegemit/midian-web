@@ -24,7 +24,7 @@ they *do*, so probe-only methods are flat in β by construction and declaration 
 
 ## Core API
 
-Files: `rte/world.py`, `rte/ledger.py`, `rte/budget.py`, `rte/methods/base.py`, `rte/backends/__init__.py`.
+Files: `midian/world.py`, `midian/ledger.py`, `midian/budget.py`, `midian/methods/base.py`, `midian/backends/__init__.py`.
 
 ```python
 Task(id: int, family: int, instance: int)     # instance = seed; the backend regenerates the concrete task from (family, instance)
@@ -47,23 +47,23 @@ View                                                   # what a method sees; Acc
 Ledger: .probe(k) .report(k) .message(k) .hop(k) .compare(k) .task(k) .snapshot() .diff(before) .reset()
 Budget(probes_per_agent_family=3): .b ; .total_probes(n, K) = n * K * b
 
-class Method:                                          # one subclass per file in rte/methods/, file name == method name
+class Method:                                          # one subclass per file in midian/methods/, file name == method name
     name: str; needs: frozenset                        # subset of {"declared", "probe", "reports", "bus"}
     def __init__(self, **params): ...
     def build(self, view, budget): ...                 # one-time setup; at most budget.total_probes(n, K) probes
     def fetch(self, task) -> int | list[int]: ...      # route one task (a list = route-to-many)
     def observe(self, task, agent, outcome): ...       # optional online update
-rte.methods.load_method("midian") -> class
+midian.methods.load_method("midian") -> class
 ```
 
 **Backends** implement one six-member protocol (`true_skill`, `declared`, `execute`, `execute_many`, `stats`, plus
-`n` / `K` / `families`) behind `rte.backends.make(name, n=, K=, dist=, seed=, rng=, **backend_kwargs)`, so every method
+`n` / `K` / `families`) behind `midian.backends.make(name, n=, K=, dist=, seed=, rng=, **backend_kwargs)`, so every method
 runs unchanged on every backend. `bernoulli.py` is the reference implementation. A backend may change n (for example by
 rounding a pool size); the World re-reads `backend.n` and `backend.K`.
 
 | backend | agents | families | true skill |
 |---|---|---|---|
-| `llm` (live) | LLM agents served by vLLM, each a (model, per-family handicap, tool) signature from a 7-model ladder (`configs/models.yaml`) | K = 16 Reasoning Gym families (`rte/backends/families.py`) | measured per signature (200 probes); agents write their own self-descriptions |
+| `llm` (live) | LLM agents served by vLLM, each a (model, per-family handicap, tool) signature from a 7-model ladder (`configs/models.yaml`) | K = 16 Reasoning Gym families (`midian/backends/families.py`) | measured per signature (200 probes); agents write their own self-descriptions |
 | `replay` | RouterBench's recorded outcomes of 11 models | its evaluation categories | recorded accuracy |
 | `routereval` | real LLM pools of RouterEval (10 to 5,000 models) and LLMRouterBench (20 models) | MMLU subjects / datasets | mean train-prompt score |
 | `bernoulli` | synthetic | K | drawn per population shape, optionally calibrated to the measured live S |
@@ -73,7 +73,7 @@ Population shapes (`dist`): `specialist` (three strong families per agent), `hea
 
 ## Conventions
 
-- **Seeding.** All randomness goes through `rte.stable_hash.stable_seed_32(*parts)`; never `hash()` of a string, never
+- **Seeding.** All randomness goes through `midian.stable_hash.stable_seed_32(*parts)`; never `hash()` of a string, never
   an unseeded generator. Results are therefore identical across processes and machines.
 - **Paired probes.** The k-th probe of (agent, family) is the same task instance for every method (index-seeded), so
   memoised LLM answers are shared and method differences within a cell and seed are paired.
@@ -84,12 +84,12 @@ Population shapes (`dist`): `specialist` (three strong families per agent), `hea
 - **Method files.** At most about 150 lines, self-contained (numpy plus an optional dependency imported lazily with a
   clear ImportError), parameters through `__init__(**params)` with defaults from the specification. A reader should see
   the whole algorithm on one screen.
-- **Shared logic lives once.** Probe-then-estimate and trimmed peer reports: `rte/methods/_est.py`; declared-channel
-  helpers: `rte/methods/_decl.py`; framework plumbing: `rte/methods/frameworks/_common.py`; LLM calls:
-  `rte/llm_client.py`.
+- **Shared logic lives once.** Probe-then-estimate and trimmed peer reports: `midian/methods/_est.py`; declared-channel
+  helpers: `midian/methods/_decl.py`; framework plumbing: `midian/methods/frameworks/_common.py`; LLM calls:
+  `midian/llm_client.py`.
 - **Swappable by configuration.** Models are a list in `configs/models.yaml`; methods are files discovered by name; a
   task source is one adapter `{generate(instance_seed) -> entry, question(entry) -> str, score(answer, entry) -> float}`
-  in `rte/backends/families.py`; backends are the six-member protocol.
+  in `midian/backends/families.py`; backends are the six-member protocol.
 - **Results.** One row per (cell, method, params, seed), written atomically; the runner is resumable and skips rows it
   already has by row id ([experimental_design.md](experimental_design.md#rows-and-row-ids)).
 
@@ -134,7 +134,7 @@ every quoted exponent names its range.
 ## Correctness checks
 
 Every method passes, on the bernoulli world at n = 100 and n = 1,000 (`tests/test_each_method.py`, which discovers every
-file in `rte/methods/`, and `scripts/checks/check_methods.py`):
+file in `midian/methods/`, and `scripts/checks/check_methods.py`):
 
 1. **View enforcement.** Touching a channel outside `needs` raises; the test also removes a declared need to prove the
    enforcement is real.
@@ -156,7 +156,7 @@ for value). They are in `scripts/checks/`.
 
 ## Framework arms
 
-Each framework arm (`rte/methods/frameworks/fw_*.py`, 6 to 11 lines) hands a shortlist and the task to a worker process
+Each framework arm (`midian/methods/frameworks/fw_*.py`, 6 to 11 lines) hands a shortlist and the task to a worker process
 running inside that framework's own virtual environment (`workers/*_worker.py`, JSON lines over `_bridge.py`) and returns
 the agent the framework's own selection primitive chose. The shared adapter (`_common.FrameworkMethod`) does what a
 practitioner would: a retriever picks the top k = 10 agents by their self-descriptions, the framework's supervisor

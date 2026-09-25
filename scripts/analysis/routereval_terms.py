@@ -65,7 +65,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 from routerbench_terms import midian_tree_pick
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-from rte.config import RTE_DATA  # noqa: E402
+from midian.config import RTE_DATA  # noqa: E402
 
 R = str(RTE_DATA)
 DATA, OUT = f"{R}/data/routereval/router_dataset", f"{R}/results/routereval_terms"

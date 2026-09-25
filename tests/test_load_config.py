@@ -1,4 +1,4 @@
-"""rte.run.load_config: configs/grids/ layout, named sets, the duplicate-key loader, and D1 row ids.
+"""midian.run.load_config: configs/grids/ layout, named sets, the duplicate-key loader, and D1 row ids.
 
 The repo-config tests are cheap (no cells are enumerated); the full enumeration gate is
 scripts/checks/grid_fingerprint.py against tests/golden/grid_fingerprints.tsv + grid_fingerprints_d1.tsv."""
@@ -8,7 +8,7 @@ import re
 import pytest
 import yaml
 
-from rte import run
+from midian import run
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BASE = """\

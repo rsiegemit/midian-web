@@ -9,9 +9,9 @@ import json
 
 import numpy as np
 
-from rte.budget import Budget
-from rte.methods import load_method
-from rte.world import World
+from midian.budget import Budget
+from midian.methods import load_method
+from midian.world import World
 
 OFF = {"audit": False, "verify": False}  # MIDIAN w/o defenses
 SPECS = [

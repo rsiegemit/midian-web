@@ -5,13 +5,13 @@ A row is contaminated when its supervisor never really answered and the adapter 
   unit
   * every other framework: fallback >= 0.9 (the bimodal infrastructure signature)
 Rows are MOVED to results/<grid>/quarantine/ (never deleted) and dropped from rows.csv; the unit list goes to
-results/quarantine_units.tsv for cluster/ops/rerun_units.sh. rte.run recomputes a unit whose rids are absent."""
+results/quarantine_units.tsv for cluster/ops/rerun_units.sh. midian.run recomputes a unit whose rids are absent."""
 
 import glob, json, os, sys
 import pandas as pd
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-from rte.config import RTE_DATA  # noqa: E402
+from midian.config import RTE_DATA  # noqa: E402
 
 R = f"{RTE_DATA}/results"
 BROKEN_ENV = {"fw_crewai", "fw_google_adk"}

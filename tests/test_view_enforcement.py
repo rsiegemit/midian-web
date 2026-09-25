@@ -10,9 +10,9 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from rte.budget import Budget
-from rte.methods.base import Method
-from rte.world import DELTA_INFLATE, AccessError, World, apply_lying, select_liars
+from midian.budget import Budget
+from midian.methods.base import Method
+from midian.world import DELTA_INFLATE, AccessError, World, apply_lying, select_liars
 
 PROBE_ONLY = {"probe"}
 

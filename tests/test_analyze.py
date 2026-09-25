@@ -1,10 +1,11 @@
-"""rte.analyze on a toy frame: arm aliasing, framework accountings from method_stats, per-channel split, v2 targets."""
+"""midian.analyze on a toy frame: arm aliasing, framework accountings from method_stats, per-channel split,
+v2 targets."""
 import json
 
 import numpy as np
 import pandas as pd
 
-from rte import analyze as A
+from midian import analyze as A
 
 CELL = dict(
     backend="llm",

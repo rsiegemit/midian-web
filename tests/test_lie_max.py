@@ -1,7 +1,7 @@
 """lie_mode='max': liars declare perfect skill in every family; honest agents and the other modes are untouched."""
 import numpy as np
 
-from rte.world import apply_lying
+from midian.world import apply_lying
 
 
 def test_max_lie_sets_every_liar_claim_to_one_and_leaves_the_rest():

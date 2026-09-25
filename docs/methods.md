@@ -1,6 +1,6 @@
 # Methods: where each one comes from, what it is, what it does
 
-One file per method in `rte/methods/` (frameworks in `rte/methods/frameworks/`). Every method sees only what it pays
+One file per method in `midian/methods/` (frameworks in `midian/methods/frameworks/`). Every method sees only what it pays
 for: `needs` ⊆ {declared, probe, reports, bus}. `build` may spend the shared budget of n·K·b probes; `fetch` routes
 one task and is charged comparisons / hops / messages; `observe` is the optional online update. True skill S and the
 liar set are never exposed to any method. **Status**: *reported* = drawn and quoted; *do-not-add* = kept in the grids,
@@ -21,7 +21,7 @@ primitive is intercepted is in [frameworks/](frameworks/).
 
 One class, `midian`, with two defenses as parameters, both on by default: `audit` (report audits with reporter
 exclusion) and `verify` (verified promotion; `cached` defaults to `verify`). MIDIAN is the default; the ablations switch
-a defense off. Renamed 2026-09-24 ([errata.md](errata.md#the-midian-rename-2026-09-24); `rte/methods/keys.py` maps the stored keys).
+a defense off. Renamed 2026-09-24 ([errata.md](errata.md#the-midian-rename-2026-09-24); `midian/methods/keys.py` maps the stored keys).
 
 | method | origin | reads | what it does | status |
 |---|---|---|---|---|

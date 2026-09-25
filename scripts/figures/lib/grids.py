@@ -1,7 +1,7 @@
 """Every grid registry the figure and number scripts read, and the grid config every script in scripts/ and cluster/
 uses.
 
-    config()          the grid config: rte.run.load_config() (configs/grids/)
+    config()          the grid config: midian.run.load_config() (configs/grids/)
     LIVE_GRIDS        live bars, per n (bar_figs, seed_tables b = 3)
     REF_GRIDS         where a shortlist condition's oracle / MIDIAN / random come from (shortlist_figs)
     H30_FW, H30_REF   erratum 30: RouterEval shortlists on the no-repeat + calibrated-claims reruns
@@ -22,8 +22,8 @@ from __future__ import annotations
 
 
 def config():
-    """The grid config (rte.run.load_config: configs/grids/, named sets expanded)."""
-    from rte.run import load_config
+    """The grid config (midian.run.load_config: configs/grids/, named sets expanded)."""
+    from midian.run import load_config
 
     return load_config()
 

@@ -15,16 +15,16 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import numpy as np
 import pytest
 
-from rte.backends import families, prompts, tools
-from rte.backends.llm import LLMBackend, current_backend
-from rte.backends.population import TOOL, bands, draw_profiles, ladder, signature
+from midian.backends import families, prompts, tools
+from midian.backends.llm import LLMBackend, current_backend
+from midian.backends.population import TOOL, bands, draw_profiles, ladder, signature
 
 LADDER = bands(ladder())[0]
 
 
 def _served() -> list[str]:
     try:
-        from rte.llm_client import served_models
+        from midian.llm_client import served_models
         return served_models()
     except Exception:
         return []
@@ -258,7 +258,7 @@ class _Mock(BaseHTTPRequestHandler):
 
 @pytest.fixture()
 def fleet(tmp_path, monkeypatch):
-    from rte import llm_client
+    from midian import llm_client
     srv = ThreadingHTTPServer(("127.0.0.1", 0), _Mock)
     threading.Thread(target=srv.serve_forever, daemon=True).start()
     url = f"http://127.0.0.1:{srv.server_address[1]}/v1"
@@ -293,7 +293,7 @@ def test_complete_batch_deduplicates_repeated_keys(fleet):
 
 
 def test_backend_end_to_end_and_tool_round(fleet):
-    from rte.world import Task
+    from midian.world import Task
     b = LLMBackend(n=4, K=2, dist="specialist", seed=1, families=["basic_arithmetic", "gcd"])
     assert current_backend() is b
     assert b.execute(0, Task(0, 0, 999)) in (0, 1)
@@ -310,7 +310,7 @@ def test_backend_end_to_end_and_tool_round(fleet):
 
 
 def test_text_accessors(fleet, tmp_path):
-    from rte.world import Task
+    from midian.world import Task
     b = LLMBackend(n=3, K=2, dist="specialist", seed=1, families=["basic_arithmetic", "gcd"],
                    population_dir=str(tmp_path / "pop"))
     d = b.descriptions()
@@ -321,7 +321,7 @@ def test_text_accessors(fleet, tmp_path):
 
 
 def test_no_endpoints_raises_a_clear_error(tmp_path, monkeypatch):
-    from rte import llm_client
+    from midian import llm_client
     monkeypatch.setattr(llm_client, "ENDPOINTS_PATH", tmp_path / "nope.json")
     monkeypatch.setattr(llm_client, "ENDPOINT_DIR", tmp_path / "nope.d")
     with pytest.raises(llm_client.NoEndpointsError, match="no vLLM endpoints"):
@@ -330,9 +330,9 @@ def test_no_endpoints_raises_a_clear_error(tmp_path, monkeypatch):
 
 # --------------------------------------------------------------------------- llm_supervisor
 def test_llm_supervisor_end_to_end_and_ledger(fleet, tmp_path):
-    from rte.budget import Budget
-    from rte.methods.llm_supervisor import LLMSupervisor
-    from rte.world import World
+    from midian.budget import Budget
+    from midian.methods.llm_supervisor import LLMSupervisor
+    from midian.world import World
 
     w = World(n=6, K=2, dist="specialist", beta=0.0, seed=1, backend="llm",
               backend_kwargs={"families": ["basic_arithmetic", "gcd"], "measure_probes": 2,
@@ -353,9 +353,9 @@ def test_llm_supervisor_end_to_end_and_ledger(fleet, tmp_path):
 
 
 def test_llm_supervisor_picks_the_index_the_model_names(fleet, tmp_path):
-    from rte.budget import Budget
-    from rte.methods.llm_supervisor import LLMSupervisor
-    from rte.world import World
+    from midian.budget import Budget
+    from midian.methods.llm_supervisor import LLMSupervisor
+    from midian.world import World
 
     _Mock.supervisor_reply = "2"
     w = World(n=6, K=2, dist="specialist", beta=0.0, seed=4, backend="llm",
@@ -374,7 +374,7 @@ def test_llm_supervisor_picks_the_index_the_model_names(fleet, tmp_path):
 @pytest.fixture()
 def live_ladder(monkeypatch):
     """Pin the ladder to what is actually served, so these work against a one-model smoke fleet."""
-    from rte.backends import llm, population
+    from midian.backends import llm, population
     served = _served()
     if not served:
         pytest.skip("fleet went away between collection and this test")   # servers register/deregister
@@ -386,7 +386,7 @@ def live_ladder(monkeypatch):
 
 @needs_endpoints
 def test_live_execution(live_ladder):
-    from rte.world import Task
+    from midian.world import Task
     b = LLMBackend(n=2, K=2, dist="specialist", seed=1, families=["basic_arithmetic", "gcd"])
     assert b.execute(0, Task(0, 0, 12345)) in (0, 1)
     assert b.stats()["llm_executions"] == 1
@@ -425,7 +425,7 @@ def test_memo_shards_are_per_process_and_read_by_later_processes(tmp_path):
     import subprocess
     import sys
     write = ("import sys; sys.path.insert(0, %r)\n"
-             "from rte import llm_client as c\n"
+             "from midian import llm_client as c\n"
              "c.CACHE_DIR = __import__('pathlib').Path(%r)\n"
              "c._mem = c._shard = None\n"
              "mem, shard = c._memo()\n"
@@ -442,7 +442,7 @@ def test_memo_shards_are_per_process_and_read_by_later_processes(tmp_path):
     shards = sorted(p.name for p in (tmp_path / "cache").glob("*.sqlite"))
     assert len(shards) == 2 and all(n.startswith("memo_") for n in shards)
 
-    from rte import llm_client
+    from midian import llm_client
     llm_client.CACHE_DIR = tmp_path / "cache"
     llm_client._mem = llm_client._shard = None
     try:

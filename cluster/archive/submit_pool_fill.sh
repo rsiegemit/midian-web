@@ -1,6 +1,6 @@
 #!/bin/bash
 # Pool-fill arms (configs/grid.yaml pool_fill_*) on the non-live backends. Resumable via logs/launch_pool_fill.txt.
-# Live pool_fill_n* units go through the pack driver plan instead (one rte.run per unit, LLM memo per process).
+# Live pool_fill_n* units go through the pack driver plan instead (one midian.run per unit, LLM memo per process).
 . "$(dirname "$(readlink -f "$0")")/../env.sh"
 need RTE_DATA RTE_ACCOUNT
 D=$RTE_DATA; LOG=$D/logs/launch_pool_fill.txt; touch $LOG; cd "$RTE_REPO"

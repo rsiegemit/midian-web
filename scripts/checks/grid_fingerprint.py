@@ -1,6 +1,6 @@
 """Grid enumeration fingerprint (refactor invariant G1).
 
-For every grid in the config, enumerate blocks x cells x seeds x method_specs exactly as `python -m rte.run` does and
+For every grid in the config, enumerate blocks x cells x seeds x method_specs exactly as `python -m midian.run` does and
 print one TSV line: grid, units, method_rows, sha256 of the sorted row ids (first 16 hex chars), rte_data_dep.
 `--dry-run` of the runner is no substitute: it counts only UNFINISHED units.
 
@@ -16,7 +16,7 @@ import hashlib
 import os
 import sys
 
-from rte import run
+from midian import run
 
 COLUMNS = ("grid", "units", "method_rows", "sha256_16", "rte_data_dep")
 
@@ -56,7 +56,7 @@ def read_tsv(path) -> dict:
 def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument(
-        "--config", help="a config directory or single YAML file (default: rte.run.load_config's configs/grids)"
+        "--config", help="a config directory or single YAML file (default: midian.run.load_config's configs/grids)"
     )
     p.add_argument("--grids", help="comma-separated subset (default: all)")
     p.add_argument("--compare", metavar="TSV", help="diff against a golden TSV; exit 1 on any difference")

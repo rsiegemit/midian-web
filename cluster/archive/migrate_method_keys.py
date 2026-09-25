@@ -1,21 +1,21 @@
-"""Rewrite stored rows to the current MIDIAN keys, ONCE per results directory (rte/methods/keys.py has the mapping).
+"""Rewrite stored rows to the current MIDIAN keys, ONCE per results directory (midian/methods/keys.py has the mapping).
     RTE_DATA=... python cluster/archive/migrate_method_keys.py <results_dir> [...] [--apply]      (default: dry run)
 Per directory: every row of rows.csv and rows.d/*.json whose (method, params) changes under keys.to_new gets the new key
-and a new rid (rte.run.rid_of_row on the rewritten row; rows.d files are renamed to it); withdrawn variants (midian_sh /
-midian_sha) are removed. Every changed or removed original goes to <dir>/_premigration_v2/ first (rows_changed.csv.gz
-and the original rows.d files), so the step is reversible. Unchanged values are written back byte-identical (the CSV is
-read as text; rids are computed from a typed read, as the runner computes them). The directory then gets keys.SENTINEL
-and is never migrated again: a second pass would turn the new full-method `midian` rows into the old undefended ones.
-Refuses (and changes nothing) if: the sentinel exists, a stored rid does not match the rid recomputed from its OLD key,
-or two rows would share a new rid."""
+and a new rid (midian.run.rid_of_row on the rewritten row; rows.d files are renamed to it); withdrawn variants
+(midian_sh / midian_sha) are removed. Every changed or removed original goes to <dir>/_premigration_v2/ first
+(rows_changed.csv.gz and the original rows.d files), so the step is reversible. Unchanged values are written back
+byte-identical (the CSV is read as text; rids are computed from a typed read, as the runner computes them). The
+directory then gets keys.SENTINEL and is never migrated again: a second pass would turn the new full-method `midian`
+rows into the old undefended ones. Refuses (and changes nothing) if: the sentinel exists, a stored rid does not match
+the rid recomputed from its OLD key, or two rows would share a new rid."""
 
 import glob, gzip, json, os, shutil, sys, time
 import pandas as pd
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, ROOT)
-from rte.methods import keys
-from rte.run import jkey, rid_of_row
+from midian.methods import keys
+from midian.run import jkey, rid_of_row
 
 load = lambda p: json.loads(p) if isinstance(p, str) and p.startswith("{") else (p if isinstance(p, dict) else {})
 

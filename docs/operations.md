@@ -8,7 +8,7 @@ to use the benchmark.
 
 ## The data root
 
-Everything outside the repository lives under `$RTE_DATA` (`rte/config.py` documents every `RTE_*` switch):
+Everything outside the repository lives under `$RTE_DATA` (`midian/config.py` documents every `RTE_*` switch):
 
 ```
 $RTE_DATA/
@@ -56,12 +56,12 @@ $RTE_DATA/
 
 ## The answer memo
 
-- Every model call goes through `rte/llm_client.py` and is memoised by a content hash of the full request (model,
+- Every model call goes through `midian/llm_client.py` and is memoised by a content hash of the full request (model,
   messages, max tokens). A reworded prompt therefore misses the cache automatically; a key built from the inputs of a
   prompt instead of its text would serve stale answers.
 - The memo is **sharded per process**: each process writes only its own SQLite file under `$RTE_DATA/cache/` and reads
   every shard at start-up, so any number of processes share it without locks. Merge the shards between stages with
-  `python -m rte.llm_client compact`.
+  `python -m midian.llm_client compact`.
 - On network file systems where `fcntl` locks hang, every database is opened without locking; this is safe only because
   no two processes write the same file.
 - Tests use a private memo (`RTE_LLM_CACHE`), never the production one.

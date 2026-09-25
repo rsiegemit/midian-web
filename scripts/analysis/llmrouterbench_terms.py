@@ -12,7 +12,7 @@ all train labels), and our probe table (b probes per dataset per model; the data
 records carry task_name, so every router may use it; a predicted-family variant via 5-NN over probe prompts is reported
 too). Hyperparameters of every router are chosen on a 20% validation slice of the train split (no failure-mode
 defaults). With truthful labels every MIDIAN variant is the probe table (max-tree = argmax; nothing to audit); MIDIAN
-with liars is grid `llmrouterbench_pool` (rte/backends/routereval.py, dataset=llmrouterbench)."""
+with liars is grid `llmrouterbench_pool` (midian/backends/routereval.py, dataset=llmrouterbench)."""
 
 import glob
 import json
@@ -30,7 +30,7 @@ from sklearn.neighbors import KNeighborsClassifier, NearestNeighbors
 from sklearn.neural_network import MLPRegressor
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-from rte.config import RTE_DATA  # noqa: E402
+from midian.config import RTE_DATA  # noqa: E402
 
 R = str(RTE_DATA)
 B, OUT, NPZ = (
@@ -77,7 +77,7 @@ def prep():
         prompts += [str(recs[models[0]][i]["prompt"]) for i in range(n)]
     Y = np.nan_to_num(np.concatenate(Y).astype(np.float32), nan=0.0)
     fam = np.array(fam)  # a few records carry NaN scores (unscored outputs): counted as wrong
-    from rte.methods._learned import embed
+    from midian.methods._learned import embed
 
     E = embed(prompts)
     np.savez(

@@ -1,7 +1,7 @@
 #!/bin/bash
 # Rerun exactly the units listed in results/quarantine_units.tsv (from quarantine_fallback_rows.py --apply).
 # Same sizing as cluster/slurm/launch_units.sh (OPS_RULES R1-R2, H3-H4): 1 CPU, measured walltime, resumable, QOS-retry.
-# rte.run recomputes only the rids that are absent, so a unit whose other arms survived redoes just the quarantined one.
+# midian.run recomputes only the rids that are absent, so a unit whose other arms survived redoes just the quarantined one.
 . "$(dirname "$(readlink -f "$0")")/../env.sh"
 need RTE_DATA RTE_ACCOUNT RTE_CPU_PARTITIONS
 PY="$RTE_DATA/env/rte/bin/python"; TSV="$RTE_DATA/results/quarantine_units.tsv"; LOG="$RTE_DATA/logs/rerun_quarantine.txt"

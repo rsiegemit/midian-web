@@ -2,9 +2,9 @@
 d-regular and symmetric under the partner slot `s ^ 1`; the per-edge coverage is b/d by design."""
 import numpy as np
 
-from rte.budget import Budget
-from rte.methods.referral_network import ReferralNetwork
-from rte.world import World
+from midian.budget import Budget
+from midian.methods.referral_network import ReferralNetwork
+from midian.world import World
 
 
 def test_graph_is_d_regular_and_beliefs_are_sparse_by_construction():

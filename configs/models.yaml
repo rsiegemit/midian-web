@@ -1,5 +1,5 @@
 # The agent model ladder (SPEC §1). THE ONLY PLACE A MODEL ID IS WRITTEN, besides
-# `SUPERVISOR` in rte/methods/frameworks/_common.py. Read by rte.backends.llm (population
+# `SUPERVISOR` in midian/methods/frameworks/_common.py. Read by midian.backends.llm (population
 # building) and by cluster/slurm/serve_fleet.sbatch (which GPU, which port, how much HBM).
 # Swapping the ladder = editing this file. Nothing in the code changes.
 #
@@ -8,7 +8,7 @@
 # ORDER MATTERS: ascending by params_b. A profile picks its model by INDEX into this list, so
 # reordering changes every population. The serve script sorts largest-first itself for launch.
 # system_role: false  -- that model's chat template REJECTS a system message (Gemma-2 returns
-# HTTP 400 'System role not supported'); rte.llm_client folds the system text into the first
+# HTTP 400 'System role not supported'); midian.llm_client folds the system text into the first
 # user turn for those models, so callers never have to care.
 models:
   - {id: Qwen/Qwen2.5-0.5B-Instruct, params_b:  0.5, tp: 1, gpu: 2, port: 8004, gpu_share: 0.15}

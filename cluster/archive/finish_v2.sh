@@ -15,8 +15,8 @@ while [ $quiet -lt 3 ]; do
   sleep 600
 done
 GRIDS="fw_live_n100 fw_live_n1000 fw_live_n100_verified fw_live_n1000_verified midian_v_replication internals_v2 variants_f1 midian_r20 stratify churn_n1000 live_n10k_v2 budget_b10_shapes live_f1_core_s6_10 live_f1_n1000"
-for g in $GRIDS; do python -m rte.analyze --grid "$g" || echo "analyze $g failed"; done
-python -m rte.analyze --grid variants_f1 --grids stratify,churn_n1000,live_n10k_v2,midian_v_replication,budget_b10_shapes,internals_v2,live_f1_n1000,live_f1_core_s6_10 \
+for g in $GRIDS; do python -m midian.analyze --grid "$g" || echo "analyze $g failed"; done
+python -m midian.analyze --grid variants_f1 --grids stratify,churn_n1000,live_n10k_v2,midian_v_replication,budget_b10_shapes,internals_v2,live_f1_n1000,live_f1_core_s6_10 \
   --out "$RTE_DATA/results/v2_targets" || echo "targets_v2 merge failed"
 python scripts/extra_figs.py || echo "figures failed"
 mkdir -p figures && cp "$RTE_DATA"/results/extra_figs/*.png figures/

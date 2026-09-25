@@ -77,7 +77,7 @@ else
 fi
 
 # Benchmark deps. numpy is left at whatever vLLM resolved -- pinning it back to the reference
-# env's 1.26.4 would fight vLLM's own numba/opencv pins, and the rte package is numpy-2 clean.
+# env's 1.26.4 would fight vLLM's own numba/opencv pins, and the midian package is numpy-2 clean.
 "$PY" -m pip install reasoning-gym openai pytest pandas scipy pyyaml \
     hnswlib trueskill scikit-learn
 

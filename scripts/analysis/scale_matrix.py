@@ -6,9 +6,9 @@ seed-bootstrap CI.
     python scripts/analysis/scale_matrix.py replay_scale_v5 --dist specialist
         # one shape (replay has three; the default pools them)
 
-Reads rows.csv directly (NOT rte.analyze.load, whose consolidate is a no-op on a grid with a .merge_owner) and runs it
-through rte.analyze.prepare for the same labels/aliases as every other table. Regimes follow RESULTS_rte_v4: beta = 0
-once (liar-free, so liar-selection is degenerate) and each beta > 0 per liar-selection cell."""
+Reads rows.csv directly (NOT midian.analyze.load, whose consolidate is a no-op on a grid with a .merge_owner) and runs
+it through midian.analyze.prepare for the same labels/aliases as every other table. Regimes follow RESULTS_rte_v4:
+beta = 0 once (liar-free, so liar-selection is degenerate) and each beta > 0 per liar-selection cell."""
 
 import argparse
 import os
@@ -18,7 +18,7 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-from rte.analyze import RTE_DATA, prepare
+from midian.analyze import RTE_DATA, prepare
 from scripts.figures.lib.regimes import matrix_title
 from scripts.figures.lib.stats import ci
 

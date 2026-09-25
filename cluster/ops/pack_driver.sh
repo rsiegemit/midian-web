@@ -1,5 +1,5 @@
 #!/bin/bash
-# Feed an explicit unit list through PACKED jobs (OPS_RULES T1-T3, T6): each job runs K units side by side, one rte.run
+# Feed an explicit unit list through PACKED jobs (OPS_RULES T1-T3, T6): each job runs K units side by side, one midian.run
 # process per unit, framework units with RTE_FW_PARALLEL=8 and 40 G each. Two kinds of pack, fed by ONE driver so no
 # unit is ever handed out twice:
 #   test    -- starts at once, but test caps us at 5 jobs / 1,000 G (leave room for other test work: TEST_MAX)

@@ -50,7 +50,9 @@ Each agent framework runs in its own virtual environment, built from `requiremen
 ## Data
 
 Everything the code reads or writes outside the repository lives under one directory, `$RTE_DATA` (results, the LLM
-answer memo, populations, downloaded datasets, model weights, environments). Set it before running anything:
+answer memo, populations, downloaded datasets, model weights, environments). The Python package is `midian`; the data
+root, `RTE_DATA`, and every `RTE_*` variable keep the name of the benchmark, RTE (routing tasks to experts). Set
+`RTE_DATA` before running anything:
 
 ```bash
 export RTE_DATA=$PWD/rte_data
@@ -74,9 +76,9 @@ inputs are, as aggregate CSVs (see [Reproducing the paper](#reproducing-the-pape
 On a laptop CPU, in about a minute (no data files, no GPU):
 
 ```bash
-pytest -q                                          # ~470 tests, ~2 min (slow and fleet tests deselected)
-python -m rte.run --grid reviewer_bernoulli        # MIDIAN, its three ablations and four rivals, honest and cartel: 180 rows, ~15 s
-python -m rte.analyze --grid reviewer_bernoulli    # tables, paired deltas, cost exponents -> summary.md, ~15 s
+pytest -q                                             # ~470 tests, ~2 min (slow and fleet tests deselected)
+python -m midian.run --grid reviewer_bernoulli        # MIDIAN, its three ablations and four rivals, honest and cartel: 180 rows, ~15 s
+python -m midian.analyze --grid reviewer_bernoulli    # tables, paired deltas, cost exponents -> summary.md, ~15 s
 ```
 
 `reviewer_bernoulli` runs MIDIAN, MIDIAN w/o verification, MIDIAN w/o audits, MIDIAN w/o defenses, declared argmax,
@@ -85,12 +87,12 @@ honest and under the β = 0.5 low-skill cartel, 5 seeds. Results land in `$RTE_D
 (see [Outputs](#outputs)). Then, in increasing cost:
 
 ```bash
-python scripts/figures/make_all.py --from-csv                   # redraw every paper figure from results/aggregates/
-python -m rte.run --grid smoke                                  # every method on a small synthetic world
-python -m rte.run --grid live_f1_n1000 --only dist=specialist   # a live grid: needs the model fleet (docs/operations.md)
+python scripts/figures/make_all.py --from-csv                      # redraw every paper figure from results/aggregates/
+python -m midian.run --grid smoke                                  # every method on a small synthetic world
+python -m midian.run --grid live_f1_n1000 --only dist=specialist   # a live grid: needs the model fleet (docs/operations.md)
 ```
 
-A method is one file in `rte/methods/`, and [docs/architecture.md](docs/architecture.md) shows the interface.
+A method is one file in `midian/methods/`, and [docs/architecture.md](docs/architecture.md) shows the interface.
 
 ## Reproducing the paper
 
@@ -118,19 +120,19 @@ figure-to-grid table.
 ## Repository structure
 
 ```
-rte/                      the benchmark package
+midian/                   the benchmark package
   world.py                World and View: hidden skill S, declarations D, liars, channels, paired task streams
   ledger.py               the six cost counters, one increment site each
   budget.py               the probe budget: b probes per (agent, family)
   run.py                  grid runner: cells x seeds x methods -> one row per result; resumable, shardable
   config.py               $RTE_DATA and every RTE_* switch, in one place
-  analysis/               tables, bootstrap CIs, paired deltas, cost exponents (python -m rte.analyze)
+  analysis/               tables, bootstrap CIs, paired deltas, cost exponents (python -m midian.analyze)
   llm_client.py           client for the served models: endpoint choice, content-hash memo
   backends/               synthetic bernoulli, replay (RouterBench), routereval (RouterEval, LLMRouterBench), live llm
   methods/                one file per method (MIDIAN, rivals, bandits, learned routers); discovered by file name
     frameworks/           the shared framework adapter, the subprocess bridge, fw_*.py, workers/ (one per framework)
 configs/
-  grids/*.yaml            every experiment as a named grid (python -m rte.run --grid <name>)
+  grids/*.yaml            every experiment as a named grid (python -m midian.run --grid <name>)
   models.yaml             the live model ladder; fleet_*.yaml: the fleet layouts
 scripts/
   setup/                  base environment, model weights, one venv per framework (fw_envs/<framework>.sh)
@@ -154,10 +156,10 @@ requirements-frameworks/  pinned requirements of each framework's virtual enviro
 
 ## Outputs
 
-`python -m rte.run --grid G` writes to `$RTE_DATA/results/G/`: one JSON file per result in `rows.d/` (atomic, so any job
+`python -m midian.run --grid G` writes to `$RTE_DATA/results/G/`: one JSON file per result in `rows.d/` (atomic, so any job
 can be killed and rerun; finished rows are skipped by id), folded into `rows.csv`. A row is one (cell, seed, method):
 success, success on the last quarter of the stream, regret against the oracle, the misroute-to-liar rate, the six
-ledger counters at build and per task, wall-clock, and the method's own statistics. `python -m rte.analyze --grid G`
+ledger counters at build and per task, wall-clock, and the method's own statistics. `python -m midian.analyze --grid G`
 adds `summary.md`, `aggregate.csv`, `paired_vs_midian.csv` (paired deltas against MIDIAN w/o defenses) and
 `cost_exponents.csv` beside them. The row schema is in [docs/experimental_design.md](docs/experimental_design.md).
 

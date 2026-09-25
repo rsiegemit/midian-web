@@ -58,9 +58,9 @@ ABL = (
 
 
 def rows(*grids, n=1000):
-    """Per-method means over the self-described cells at `n`, read through rte.analyze.load so legacy rows get MIDIAN's
-    observe-time recompute charged (commit 3415f03: r comparisons + 1 message per level per task)."""
-    from rte.analyze import load
+    """Per-method means over the self-described cells at `n`, read through midian.analyze.load so legacy rows get
+    MIDIAN's observe-time recompute charged (commit 3415f03: r comparisons + 1 message per level per task)."""
+    from midian.analyze import load
 
     df = load(list(grids))
     df = df[(df.declared_source == "self_described") & (df.n == n)]

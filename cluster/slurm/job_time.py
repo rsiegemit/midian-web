@@ -10,7 +10,7 @@ import pandas as pd
 
 
 def minutes(grid: str, method: str) -> int:
-    from rte.config import RTE_DATA
+    from midian.config import RTE_DATA
 
     t = pd.read_csv(f"{RTE_DATA}/results/job_sizing.csv")
     size = (re.search(r"fw_live_(n\d+k?)", grid) or [None, None])[1]

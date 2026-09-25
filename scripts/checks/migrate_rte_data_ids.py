@@ -1,9 +1,9 @@
 """Rewrite stored rows to decision-D1 row ids, ONCE per results directory (dry run by default).
 
-D1: rte.run.row_id hashes backend_kwargs as the config writes them ("$RTE_DATA/populations/..."), not the path they
+D1: midian.run.row_id hashes backend_kwargs as the config writes them ("$RTE_DATA/populations/..."), not the path they
 expand to, so ids and stored rows no longer depend on where RTE_DATA points. Rows written before D1 store the expanded
 path and their rid hashes it. Per directory, every row of rows.csv and rows.d/*.json gets the config's unexpanded
-backend_kwargs and the new rid (rte.run.rid_of_row on the rewritten row; rows.d files are renamed to it). Afterwards
+backend_kwargs and the new rid (midian.run.rid_of_row on the rewritten row; rows.d files are renamed to it). Afterwards
 rid_of_row, which hashes what a row stores, reproduces the new ids, and the D1 runner resumes the directory.
 
     RTE_DATA=... PYTHONPATH=. python scripts/checks/migrate_rte_data_ids.py [<results_dir> ...] [--apply]
@@ -31,7 +31,7 @@ import shutil
 import sys
 import time
 
-from rte import run
+from midian import run
 
 SENTINEL = ".rte_data_ids_v1"
 BACKUP = "_premigration_rte_data_v1"

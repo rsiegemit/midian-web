@@ -1,7 +1,7 @@
 """Rows the condensed figures need that are neither written nor in flight -- the SILENTLY missing ones.
     python cluster/ops/coverage_gaps.py [--plan-out gaps.tsv]
 For every grid behind A / B / E-H, restricted to the figure cells (specialist on live; beta 0 and the beta 0.5 low-skill
-cartel; RouterEval strong_to_weak + the 5,000 leaderboard), every expected row id (rte.run's own loader) is checked:
+cartel; RouterEval strong_to_weak + the 5,000 leaderboard), every expected row id (midian.run's own loader) is checked:
   done      its row is in rows.d / rows.csv
   inflight  a live SLURM job holds a unit whose filter covers it (cluster/ops/inflight.py)
   planned   a line of the focus pack plan not yet handed to a pack covers it
@@ -21,7 +21,7 @@ import yaml
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 sys.path.insert(0, ROOT)
 from cluster.ops.inflight import inflight, queue
-from rte.run import RTE_DATA, blocks, cells, method_specs, row_id, seeds
+from midian.run import RTE_DATA, blocks, cells, method_specs, row_id, seeds
 from scripts.figures.lib.grids import config
 
 L = f"{RTE_DATA}/logs"

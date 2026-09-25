@@ -21,7 +21,7 @@ import sys
 import time
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-from rte.config import RTE_DATA  # noqa: E402
+from midian.config import RTE_DATA  # noqa: E402
 
 RESULTS = f"{RTE_DATA}/results"
 
@@ -68,8 +68,8 @@ def merge(grids: list[str], prune: bool, every: int = 0) -> None:
     """Fold rows.d into rows.csv (and delete what was folded when `prune`), once or every `every` seconds.
 
     A million-row sweep writes a million one-row files, which makes both consolidation and the resume scan slow. The
-    CSV carries each row's `rid`, so a pruned row still counts as done -- see rte.run.consolidate / the resume set."""
-    from rte.run import consolidate
+    CSV carries each row's `rid`, so a pruned row still counts as done; see midian.run.consolidate / the resume set."""
+    from midian.run import consolidate
 
     while True:
         for g in grids:

@@ -6,10 +6,10 @@ rows (cheap cells n <= 10^4 first, then the most recently written rows.csv, smal
 before a second from the same one: recent grids are the ones today's code should reproduce; the sample moves with file
 mtimes,
 --baseline freezes it), rebuilds the row's cell from the row itself (the rebuilt row_id must equal the stored rid),
-re-runs that unit for that one method through rte.run.run_unit into a temp dir, and compares every column except
+re-runs that unit for that one method through midian.run.run_unit into a temp dir, and compares every column except
 wall_clock_*: ints, strings and lists by value, floats by exact equality (NaN == NaN; a column missing on one side
 must be empty on the other). One exception: a row read from rows.csv (its rows.d file was pruned) is compared with
-rtol 1e-12, because rte.run.consolidate re-reads rows.csv with pandas' default float parser, which is not round-trip
+rtol 1e-12, because midian.run.consolidate re-reads rows.csv with pandas' default float parser, which is not round-trip
 exact (0.08399999999999996 -> 0.0839999999999999), and writes the parsed value back on every merge.
 
 Stored rows are only as current as the code that wrote them: a row written before a later method or backend change
@@ -54,7 +54,7 @@ import time
 import numpy as np
 import pandas as pd
 
-from rte import run
+from midian import run
 
 BACKENDS = ("bernoulli", "replay", "routereval")
 EMBED_BATCH_GRIDS = {"rivals_b_n10k", "rivals_b_n100k", "routereval5k_norep_cal"}
@@ -108,7 +108,7 @@ def stored_row(results, ref):
 
 
 def cell_of(row):
-    """The runner's cell dict rebuilt from a stored row (same casting as rte.run.rid_of_row)."""
+    """The runner's cell dict rebuilt from a stored row (same casting as midian.run.rid_of_row)."""
     cell = {f: row[f].item() if hasattr(row[f], "item") else row[f] for f in run.CELL}
     for k in ("n", "K", "b", "Q"):
         cell[k] = int(cell[k])

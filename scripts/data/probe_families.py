@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate every family in rte.backends.llm's lists against the installed reasoning-gym.
+"""Validate every family in midian.backends.llm's lists against the installed reasoning-gym.
 
 For each family: generate instance seed 7, check the *gold* answer scores 1.0, a junk answer
 scores < 0.99, and that regenerating from the same seed gives the identical question.
@@ -16,7 +16,7 @@ import sys
 
 sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parents[2]))
 
-from rte.backends import families  # noqa: E402
+from midian.backends import families  # noqa: E402
 
 
 def check(name: str) -> tuple[bool, str]:
