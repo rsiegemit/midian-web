@@ -1,10 +1,8 @@
 # the agent frameworks on live populations: shortlists, cohorts, lie conditions
 grids:
   # Headline comparison (SPEC §6A): the 10 frameworks vs MIDIAN, paired with core4 + llm_supervisor. Each framework
-  # fetch is
-  # a real supervisor call (~1-2 s, serial per framework), so: ecological channel only, 3 seeds, Q=300, one process per
-  # method.
-  # v2 0.4: 5 seeds, Q=1000 (was 3/300); 14B orchestrator arm is asymmetric (0.2)
+  # fetch is a real supervisor call (~1-2 s, serial per framework), so: ecological channel only, 3 seeds, Q=300, one
+  # process per method. v2 0.4: 5 seeds, Q=1000 (was 3/300); 14B orchestrator arm is asymmetric (0.2)
   # [FIG:A,D,E] headline: ten frameworks vs MIDIAN, live n = 10^3, self-described channel; read by: bar_figs +11
   fw_live_n1000:
     backend: llm
@@ -69,12 +67,10 @@ grids:
   # [FIG:A,E] frameworks at n = 10^4 under the beta = 0.5 cartel; read by: bar_figs, dedup_compare, doc_tables +3
   fw_live_n10k_cartel:
                                     # under the low-skill colluding cartel. live_n10k_v2 ran beta in {0, 0.25} with
-                                    # random liars
-                                    # only, so the framework band stops at 10^3 in the scale figure's cartel panel.
-                                    # Cells here are
-                                    # identical to learned_n10k's beta = 0.5 low-skill cells, so these rows pair
-                                    # directly with the
-                                    # MIDIAN-side arms already measured there (specialist, b = 3, Q = 300, seeds 1-3).
+                                    # random liars only, so the framework band stops at 10^3 in the scale figure's
+                                    # cartel panel. Cells here are identical to learned_n10k's beta = 0.5 low-skill
+                                    # cells, so these rows pair directly with the MIDIAN-side arms already measured
+                                    # there (specialist, b = 3, Q = 300, seeds 1-3).
     mirror_of: live_n10k_v2
     beta: [0.5]
     liar_select: [low_skill_first]
@@ -104,9 +100,8 @@ grids:
   # prompts (~3,900 specialist; 5 heavy_tail; 2 bimodal at ANY n) and the framework's pick stops mattering. `dedup`
   # ranks distinct description texts and offers one agent per text. Every grid below MIRRORS its pre-registered source
   # cell for cell; separate grid => separate results dir and rids, so old and new rows are never mixed. Verified-
-  # shortlist
-  # grids (retrieval: midian_wo_audit) and the RouterEval framework grids (all descriptions unique) are unaffected and
-  # not rerun.
+  # shortlist grids (retrieval: midian_wo_audit) and the RouterEval framework grids (all descriptions unique) are
+  # unaffected and not rerun.
   # [NUM] dedup TF-IDF shortlist (erratum 25) of fw_live_n1000; read by: dedup_compare, doc_tables +2
   fw_live_n1000_dd:
     mirror_of: fw_live_n1000
@@ -444,8 +439,8 @@ grids:
         - {name: fw_camel_workforce, params: {retrieval: bm25, dedup: true, lie_text: true, claim_threshold: 0.7}}
 
   # ---- 2026-09-16: the missing cartel cell for the frameworks on the MIDIAN cohort (the verified-cohort grids ran
-  # random liars
-  # only). Same ten frameworks holding MIDIAN's leaf cohort (r = 10), beta = 0.5 low-skill-first, 3 shapes, seeds 1-10.
+  # random liars only). Same ten frameworks holding MIDIAN's leaf cohort (r = 10), beta = 0.5 low-skill-first, 3 shapes,
+  # seeds 1-10.
   # [FIG:A,E] MIDIAN-cohort shortlist of fw_live_n1000_verified_va; read by: doc_tables, fw_variant_numbers +1
   fw_live_n1000_verified_va_lowskill:
     mirror_of: fw_live_n1000_verified_va
@@ -453,10 +448,9 @@ grids:
     liar_select: [low_skill_first]
 
   # ---- 2026-09-16: the frameworks on the MIDIAN cohort at scale. The verified-cohort grids stopped at 10^3; these hand
-  # the same
-  # ten frameworks MIDIAN's leaf cohort (r = 10) on live_n10k_v2's, fw_live_n10k_cartel's and live_n100k's exact
-  # cells, so rows pair with the TF-IDF / dedup / MiniLM framework rows and with MIDIAN's own row there. A 10^5 unit
-  # rebuilds MIDIAN (15-20 h on memo hits) before its 300 supervisor calls.
+  # the same ten frameworks MIDIAN's leaf cohort (r = 10) on live_n10k_v2's, fw_live_n10k_cartel's and live_n100k's
+  # exact cells, so rows pair with the TF-IDF / dedup / MiniLM framework rows and with MIDIAN's own row there. A 10^5
+  # unit rebuilds MIDIAN (15-20 h on memo hits) before its 300 supervisor calls.
   # [FIG:A,E] MIDIAN-cohort shortlist of live_n10k_v2; read by: doc_tables, fw_variant_numbers, shortlist_figs
   fw_live_n10k_verified_va:
     mirror_of: live_n10k_v2
@@ -497,11 +491,10 @@ grids:
   fw_live_n10k_cartel_shapes: {mirror_of: fw_live_n10k_cartel, dist: [heavy_tail, bimodal]}
 
   # ---- 2026-09-22 BACKFILL (post-hoc): the five shortlists that existed only at 10^5 -- Qwen3 dense and fusion +
-  # reranker
-  # under both task instructions, and the declared-claim top-k -- at 10^2 / 10^3 / 10^4, in the two headline cells only
-  # (specialist; beta = 0 and the beta = 0.5 low-skill cartel), seeds 1-3 as at 10^4 / 10^5. Mirrors keep Q and b.
-  # The instruction caches are pre-warmed by scripts/embed_populations.py --instruct ... --sota (GPU), so every job is
-  # CPU-only.
+  # reranker under both task instructions, and the declared-claim top-k -- at 10^2 / 10^3 / 10^4, in the two headline
+  # cells only (specialist; beta = 0 and the beta = 0.5 low-skill cartel), seeds 1-3 as at 10^4 / 10^5. Mirrors keep Q
+  # and b. The instruction caches are pre-warmed by scripts/embed_populations.py --instruct ... --sota (GPU), so every
+  # job is CPU-only.
   # [FIG:A,E] backfill: Qwen3 + declared shortlists of fw_live_n100; read by: shortlist_figs
   fw_live_n100_backfill:
     mirror_of: fw_live_n100

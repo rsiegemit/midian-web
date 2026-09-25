@@ -77,8 +77,7 @@ grids:
   # max |difference| = 0 over 690 cells). Each n-rung is therefore two blocks, honest-only and liar-only.
   # b = [1, 3] at the top two rungs (2026-09-11): b=1 was inherited from bernoulli_scale and starves verification
   # (midian.py: e = (b - b0) n / C = 0 at b=1, so w/o audits == w/o defenses and MIDIAN == w/o verification). The b=1
-  # rows stay as the documented
-  # control; b=3 is the row that belongs in the table with the rungs below.
+  # rows stay as the documented control; b=3 is the row that belongs in the table with the rungs below.
   # [FIG:B,C] many-seed calibrated bernoulli n = 10..10^7, five liar regimes; read by: bar_figs, condensed_figs +6
   bernoulli_scale_v5:
     K: [16]

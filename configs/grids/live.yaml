@@ -318,8 +318,8 @@ grids:
   live_n100k_cohort:                # v4 cohort modes at n = 10^5, on live_n100k's exact cells so rows pair with it.
                                     # Separate grid, not extra arms in live_n100k: see the note above. The plain
                                     # cohort=random baselines are live_n100k's own MIDIAN w/o defenses / w/o
-                                    # verification / MIDIAN rows -- analysis
-                                    # loads both grids together, so they are not recomputed here.
+                                    # verification / MIDIAN rows -- analysis loads both grids together, so they are not
+                                    # recomputed here.
     mirror_of: live_n100k
     methods:
       - {name: midian, params: {audit: false, verify: false, stratify: true}}
@@ -395,9 +395,8 @@ grids:
       - llm_supervisor
 
   # ---- 2026-09-17 expansions (COVERAGE.md §8): live β = 0.1 above 10^3; live heavy_tail / bimodal at 10^4; the
-  # frameworks on
-  # RouterEval with the MiniLM and MIDIAN cohort shortlists (dedup is a no-op there: every rendered description is
-  # unique).
+  # frameworks on RouterEval with the MiniLM and MIDIAN cohort shortlists (dedup is a no-op there: every rendered
+  # description is unique).
   # [FIG:E] beta = 0.1 cells of learned_n10k; read by: shortlist_figs
   learned_n10k_beta01:      {mirror_of: learned_n10k,      beta: [0.1]}
 
@@ -439,10 +438,8 @@ grids:
 
   # ---- 2026-09-22 PROBE-BUDGET axis for MIDIAN in condensed figures A / B: b in {1, 5} beside the existing b = 3,
   # specialist, beta = 0 and the beta = 0.5 low-skill cartel only (b = 10 deferred). Each grid mirrors the cell source
-  # of
-  # A / B so rows pair with the b = 3 arms; at beta = 0 the liar selection is inert, so both regimes share one grid and
-  # a
-  # per-seed job builds each population's probes ONCE (cached for the second regime).
+  # of A / B so rows pair with the b = 3 arms; at beta = 0 the liar selection is inert, so both regimes share one grid
+  # and a per-seed job builds each population's probes ONCE (cached for the second regime).
   # [FIG:A] MIDIAN at b = 1 / 5 on fw_live_n100; read by: seed_tables
   va_b_n100:
     mirror_of: fw_live_n100
@@ -501,8 +498,7 @@ grids:
 
   # ---- 2026-09-22 BUDGET-MATCHED RIVALS for MIDIAN's b axis: every probe-using rival the A / B cell already has at
   # b = 3 (MIDIAN w/o defenses, flat probe argmax online, the learned-router and bandit pools, + the tuned warm-start
-  # bandit on
-  # live), at the same b as the va_b_* twin, so no bar compares MIDIAN at b = 5 with rivals at b = 3.
+  # bandit on live), at the same b as the va_b_* twin, so no bar compares MIDIAN at b = 5 with rivals at b = 3.
   # [FIG:A] rivals at b = 1 / 5 on va_b_n100; read by: seed_tables
   rivals_b_n100:
     mirror_of: va_b_n100
@@ -559,10 +555,9 @@ grids:
       - {name: warm_start_bandit, params: {n0: 0.5}}
 
   # ---- 2026-09-23 STRONGEST DECLARED LIE (lie_mode: max -- every cartel member claims perfect skill in every family):
-  # does
-  # declaration-based discovery (declared argmax; frameworks on the declared top-k, i.e. an idealized A2A Agent-Card
-  # registry) collapse while MIDIAN holds? The cartel cell of live 10^3 / 10^4 / 10^5, seeds 1-3. Only D changes, so
-  # every probe build is already cached.
+  # does declaration-based discovery (declared argmax; frameworks on the declared top-k, i.e. an idealized A2A Agent-
+  # Card registry) collapse while MIDIAN holds? The cartel cell of live 10^3 / 10^4 / 10^5, seeds 1-3. Only D changes,
+  # so every probe build is already cached.
   # [FIG:I] lie_mode max, cartel cell on fw_live_n1000_lowskill; read by: none
   lie_max_n1000:
     mirror_of: fw_live_n1000_lowskill
@@ -588,14 +583,12 @@ grids:
     methods: {set: lie_max_arms}
 
   # ---- 2026-09-23 POOL FILL for condensed A / B: "best learned router" / "best bandit" are chosen from the SAME
-  # candidate
-  # set at every b in a cell (the user: no arm may change between b values because a candidate did not run). Each cell's
-  # pool = LEARNED + BANDIT + warm_start_bandit[n0=0.5] (scripts/condensed_figs.py) minus the arms that cannot run
-  # there:
-  # trueskill_per_family at n >= 10^5 (NotImplemented), knn/mlp_router on bernoulli / replay (no prompt text: they embed
-  # n*K*b prompts), mlp_router at n >= 5,000 (agent one-hot over >= 2.4e5 probes, as learned_n10k). These grids hold
-  # ONLY
-  # arms no other grid ran in that cell, so nothing is run twice (tuned n0 = 0.5 at live b = 3 is tuned_wsb_*).
+  # candidate set at every b in a cell (the user: no arm may change between b values because a candidate did not run).
+  # Each cell's pool = LEARNED + BANDIT + warm_start_bandit[n0=0.5] (scripts/condensed_figs.py) minus the arms that
+  # cannot run there: trueskill_per_family at n >= 10^5 (NotImplemented), knn/mlp_router on bernoulli / replay (no
+  # prompt text: they embed n*K*b prompts), mlp_router at n >= 5,000 (agent one-hot over >= 2.4e5 probes, as
+  # learned_n10k). These grids hold ONLY arms no other grid ran in that cell, so nothing is run twice (tuned n0 = 0.5 at
+  # live b = 3 is tuned_wsb_*).
   # [FIG:A] pool fill on va_b_n100; read by: seed_tables
   pool_fill_n100:
     mirror_of: va_b_n100
@@ -629,8 +622,8 @@ grids:
     methods: [flat_nsw_router, cluster_head_router, disrouter_cascade, ucb_per_family, thompson_per_family]
 
   # live 10^3 b = 3: seven pool candidates ran only seeds 1-5 (live_f1_n1000); every other arm there has 1-10. Same
-  # cells
-  # as variants_f1 / learned_f1 (self-described, Q = 1000), seeds 6-10 only, so each cross-fitted pool sees 10 seeds.
+  # cells as variants_f1 / learned_f1 (self-described, Q = 1000), seeds 6-10 only, so each cross-fitted pool sees 10
+  # seeds.
   # [FIG:A] seeds 6-10 for seven live 10^3 pool candidates; read by: seed_tables
   pool_seeds_n1000:
     mirror_of: va_b_n1000
@@ -646,8 +639,7 @@ grids:
       - warm_start_bandit
 
   # ---- 2026-09-23 LinUCB with the fixed bonus (bonus = own; post hoc, audit rivals F1 / erratum 30): every A/B cell, b
-  # = 1/3/5,
-  # queued AFTER everything else (lowest priority). Replay 10^6 gets it in the fix-B split grids.
+  # = 1/3/5, queued AFTER everything else (lowest priority). Replay 10^6 gets it in the fix-B split grids.
   # [FIG:A] LinUCB bonus=own, b = 1/3/5 on va_b_n100; read by: seed_tables
   linucb_fix_n100:  {mirror_of: va_b_n100,  b: [1, 3, 5], methods: [{name: linucb_honest, params: {bonus: own}}]}
 
@@ -661,8 +653,7 @@ grids:
   linucb_fix_n100k: {mirror_of: va_b_n100k, b: [1, 3, 5], methods: [{name: linucb_honest, params: {bonus: own}}]}
 
   # TrueSkill after the World._probe duplicate-cell fix (erratum 30): a repeated (agent, family) cell in one probe call
-  # now draws
-  # fresh instances; trueskill_per_family is the only arm that sends repeats, so its earlier rows are pre-fix
+  # now draws fresh instances; trueskill_per_family is the only arm that sends repeats, so its earlier rows are pre-fix
   # (handicapped).
   # [FIG:A] TrueSkill after the erratum-30 probe fix on va_b_n100; read by: seed_tables
   trueskill_fix_n100:  {mirror_of: va_b_n100,  b: [1, 3, 5], methods: [trueskill_per_family]}

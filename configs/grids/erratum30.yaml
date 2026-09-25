@@ -3,26 +3,21 @@ grids:
   # ---- 2026-09-23 ERRATUM 30 reruns (defined, NOT launched). Three opt-in fixes, each a new cell value, so no existing
   # row id moves:
   # declared_source: calibrated  -- realistic declarations on the non-live backends (live self-rating pattern,
-  # rte/backends/__init__.py
-  # CAL_P, fitted by scripts/fit_declared_calibration.py) instead of clip(S + N(0, .05)), an answer key;
+  # rte/backends/__init__.py CAL_P, fitted by scripts/fit_declared_calibration.py) instead of clip(S + N(0, .05)), an
+  # answer key;
   # backend_kwargs split: true   -- replay: probes and S on 70 % of each category's prompts, routed tasks on the other
   # 30 %;
   # backend_kwargs no_repeat: true -- RouterEval / LLMRouterBench: each (family, test prompt) at most once per stream,
-  # uniform demand
-  # until the smallest family runs out; Q = 300 everywhere (on average the last 0.8-0.9 % of the stream
+  # uniform demand until the smallest family runs out; Q = 300 everywhere (on average the last 0.8-0.9 % of the stream
   #                                   misses one family; Q > the pool raises).
   # Arms = B's (scripts/condensed_figs.py ARMS + LEARNED / BANDIT pools with linucb_honest[bonus=own] and
-  # warm_start_bandit[n0=0.5],
-  # minus NOT_RUNNABLE). Probing arms and the declared-only pool members run at b = 1 / 3 / 5 (every b needs the whole
-  # pool);
-  # declared_argmax and random (BUDGETLESS) at b = 3 only, in the same b = 3 unit (nested method lists flatten). beta =
-  # 0 and the beta = 0.5 low-skill cartel, as the va_b_* grids.
+  # warm_start_bandit[n0=0.5], minus NOT_RUNNABLE). Probing arms and the declared-only pool members run at b = 1 / 3 / 5
+  # (every b needs the whole pool); declared_argmax and random (BUDGETLESS) at b = 3 only, in the same b = 3 unit
+  # (nested method lists flatten). beta = 0 and the beta = 0.5 low-skill cartel, as the va_b_* grids.
   # shuffle: true (every RouterEval / LLMRouterBench grid here) = a per-seed agent order: the stored pools run weak ->
-  # strong,
-  # so lowest-index tie-breaks among the many tied calibrated claims picked the weakest agent (erratum 30).
+  # strong, so lowest-index tie-breaks among the many tied calibrated claims picked the weakest agent (erratum 30).
   # (a) calibrated claims, claim-reading arms only: world, liars, stream and probes do not depend on declared_source, so
-  # every other
-  # arm's rows are the existing programmatic rows (bit-identical by construction).
+  # every other arm's rows are the existing programmatic rows (bit-identical by construction).
   # [FIG:B] erratum 30: claim-reading arms on calibrated claims, n = 10^7; read by: seed_tables
   bernoulli_1e7_cal:
     mirror_of: bernoulli_scale_v5
@@ -38,8 +33,7 @@ grids:
         methods: [{set: cal_arms}, declared_argmax]
 
   # (b) replay 10^6 with split rows AND calibrated claims, every arm B draws there (trueskill: NotImplemented at >=
-  # 10^5; knn / mlp:
-  # no prompt text). 30 seeds, not the 100 of replay_scale_v5 / va_b_replay_1e6, for time.
+  # 10^5; knn / mlp: no prompt text). 30 seeds, not the 100 of replay_scale_v5 / va_b_replay_1e6, for time.
   # [FIG:B] erratum 30: replay 10^6 with probe/task split + calibrated claims; read by: seed_tables
   replay_1e6_split_cal:
     mirror_of: replay_scale_v5
@@ -56,8 +50,7 @@ grids:
         methods: [{set: replay_arms}, declared_argmax, random]
 
   # (c) no repeated test prompts + calibrated claims: B's RouterEval-5k and LLMRouterBench cells (every arm B draws),
-  # H's mmlu
-  # strong-to-weak m = 10 / 100 / 1,000 reference line (MIDIAN; the oracle row comes with every unit).
+  # H's mmlu strong-to-weak m = 10 / 100 / 1,000 reference line (MIDIAN; the oracle row comes with every unit).
   # [FIG:B,H] erratum 30: RouterEval 5k, no repeated prompts, calibrated claims; read by: seed_tables, shortlist_figs
   routereval5k_norep_cal:
     mirror_of: va_b_routereval5k
@@ -77,8 +70,7 @@ grids:
     blocks: [{b: [1, 5]}, {b: [3], methods: [{set: lrb_arms}, declared_argmax, random]}]
 
   # (d) the five rivals run but not drawn (Appendix B "run but not drawn"), on B's erratum-30 cells at b = 3: their
-  # older
-  # bernoulli / replay rows used programmatic (answer-key) claims. The oracle row comes with every unit.
+  # older bernoulli / replay rows used programmatic (answer-key) claims. The oracle row comes with every unit.
   # [HIST] five undrawn rivals, calibrated claims on bernoulli_scale_v5; read by: none
   rivals5_bernoulli_1e7_cal:
     mirror_of: bernoulli_scale_v5
@@ -125,9 +117,8 @@ grids:
     methods: [midian, random]
 
   # OPTIONAL (expensive: one supervisor-LLM call per task on the fleet): H's framework slots on the same no-repeat +
-  # calibrated cells
-  # (the frameworks read the rendered declaration vector, so both fixes apply). Mirrors keep each source grid's arms and
-  # seeds.
+  # calibrated cells (the frameworks read the rendered declaration vector, so both fixes apply). Mirrors keep each
+  # source grid's arms and seeds.
   # [FIG:H] erratum-30 rerun (no repeats, calibrated, shuffled) of fw_routereval_small; read by: shortlist_figs
   fw_routereval_small_norep_cal:
     mirror_of: fw_routereval_small

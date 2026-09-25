@@ -126,13 +126,10 @@ grids:
   # [NUM | SUPERSEDED-BY:fw_routereval_1k_norep_cal] frameworks on RouterEval m = 10^3 (post hoc); read by: bar_figs +1
   fw_routereval_1k:
                                     # real-LLM pools. Those pools DO ship real model names, but the adapter reads the
-                                    # same
-                                    # declaration-rendered descriptions as the 5k grid so the two pool sizes stay
-                                    # comparable
-                                    # (see DEVIATIONS). Magentic-One excluded here too, so the 1k and 5k framework
-                                    # ranges cover
-                                    # the same nine frameworks. Cells match routereval_mmlu, so rows pair with the arms
-                                    # there.
+                                    # same declaration-rendered descriptions as the 5k grid so the two pool sizes stay
+                                    # comparable (see DEVIATIONS). Magentic-One excluded here too, so the 1k and 5k
+                                    # framework ranges cover the same nine frameworks. Cells match routereval_mmlu, so
+                                    # rows pair with the arms there.
     mirror_of: routereval_mmlu
     allow_llm_methods: true
     n: [1000]
@@ -146,16 +143,11 @@ grids:
                                     # leaderboard pool. That pool's model names are synthetic (llm0..llm4999), so the
                                     # adapter's
                                     # fallback descriptions apply: each agent's declaration vector rendered as text. The
-                                    # frameworks
-                                    # therefore read the same declaration channel as declared_argmax (honest+noisy at
-                                    # beta=0,
-                                    # corrupted by liars above it); the TF-IDF retrieval step is degenerate on rendered
-                                    # numbers, so
-                                    # only the supervisor's pick among the top-10 carries signal. Magentic-One is
-                                    # excluded: at 18 s
-                                    # per task it alone would take 5 h per unit. Agents are table lookups, so the only
-                                    # LLM calls are
-                                    # the supervisor's.
+                                    # frameworks therefore read the same declaration channel as declared_argmax
+                                    # (honest+noisy at beta=0, corrupted by liars above it); the TF-IDF retrieval step
+                                    # is degenerate on rendered numbers, so only the supervisor's pick among the top-10
+                                    # carries signal. Magentic-One is excluded: at 18 s per task it alone would take 5 h
+                                    # per unit. Agents are table lookups, so the only LLM calls are the supervisor's.
     mirror_of: routereval_mmlu5k
     allow_llm_methods: true         # frameworks need only a supervisor endpoint; the world backend stays routereval
     beta: [0, 0.5]
@@ -208,9 +200,8 @@ grids:
       - trueskill_per_family
 
   # ---- 2026-09-17 coverage fill (COVERAGE.md §6): every arm that was cheap and simply never scheduled. Mirrors keep
-  # the
-  # source cells, seeds and Q; only the arm lists differ. Live units execute their routed tasks live, so they wait on
-  # fleet health like every live grid.
+  # the source cells, seeds and Q; only the arm lists differ. Live units execute their routed tasks live, so they wait
+  # on fleet health like every live grid.
   # the nine frameworks on RouterEval's m = 10 and 100 pools
   # [NUM | SUPERSEDED-BY:fw_routereval_small_norep_cal] frameworks on RouterEval m = 10 / 100; read by: shortlist_figs
   fw_routereval_small: {mirror_of: fw_routereval_1k, n: [10, 100]}
@@ -289,11 +280,9 @@ grids:
       - {name: trueskill_per_family, params: {}}
 
   # ---- 2026-09-23 RouterEval gets the shortlists live has: declared top-k, Qwen3 dense (both instructions), fusion +
-  # reranker
-  # (stock, both instructions). Nine frameworks as the other fw_routereval grids; the mixed strong-to-weak pool at
-  # 10-1,000 and
-  # the leaderboard at 5,000; honest + beta = 0.5 low-skill cartel. Embedding / rerank caches are content-keyed under
-  # RTE_EMBED_CACHE_DIR (scripts/embed_routereval.py pre-warms them on a GPU); declared needs none.
+  # reranker (stock, both instructions). Nine frameworks as the other fw_routereval grids; the mixed strong-to-weak pool
+  # at 10-1,000 and the leaderboard at 5,000; honest + beta = 0.5 low-skill cartel. Embedding / rerank caches are
+  # content-keyed under RTE_EMBED_CACHE_DIR (scripts/embed_routereval.py pre-warms them on a GPU); declared needs none.
   # [NUM | SUPERSEDED-BY:re_sl_declared_small_norep_cal] declared top-k shortlist; read by: shortlist_figs
   re_sl_declared_small:
     mirror_of: fw_routereval_small
