@@ -3,7 +3,7 @@
 A cell = one point of the CELL axes; a unit = (cell, seed): one World, one paired task stream shared by every
 method, the oracle line executed once. Each row is its own JSON file under results/<grid>/rows.d (atomic, resumable);
 rows.csv is materialised at the end."""
-import argparse, hashlib, json, os, pkgutil, sys, time, traceback
+import argparse, glob, hashlib, json, os, pkgutil, sys, time, traceback
 from itertools import product
 from multiprocessing import get_context
 import numpy as np, yaml
@@ -17,6 +17,80 @@ RTE_DATA = os.environ.get("RTE_DATA", "/scratch/rte")
 CELL = ("backend", "n", "K", "dist", "beta", "liar_select", "collude", "declared_source", "lie_mode", "demand", "b", "Q")
 log = lambda m: print(m, file=sys.stderr, flush=True)
 jkey = lambda d: json.dumps(d, sort_keys=True, separators=(",", ":"), default=str)
+
+
+# ------------------------------------------------------------------ config files
+CONFIG = os.path.join(os.path.dirname(__file__), "..", "configs", "grids")
+
+
+class UniqueKeyLoader(yaml.SafeLoader):
+    """yaml.SafeLoader that rejects a mapping key given twice (PyYAML silently keeps the last one)."""
+
+
+def _unique_mapping(loader, node, deep=False):
+    seen = set()
+    for key_node, _ in node.value:
+        key = loader.construct_object(key_node, deep=deep)
+        if key in seen:
+            raise yaml.constructor.ConstructorError(None, None, f"duplicate key {key!r}", key_node.start_mark)
+        seen.add(key)
+    return loader.construct_mapping(node, deep=deep)
+
+
+UniqueKeyLoader.add_constructor(yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, _unique_mapping)
+
+
+def _read_yaml(path):
+    with open(path) as fh:
+        return yaml.load(fh, Loader=UniqueKeyLoader) or {}
+
+
+def _expand_sets(x, sets):
+    """Replace every `{set: NAME}` by sets[NAME] (itself expanded), anywhere in x. A set that is a list and sits inside
+    a method list becomes a nested list, which method_specs flattens -- exactly what a YAML alias did before."""
+    if isinstance(x, list):
+        return [_expand_sets(v, sets) for v in x]
+    if not isinstance(x, dict):
+        return x
+    if set(x) == {"set"}:
+        if x["set"] not in sets:
+            raise KeyError(f"unknown set {x['set']!r} (define it under _sets in 00_base.yaml)")
+        return sets[x["set"]]
+    return {k: _expand_sets(v, sets) for k, v in x.items()}
+
+
+def load_config(path=None) -> dict:
+    """The grid config as one dict {defaults, _sets, grids}, named sets expanded.
+
+    `path` is a directory (default configs/grids/) or a single YAML file. A directory is read in sorted file order: the
+    first file (00_base.yaml) holds `defaults` and `_sets`, every other file holds only `grids:`; a grid defined twice
+    raises. Every file is read with a loader that rejects duplicate keys. Two references replace YAML aliases, which
+    cannot cross files: `{set: NAME}` anywhere stands for _sets[NAME], and a grid's `use: NAME` merges the mapping
+    _sets[NAME] under the grid's own keys (the grid wins, as with `<<:`)."""
+    path = path or CONFIG
+    if os.path.isdir(path):
+        files = sorted(glob.glob(os.path.join(path, "*.yaml")))
+        cfg = _read_yaml(files[0])
+        cfg["grids"] = dict(cfg.get("grids") or {})
+        for f in files[1:]:
+            doc = _read_yaml(f)
+            if set(doc) - {"grids"}:
+                raise ValueError(f"{f}: only `grids:` belongs here (defaults and _sets live in {files[0]})")
+            for g, v in (doc.get("grids") or {}).items():
+                if g in cfg["grids"]:
+                    raise ValueError(f"grid {g!r} defined twice (again in {f})")
+                cfg["grids"][g] = v
+    else:
+        cfg = _read_yaml(path)
+    sets = {}
+    for name, v in (cfg.get("_sets") or {}).items():       # a set may use sets defined above it
+        sets[name] = _expand_sets(v, sets)
+    grids = {}
+    for g, v in cfg["grids"].items():
+        if isinstance(v, dict) and "use" in v:
+            v = {**sets[v["use"]], **{k: x for k, x in v.items() if k != "use"}}
+        grids[g] = _expand_sets(v, sets)
+    return {**cfg, "_sets": sets, "grids": grids}
 
 
 # ------------------------------------------------------------------ config -> units
@@ -69,12 +143,20 @@ def cells(blk):
     axes = [blk[f] if f != "backend" else [blk["backend"]] for f in CELL]
     for combo in product(*axes):
         c = dict(zip(CELL, combo)); c.update(n=int(c["n"]), K=int(c["K"]), b=int(c["b"]), Q=int(c["Q"]), beta=float(c["beta"]))
-        c["backend_kwargs"] = {k: (os.path.expandvars(str(v).replace("$RTE_DATA", RTE_DATA)) if isinstance(v, str) else v)
-                               for k, v in (blk.get("backend_kwargs") or {}).items()}
+        c["backend_kwargs"] = dict(blk.get("backend_kwargs") or {})   # as written: "$RTE_DATA/..." unexpanded (D1)
         c["churn"] = blk.get("churn")                                   # optional {frac, every}; absent -> None
-        cal = c["backend_kwargs"].get("calibrate_from")
+        cal = expand(c["backend_kwargs"]).get("calibrate_from")
         assert not cal or os.path.exists(cal), f"calibrate_from={cal} missing: measure the live S first (bernoulli_scale must be calibrated)"
         yield c
+
+
+def expand(backend_kwargs) -> dict:
+    """backend_kwargs as the backend reads them: $RTE_DATA and other environment variables expanded in string values.
+
+    Only the World sees the expanded form. Row ids hash, and rows store, the strings as the config writes them
+    (decision D1), so neither depends on where RTE_DATA points."""
+    return {k: os.path.expandvars(v.replace("$RTE_DATA", RTE_DATA)) if isinstance(v, str) else v
+            for k, v in backend_kwargs.items()}
 
 
 def row_id(cell, method, params, seed):
@@ -84,7 +166,10 @@ def row_id(cell, method, params, seed):
 
 
 def rid_of_row(r) -> str:
-    """row_id recomputed from a stored row (CSV or rows.d): lets a CSV written without `rid` be re-keyed."""
+    """row_id recomputed from a stored row (CSV or rows.d): lets a CSV written without `rid` be re-keyed.
+
+    It hashes the backend_kwargs the row stores. Rows written before D1 store the $RTE_DATA-expanded path and keep
+    their old id here; scripts/checks/migrate_rte_data_ids.py rewrites them to the unexpanded string and the new id."""
     cell = {f: r[f] for f in CELL}
     for k in ("n", "K", "b", "Q"): cell[k] = int(cell[k])
     cell["beta"] = float(cell["beta"])
@@ -136,8 +221,7 @@ def oracle_line(world, stream, churn):
 
 def run_method(world, stream, spec, b, churn=None):
     m = load_method(spec["name"])(**spec["params"]); view = world.view(m.needs)
-    lm, lp = keys.legacy(spec["name"], spec["params"])                  # the pre-rename key seeds the world: reruns reproduce stored rows
-    world.reset(lm + jkey(lp)); t0 = time.perf_counter(); m.build(view, Budget(b)); wall_build = time.perf_counter() - t0
+    world.reset(); t0 = time.perf_counter(); m.build(view, Budget(b)); wall_build = time.perf_counter() - t0
     build = world.ledger.snapshot(); world.ledger.reset()
     if build["probes"] > Budget(b).total_probes(world.n, world.K):
         log(f"  [WARNING] {spec['name']}: build spent {build['probes']} probes > budget {Budget(b).total_probes(world.n, world.K)}")
@@ -160,7 +244,7 @@ def run_method(world, stream, spec, b, churn=None):
 
 
 def run_unit(cell, seed, specs, rows_dir, grid):
-    world = World(**{k: cell[k] for k in CELL if k not in ("b", "Q")}, seed=seed, backend_kwargs=cell["backend_kwargs"] or None)
+    world = World(**{k: cell[k] for k in CELL if k not in ("b", "Q")}, seed=seed, backend_kwargs=expand(cell["backend_kwargs"]) or None)
     stream = world.tasks(cell["Q"]); st = world.stats()
     base = {**{f: cell[f] for f in CELL}, "backend_kwargs": jkey(cell["backend_kwargs"]), "seed": seed, "grid": grid,
             "n_agents": world.n, "n_liars": st.pop("n_liars"),
@@ -199,6 +283,9 @@ def consolidate(out, prune: bool = False, force: bool = False):
     names = sorted(f for f in os.listdir(f"{out}/rows.d") if f.endswith(".json"))   # snapshot: later arrivals wait
     frames = []
     if os.path.exists(csv):
+        # NOTE: pandas' default float parser is not round-trip exact (0.08399999999999996 -> 0.0839999999999999), so a
+        # row that lives only in the CSV can drift a few ulps on each merge. Left as is: changing it would alter stored
+        # values on the next merge of a live grid.
         old = pd.read_csv(csv, low_memory=False)
         if "rid" not in old.columns or old.rid.isna().any():     # a CSV rebuilt by pre-guard code has no rid: re-key it
             old["rid"] = [rid_of_row(r) for _, r in old.iterrows()]   # so dedup works and nothing doubles
@@ -238,12 +325,12 @@ def _star(args):
 
 def main(argv=None):
     p = argparse.ArgumentParser("rte.run")
-    p.add_argument("--config", default=os.path.join(os.path.dirname(__file__), "..", "configs", "grid.yaml"))
+    p.add_argument("--config", default=CONFIG, help="configs/grids/ (default) or one YAML file")
     p.add_argument("--grid", required=True); p.add_argument("--seeds"); p.add_argument("--methods")
     p.add_argument("--workers", type=int); p.add_argument("--dry-run", action="store_true")
     p.add_argument("--only", help="cell filter, e.g. beta=0.25,collude=true (splits one grid over many jobs)")
     a = p.parse_args(argv)
-    cfg = yaml.safe_load(open(a.config)); out = f"{RTE_DATA}/results/{a.grid}"; rows_dir = f"{out}/rows.d"
+    cfg = load_config(a.config); out = f"{RTE_DATA}/results/{a.grid}"; rows_dir = f"{out}/rows.d"
     have = {f[:-5] for f in os.listdir(rows_dir)} if os.path.isdir(rows_dir) else set()
     if os.path.exists(f"{out}/rows.csv"):        # rows merged into the CSV and pruned from rows.d are still DONE
         try:

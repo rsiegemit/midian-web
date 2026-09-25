@@ -1,0 +1,252 @@
+# bernoulli (calibrated to the measured live S) and RouterBench replay: scale and budget sweeps
+grids:
+  # ---- replay twins of the live F1 sweep (RouterBench real outcomes, K=64 real categories): every algorithmic rival,
+  # CPU only
+  # [NUM] replay twin (RouterBench outcomes, K = 64) on live_f1_n1000; read by: extra_figs
+  replay_mirror_live_f1_n1000:
+    mirror_of: live_f1_n1000
+    backend: replay
+    K: [64]
+    seeds: 1-10
+    Q: 2000
+    declared_source: [programmatic]
+
+  # ---- scale (F2/F3): replay 1e4-1e6 (real outcomes), bernoulli 1e2-1e7 calibrated to the measured S
+  # [NUM] replay n = 10^4..10^6 cost scaling (published exponents); read by: analyze
+  replay_scale:
+    backend: replay
+    K: [64]
+    dist: [specialist, heavy_tail, bimodal]
+    beta: [0.25]
+    seeds: 1-3
+    exclude: [trueskill_per_family]
+    blocks: [{n: [10000, 100000]}, {n: [1000000], b: [1]}]
+    methods: {set: all_arms}
+
+  # cheap multi-n twin of bernoulli_scale: exercises F2/F3/F3b and the cost-exponent fits on CPU
+  # in minutes, so the message-accounting figures are verified before the fleet is up.
+
+  # [HIST] control: b in {1, 3} at n = 10^5 / 10^6; read by: none
+  bernoulli_b_probe:                # CONTROL for the v5 b=1 rungs (2026-09-11): same n, b in {1, 3}. If the 10^6/10^7
+                                    # drop of the probe arms is the budget and not the scale, it must reproduce at 10^5.
+    K: [16]
+    dist: [specialist]
+    beta: [0.5]
+    liar_select: [low_skill_first]
+    methods: {set: scale_arms}
+    backend_kwargs: {calibrate_from: $RTE_DATA/populations/specialist_n1000_K16_seed1/S.npy}
+    blocks:
+      - {n: [100000], b: [1, 3], seeds: "1-5"}      # same n, both budgets: isolates b
+      - {n: [1000000], b: [3], seeds: "1-2"}        # the v5 rung at b=3: does MIDIAN recover?
+
+  # The probe-budget axis (2026-09-11): b in {1, 2, 3, 5, 10} at n = 10^3..10^5, five liar
+  # regimes, every scale arm (the withdrawn halving variants were excluded: their schedule
+  # is unfundable at small b). Motivated by bernoulli_b_probe: at b=1 verification gets
+  # zero probes (w/o audits == w/o defenses, MIDIAN == w/o verification), so the sweep
+  # should show w/o audits / MIDIAN
+  # switching on at b=2 and every probe arm improving with b while declaration arms stay flat.
+  # 20, 30 added 2026-09-14 (same cells/seeds; MIDIAN was still climbing at b=10)
+  # fill_arms added 2026-09-17 (COVERAGE.md §7)
+  # [NUM] probe-budget axis b = 1..30 at n = 10^3..10^5; read by: paper_figs, paper_numbers
+  bernoulli_b_sweep:
+    K: [16]
+    dist: [specialist]
+    b: [1, 2, 3, 5, 10, 20, 30]
+    methods: [{set: scale_arms}, {set: fill_arms}]
+    exclude: []
+    backend_kwargs: {calibrate_from: $RTE_DATA/populations/specialist_n1000_K16_seed1/S.npy}
+    blocks:
+      - {n: [1000, 10000], seeds: 1-1000, beta: [0], liar_select: [random]}
+      - {n: [1000, 10000], seeds: 1-1000, beta: [0.25, 0.5], liar_select: [random, low_skill_first]}
+      - {n: [100000], seeds: 1-200, beta: [0], liar_select: [random], exclude: [trueskill_per_family]}
+      - n: [100000]
+        seeds: 1-200
+        beta: [0.25, 0.5]
+        liar_select: [random, low_skill_first]
+        exclude: [trueskill_per_family]
+
+  # ---- v5 many-seed scale sweeps (2026-09-10). SEPARATE grids, not edits to the two above: the published cost
+  # exponents (MIDIAN n^0.112 [0.106, 0.118], flat n^1.000) are fits over exactly those rows, and adding cells would
+  # silently move a quoted number. These add (a) the full arm set, (b) 20 seeds instead of 3, and (c) the LIAR axis --
+  # bernoulli_scale/replay_scale are beta = 0.25 with RANDOM liars only, which is why RESULTS II.4d cannot say whether
+  # declared_argmax's win at 10^6-10^7 survives a cartel. That is the question these exist to answer.
+  # Seed ladder sized to the MEASURED across-seed std, which GROWS with n (0.005-0.03 at 10^4, 0.03-0.06 at 10^6):
+  # seeds are worth most exactly where they cost most. 1000 seeds up to 10^4 is nearly free; 100 at 10^7 is the
+  # difference between one observation and a real interval. b = 1 above 10^5 as in bernoulli_scale, for comparability.
+  # FIVE regimes, not six: beta = 0 has no liars, so its two liar-selection cells are bit-identical (verified:
+  # max |difference| = 0 over 690 cells). Each n-rung is therefore two blocks, honest-only and liar-only.
+  # b = [1, 3] at the top two rungs (2026-09-11): b=1 was inherited from bernoulli_scale and starves verification
+  # (midian.py: e = (b - b0) n / C = 0 at b=1, so w/o audits == w/o defenses and MIDIAN == w/o verification). The b=1
+  # rows stay as the documented
+  # control; b=3 is the row that belongs in the table with the rungs below.
+  # [FIG:B,C] many-seed calibrated bernoulli n = 10..10^7, five liar regimes; read by: bar_figs, condensed_figs +6
+  bernoulli_scale_v5:
+    K: [16]
+    dist: [specialist]
+    methods: [{set: scale_arms}, {set: fill_arms}]
+    backend_kwargs: {calibrate_from: $RTE_DATA/populations/specialist_n1000_K16_seed1/S.npy}
+    blocks:
+      - {n: [10, 100, 1000, 10000], seeds: 1-1000, beta: [0], liar_select: [random]}
+      - {n: [10, 100, 1000, 10000], seeds: 1-1000, beta: [0.25, 0.5], liar_select: [random, low_skill_first]}
+      - {n: [100000], seeds: 1-500, beta: [0], liar_select: [random], exclude: [trueskill_per_family]}
+      - n: [100000]
+        seeds: 1-500
+        beta: [0.25, 0.5]
+        liar_select: [random, low_skill_first]
+        exclude: [trueskill_per_family]
+      - {n: [1000000], b: [1, 3], seeds: 1-200, beta: [0], liar_select: [random], exclude: [trueskill_per_family]}
+      - n: [1000000]
+        b: [1, 3]
+        seeds: 1-200
+        beta: [0.25, 0.5]
+        liar_select: [random, low_skill_first]
+        exclude: [trueskill_per_family]
+      - n: [10000000]
+        b: [1, 3]
+        seeds: 1-100
+        beta: [0]
+        liar_select: [random]
+        exclude: [trueskill_per_family, referral_network, gossip_reputation_greedy]
+      - n: [10000000]
+        b: [1, 3]
+        seeds: 1-100
+        beta: [0.25, 0.5]
+        liar_select: [random, low_skill_first]
+        exclude: [trueskill_per_family, referral_network, gossip_reputation_greedy]
+
+  # b = [1, 3] at 10^6 (2026-09-11), same reason as bernoulli_scale_v5: b=1 gives verification zero probes.
+  # [NUM] many-seed replay n = 10..10^6, five liar regimes; read by: bar_figs, condensed_figs, paired_gaps +3
+  replay_scale_v5:
+    backend: replay
+    K: [64]
+    dist: [specialist, heavy_tail, bimodal]
+    methods: [{set: scale_arms}, {set: fill_arms}]
+    blocks:
+      - {n: [10, 100, 1000, 10000], seeds: 1-1000, beta: [0], liar_select: [random]}
+      - {n: [10, 100, 1000, 10000], seeds: 1-1000, beta: [0.25, 0.5], liar_select: [random, low_skill_first]}
+      - {n: [100000], seeds: 1-200, beta: [0], liar_select: [random], exclude: [trueskill_per_family]}
+      - n: [100000]
+        seeds: 1-200
+        beta: [0.25, 0.5]
+        liar_select: [random, low_skill_first]
+        exclude: [trueskill_per_family]
+      - {n: [1000000], b: [1, 3], seeds: 1-100, beta: [0], liar_select: [random], exclude: [trueskill_per_family]}
+      - n: [1000000]
+        b: [1, 3]
+        seeds: 1-100
+        beta: [0.25, 0.5]
+        liar_select: [random, low_skill_first]
+        exclude: [trueskill_per_family]
+
+  # [NUM] calibrated bernoulli n = 10^2..10^7 (published cost exponents); read by: extra_figs, paper_numbers
+  bernoulli_scale:                         # K=16: it is calibrated to the MEASURED live S, which has 16 families
+    K: [16]
+    dist: [specialist]
+    beta: [0.25]
+    seeds: 1-3
+    methods: [{set: cost_curve}, {name: midian, params: {verify: false}}, midian]
+    backend_kwargs: {calibrate_from: $RTE_DATA/populations/specialist_n1000_K16_seed1/S.npy}
+    blocks: [{n: [100, 1000, 10000, 100000]}, {n: [1000000], b: [1]}, {n: [10000000], b: [1], seeds: 1}]
+
+  # [NUM] MIDIAN variants + rivals on calibrated bernoulli n = 10^4 / 10^5; read by: paper_numbers, v3_figs
+  # every MIDIAN variant + self-contained rivals at n = 10k and 100k on the calibrated bernoulli backend (no LLM calls;
+  # frameworks n/a)
+  scale_100k:
+    backend: bernoulli
+    backend_kwargs: {calibrate_from: "$RTE_DATA/populations/specialist_n1000_K16_seed1/S.npy"}
+    n: [10000, 100000]
+    K: [16]
+    dist: [specialist, heavy_tail, bimodal]
+    beta: [0, 0.25, 0.5]
+    liar_select: [random, low_skill_first]
+    declared_source: [programmatic]
+    b: [3]
+    seeds: "1-3"
+    Q: 1000
+    methods:
+      - {name: midian, params: {audit: false, verify: false}}
+      - {name: midian, params: {audit: false}}
+      - {name: midian, params: {verify: false}}
+      - midian
+      - flat_probe_argmax
+      - {name: flat_probe_argmax, params: {online: true}}
+      - sequential_halving
+      - {name: sequential_halving, params: {peer_reported: true}}
+      - warm_start_bandit
+      - linucb_honest
+      - declared_argmax
+      - random
+
+  # b = 1 already in bernoulli_scale_v5
+  # [FIG:B,D] MIDIAN at b = 1 / 5 on bernoulli_scale_v5; read by: efficiency_figs, seed_tables
+  va_b_bernoulli_1e7:
+    mirror_of: bernoulli_scale_v5
+    methods: [midian]
+    blocks: [{n: [10000000], b: [5], seeds: 1-100, beta: [0, 0.5], liar_select: [low_skill_first]}]
+
+  # b = 1 already in replay_scale_v5
+  # [NUM | SUPERSEDED-BY:replay_1e6_split_cal] MIDIAN at b = 1 / 5 on replay_scale_v5; read by: seed_tables
+  va_b_replay_1e6:
+    mirror_of: replay_scale_v5
+    methods: [midian]
+    blocks: [{n: [1000000], b: [5], seeds: 1-100, beta: [0, 0.5], liar_select: [low_skill_first]}]
+
+  # [FIG:B] rivals at b = 1 / 5 on va_b_bernoulli_1e7; read by: seed_tables
+  rivals_b_bernoulli_1e7:
+    mirror_of: va_b_bernoulli_1e7
+    methods:
+      - {name: midian, params: {audit: false, verify: false}}
+      - {name: flat_probe_argmax, params: {online: true}}
+      - {name: flat_nsw_router, params: {}}
+      - {name: ucb_per_family, params: {}}
+      - {name: thompson_per_family, params: {}}
+      - {name: warm_start_bandit, params: {}}
+      - {name: cluster_head_router, params: {}}
+      - {name: linucb_honest, params: {}}
+      - {name: disrouter_cascade, params: {}}
+
+  # [NUM | SUPERSEDED-BY:replay_1e6_split_cal] rivals at b = 1 / 5 on va_b_replay_1e6; read by: seed_tables
+  rivals_b_replay_1e6:
+    mirror_of: va_b_replay_1e6
+    methods:
+      - {name: midian, params: {audit: false, verify: false}}
+      - {name: flat_probe_argmax, params: {online: true}}
+      - {name: flat_nsw_router, params: {}}
+      - {name: ucb_per_family, params: {}}
+      - {name: thompson_per_family, params: {}}
+      - {name: warm_start_bandit, params: {}}
+      - {name: cluster_head_router, params: {}}
+      - {name: linucb_honest, params: {}}
+      - {name: disrouter_cascade, params: {}}
+
+  # [FIG:B] pool fill on bernoulli_scale_v5; read by: seed_tables
+  pool_fill_bernoulli_1e7:
+    mirror_of: bernoulli_scale_v5
+    methods: [{name: warm_start_bandit, params: {n0: 0.5}}]
+    blocks:
+      - n: [10000000]
+        b: [1]
+        seeds: 1-100
+        beta: [0, 0.5]
+        liar_select: [low_skill_first]
+        methods: [disrouter_cascade, linucb_honest, {name: warm_start_bandit, params: {n0: 0.5}}]
+      - {n: [10000000], b: [3, 5], seeds: 1-100, beta: [0, 0.5], liar_select: [low_skill_first]}
+
+  # [NUM | SUPERSEDED-BY:replay_1e6_split_cal] pool fill on replay_scale_v5; read by: seed_tables
+  pool_fill_replay_1e6:
+    mirror_of: replay_scale_v5
+    methods: [{name: warm_start_bandit, params: {n0: 0.5}}]
+    blocks:
+      - n: [1000000]
+        b: [1]
+        seeds: 1-100
+        beta: [0, 0.5]
+        liar_select: [low_skill_first]
+        methods: [disrouter_cascade, linucb_honest, {name: warm_start_bandit, params: {n0: 0.5}}]
+      - {n: [1000000], b: [3, 5], seeds: 1-100, beta: [0, 0.5], liar_select: [low_skill_first]}
+
+  # [FIG:B] LinUCB bonus=own, b = 1/3/5 on bernoulli_scale_v5; read by: seed_tables
+  linucb_fix_bernoulli_1e7:
+    mirror_of: bernoulli_scale_v5
+    methods: [{name: linucb_honest, params: {bonus: own}}]
+    blocks: [{n: [10000000], b: [1, 3, 5], seeds: 1-100, beta: [0, 0.5], liar_select: [low_skill_first]}]

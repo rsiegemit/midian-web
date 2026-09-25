@@ -1,0 +1,244 @@
+# erratum-30 reruns: calibrated claims, replay probe/task split, no repeated test prompts
+grids:
+  # ---- 2026-09-23 ERRATUM 30 reruns (defined, NOT launched). Three opt-in fixes, each a new cell value, so no existing
+  # row id moves:
+  # declared_source: calibrated  -- realistic declarations on the non-live backends (live self-rating pattern,
+  # rte/backends/__init__.py
+  # CAL_P, fitted by scripts/fit_declared_calibration.py) instead of clip(S + N(0, .05)), an answer key;
+  # backend_kwargs split: true   -- replay: probes and S on 70 % of each category's prompts, routed tasks on the other
+  # 30 %;
+  # backend_kwargs no_repeat: true -- RouterEval / LLMRouterBench: each (family, test prompt) at most once per stream,
+  # uniform demand
+  # until the smallest family runs out; Q = 300 everywhere (on average the last 0.8-0.9 % of the stream
+  #                                   misses one family; Q > the pool raises).
+  # Arms = B's (scripts/condensed_figs.py ARMS + LEARNED / BANDIT pools with linucb_honest[bonus=own] and
+  # warm_start_bandit[n0=0.5],
+  # minus NOT_RUNNABLE). Probing arms and the declared-only pool members run at b = 1 / 3 / 5 (every b needs the whole
+  # pool);
+  # declared_argmax and random (BUDGETLESS) at b = 3 only, in the same b = 3 unit (nested method lists flatten). beta =
+  # 0 and the beta = 0.5 low-skill cartel, as the va_b_* grids.
+  # shuffle: true (every RouterEval / LLMRouterBench grid here) = a per-seed agent order: the stored pools run weak ->
+  # strong,
+  # so lowest-index tie-breaks among the many tied calibrated claims picked the weakest agent (erratum 30).
+  # (a) calibrated claims, claim-reading arms only: world, liars, stream and probes do not depend on declared_source, so
+  # every other
+  # arm's rows are the existing programmatic rows (bit-identical by construction).
+  # [FIG:B] erratum 30: claim-reading arms on calibrated claims, n = 10^7; read by: seed_tables
+  bernoulli_1e7_cal:
+    mirror_of: bernoulli_scale_v5
+    declared_source: [calibrated]
+    methods: {set: cal_arms}
+    blocks:
+      - {n: [10000000], b: [1, 5], seeds: 1-100, beta: [0, 0.5], liar_select: [low_skill_first]}
+      - n: [10000000]
+        b: [3]
+        seeds: 1-100
+        beta: [0, 0.5]
+        liar_select: [low_skill_first]
+        methods: [{set: cal_arms}, declared_argmax]
+
+  # (b) replay 10^6 with split rows AND calibrated claims, every arm B draws there (trueskill: NotImplemented at >=
+  # 10^5; knn / mlp:
+  # no prompt text). 30 seeds, not the 100 of replay_scale_v5 / va_b_replay_1e6, for time.
+  # [FIG:B] erratum 30: replay 10^6 with probe/task split + calibrated claims; read by: seed_tables
+  replay_1e6_split_cal:
+    mirror_of: replay_scale_v5
+    declared_source: [calibrated]
+    backend_kwargs: {split: true}
+    methods: {set: replay_arms}
+    blocks:
+      - {n: [1000000], b: [1, 5], seeds: 1-30, beta: [0, 0.5], liar_select: [low_skill_first]}
+      - n: [1000000]
+        b: [3]
+        seeds: 1-30
+        beta: [0, 0.5]
+        liar_select: [low_skill_first]
+        methods: [{set: replay_arms}, declared_argmax, random]
+
+  # (c) no repeated test prompts + calibrated claims: B's RouterEval-5k and LLMRouterBench cells (every arm B draws),
+  # H's mmlu
+  # strong-to-weak m = 10 / 100 / 1,000 reference line (MIDIAN; the oracle row comes with every unit).
+  # [FIG:B,H] erratum 30: RouterEval 5k, no repeated prompts, calibrated claims; read by: seed_tables, shortlist_figs
+  routereval5k_norep_cal:
+    mirror_of: va_b_routereval5k
+    backend_kwargs: {dataset: leaderboard_mmlu, no_repeat: true, shuffle: true}
+    declared_source: [calibrated]
+    Q: 300
+    methods: {set: re5k_arms}
+    blocks: [{b: [1, 5]}, {b: [3], methods: [{set: re5k_arms}, declared_argmax, random]}]
+
+  # [FIG:B] erratum 30: LLMRouterBench, no repeated prompts, calibrated claims; read by: seed_tables
+  llmrouterbench_norep_cal:
+    mirror_of: va_b_llmrouterbench
+    backend_kwargs: {dataset: llmrouterbench, no_repeat: true, shuffle: true}
+    declared_source: [calibrated]
+    Q: 300
+    methods: {set: lrb_arms}
+    blocks: [{b: [1, 5]}, {b: [3], methods: [{set: lrb_arms}, declared_argmax, random]}]
+
+  # (d) the five rivals run but not drawn (Appendix B "run but not drawn"), on B's erratum-30 cells at b = 3: their
+  # older
+  # bernoulli / replay rows used programmatic (answer-key) claims. The oracle row comes with every unit.
+  # [HIST] five undrawn rivals, calibrated claims on bernoulli_scale_v5; read by: none
+  rivals5_bernoulli_1e7_cal:
+    mirror_of: bernoulli_scale_v5
+    declared_source: [calibrated]
+    methods: {set: rivals5}
+    blocks: [{n: [10000000], b: [3], seeds: "1-100", beta: [0, 0.5], liar_select: [low_skill_first]}]
+
+  # [HIST] five undrawn rivals, calibrated claims on replay_scale_v5; read by: none
+  rivals5_replay_1e6_split_cal:
+    mirror_of: replay_scale_v5
+    declared_source: [calibrated]
+    backend_kwargs: {split: true}
+    methods: {set: rivals5}
+    blocks: [{n: [1000000], b: [3], seeds: "1-30", beta: [0, 0.5], liar_select: [low_skill_first]}]
+
+  # [HIST] erratum-30 rerun (no repeats, calibrated, shuffled) of va_b_routereval5k; read by: none
+  rivals5_routereval5k_norep_cal:
+    mirror_of: va_b_routereval5k
+    backend_kwargs: {dataset: leaderboard_mmlu, no_repeat: true, shuffle: true}
+    declared_source: [calibrated]
+    Q: 300
+    methods: {set: rivals5}
+    blocks: [{b: [3]}]
+
+  # [HIST] erratum-30 rerun (no repeats, calibrated, shuffled) of va_b_llmrouterbench; read by: none
+  rivals5_llmrouterbench_norep_cal:
+    mirror_of: va_b_llmrouterbench
+    backend_kwargs: {dataset: llmrouterbench, no_repeat: true, shuffle: true}
+    declared_source: [calibrated]
+    Q: 300
+    methods: {set: rivals5}
+    blocks: [{b: [3]}]
+
+  # random: H's random reference line at every m
+  # [FIG:H] erratum 30: H's reference lines (MIDIAN, random) at m = 10..10^3; read by: shortlist_figs
+  routereval_mmlu_norep_cal:
+    mirror_of: routereval_mmlu
+    backend_kwargs: {dataset: mmlu, no_repeat: true, shuffle: true}
+    declared_source: [calibrated]
+    Q: 300
+    dist: [strong_to_weak]
+    beta: [0, 0.5]
+    liar_select: [low_skill_first]
+    methods: [midian, random]
+
+  # OPTIONAL (expensive: one supervisor-LLM call per task on the fleet): H's framework slots on the same no-repeat +
+  # calibrated cells
+  # (the frameworks read the rendered declaration vector, so both fixes apply). Mirrors keep each source grid's arms and
+  # seeds.
+  # [FIG:H] erratum-30 rerun (no repeats, calibrated, shuffled) of fw_routereval_small; read by: shortlist_figs
+  fw_routereval_small_norep_cal:
+    mirror_of: fw_routereval_small
+    backend_kwargs: {dataset: mmlu, no_repeat: true, shuffle: true}
+    declared_source: [calibrated]
+    Q: 300
+    dist: [strong_to_weak]
+    liar_select: [low_skill_first]
+
+  # [FIG:H] erratum-30 rerun (no repeats, calibrated, shuffled) of fw_routereval_1k; read by: shortlist_figs
+  fw_routereval_1k_norep_cal:
+    mirror_of: fw_routereval_1k
+    backend_kwargs: {dataset: mmlu, no_repeat: true, shuffle: true}
+    declared_source: [calibrated]
+    Q: 300
+    dist: [strong_to_weak]
+    liar_select: [low_skill_first]
+
+  # [FIG:H] erratum-30 rerun (no repeats, calibrated, shuffled) of fw_routereval_5k; read by: shortlist_figs
+  fw_routereval_5k_norep_cal:
+    mirror_of: fw_routereval_5k
+    backend_kwargs: {dataset: leaderboard_mmlu, no_repeat: true, shuffle: true}
+    declared_source: [calibrated]
+    liar_select: [low_skill_first]
+
+  # [FIG:H] erratum-30 rerun (no repeats, calibrated, shuffled) of fw_routereval_small_em; read by: shortlist_figs
+  fw_routereval_small_em_norep_cal:
+    mirror_of: fw_routereval_small_em
+    backend_kwargs: {dataset: mmlu, no_repeat: true, shuffle: true}
+    declared_source: [calibrated]
+    Q: 300
+    dist: [strong_to_weak]
+    liar_select: [low_skill_first]
+
+  # [FIG:H] erratum-30 rerun (no repeats, calibrated, shuffled) of fw_routereval_1k_em; read by: shortlist_figs
+  fw_routereval_1k_em_norep_cal:
+    mirror_of: fw_routereval_1k_em
+    backend_kwargs: {dataset: mmlu, no_repeat: true, shuffle: true}
+    declared_source: [calibrated]
+    Q: 300
+    dist: [strong_to_weak]
+    liar_select: [low_skill_first]
+
+  # [FIG:H] erratum-30 rerun (no repeats, calibrated, shuffled) of fw_routereval_5k_em; read by: shortlist_figs
+  fw_routereval_5k_em_norep_cal:
+    mirror_of: fw_routereval_5k_em
+    backend_kwargs: {dataset: leaderboard_mmlu, no_repeat: true, shuffle: true}
+    declared_source: [calibrated]
+    liar_select: [low_skill_first]
+
+  # [FIG:H] erratum-30 rerun (no repeats, calibrated, shuffled) of fw_routereval_small_va; read by: shortlist_figs
+  fw_routereval_small_va_norep_cal:
+    mirror_of: fw_routereval_small_va
+    backend_kwargs: {dataset: mmlu, no_repeat: true, shuffle: true}
+    declared_source: [calibrated]
+    Q: 300
+    dist: [strong_to_weak]
+    liar_select: [low_skill_first]
+
+  # [FIG:H] erratum-30 rerun (no repeats, calibrated, shuffled) of fw_routereval_1k_va; read by: shortlist_figs
+  fw_routereval_1k_va_norep_cal:
+    mirror_of: fw_routereval_1k_va
+    backend_kwargs: {dataset: mmlu, no_repeat: true, shuffle: true}
+    declared_source: [calibrated]
+    Q: 300
+    dist: [strong_to_weak]
+    liar_select: [low_skill_first]
+
+  # [FIG:H] erratum-30 rerun (no repeats, calibrated, shuffled) of fw_routereval_5k_va; read by: shortlist_figs
+  fw_routereval_5k_va_norep_cal:
+    mirror_of: fw_routereval_5k_va
+    backend_kwargs: {dataset: leaderboard_mmlu, no_repeat: true, shuffle: true}
+    declared_source: [calibrated]
+    liar_select: [low_skill_first]
+
+  # [FIG:H] erratum-30 rerun (no repeats, calibrated, shuffled) of re_sl_declared_small; read by: shortlist_figs
+  re_sl_declared_small_norep_cal:
+    mirror_of: re_sl_declared_small
+    backend_kwargs: {dataset: mmlu, no_repeat: true, shuffle: true}
+    declared_source: [calibrated]
+    Q: 300
+
+  # [FIG:H] erratum-30 rerun (no repeats, calibrated, shuffled) of re_sl_declared_1k; read by: shortlist_figs
+  re_sl_declared_1k_norep_cal:
+    mirror_of: re_sl_declared_1k
+    backend_kwargs: {dataset: mmlu, no_repeat: true, shuffle: true}
+    declared_source: [calibrated]
+    Q: 300
+
+  # [FIG:H] erratum-30 rerun (no repeats, calibrated, shuffled) of re_sl_declared_5k; read by: shortlist_figs
+  re_sl_declared_5k_norep_cal:
+    mirror_of: re_sl_declared_5k
+    backend_kwargs: {dataset: leaderboard_mmlu, no_repeat: true, shuffle: true}
+    declared_source: [calibrated]
+
+  # [FIG:H] erratum-30 rerun (no repeats, calibrated, shuffled) of re_sl_embed_small; read by: shortlist_figs
+  re_sl_embed_small_norep_cal:
+    mirror_of: re_sl_embed_small
+    backend_kwargs: {dataset: mmlu, no_repeat: true, shuffle: true}
+    declared_source: [calibrated]
+    Q: 300
+
+  # [FIG:H] erratum-30 rerun (no repeats, calibrated, shuffled) of re_sl_embed_1k; read by: shortlist_figs
+  re_sl_embed_1k_norep_cal:
+    mirror_of: re_sl_embed_1k
+    backend_kwargs: {dataset: mmlu, no_repeat: true, shuffle: true}
+    declared_source: [calibrated]
+    Q: 300
+
+  # [FIG:H] erratum-30 rerun (no repeats, calibrated, shuffled) of re_sl_embed_5k; read by: shortlist_figs
+  re_sl_embed_5k_norep_cal:
+    mirror_of: re_sl_embed_5k
+    backend_kwargs: {dataset: leaderboard_mmlu, no_repeat: true, shuffle: true}
+    declared_source: [calibrated]
