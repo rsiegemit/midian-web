@@ -4,7 +4,7 @@ These files are kept **verbatim** as the record of what was specified, pre-regis
 when. They are not maintained. The current documentation is in [`docs/`](..) and the current numbers are the figure
 CSVs in `figures/paper/` <!-- VERIFY-PATH -->. The only edits made when these files were archived replace cluster account,
 partition and host names and absolute user paths with placeholders (`<cpu-partition>`, `<gpu-account>`, `$RTE_DATA`, ...);
-nothing else was changed. Apart from the pre-registration files (below), each file is the copy at tag
+nothing else was changed (the pre-registration files needed no such edit). Apart from those, each file is the copy at tag
 `submission-2026-09-24`, including the one-line names note it received on that date.
 
 > **Names.** Nearly every file here predates the 2026-09-24 rename. In them, **MIDIAN-VA** is today's **MIDIAN**; plain
@@ -14,16 +14,34 @@ nothing else was changed. Apart from the pre-registration files (below), each fi
 
 ## Pre-registration (`preregistration/`)
 
-Each file is restored byte for byte from the last commit that touched it before the rename (so the rename notes that
-were later added to the working copies are absent). Every amendment after the first commit is dated in the text and
-states that it was written before the runs it pre-registers. `git show <commit>:<file>` reproduces each one.
+`TARGETS_*.md` is each file **as registered**: byte for byte the version of its first commit. Where the file was
+changed before the rename, the last pre-rename version is shipped beside it as `TARGETS_*.amended.md`, byte for byte
+from that commit. Registered text and amendments are never merged into one file. Every amendment only appended text
+(no registered line was changed or deleted: 0 deleted lines in each commit's diff), and each dates itself in the
+text. `git show <commit>:TARGETS_rte*.md` reproduces any version; the rename notes later added to the working copies
+are in none of them.
 
-| file | first committed | restored from (last pre-rename commit) | what it is |
+| file | registered (first commit) | blob | first results of that phase |
 |---|---|---|---|
-| `TARGETS_rte.md` | 2026-09-02, `daa4a9a` | `daa4a9a` (blob `d578ed4`) | the six phase-1 expectations, committed before any run |
-| `TARGETS_rte_v2.md` | 2026-09-02, `625f8a3` | `edbc078` (blob `d49b5c2`; adds V2-11, dated 2026-09-03 15:00, before any run) | the eleven v2 expectations (labeled variants, churn, budget) |
-| `TARGETS_rte_v3.md` | 2026-09-03, `f3b90b5` | `35a8017` (blob `a19a4df`; parts C-F added 2026-09-03 / 04, each before its launch) | the twenty-four v3 expectations: external routers on their own terms, scale |
-| `TARGETS_rte_v4.md` | 2026-09-08, `8ed4f47` | `8ed4f47` (blob `47282b9`) | v4: non-random MIDIAN cohorts (block / specialty / declared) |
+| `TARGETS_rte.md` | `daa4a9a`, 2026-09-02 01:56 | `d578ed4` | `RESULTS_rte.md`, `4901c13`, 2026-09-02 20:44 |
+| `TARGETS_rte_v2.md` | `625f8a3`, 2026-09-02 23:22 | `f77e70e` | `RESULTS_rte_v2.md`, `3d901c2`, 2026-09-03 00:21 (numbers for closed grids `c16ed61`, 13:34) |
+| `TARGETS_rte_v3.md` | `f3b90b5`, 2026-09-03 17:38 | `437aeae` | `RESULTS_rte_v3.md`, `1759270`, 2026-09-03 18:24 (T3-1 to T3-3) |
+| `TARGETS_rte_v4.md` | `8ed4f47`, 2026-09-08 00:27 | `47282b9` | `RESULTS_rte_v4.md`, `85dab5a`, 2026-09-08 11:39 |
+
+`TARGETS_rte.md` and `TARGETS_rte_v4.md` were never amended. The amendments (times US Eastern; **after results** = the
+phase already had results in the repository when the amendment was committed):
+
+| file | commit | date | lines | what it added | after results? |
+|---|---|---|---|---|---|
+| `TARGETS_rte_v2.amended.md` (blob `d49b5c2`) | `edbc078` | 2026-09-03 14:35 | +5 | V2-11, the three expectations for MIDIAN-VA (today's MIDIAN), stated as written before any MIDIAN-VA run | **yes**: v2 results for other targets existed (`3d901c2`, `c16ed61`) |
+| `TARGETS_rte_v3.amended.md` (blob `a19a4df`) | `58e052c` | 2026-09-03 18:03 | +28 | part C: RouterBench's kNN / MLP routers as methods on our terms, T3-6 to T3-10, with speeds measured before launch | no |
+| | `6d95947` | 2026-09-03 18:50 | +29 | part D: RouterEval on its own terms (pools of 10 / 100 / 1,000 LLMs), T3-11 to T3-16 | **yes**: T3-1 to T3-3 results existed (`1759270`); part D had not run |
+| | `e7a0f77` | 2026-09-03 20:32 | +11 | D2: RouterEval's 5,000-LLM leaderboard pool, T3-17, with the numbers of one smoke seed of that grid written into the text | **yes**: committed together with the part-D1 results (T3-11 to T3-13 verdicts), and after a smoke run of its own grid |
+| | `185df61` | 2026-09-04 02:28 | +13 | part E: MIDIAN-VA added to every grid, scale to 10^4 / 10^5, T3-18 to T3-21 | **yes**: v3 parts A-D results existed |
+| | `35a8017` | 2026-09-04 02:37 | +14 | part F: LLMRouterBench on its own terms, T3-22 to T3-24 | **yes**: v3 parts A-D results existed; part F had not run |
+
+Intermediate versions: v3 after `58e052c` is blob `85cda71`, after `6d95947` `b077ab0`, after `e7a0f77` `02b22e5`; after
+`185df61` it is `git show 185df61:TARGETS_rte_v3.md`.
 
 ## Specification, deviations, errata
 
