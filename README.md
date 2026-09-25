@@ -66,7 +66,7 @@ redistributed here (see [NOTICE](NOTICE)); download scripts are in `scripts/data
 | routereval | RouterEval (Huang et al., 2025) pools of 10 to 5,000 LLMs; LLMRouterBench (Li et al., 2026) | `data/routereval/router_dataset/` |
 | llm (live) | Reasoning Gym task families; Qwen2.5 0.5B-14B and Gemma-2 2B/9B weights | `hf_cache/`, `populations/` |
 
-The stored result rows behind the paper (4.5 M method rows over 197 grids) are not part of the repository; the figure
+The stored result rows behind the paper (4.5 M method rows over 200 grids) are not part of the repository; the figure
 inputs are, as aggregate CSVs (see [Reproducing the paper](#reproducing-the-paper)).
 
 ## Quickstart
@@ -74,7 +74,7 @@ inputs are, as aggregate CSVs (see [Reproducing the paper](#reproducing-the-pape
 On a laptop CPU, in about a minute (no data files, no GPU):
 
 ```bash
-pytest -q                                          # ~400 tests, ~2 min (slow and fleet tests deselected)
+pytest -q                                          # ~470 tests, ~2 min (slow and fleet tests deselected)
 python -m rte.run --grid reviewer_bernoulli        # MIDIAN, its three ablations and four rivals, honest and cartel: 180 rows, ~15 s
 python -m rte.analyze --grid reviewer_bernoulli    # tables, paired deltas, cost exponents -> summary.md, ~15 s
 ```

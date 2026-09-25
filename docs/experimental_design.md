@@ -135,7 +135,7 @@ count and row-id hash; `tests/test_golden_fingerprints.py` fails if a configurat
 
 ### Catalogue
 
-197 grids, 183,793 units and 4,520,534 method rows in the golden fingerprint file, plus `reviewer_bernoulli`. Each grid is counted once, in the
+197 grids, 183,793 units and 4,520,534 method rows in the golden fingerprint file, plus `reviewer_bernoulli`, `vc_live_n1000` and `vc_lie_max_n1000` (200 grids in all). Each grid is counted once, in the
 first family it matches:
 
 | family | grids | what they are |
