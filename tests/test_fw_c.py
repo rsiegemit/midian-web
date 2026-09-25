@@ -1,4 +1,4 @@
-"""Frameworks-C rivals (smolagents, CAMEL, MetaGPT, AgentScope) driven through their own venvs against
+"""Frameworks-C rivals (smolagents, CAMEL, AgentScope) driven through their own venvs against
 scripts/mock_openai_server.py: no GPU, no vLLM. A framework whose venv is missing is skipped, not failed."""
 from __future__ import annotations
 
@@ -19,7 +19,7 @@ RTE_DATA = os.environ.get("RTE_DATA", "/scratch/rte")
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _picks = lambda st: {k: st[k] for k in ("picks", "fallbacks", "bad_name")}
 FRAMEWORKS = {"fw_smolagents": "fw_smolagents", "fw_camel_workforce": "fw_camel",
-              "fw_metagpt": "fw_metagpt", "fw_agentscope": "fw_agentscope"}
+              "fw_agentscope": "fw_agentscope"}
 N_TASKS = 20
 
 
