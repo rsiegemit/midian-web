@@ -1,13 +1,13 @@
 """The world: agents, tasks, true skill S, declared skill D, probes, reports.
 
-One `World`, three backends (rte.backends.{bernoulli,replay,llm}). A backend
+One `World`, four backends (rte.backends.{bernoulli,replay,routereval,llm}). A backend
 supplies: n, K, family names, true skill S[n,K], honest declared skill D,
 task instances, and `execute(agent, task) -> 0/1`. The World layers on top:
 liar selection, the lying model (`apply_lying`), the report channel, the
 ledger, the paired task stream, and the access-controlled `View` that methods
 see. Methods NEVER see S or the liar set.
 
-Churn (v2): `World.churn(frac)` replaces round(frac*n) random agents IN PLACE (same ids, n unchanged): the backend
+Churn: `World.churn(frac)` replaces round(frac*n) random agents IN PLACE (same ids, n unchanged): the backend
 redraws their profiles (llm: new ladder signature + fresh self-description; bernoulli/replay: new skill row / model),
 liars are redrawn at rate beta, declarations recomputed, probe indices reset. Draws are seeded
 by the event index, so every method sees the same churn sequence, and `reset()` restores the initial population.
@@ -295,7 +295,7 @@ class World:
         return [Task(i, int(f), int(stable_seed_32(self.seed, "inst", i, int(f)))) for i, f in enumerate(fams)]
 
     def _tasks_no_repeat(self, Q: int, rng) -> list[Task]:
-        """Each (family, test prompt) at most once (erratum 30): families are drawn by the demand vector renormalised over
+        """Each (family, test prompt) at most once (docs/errata.md): families are drawn by the demand vector renormalised over
         the families with prompts left, each family's prompts in a random order; instance = the prompt's index in the
         family's test pool. Demand is exact until the smallest family runs out; Q > the whole pool is an error."""
         size = np.asarray(self.backend.task_pool_sizes())
@@ -335,7 +335,7 @@ class World:
         k0, pos = flat[lin], np.arange(lin.size, dtype=np.uint32).reshape(lin.shape)
         flat[lin] = pos                                                  # a repeated cell cannot hold every position written to it
         if (flat[lin] != pos).any():                                     # repeated cell: each occurrence takes the next instances,
-            flat[lin] = k0; np.add.at(flat, lin, reps)                   # as sequential calls would (erratum 30)
+            flat[lin] = k0; np.add.at(flat, lin, reps)                   # as sequential calls would
             k0 = k0.astype(np.int64) + reps * _occurrence(lin)
         else:
             flat[lin] = k0 + np.uint32(reps)

@@ -89,7 +89,7 @@ def _t6(df, fits):
             if {"heavy_tail", "iid_uniform"} <= set(g.index) else None,
             "gap by dist: " + ", ".join(f"{k} {v:.3f}" for k, v in g.sort_values(ascending=False).items()))
 def targets(df, fits):
-    """The six expectations of TARGETS_rte.md. PASS / MISS / NO DATA with the numbers. Never a fix."""
+    """The six pre-registered v1 expectations (texts in docs/archive). PASS / MISS / NO DATA with the numbers. Never a fix."""
     out = []
     for i, fn in enumerate((_t1, _t2, _t3, _t4, _t5, _t6), 1):
         try: ok, detail = fn(df, fits)
@@ -182,7 +182,7 @@ def _v11(df, fits):
     return ok, ("MIDIAN - max(w/o audits, w/o verification) by beta: " + ", ".join(f"{b}: {v:+.3f}" for b, v in gap.items())
                 + f"; MIDIAN - w/o verification at beta=0.5 low-skill {x:+.3f} ({n} pairs); build probes {ratio:.3f}x w/o audits"), float(gap.min())
 def targets_v2(df, fits):
-    """The expectations of TARGETS_rte_v2.md: HIT / MISS / WITHIN_FLOOR / REPORTED / NO DATA, with the numbers. V2-1 and
+    """The pre-registered v2 expectations (texts in docs/archive): HIT / MISS / WITHIN_FLOOR / REPORTED / NO DATA, with the numbers. V2-1 and
     V2-3 tested the withdrawn successive-halving variants (SH, SH+A); the remaining targets keep their numbers."""
     out, env = [], envelope(df)
     for i, fn in ((2, _v2), (4, _v4), (5, _v5), (6, _v6), (7, _v7), (8, _v8), (9, _v9), (10, _v10), (11, _v11)):

@@ -1,5 +1,10 @@
-"""Declared-channel floor: argmax_a D[a,f]. cached=True precomputes the per-family argmax
-at build (O(1) fetch); default is a flat O(n) scan per fetch."""
+"""Declared-channel floor: route to argmax_a D[a, f].
+
+Mechanism: collect the declarations once at build; fetch scans the family's column (or, cached, reads a per-family
+argmax computed at build).
+
+Ledger: build = n messages; fetch = n comparisons (cached: 1); observe = 0.
+Params: cached=False."""
 import numpy as np
 from .base import Method
 from ._decl import declared, scan

@@ -30,7 +30,7 @@ def roll_up(cmp_):
         midian_better=n("midian_better"), rival_better=n("rival_better"), within_floor=n(FLOOR),
         min_sign_p=("sign_p", "min")).sort_values("delta_mean").reset_index()
 def strict(df):
-    """(0.2) Frameworks under the strict accounting (a task the framework did not delegate scores 0), paired vs MIDIAN w/o defenses."""
+    """Frameworks under the strict accounting (a task the framework did not delegate scores 0), paired vs MIDIAN w/o defenses."""
     f = df[(df.group == "framework") & df.success_strict.notna()]
     if f.empty: return []
     d = pd.concat([f.assign(success=f.success_strict), df[df.label == REF]]); c = paired(d)
@@ -42,7 +42,7 @@ UPPER = "programmatic = upper bound (S + N(0,0.05)): an honest declaration no li
 def sec(t, table, *prose, level=2):
     return ["", f"{'#' * level} {t}", "", *prose, *([""] if prose else []), table]
 def by_channel(df, cmp_):
-    """(0.1) Success tables per declaration channel: declared-channel readers are never pooled across channels
+    """Success tables per declaration channel: declared-channel readers are never pooled across channels
     (x beta, x dist and the paired-vs-MIDIAN w/o defenses roll-up per channel); probe-only methods once, identical by construction."""
     piv = lambda d, col: md(d.pivot_table(index=["group", "label"], columns=col, values="success").reset_index())
     dec = df.method.map(reads_declared)
@@ -58,7 +58,7 @@ def by_channel(df, cmp_):
     note = f"single declaration channel: {chans[0]}" + (f"; {UPPER}" if chans == ["programmatic"] else "") if not chans[1:] else "probe-only methods: identical across channels"
     return L + sec("Success x beta", piv(rest, "beta"), note, level=3)
 def latency(df):
-    """(0.6) The one wall-clock table: frameworks' supervisor call per task. Their clients call vLLM directly and are
+    """The one wall-clock table: frameworks' supervisor call per task. Their clients call vLLM directly and are
     never memoised, so these are cache-consistent; they are latencies under shared-fleet load, not compute costs."""
     f = df[(df.group == "framework") & (df.wall_clock_per_task > 0)] if "wall_clock_per_task" in df else pd.DataFrame()
     if f.empty: return []

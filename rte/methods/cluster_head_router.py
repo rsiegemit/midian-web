@@ -1,11 +1,12 @@
-"""Two-level router: k-means clusters of ~r agents on D; head = per-cluster argmax mean skill.
-fetch: best cluster by its head's D[f] (compare(k), hop 1, message 2 -- ask the head), then argmax
-within it (compare(cluster size), hop 1, message 2 -- ask the member).
+"""Two-level declared router: k-means clusters of ~r agents on D, one head per cluster.
 
-Naive k-means with k=ceil(n/r) centroids is O(n*k) per assignment sweep: infeasible at n=1e6
-(measured ~9s at n=1e5,k=1e4 -> ~90 min/sweep at n=1e6). So build clusters *within* random buckets
-of `bucket` agents instead of the whole population (see DEVIATIONS.md); fetch is unaffected -- it
-still searches the full global set of ~n/r clusters."""
+Mechanism: the head of a cluster is its member with the highest mean declared skill. Fetch picks the best cluster by its
+head's D[., f], then the argmax of D[., f] inside it. Naive k-means with k = ceil(n/r) centroids is O(n*k) per sweep
+(~90 min per sweep at n = 10^6), so clusters are built within random buckets of `bucket` agents (see docs/errata.md);
+fetch still searches the global set of ~n/r clusters.
+
+Ledger: build = n messages; fetch = (#clusters + cluster size) comparisons, 2 hops, 4 messages; observe = 0.
+Params: r=10, iters=5, bucket=20000."""
 import math
 import numpy as np
 from .base import Method

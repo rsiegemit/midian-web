@@ -1,4 +1,10 @@
-"""Sample ~ softmax(D[:,f] / tau); numerically stable (subtract the row max)."""
+"""Declared-channel soft pick: sample an agent with probability proportional to exp(D[a, f] / tau).
+
+Mechanism: collect the declarations once at build; fetch scans the family's column and samples from its softmax
+(computed after subtracting the column max, for numerical stability) with view.rng.
+
+Ledger: build = n messages; fetch = n comparisons; observe = 0.
+Params: tau=0.1."""
 import numpy as np
 from .base import Method
 from ._decl import declared, scan

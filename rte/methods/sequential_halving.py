@@ -1,5 +1,12 @@
-"""Per family, fixed-budget best-arm identification (sequential halving) with budget n*b probes per family.
-Runs entirely at build; fetch is a cached lookup, no online update."""
+"""Per-family fixed-budget best-arm identification (sequential halving) over all agents.
+
+Mechanism: per family, ceil(log2 n) rounds on a budget of n*b probes: probe the surviving agents equally, keep the
+better half. With peer_reported=True the router is not a trusted observer: each probe outcome reaches it only as the reports of
+r-1 random other agents, aggregated by a per-reporter trimmed mean (MIDIAN's channel). Fetch is a cached lookup.
+
+Ledger: build <= n*K*b probes (+ r-1 reports per probe when peer_reported); fetch = 1 comparison; observe = 0.
+Churn: churn_mode="rebuild" reruns the whole build (charged); "stale" keeps the old picks.
+Params: peer_reported=False, r=10, delta=1/3, churn_mode="stale"."""
 import math
 import numpy as np
 from .base import Method

@@ -1,5 +1,10 @@
-"""Contract Net Protocol: broadcast the task, every agent self-bids D[a,f]+noise, argmax bid wins.
-2n messages per fetch (broadcast + every agent's reply), matching the CNP primitive."""
+"""Contract Net Protocol: broadcast the task, every agent bids its declared skill plus noise, the highest bid wins.
+
+Mechanism: collect the declarations once at build; per task a broadcast and n replies with bids D[a, f] + N(0, noise)
+(noise from view.rng), then an argmax over the bids.
+
+Ledger: build = n messages; fetch = 2n messages + n comparisons; observe = 0.
+Params: noise=0.02."""
 import numpy as np
 from .base import Method
 from ._decl import declared

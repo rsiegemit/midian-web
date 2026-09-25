@@ -1,4 +1,4 @@
-"""AutoGen, SPEC §6A recipe 3: `SelectorGroupChat`'s manager formats a `"<name>: <description>"` roster
+"""AutoGen: `SelectorGroupChat`'s manager formats a `"<name>: <description>"` roster
 into its `selector_prompt` and the pick arrives as a `SelectSpeakerEvent`. Descriptions therefore go in
 `description`. Shared with the Magentic-One worker. See docs/frameworks/NOTES_autogen.md."""
 import os

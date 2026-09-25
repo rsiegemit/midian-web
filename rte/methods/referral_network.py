@@ -1,7 +1,12 @@
-"""Referral network (SPEC §6): random d-regular graph; node j believes only about its d neighbours, from the outcomes it
-observed through the report channel (a lying j corrupts its own map). Fetch = greedy referral walk of `depth` hops.
-Each agent is probed b times per family and each outcome observed by ONE random neighbour, so per-edge coverage is b/d
-(DEVIATIONS). Messages: build n*d (2 per undirected edge); fetch 2*d per hop."""
+"""Referral network: a random d-regular graph whose nodes believe only what they saw of their neighbours.
+
+Mechanism: each agent is probed b times per family and each outcome is observed through the report channel by ONE of
+its neighbours (so per-edge coverage is b/d; a lying node corrupts its own map). Fetch is a greedy referral walk of
+`depth` hops from a random start, moving to the neighbour with the best belief for the family.
+
+Ledger: build = n*K*b probes + n*K*b reports + n*d messages; fetch = depth hops, d*depth comparisons, 2*d*depth
+messages; observe = 0.
+Params: d=10 (rounded up to even), depth=4."""
 import numpy as np
 from .base import Method
 from ._est import observed_reports, greedy_walk

@@ -1,4 +1,6 @@
-"""Google ADK rival (SPEC §6A row 7). See docs/frameworks/NOTES_google_adk.md."""
+"""Google ADK rival. See docs/frameworks/NOTES_google_adk.md.
+
+Ledger and params: as FrameworkMethod (rte.methods.frameworks._common)."""
 from ._common import FrameworkMethod
 
 

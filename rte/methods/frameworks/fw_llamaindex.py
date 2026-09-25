@@ -1,4 +1,6 @@
-"""LlamaIndex rival (SPEC §6A row 8), mode="selector"|"handoff". See docs/frameworks/NOTES_llamaindex.md."""
+"""LlamaIndex rival, mode="selector"|"handoff". See docs/frameworks/NOTES_llamaindex.md.
+
+Ledger and params: as FrameworkMethod (rte.methods.frameworks._common), plus mode="selector"."""
 from ._common import FrameworkMethod
 
 

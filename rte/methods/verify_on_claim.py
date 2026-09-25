@@ -1,6 +1,12 @@
-"""Rank by declared D[:, f]; probe the top unverdicted candidate k times; accept if mean >= D - margin, else reject and
-try the next (max_tries fresh verifications per fetch). Verdicts cached per (agent, family). The most dangerous baseline:
-verification budget drains on liars. Ranking is O(n) once per family, then cached (compare(1))."""
+"""Verify on claim: trust the highest declarer only after probing it.
+
+Mechanism: rank agents by D[., f] (once per family, then cached); probe the top candidate without a verdict k times and
+accept it if its mean >= D[a, f] - margin, else reject it and try the next (at most max_tries fresh verifications per
+fetch; otherwise the best mean seen). Verdicts are cached per (agent, family). Its verification budget drains on liars.
+
+Ledger: build = n messages; fetch = n comparisons on a family's first task (1 after) + k probes per fresh verification;
+observe = 0.
+Params: k=3, max_tries=5, margin=0.15."""
 import numpy as np
 from .base import Method
 

@@ -1,7 +1,11 @@
-"""RouterBench's MLP predictive router (Hu et al. 2024) on our terms: MIDIAN's probe budget, no report channel.
-One regressor (prompt embedding ⊕ agent one-hot) -> success, fit on the n*K*b probes; at route time every agent is
-scored on the task's text and the argmax is picked (n comparisons per task). Offline only (sklearn has no masked
-multi-output partial fit); the online learned router is knn_router(online=True)."""
+"""RouterBench's MLP predictive router (Hu et al. 2024) on MIDIAN's probe budget, without the report channel.
+
+Mechanism: one regressor (prompt embedding concatenated with an agent one-hot) -> success, fit on the n*K*b probes; at
+route time every agent is scored on the task's text and the argmax is picked. Offline only (sklearn has no masked
+multi-output partial fit); the online learned router is knn_router(online=True).
+
+Ledger: build = n*K*b probes; fetch = n comparisons; observe = 0.
+Params: hidden=128, epochs=30."""
 import numpy as np
 from sklearn.neural_network import MLPRegressor
 from .base import Method

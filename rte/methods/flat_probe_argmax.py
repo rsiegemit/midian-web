@@ -1,5 +1,11 @@
-"""The key control: MIDIAN's probes, no hierarchy, no report channel. est = mean of b probes; argmax per family.
-`cached=True` precomputes the argmax (O(1) per fetch, recomputed on observe if online)."""
+"""The key control: MIDIAN's probes without the tree or the report channel.
+
+Mechanism: est = mean of b probes per (agent, family); fetch takes argmax_a est[a, f] (or, cached, a per-family argmax
+kept up to date); online=True folds every routed outcome into a running mean.
+
+Ledger: build = n*K*b probes; fetch = n comparisons (cached: 1); observe = 0.
+Churn: |arrived|*K*b probes (the replaced agents are re-probed).
+Params: cached=False, online=False."""
 import numpy as np
 from .base import Method
 from ._est import lookup, probe_means, reprobe, running_mean, scan_argmax

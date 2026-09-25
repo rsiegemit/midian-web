@@ -1,7 +1,7 @@
-"""Magentic-One, SPEC §6A recipe 3 second half: the `MagenticOneGroupChat` orchestrator writes a JSON
+"""Magentic-One: the `MagenticOneGroupChat` orchestrator writes a JSON
 progress ledger and dispatches `next_speaker.answer`, reasoning over a `{team}` roster built from each
 participant's `description`. It announces the pick through `_log_message("Next Speaker: ...")` just before
-dispatching, which is the only place to stop it with the pick in hand. Since 2026-09-03 (`robust=True`,
+dispatching, which is the only place to stop it with the pick in hand. With `robust=True` (
 the default) a ledger the orchestrator rejects is read by name mention instead of being retried up to
 `max_json_retries` times: the first participant named after "next_speaker" in the raw reply (else the first
 named anywhere) is the pick; a rejected ledger naming nobody, or a ledger that declares the request satisfied

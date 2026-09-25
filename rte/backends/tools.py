@@ -1,4 +1,4 @@
-"""Agent tools (SPEC §1: tools in {calculator, python, none}). Each is `run(payload) -> str`.
+"""Agent tools (calculator, python, none). Each is `run(payload) -> str`.
 
 The `python` tool is containment, not a security boundary: an isolated interpreter, 5 s, CPU and
 memory rlimits, empty environment, sockets disabled. It stops runaway loops and stray imports; it

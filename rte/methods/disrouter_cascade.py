@@ -1,8 +1,11 @@
-"""Cascade of agents ordered by ascending mean declared skill (cheap first). Each fetch walks the
-order for the task's family; an agent takes the task once D[a,f] >= tau, else forwards (1 message,
-1 hop, per the "state it" alternative for a single-primitive forward). If nobody takes -- everyone
-forwards once -- fall back to the highest declarer rather than the last (cheapest) agent: see
-DEVIATIONS.md."""
+"""Declared-skill cascade: agents in ascending mean-declared order; the first whose claim clears tau takes the task.
+
+Mechanism: at build, order agents by their mean declared skill (cheap first). Each fetch walks that order for the task's
+family; an agent takes the task once D[a, f] >= tau, else forwards it (one message, one hop). If nobody takes it, the
+highest declarer does rather than the last agent (see docs/errata.md).
+
+Ledger: build = n messages; fetch = p messages + p hops (p = position of the taker, n - 1 if none); observe = 0.
+Params: tau=0.7."""
 import numpy as np
 from .base import Method
 from ._decl import declared

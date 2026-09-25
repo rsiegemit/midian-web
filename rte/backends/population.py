@@ -1,6 +1,6 @@
 """The agent population: the model ladder (config) and how a skill distribution draws profiles.
 
-A profile is `{id, model, specialty: [family index], tool}`. SPEC §3's llm column says a
+A profile is `{id, model, specialty: [family index], tool}`. In the llm backend a skill
 distribution is *realized* by how profiles are drawn; the resulting S is MEASURED, never assumed.
 Model ids come only from configs/models.yaml — the code selects by parameter-count band.
 """
@@ -17,7 +17,7 @@ from ..stable_hash import stable_seed_32
 # The tool axis collapsed to one option: `calculator` measured at or BELOW the no-tool arm on the
 # 7B (0.40 vs 0.47 on basic_arithmetic, 0.73 vs 0.80 on gcd) because one expression cannot carry a
 # multi-step task and emitting it costs a turn. Every agent therefore holds `python`, and
-# `signature()` withholds it on handicapped families -- which is exactly SPEC §1's "family tool
+# `signature()` withholds it on handicapped families -- which is exactly the "family tool
 # removed". The field stays in the profile for the record.
 TOOL = "python"
 
@@ -54,7 +54,7 @@ def draw_profiles(n: int, K: int, dist: str, seed: int, cfg: dict | None = None)
     rng = np.random.default_rng(stable_seed_32(seed, "profiles", n, K, dist))
     pick = lambda pool: pool[int(rng.integers(len(pool)))]              # noqa: E731
     out = []
-    # DRAW ORDER IS PART OF THE SEED CONTRACT: model, then specialty, for every distribution.
+    # DRAW ORDER IS PART OF THE SEEDING: model, then specialty, for every distribution.
     # Reordering these rng calls changes every population.
     for a in range(n):
         if dist == "specialist":            # 3 families unhandicapped, models mixed

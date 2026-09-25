@@ -1,4 +1,4 @@
-"""Task families: one small adapter per data source (CONTRACT "swappable by config").
+"""Task families: one small adapter per data source (swappable by config).
 
 Adapter protocol (duck-typed):
     generate(instance_seed) -> entry        deterministic; same seed == same problem
@@ -18,13 +18,13 @@ from ..stable_hash import stable_seed_32
 
 DEFAULT_SOURCE = "rg"
 
-# 16 diverse generators with programmatic verifiers (SPEC §1, K=16 default).
+# 16 diverse generators with programmatic verifiers (K=16 default).
 # `propositional_logic` and `graph_color` are deliberately absent: in reasoning-gym 0.1.19 both
 # emit entries with answer=None and score their own gold answer 0.0, so no agent can ever be
 # right on them. scripts/probe_families.py re-checks every name below.
 # leg_counting / caesar_cipher / base_conversion / bitwise_arithmetic / spell_backward / word_sorting
 # were demoted to the K=64 tail: measured <=0.20 on BOTH the 7B and the 14B, so they carry no signal
-# about which agent to route to (DEVIATIONS.md 2026-09-02). True/False families are avoided here on
+# about which agent to route to (docs/errata.md). True/False families are avoided here on
 # purpose -- a chance-level responder floors at 0.50, which no weak agent can score below.
 FAMILIES_16 = ["basic_arithmetic", "chain_sum", "letter_counting", "syllogism",
                "family_relationships", "gcd", "lcm", "prime_factorization", "number_sorting",
@@ -48,7 +48,7 @@ SEED_KEY = "_rte_instance"      # generate() stamps the seed so score() can rebu
 
 # Per-family generator settings, passed straight to `create_dataset`. This is the difficulty knob:
 # at stock settings `basic_arithmetic` (up to 6 terms, 4 digits) scored 0.25 on the 7B and 0.10 on
-# the 14B, far below the 0.70-0.95 band SPEC §3 wants for a specialty family.
+# the 14B, far below the 0.70-0.95 band wanted for a specialty family.
 PARAMS: dict[str, dict] = {
     "basic_arithmetic": {"max_terms": 3, "max_digits": 2},
     "chain_sum": {"max_terms": 3, "max_digits": 2},

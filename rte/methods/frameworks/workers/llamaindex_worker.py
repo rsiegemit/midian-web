@@ -1,4 +1,4 @@
-"""LlamaIndex, SPEC §6A recipe 7. selector: `LLMSingleSelector.select([ToolMetadata(name, description)], task)`
+"""LlamaIndex. selector: `LLMSingleSelector.select([ToolMetadata(name, description)], task)`
 -- one LLM call, no agent execution, and the prompt shows the descriptions only. handoff: an `AgentWorkflow`
 whose built-in `handoff(to_agent, reason)` tool is the primitive; we return at the first such call.
 See docs/frameworks/NOTES_llamaindex.md."""

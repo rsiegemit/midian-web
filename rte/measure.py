@@ -4,7 +4,7 @@
 
 Writes S.npy, profiles.json, D_programmatic.npy, D_self_described.npy, descriptions.json and
 summary.json under $RTE_DATA/populations/<dist>_n<n>_K<K>_seed<seed>/. Exits 3 if the population
-fails SPEC §1's `skill_excess_ratio_family >= 1.5` gate — there is no expertise to discover, so
+fails the `skill_excess_ratio_family >= 1.5` gate — there is no expertise to discover, so
 running the grid on it would prove nothing.
 """
 from __future__ import annotations

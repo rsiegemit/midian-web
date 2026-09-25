@@ -4,7 +4,7 @@ HANDICAP: no exemplar, no family description, no tool. The spec's "difficulty ca
 applied per agent — every agent must see the SAME instance for the paired stream and the shared
 verifier to mean anything — and the generation-budget cap that once stood in for it measured
 NON-MONOTONE (it HELPED a 0.5B on syllogism, 0.85 vs 0.30), so it is off by default.
-See DEVIATIONS.md 2026-09-02 and scripts/calibrate_families.py.
+See docs/errata.md and scripts/calibrate_families.py.
 """
 from __future__ import annotations
 

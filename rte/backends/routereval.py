@@ -7,11 +7,11 @@ without subjects, K KMeans clusters of their RoBERTa prompt embeddings). Probes 
 family (a fresh one per (agent, family, k), like the llm backend's instances); tasks = TEST prompts of the family.
 True skill S[a, f] = the agent's mean train score on the family (used for the oracle and liar selection only; never
 shown to a method). Declarations = noisy_declared(S) (no self-descriptions exist here; programmatic and self_described are the honest
-control, as in replay; `calibrated` draws the live self-rating pattern, erratum 30). `text(f, inst)` returns the prompt, so
-knn_router / mlp_router run unchanged. `no_repeat: true` (erratum 30): World.tasks visits each (family, test prompt) at
+control, as in replay; `calibrated` draws the live self-rating pattern). `text(f, inst)` returns the prompt, so
+knn_router / mlp_router run unchanged. `no_repeat: true`: World.tasks visits each (family, test prompt) at
 most once (task instance = the prompt's index in the family's test rows); default: instance % pool, with repeats.
-`shuffle: true` (erratum 30): agents are a per-seed permutation of the pool, so lowest-index tie-breaks are random.
-Data: $RTE_DATA/data/routereval/router_dataset/<dataset>_router_dataset.pkl (scripts: TARGETS_rte_v3.md part D)."""
+`shuffle: true`: agents are a per-seed permutation of the pool, so lowest-index tie-breaks are random.
+Data: $RTE_DATA/data/routereval/router_dataset/<dataset>_router_dataset.pkl (built by the data scripts, see docs/reproducing.md)."""
 from __future__ import annotations
 import os, re, pickle, numpy as np
 from ..config import RTE_DATA
@@ -48,7 +48,7 @@ class RouterEvalBackend:
             Ptr, Pte = list(d["prompt"]["train_prompt"]), list(d["prompt"]["test_prompt"])
             ftr, fte, names = self._families(dataset, Ptr, Pte, d["embedding"], int(K), seed)
             self._Etr, self._Ete = np.asarray(d["embedding"]["train_embed"], np.float32), np.asarray(d["embedding"]["test_embed"], np.float32)
-        if shuffle:                                                      # per-seed agent order (erratum 30): pools are stored weak ->
+        if shuffle:                                                      # per-seed agent order: pools are stored weak ->
             perm = np.random.default_rng(stable_seed_32(seed, "agent_order")).permutation(Ytr.shape[1])   # strong, so index
             Ytr, Yte, self.model_names = Ytr[:, perm], Yte[:, perm], [self.model_names[i] for i in perm]  # tie-breaks were not random
         self.families = names; self.K = len(names)

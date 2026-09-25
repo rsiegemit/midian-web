@@ -1,4 +1,10 @@
-"""UCB1 over arms (agent, family); warmup = the shared n*K*b budget, b pulls per arm; online updates."""
+"""UCB1 over arms (agent, family), warmed up on the shared probe budget.
+
+Mechanism: b probes per arm give the initial means; fetch takes argmax_a mean[a, f] + c * sqrt(log t_f / count[a, f])
+(t_f = pulls on family f so far); observe updates the running mean and the counts.
+
+Ledger: build = n*K*b probes; fetch = n comparisons; observe = 0.
+Params: c=sqrt(2)."""
 import numpy as np
 from .base import Method
 from ._est import probe_means, running_mean, scan_argmax

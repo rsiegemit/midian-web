@@ -1,21 +1,32 @@
-"""MIDIAN (SPEC §5): a tree of cohorts routed by per-family max-summaries. Leaves are agents in random cohorts of r,
-estimated from probes reported by the r-1 cohort peers and trimmed; each node holds per family the best estimate in its
-subtree and which child has it; upper levels regroup nodes at random. fetch descends ceil(log_r n) levels.
+"""MIDIAN: a tree of cohorts routed by per-family max-summaries.
+
+Mechanism: leaves are agents in random cohorts of r, estimated from probes reported by the r-1 cohort peers and trimmed;
+each node holds per family the best estimate in its subtree and which child has it; upper levels regroup nodes at
+random. Fetch descends ceil(log_r n) levels; online=True folds each routed outcome into a running mean and recomputes
+the family's summaries up the agent's path.
 
 Two defenses, both ON by default (the method the paper calls MIDIAN):
-  audit=True   report audits with reporter exclusion. At build, a uniform `audit` rate (True = 5%) of level-0 probe
-               instances is re-run by the auditor (`view.probe_at`: the same index-seeded instance, charged as a probe) and
-               every peer's report about it is compared with the truth; a reporter with STRIKES mismatches is excluded from
-               every later aggregation. Online, the same rate of routed outcomes is put to the agent's cohort peers.
-               Level 0 then estimates est = trimmed mean over non-excluded PEERS of each peer's mean report (one round of
-               b0 probes, one report per peer per probe). Build probes = n*K*b0*(1 + audit).
-  verify=True  verification at promotion: level 0 keeps b0 = b-1 probes per cell and the saved n*K probes re-probe every
-               candidate forwarded to a parent, reported by the OTHER children's representatives (trimmed by reporter,
-               excluded reporters masked). `cached` (default = verify) remembers the root's pick per family, so a route
-               costs 1 comparison + 2 messages.
+  audit=True   report audits with reporter exclusion. At build, a uniform `audit` rate (True = 5%) of level-0
+               probe instances is re-run by the auditor (`view.probe_at`: the same index-seeded instance, charged as
+               a probe) and every peer's report about it is compared with the truth; a reporter with STRIKES
+               mismatches is excluded from every later aggregation. Online, the same rate of routed outcomes is put
+               to the agent's cohort peers. Level 0 then estimates est = trimmed mean over non-excluded PEERS of each
+               peer's mean report (one round of b0 probes, one report per peer per probe).
+  verify=True  verification at promotion: level 0 keeps b0 = b-1 probes per cell and the saved n*K probes re-probe
+               every candidate forwarded to a parent, reported by the OTHER children's representatives (trimmed by
+               reporter, excluded reporters masked). `cached` (default = verify) remembers the root's pick per family.
 Ablations switch them off: midian{"verify": false} (w/o verification), midian{"audit": false} (w/o audits; its level 0
-trims by reporter), midian{"audit": false, "verify": false} (w/o defenses: level 0 trims by report). stratify=True
-groups level 0 by measured probe mean. Arrays per level, padded to a multiple of r. `_choose` is the LLM-descent hook."""
+trims by reporter), midian{"audit": false, "verify": false} (w/o defenses: level 0 trims by report). `cohort` selects
+how level 0 is grouped (random | stratify | block | specialty | declared; stratify=True is cohort="stratify"). Arrays
+per level, padded to a multiple of r. `_choose` is the LLM-descent hook.
+
+Ledger: build = n*K*b probes (w/o defenses; with verify n*K*b0 at level 0 plus e per forwarded candidate, e =
+floor((b-b0)*n / #candidates); with audit + the audited instances, n*K*b0*audit) + (r-1) reports per level-0 and
+verification probe + (n - #leaves + #summaries - 1) messages; fetch = per level 1 hop, r comparisons, 2 messages
+(cached: 1 comparison, 2 messages); observe (online) = per level r comparisons + 1 message.
+Churn: per arrival K*b probes, K*b*(r-1) reports, (r-1) + depth messages.
+Params: r=10, delta=1/3, online=True, audit=True, verify=True, cached=verify, observers=r-1, b0=b-1, top=1,
+stratify=False, cohort="random"."""
 import numpy as np
 
 from ._est import (REPORT_ELEMS, cohort_blocks, others, peer_estimate, peer_reported_estimates, probe_outcomes, trim_k,
@@ -24,7 +35,7 @@ from .base import Method
 
 NEG = np.float32(-np.inf)
 CHUNK_ELEMS = 8_000_000
-STRIKES = 2                                            # mismatches before a reporter is excluded (work order 1.2)
+STRIKES = 2                                            # mismatches before a reporter is excluded
 AUDIT_RATE = 0.05                                      # audit=True
 
 
@@ -53,7 +64,7 @@ class Midian(Method):
             self.needs = frozenset(self.needs | {"declared"})
         self.observers = int(observers) if observers else self.r - 1          # peers observing each verification probe (V)
         self.b0, self.cached, self.top = b0, bool(cached), int(top)          # V: level-0 probes per cell; cached root pick; forwarded per family
-        self.cnt = {}; self.stats = {"observe_charged": 1}                  # rows before 2026-09-03 15:20 lack observe-time charges (analyzer adds them)
+        self.cnt = {}; self.stats = {"observe_charged": 1}                  # older rows lack observe-time charges (the analyzer adds them)
 
     def _cohort_key(self, view, out):
         """Grouping signal per cohort mode; None means random. `out` is outcomes[n, K, b] when the mode needs probes."""

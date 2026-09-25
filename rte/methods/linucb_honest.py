@@ -1,8 +1,13 @@
-"""LinUCB-honest (labeled rival, 2026-09-03): a contextual bandit whose only context is the agent's OWN observed
-outcome history -- never model identity, specialty, or the declared channel. Per family f the arm-context of agent a is
-x = [1, mean_af, sqrt(count_af), mean_a-over-families]; the family's ridge model (A_f = I + sum x x^T, b_f = sum x y)
-scores arms by x^T theta_f + alpha * sqrt(x^T A_f^-1 x). Warm-up = the shared n*K*b probe budget (b pulls per arm,
-each fed to the model as an observation); online updates on. Fetch scans the n arms (compare(n))."""
+"""LinUCB-honest: a contextual bandit whose only context is the agent's own observed outcome history.
+
+Mechanism: per family f the context of agent a is x = [1, mean_af, sqrt(count_af), mean_a over families] -- never model
+identity, specialty or the declared channel. A ridge model per family (A_f = I + sum x x^T, b_f = sum x y) scores arms
+by x^T theta_f + alpha * sqrt(x^T A_f^-1 x). The b warm-up pulls per arm train the model; observe updates it online.
+bonus="own" (a post-hoc variant, see docs/errata.md) computes the exploration bonus from the agent's own evidence
+[1, sqrt(count)] only; the default "context" is the pre-registered form.
+
+Ledger: build = n*K*b probes; fetch = n comparisons; observe = 0.
+Params: alpha=1.0, bonus="context"."""
 import numpy as np
 
 from ._est import probe_means, running_mean
@@ -14,7 +19,7 @@ class LinUcbHonest(Method):
     needs = frozenset({"probe"})
 
     def __init__(self, alpha=1.0, bonus="context", **p):
-        # bonus="own" (post-hoc fix, 2026-09-23 audit): the exploration bonus uses only the agent's OWN evidence for the
+        # bonus="own" (post-hoc variant, docs/errata.md): the exploration bonus uses only the agent's OWN evidence for the
         # family ([1, sqrt(count)]), not the full context. With the full context, agents tied at the top estimate are
         # separated by how ATYPICAL their cross-family mean is -- i.e. weak agents that got lucky -- so LinUCB fell to
         # random at 10^4-10^5. Default "context" keeps the pre-registered behaviour (and every existing row).

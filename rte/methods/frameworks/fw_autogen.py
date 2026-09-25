@@ -1,4 +1,6 @@
-"""AutoGen rival (SPEC §6A row 3). See docs/frameworks/NOTES_autogen.md."""
+"""AutoGen rival. See docs/frameworks/NOTES_autogen.md.
+
+Ledger and params: as FrameworkMethod (rte.methods.frameworks._common)."""
 from ._common import FrameworkMethod
 
 

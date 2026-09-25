@@ -1,9 +1,15 @@
 """Shared base for framework rivals: needs={"declared"} only; retrieval adapter (top-k by description
-similarity, SPEC §6A "common scaling adapter"); agent-name <-> id mapping; ledger accounting
+similarity, the common scaling adapter); agent-name <-> id mapping; ledger accounting
 (compare(k) for the k descriptions read, hop(1) for the one supervisor call); fallback to declared
 argmax among the k when the framework fails to pick (counted in stats). Two accountings per task: lenient
 (the fallback pick is routed and scored) and strict (`success_strict`: a task the framework did not delegate
--- worker answered "FAILURE: ..." -- or named nothing/not a candidate scores 0)."""
+-- worker answered "FAILURE: ..." -- or named nothing/not a candidate scores 0).
+
+Ledger: build = n messages (every description sent to the registry once; retrieval="midian*" adds MIDIAN's build);
+fetch = k comparisons, 1 hop, k + 2 messages; observe = 0.
+Params: k=10, supervisor, retrieval="tfidf" (| declared | embed | bm25 | hybrid | sota | midian | midian_wo_audit), r=10,
+dedup=False, embed_model, rerank_model, rerank_pool=50, embed_instruct="", shuffle=False, lie_text=False,
+claim_threshold=0.0; subclasses add `mode`."""
 from __future__ import annotations
 
 import os
@@ -24,8 +30,8 @@ DENSE = ("embed", "hybrid", "sota")          # modes that need the dense block
 DECLARED = "declared"                        # top-k by the declared claim; no text retrieval at all
 LEXICAL = ("bm25", "hybrid", "sota")        # modes that need the BM25 block
 # Framework errors that are the supervisor LLM's own invalid action, not infrastructure (every class that has failed a
-# unit, 2026-09-23): ADK / OpenAI Agents -- a tool named after the agent instead of the routing tool; MAF -- no next
-# speaker. Anything else stays an infrastructure error (erratum 28).
+# unit): ADK / OpenAI Agents -- a tool named after the agent instead of the routing tool; MAF -- no next
+# speaker. Anything else stays an infrastructure error (docs/errata.md).
 INVALID_ACTION = re.compile(r"Tool '?[\w.-]+'? not found|ModelBehaviorError|next_speaker must be provided|KeyError: '?agent_\d+'?")   # MAF: orchestrator names a non-candidate
 _TOK = re.compile(r"[a-z0-9]+")
 
@@ -124,7 +130,7 @@ class FrameworkMethod(Method):
         super().__init__(k=k, supervisor=supervisor, retrieval=retrieval, r=r, **params)
         self.k, self.supervisor, self._base_url = int(k), supervisor, base_url
         self.retrieval, self.r = retrieval, int(r)
-        # The SOTA retrieval stack (2026-09-17, labeled variant): what a production system would actually put in front
+        # The SOTA retrieval stack (labeled variant): what a production system would actually put in front
         # of a framework, rather than the pre-registered hashed TF-IDF. retrieval="bm25" is the lexical half alone;
         # "hybrid" is reciprocal-rank fusion of BM25 with a strong dense embedder; "sota" reranks the fused top
         # `rerank_pool` with a cross-encoder. Shortlists are per FAMILY (K = 16 live), so the reranker costs
@@ -138,7 +144,7 @@ class FrameworkMethod(Method):
         # best agent sits in position 1 and a supervisor with position bias gets it for free. Shuffling permutes that
         # list deterministically per cohort, which separates "the cohort is better material" from "the pick was first".
         self.shuffle = bool(shuffle)
-        # lie_text (erratum 27): the benchmark's lie inflates the declared MATRIX but leaves the self-description TEXT
+        # lie_text (docs/errata.md): the benchmark's lie inflates the declared MATRIX but leaves the self-description TEXT
         # stating the agent's TRUE specialty, so a liar's text and its numbers disagree and every text retriever is
         # shielded from the attack. With lie_text the "Declared areas:" clause -- the structured claim carried IN the
         # text -- is rederived from view.declared for EVERY agent, liar or not, so the method needs no knowledge of
@@ -152,12 +158,12 @@ class FrameworkMethod(Method):
         # ~15 of 16 families against ~3 honestly: the "I can do everything" description a lying agent actually writes.
         self.claim_threshold = float(claim_threshold)
         self._rr = None
-        # dedup (2026-09-14, labeled variant): rank DISTINCT description texts and offer one agent per text (the lowest
+        # dedup (labeled variant): rank DISTINCT description texts and offer one agent per text (the lowest
         # id). Agents sharing a prompt signature share a memoized self-description AND memoized answers, so the plain
         # top-k fills with clones once the population exceeds the number of distinct prompts (~3,900 specialist, 5
-        # heavy_tail, 2 bimodal) and the framework's pick stops mattering. See CHANGES_AND_ERRATA.
+        # heavy_tail, 2 bimodal) and the framework's pick stops mattering. See docs/errata.md.
         self.dedup = bool(dedup)
-        # retrieval="embed" (2026-09-15, labeled variant): rank by cosine over all-MiniLM-L6-v2 embeddings of the same
+        # retrieval="embed" (labeled variant): rank by cosine over all-MiniLM-L6-v2 embeddings of the same
         # descriptions (the encoder knn_router uses) instead of hashed TF-IDF -- the dense retriever a deployed stack
         # would put in front of a framework. Embeddings are cached per population dir (descriptions_minilm.npy).
         if retrieval in ("midian", "midian_wo_audit"):        # verified shortlist: MIDIAN's (or MIDIAN w/o audits') leaf cohort (k = r)
@@ -381,7 +387,7 @@ class FrameworkMethod(Method):
         if resp.get("error"):
             # INFRASTRUCTURE, not framework behaviour: a crashed worker, a missing shared library, a dead endpoint. These
             # used to fall through to declared argmax and write a normal-looking row that measured declared argmax under
-            # the framework's name -- ~4,500 rows on 2026-09-22 (CrewAI / ADK venvs with deleted .so files). A few are
+            # the framework's name -- ~4,500 rows once (CrewAI / ADK venvs with deleted .so files). A few are
             # tolerated and counted apart from real fallbacks; past 2 % of calls the unit FAILS and writes no row.
             self.stats["infra_errors"] = self.stats.get("infra_errors", 0) + 1
             if self.stats["infra_errors"] > max(3, 0.02 * self._calls):

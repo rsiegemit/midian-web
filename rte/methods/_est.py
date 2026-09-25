@@ -83,12 +83,12 @@ REPORT_ELEMS = 8_000_000       # cap on one report tensor: n*K*b*(r-1) is never 
 
 
 def trim_k(delta: float, s: int, b: int) -> int:
-    """Reports trimmed from each side for a cohort of size s (SPEC §5), clamped to leave one report."""
+    """Reports trimmed from each side for a cohort of size s, clamped to leave one report."""
     return max(0, min(int(delta * (s - 1) + 1e-9), ((s - 1) * b - 1) // 2))
 
 
 def trimmed_mean(x: np.ndarray, t: int) -> np.ndarray:
-    """SPEC §5 trimmed mean along the last axis: sort, drop t from each end, average."""
+    """Trimmed mean along the last axis: sort, drop t from each end, average."""
     x = np.sort(x, axis=-1)
     return x[..., t:x.shape[-1] - t].mean(-1)
 
@@ -127,7 +127,7 @@ def probe_outcomes(view, b: int) -> np.ndarray:
 
 def peer_reported_estimates(view, b: int, cohorts: np.ndarray, delta: float, by_reporter: bool = False,
                             observers: int | None = None, outcomes: np.ndarray | None = None) -> np.ndarray:
-    """MIDIAN's level-0 estimates (SPEC §5): b probes per (agent, family), each outcome reported by
+    """MIDIAN's level-0 estimates: b probes per (agent, family), each outcome reported by
     every other member of the agent's cohort, aggregated by a trimmed mean. `cohorts` is int32[N, r]
     of agent ids with -1 padding, which (padding being contiguous) can only shorten the last cohort.
     Spends exactly n*K*b probes and sum_c size_c*(size_c-1)*K*b reports, in cohort-sized chunks.
@@ -155,7 +155,7 @@ def peer_reported_estimates(view, b: int, cohorts: np.ndarray, delta: float, by_
                                ag[:, :, None, None, None],                               # about member m
                                out.reshape(C, s, K, 1, b)                                # what j saw
                                ).reshape(C * s, K, (s - 1) * b)
-        est[ag.ravel()] = trimmed_mean(rep, trim_k(delta, s, b))                         # SPEC §5: trim single reports
+        est[ag.ravel()] = trimmed_mean(rep, trim_k(delta, s, b))                         # trim single reports
     return est
 
 def observed_reports(view, f: int, b: int, observers):

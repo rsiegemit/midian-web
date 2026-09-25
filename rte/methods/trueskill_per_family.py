@@ -1,13 +1,11 @@
-"""trueskill_per_family.py -- pairwise per-family TrueSkill. At build, for
-each family sample random agent pairs, probe both once on the same instance
-(2 probes per pair) so total probes <= n*K*b, i.e. n*b/2 pairs per family.
-The pair's two binary outcomes give a win/loss/draw update to per-family
-TrueSkill ratings. Fetch = argmax mu.
+"""Pairwise per-family TrueSkill ratings from head-to-head probes.
 
-This is an O(pairs) pure-Python update loop (`trueskill.rate_1vs1` has no
-vectorized form): at n=1e3 that is ~1e3*16*1.5 updates, fine; at n>=1e5 it
-is not implemented (documented in DEVIATIONS.md) rather than run for hours.
-"""
+Mechanism: per family, n*b/2 random agent pairs (self-pairs dropped) are probed once each; the two outcomes give a
+win / loss / draw update to the pair's TrueSkill ratings; fetch takes argmax mu. The update loop is pure Python
+(`trueskill.rate_1vs1` has no vectorised form), so n >= 10^5 raises NotImplementedError (see docs/errata.md).
+
+Ledger: build <= n*K*b probes; fetch = n comparisons; observe = 0.
+Params: none."""
 from __future__ import annotations
 
 import numpy as np
@@ -34,7 +32,7 @@ class TrueSkillPerFamily(Method):
             raise NotImplementedError(
                 f"trueskill_per_family is an O(pairs) pure-Python rating loop "
                 f"({n}*{K}*{b // 2} pair updates); not implemented at n>={_MAX_N}. "
-                "See DEVIATIONS.md.")
+                "See docs/errata.md.")
         self.view = view
         env = trueskill.TrueSkill()
         self.env = env

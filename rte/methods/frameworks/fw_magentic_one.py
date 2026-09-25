@@ -1,4 +1,6 @@
-"""Magentic-One rival (SPEC §6A row 4); shares the AutoGen venv. See docs/frameworks/NOTES_magentic_one.md."""
+"""Magentic-One rival; shares the AutoGen venv. See docs/frameworks/NOTES_magentic_one.md.
+
+Ledger and params: as FrameworkMethod (rte.methods.frameworks._common)."""
 from ._common import FrameworkMethod
 
 

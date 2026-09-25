@@ -1,6 +1,11 @@
-"""MIDIAN w/o defenses with an LLM making the descent decisions (SPEC §9). Same tree, same estimates, same
-ledger as midian{"audit": false, "verify": false}; only the choice among a node's r children changes, so the ablation is
-quality-only. An unparseable or out-of-range answer falls back to the argmax, counted in `stats`."""
+"""MIDIAN w/o defenses with an LLM choosing the child at each descent step.
+
+Mechanism: the same tree, estimates and ledger as midian{"audit": false, "verify": false}; only the choice among a
+node's r children changes (the LLM sees each child's best estimate for the family), so the ablation is quality-only. An
+unparseable or out-of-range answer falls back to the argmax and is counted in `stats`.
+
+Ledger: as midian w/o defenses; the LLM calls (one per level with >= 2 live children) are not charged.
+Params: model="Qwen/Qwen2.5-7B-Instruct", plus every midian parameter."""
 import re
 
 import numpy as np
@@ -17,7 +22,7 @@ class MidianLLMDescent(Midian):
     requires_llm = True
 
     def __init__(self, model="Qwen/Qwen2.5-7B-Instruct", **p):
-        super().__init__(**{"audit": False, "verify": False, **p})          # the undefended tree (the pre-2026-09-24 default)
+        super().__init__(**{"audit": False, "verify": False, **p})          # the undefended tree
         self.params["model"] = self.model = model
         self.stats = {"calls": 0, "fallbacks": 0}
 

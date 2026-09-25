@@ -1,4 +1,7 @@
-"""AgentScope rival (SPEC §6A appendix). No selection primitive: DIY router. See docs/frameworks/NOTES_agentscope.md."""
+"""AgentScope rival (framework appendix): no selection primitive, so a DIY router.
+See docs/frameworks/NOTES_agentscope.md.
+
+Ledger and params: as FrameworkMethod (rte.methods.frameworks._common)."""
 from ._common import FrameworkMethod
 
 

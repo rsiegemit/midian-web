@@ -1,4 +1,4 @@
-"""Microsoft Agent Framework, SPEC §6A recipe 4. groupchat: the GroupChatBuilder orchestrator answers with
+"""Microsoft Agent Framework. groupchat: the GroupChatBuilder orchestrator answers with
 `AgentOrchestrationOutput.next_speaker` over a `name: description` roster. handoff: the triage agent calls one
 `handoff_to_<name>` tool per candidate, described by that candidate's description. We return at the first
 selection event, so no candidate agent runs. See docs/frameworks/NOTES_maf.md."""

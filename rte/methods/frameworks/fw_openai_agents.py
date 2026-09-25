@@ -1,4 +1,6 @@
-"""OpenAI Agents SDK rival (SPEC §6A row 6). See docs/frameworks/NOTES_openai_agents.md."""
+"""OpenAI Agents SDK rival. See docs/frameworks/NOTES_openai_agents.md.
+
+Ledger and params: as FrameworkMethod (rte.methods.frameworks._common)."""
 from ._common import FrameworkMethod
 
 

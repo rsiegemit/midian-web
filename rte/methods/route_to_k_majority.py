@@ -1,5 +1,10 @@
-"""Route-to-many: top-k by declared skill; the runner executes all k and majority-votes
-(fetch returns a list of ids, per CONTRACT's route-to-many convention)."""
+"""Route-to-many: the top-k agents by declared skill all execute the task; the majority of their outcomes counts.
+
+Mechanism: collect the declarations once at build; fetch returns the k highest declarers for the family as a list, which
+the runner executes in full (k tasks charged) and scores by majority vote (ties fail).
+
+Ledger: build = n messages; fetch = n comparisons + k executions; observe = 0.
+Params: k=3."""
 import numpy as np
 from .base import Method
 from ._decl import declared, scan

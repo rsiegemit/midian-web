@@ -1,8 +1,13 @@
-"""EigenTrust reputation + greedy forwarding (SPEC §6). Each agent probed b times per family, each outcome reported by ONE
-random peer. R[j,a] = mean report of j about a; EigenTrust = power iteration on row-normalised R, no pre-trusted seed;
-est[a,f] = trust-weighted mean of reports about a. T-Man overlay: c most-similar neighbours in est space, found by gossip
-rounds. Fetch = greedy walk on trust*est. Messages: build nnz(R) per power iteration + 2 per node per T-Man round;
-fetch 2*c per hop."""
+"""EigenTrust reputation plus greedy forwarding on a T-Man similarity overlay.
+
+Mechanism: each agent is probed b times per family and each outcome is reported by ONE random peer.
+R[j, a] = mean report of j about a; EigenTrust is a power iteration on row-normalised R (no pre-trusted seed); est[a, f] = trust-weighted mean
+of the reports about a. T-Man gossip rounds find each node's c most similar neighbours in est space. Fetch is a greedy
+walk on trust * est from a random start.
+
+Ledger: build = n*K*b probes + n*K*b reports + nnz(R) messages per power iteration + 2n messages per T-Man round;
+fetch = depth hops, c*depth comparisons, 2*c*depth messages; observe = 0.
+Params: c=10, depth=6, iters=50, rounds=3."""
 import numpy as np
 from .base import Method
 from ._est import observed_reports, greedy_walk

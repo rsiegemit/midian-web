@@ -1,7 +1,12 @@
-"""RouterBench's KNN predictive router (Hu et al. 2024) on our terms: MIDIAN's probe budget, no report channel.
-Predicted success of agent a on a task = mean outcome of a's k nearest probes (cosine over prompt embeddings; k = b by
-default because an agent has only b probes per family). Pick = argmax over agents: n comparisons per task.
-`online=True` adds every routed (prompt, agent, outcome) to the store, the learned-router analogue of flat_online."""
+"""RouterBench's KNN predictive router (Hu et al. 2024) on MIDIAN's probe budget, without the report channel.
+
+Mechanism: every probe's prompt is embedded (all-MiniLM-L6-v2, or the backend's own vectors); the predicted success of
+agent a on a task is the mean outcome of a's k nearest probes by cosine (k = b by default: an agent has b probes per
+family); fetch takes the argmax over agents. online=True adds every routed (prompt, agent, outcome) to the store.
+
+Ledger: build = n*K*b probes; fetch = n comparisons; observe = 0.
+Churn: |arrived|*K*b probes (the replaced agents' stores are rebuilt).
+Params: online=False, k=None (= b)."""
 import numpy as np
 from .base import Method
 from ._est import scan_argmax

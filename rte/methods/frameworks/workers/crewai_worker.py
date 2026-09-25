@@ -1,6 +1,6 @@
-"""CrewAI, SPEC §6A recipe 2: a `Process.hierarchical` crew whose manager delegates through
+"""CrewAI: a `Process.hierarchical` crew whose manager delegates through
 `Delegate work to coworker`, whose description lists only each agent's `role` -- so the self-description
-goes there, prefixed with the agent id to stay invertible. Since 2026-09-03 the manager is an explicit
+goes there, prefixed with the agent id to stay invertible. The manager is an explicit
 `manager_agent` whose persona and task both demand delegation; a kickoff that finishes without a single
 delegate call is a FAILURE (the manager answered itself), not a fallback. See docs/frameworks/NOTES_crewai.md."""
 import contextlib

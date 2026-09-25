@@ -1,4 +1,4 @@
-"""OpenAI Agents SDK, SPEC §6A recipe 5: a triage agent whose handoffs become `transfer_to_<name>` tools
+"""OpenAI Agents SDK: a triage agent whose handoffs become `transfer_to_<name>` tools
 described by each candidate's `handoff_description`. `RunHooks.on_handoff` fires before the target agent's
 turn, so raising out of it stops the run at the pick. The endpoint is reached with `use_responses=False`
 because vLLM serves chat-completions, not the Responses API. See docs/frameworks/NOTES_openai_agents.md."""

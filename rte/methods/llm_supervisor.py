@@ -1,11 +1,11 @@
-"""The practitioner default, run for real (SPEC §9): retrieve top-k agents by description
-similarity, then a supervisor model reads those descriptions and picks one.
+"""The practitioner default, run for real: retrieve top-k agents by description, an LLM supervisor picks one.
 
-At n=1,000 the descriptions do not fit a context window, so retrieve-then-pick is what real
-systems do. Everything except the pick itself — retrieval, name/id mapping, ledger and message
-accounting, the declared-argmax fallback — is `FrameworkMethod`; this file is only the difference:
-one direct `llm_client` call instead of a framework's subprocess bridge. It is NOT a framework.
-"""
+Mechanism: at n = 1,000 the descriptions do not fit a context window, so retrieve-then-pick is what real systems do.
+Retrieval, name/id mapping, ledger accounting and the declared-argmax fallback are FrameworkMethod's; this file is only
+the difference: one direct `llm_client` call instead of a framework's subprocess bridge. It is not a framework.
+
+Ledger: build = n messages; fetch = k comparisons, 1 hop, k + 2 messages; observe = 0.
+Params: k=20, max_tokens=64, plus FrameworkMethod's (supervisor, retrieval, ...)."""
 from __future__ import annotations
 
 import re

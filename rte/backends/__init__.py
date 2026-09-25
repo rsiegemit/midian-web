@@ -23,7 +23,7 @@ def noisy_declared(S, seed, sigma=0.05):
     return np.clip(S + rng.normal(0, sigma, S.shape), 0, 1).astype(np.float32)
 
 
-# `calibrated` declarations (erratum 30): the live self-rating's error pattern. D | S is drawn from the empirical
+# `calibrated` declarations (docs/errata.md): the live self-rating's error pattern. D | S is drawn from the empirical
 # distribution of the live D_self_described given S's decile, pooled over the live specialist n = 100 and 1,000 populations
 # (scripts/fit_declared_calibration.py fits this table and validates it). i.i.d. per (agent, family).
 CAL_VALUES = np.array([0, .2, .5, .6, .7, .75, .8, .85, .9, .95, 1], np.float32)   # the ratings live models emit

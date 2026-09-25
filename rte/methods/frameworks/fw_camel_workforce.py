@@ -1,4 +1,6 @@
-"""CAMEL Workforce rival (SPEC §6A row 10, recipe 9). See docs/frameworks/NOTES_camel.md."""
+"""CAMEL Workforce rival. See docs/frameworks/NOTES_camel.md.
+
+Ledger and params: as FrameworkMethod (rte.methods.frameworks._common)."""
 from ._common import FrameworkMethod
 
 

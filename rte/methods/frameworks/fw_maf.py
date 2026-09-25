@@ -1,4 +1,6 @@
-"""Microsoft Agent Framework rival (SPEC §6A row 5), mode="groupchat"|"handoff". See docs/frameworks/NOTES_maf.md."""
+"""Microsoft Agent Framework rival, mode="groupchat"|"handoff". See docs/frameworks/NOTES_maf.md.
+
+Ledger and params: as FrameworkMethod (rte.methods.frameworks._common), plus mode="groupchat"."""
 from ._common import FrameworkMethod
 
 
