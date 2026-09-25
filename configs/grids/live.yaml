@@ -1,0 +1,665 @@
+# live LLM populations (backend llm): MIDIAN, its variants and the algorithmic rivals
+grids:
+  # ---- live LLM grids (SPEC §3 compute plan)
+  # [FIG:E] live n = 100, core arms (pre-09-02 probe instances); read by: bar_figs, shortlist_figs
+  live_core_n100:   {use: live, n: [100], methods: {set: core4}}
+
+  # [FIG:A,E] live n = 10^3 F1 sweep, every algorithmic method; read by: analyze, bar_figs, energy, extra_figs +4
+  live_f1_n1000:    {use: live, methods: {set: all_arms}}
+
+  # [HIST] live n = 10^3 on correlated / iid_uniform shapes; read by: none
+  live_extra_n1000: {use: live, dist: [correlated, iid_uniform], methods: {set: all_arms}}
+
+  # [NUM] live probe budget b in {1, 3, 10}; read by: extra_figs, paper_numbers
+  budget_sweep:
+    backend: llm
+    n: [1000]
+    dist: [specialist, heavy_tail, bimodal]
+    beta: [0.25]
+    b: [1, 3, 10]
+    methods: {set: budget}
+
+  # [NUM] MIDIAN r / delta internals, collusion on/off; read by: analyze
+  midian_internals:
+    backend: llm
+    n: [1000]
+    dist: [specialist]
+    beta: [0.1, 0.25, 0.5]
+    collude: [true, false]
+    methods: {set: midian_variants}
+
+  # ---- v2 work order (TARGETS_rte_v2.md), 2026-09-03. Variants are labeled; MIDIAN w/o defenses unchanged.
+  # 1.4
+  # [HIST] v2 1.4: cohort size r = 20; read by: none
+  midian_r20:
+    backend: llm
+    n: [1000]
+    dist: [specialist, heavy_tail, bimodal]
+    beta: [0.25, 0.5]
+    declared_source: [programmatic, self_described]
+    methods:
+      - {name: midian, params: {audit: false, verify: false}}
+      - {name: midian, params: {audit: false, verify: false, r: 20}}
+      - {name: midian, params: {audit: false, r: 20}}
+      - {name: midian, params: {r: 20}}
+
+  # 1.5
+  # [NUM] v2 1.5: stratified cohorts; read by: analyze, cohort_table, equivalence, extra_figs
+  stratify:
+    backend: llm
+    n: [1000]
+    dist: [specialist, heavy_tail]
+    beta: [0, 0.5]
+    declared_source: [self_described]
+    methods:
+      - {name: midian, params: {audit: false, verify: false}}
+      - {name: midian, params: {audit: false, verify: false, stratify: true}}
+
+  # 2.2 (replaces the b=1/programmatic 10k row)
+  # [FIG:A,E] live n = 10^4, self-described (replaces live_n10k); read by: analyze, bar_figs, dedup_compare +6
+  live_n10k_v2:
+    backend: llm
+    n: [10000]
+    dist: [specialist]
+    beta: [0, 0.25]
+    declared_source: [self_described]
+    b: [3]
+    seeds: 1-3
+    Q: 300
+    methods:
+      - {name: midian, params: {audit: false, verify: false}}
+      - {name: midian, params: {verify: false}}
+      - {name: midian, params: {audit: false}}
+      - {name: flat_probe_argmax, params: {online: true}}
+      - {name: sequential_halving, params: {peer_reported: true}}
+      - verify_on_claim
+      - warm_start_bandit
+      - linucb_honest
+      - {set: frameworks}
+      - random
+      - midian
+
+  # 2.3: 10 FRESH seeds
+  # [NUM] v2 2.3: ten fresh seeds 11-20; read by: analyze
+  midian_v_replication:
+    backend: llm
+    n: [100, 1000]
+    dist: [specialist, heavy_tail, bimodal]
+    beta: [0, 0.25, 0.5]
+    declared_source: [programmatic, self_described]
+    seeds: 11-20
+    methods:
+      - {name: midian, params: {audit: false, verify: false}}
+      - {name: midian, params: {audit: false}}
+      - midian
+      - {name: flat_probe_argmax, params: {online: true}}
+      - {name: sequential_halving, params: {peer_reported: true}}
+
+  # 2.4
+  # [NUM] v2 2.4: b = 10 on bimodal / heavy_tail; read by: analyze, dedup_compare, extra_figs
+  budget_b10_shapes:
+    backend: llm
+    n: [1000]
+    dist: [bimodal, heavy_tail]
+    beta: [0.25]
+    b: [10]
+    declared_source: [programmatic, self_described]
+    seeds: 1-3
+    Q: 300
+    methods:
+      - {name: midian, params: {audit: false, verify: false}}
+      - {name: midian, params: {audit: false}}
+      - {name: flat_probe_argmax, params: {online: true}}
+      - sequential_halving
+      - {name: sequential_halving, params: {peer_reported: true}}
+      - fw_langgraph
+      - fw_autogen
+      - random
+      - {name: midian, params: {verify: false}}
+      - midian
+
+  # 2.5
+  # [NUM] v2 2.5: r / delta internals with and without audits; read by: analyze, extra_figs
+  internals_v2:
+    backend: llm
+    n: [1000]
+    dist: [specialist]
+    beta: [0.5]
+    collude: [true, false]
+    liar_select: [random, low_skill_first]
+    declared_source: [self_described]
+    methods:
+      - {name: midian, params: {audit: false, verify: false, r: 5, delta: 0.0}}
+      - {name: midian, params: {audit: false, verify: false, r: 5, delta: 0.3333333333333333}}
+      - {name: midian, params: {audit: false, verify: false, r: 10, delta: 0.0}}
+      - {name: midian, params: {audit: false, verify: false, r: 10, delta: 0.3333333333333333}}
+      - {name: midian, params: {audit: false, verify: false, r: 20, delta: 0.0}}
+      - {name: midian, params: {audit: false, verify: false, r: 20, delta: 0.3333333333333333}}
+      - {name: midian, params: {verify: false, r: 5, delta: 0.0}}
+      - {name: midian, params: {verify: false, r: 5, delta: 0.3333333333333333}}
+      - {name: midian, params: {verify: false, r: 10, delta: 0.0}}
+      - {name: midian, params: {verify: false, r: 10, delta: 0.3333333333333333}}
+      - {name: midian, params: {verify: false, r: 20, delta: 0.0}}
+      - {name: midian, params: {verify: false, r: 20, delta: 0.3333333333333333}}
+      - flat_probe_argmax
+
+  # headline arms of live_f1_n1000 on 5 more seeds (variance); merge with --grids
+  # [NUM] headline arms of live_f1_n1000 on seeds 6-10; read by: v3_figs
+  live_f1_core_s6_10:
+    use: live
+    seeds: 6-10
+    methods:
+      - {name: midian, params: {audit: false, verify: false}}
+      - {name: midian, params: {audit: false, verify: false, r: 5}}
+      - {name: midian, params: {audit: false}}
+      - {name: midian, params: {audit: false, r: 5}}
+      - random
+      - declared_argmax
+      - flat_probe_argmax
+      - {name: flat_probe_argmax, params: {online: true}}
+      - sequential_halving
+      - {name: sequential_halving, params: {peer_reported: true}}
+      - warm_start_bandit
+      - verify_on_claim
+      - llm_supervisor
+
+  # 2.1 (V2-6)
+  # [NUM] v2 2.1: agent churn (10 % / 30 % every 200 tasks); read by: analyze, dedup_compare, extra_figs, paper_numbers
+  churn_n1000:
+    backend: llm
+    n: [1000]
+    dist: [specialist, heavy_tail]
+    beta: [0, 0.25]
+    declared_source: [self_described]
+    seeds: 1-5
+    Q: 1000
+    blocks: [{churn: {frac: 0.1, every: 200}}, {churn: {frac: 0.3, every: 200}}]
+    methods:
+      - {name: midian, params: {audit: false, verify: false}}
+      - {name: midian, params: {verify: false}}
+      - {name: midian, params: {audit: false}}
+      - {name: sequential_halving, params: {peer_reported: true, churn_mode: rebuild}}
+      - {name: sequential_halving, params: {peer_reported: true, churn_mode: stale}}
+      - {name: flat_probe_argmax, params: {online: true}}
+      - warm_start_bandit
+      - linucb_honest
+      - fw_langgraph
+      - fw_autogen
+      - midian
+
+  # Phase 1 variants on the F1 cells (V2-1..3, V2-5)
+  # [FIG:A,E] MIDIAN variants on the F1 cells, self-described; read by: analyze, bar_figs, energy, extra_figs +4
+  variants_f1:
+    use: live
+    declared_source: [self_described]
+    seeds: 1-10
+    methods:
+      - {name: midian, params: {audit: false, verify: false}}
+      - {name: midian, params: {verify: false}}
+      - {name: midian, params: {audit: false}}
+      - midian
+      - linucb_honest
+      - {name: sequential_halving, params: {peer_reported: true}}
+      - {name: flat_probe_argmax, params: {online: true}}
+
+  # RouterBench's predictive routers on our terms (TARGETS_rte_v3 part C): variants_f1 cells
+  # [FIG:A,E] RouterBench learned routers on the variants_f1 cells; read by: bar_figs, paper_figs, paper_numbers +2
+  learned_f1:
+    mirror_of: variants_f1
+    methods:
+      - knn_router
+      - {name: knn_router, params: {online: true}}
+      - mlp_router
+
+  # same cells at n=100, every MIDIAN variant + top self-contained rivals + the learned routers (frameworks:
+  # fw_live_n100)
+  # [FIG:A,E] live n = 100: MIDIAN variants, rivals, learned routers; read by: bar_figs, paper_figs, paper_numbers +2
+  learned_n100:
+    mirror_of: variants_f1
+    n: [100]
+    methods:
+      - {name: midian, params: {audit: false, verify: false}}
+      - {name: midian, params: {audit: false}}
+      - {name: midian, params: {verify: false}}
+      - midian
+      - flat_probe_argmax
+      - {name: flat_probe_argmax, params: {online: true}}
+      - sequential_halving
+      - {name: sequential_halving, params: {peer_reported: true}}
+      - warm_start_bandit
+      - declared_argmax
+      - knn_router
+      - {name: knn_router, params: {online: true}}
+      - mlp_router
+
+  # n=10k (specialist, b=3, Q=300 as live_n10k_v2), both liar selections; mlp_router excluded (agent one-hot x 480k
+  # probes)
+  # [FIG:A,E] live n = 10^4: MIDIAN variants, rivals, learned routers; read by: bar_figs, doc_tables, paper_figs +3
+  learned_n10k:
+    backend: llm
+    n: [10000]
+    dist: [specialist]
+    beta: [0, 0.25, 0.5]
+    liar_select: [random, low_skill_first]
+    declared_source: [self_described]
+    b: [3]
+    seeds: "1-3"
+    Q: 300
+    methods:
+      - {name: midian, params: {audit: false, verify: false}}
+      - {name: midian, params: {audit: false}}
+      - {name: midian, params: {verify: false}}
+      - midian
+      - flat_probe_argmax
+      - {name: flat_probe_argmax, params: {online: true}}
+      - {name: sequential_halving, params: {peer_reported: true}}
+      - warm_start_bandit
+      - declared_argmax
+      - knn_router
+      - {name: knn_router, params: {online: true}}
+
+  # [NUM] v4 cohort modes on the live benchmark; read by: cohort_table, paper_numbers
+  cohort_rte:                       # TARGETS_rte_v4 on our own live benchmark; mirrors variants_f1's cells so the probe
+                                    # worlds are already memoised. b = 10 is the axis the diagnostics say matters.
+    backend: llm
+    n: [1000]
+    K: [16]
+    dist: [specialist, heavy_tail, bimodal]
+    beta: [0, 0.5]
+    liar_select: [random, low_skill_first]
+    declared_source: [self_described]
+    b: [3, 10]
+    seeds: "1-5"
+    Q: 1000
+    methods: [{set: cohort_arms}]              # the oracle line is emitted by the runner, not a method module
+
+  # n = 100,000 on the LIVE backend: the design of learned_n10k one decade up, so rows pair
+  # directly with the 10^4 arms and with scale_100k's synthetic 10^5 point.
+  # COST: the probe build is per (n, dist, seed) - NOT per cell - because _probe_salt and the
+  # world RNG depend on the seed only, and lying changes D, never S. So the 18 cell-seeds here
+  # cost THREE builds of 48n = 4.8M generations, not eighteen. Warm those three first
+  # (stage 1: knn_router alone, one job per seed) or concurrent cold starts duplicate the work.
+  # 2026-09-08: extended from 16 arms to the FULL 10^4 table so the two columns match arm for arm. mlp_router stays
+  # excluded (agent one-hot over 4.8M probes). declared_argmax IS meaningful here, unlike in scale_100k, because
+  # this grid declares on the SELF-DESCRIBED channel. The v4 cohort modes live in live_n100k_cohort, NOT here:
+  # --methods filters by NAME (every MIDIAN arm is named midian), so putting midian[cohort=...] beside MIDIAN would
+  # bundle every variant into one unit, and a unit is all-or-nothing -- that would turn a >9 h MIDIAN unit into a >36 h
+  # one.
+  # [FIG:A,B,D,E,F,G] live n = 10^5, full arm table; read by: bar_figs, cohort_table, dedup_compare, doc_tables +4
+  live_n100k:
+    backend: llm
+    n: [100000]
+    K: [16]
+    dist: [specialist]
+    beta: [0, 0.25, 0.5]
+    liar_select: [random, low_skill_first]
+    declared_source: [self_described]
+    b: [3]
+    seeds: 1-3
+    Q: 300
+    methods:
+      - {set: frameworks}
+      - knn_router
+      - {name: knn_router, params: {online: true}}
+      - {name: midian, params: {audit: false, verify: false}}
+      - {name: midian, params: {verify: false}}
+      - midian
+      - {name: sequential_halving, params: {peer_reported: true}}
+      - random
+      - {name: midian, params: {audit: false}}
+      - declared_argmax
+      - flat_probe_argmax
+      - {name: flat_probe_argmax, params: {online: true}}
+      - linucb_honest
+      - warm_start_bandit
+      - verify_on_claim
+
+  # [NUM] v4 cohort modes at live n = 10^5; read by: cohort_table
+  live_n100k_cohort:                # v4 cohort modes at n = 10^5, on live_n100k's exact cells so rows pair with it.
+                                    # Separate grid, not extra arms in live_n100k: see the note above. The plain
+                                    # cohort=random baselines are live_n100k's own MIDIAN w/o defenses / w/o
+                                    # verification / MIDIAN rows -- analysis loads both grids together, so they are not
+                                    # recomputed here.
+    mirror_of: live_n100k
+    methods:
+      - {name: midian, params: {audit: false, verify: false, stratify: true}}
+      - {name: midian, params: {audit: false, verify: false, cohort: block}}
+      - {name: midian, params: {audit: false, verify: false, cohort: specialty}}
+      - {name: midian, params: {audit: false, verify: false, cohort: declared}}
+      - {name: midian, params: {verify: false, cohort: block}}
+      - {name: midian, params: {verify: false, cohort: specialty}}
+      - {name: midian, params: {verify: false, cohort: declared}}
+      - {name: midian, params: {cohort: block}}
+      - {name: midian, params: {cohort: specialty}}
+      - {name: midian, params: {cohort: declared}}
+
+  # [NUM] dedup TF-IDF shortlist (erratum 25) of budget_b10_shapes; read by: dedup_compare
+  budget_b10_fw_dd:
+    mirror_of: budget_b10_shapes
+    methods: [{name: fw_langgraph, params: {dedup: true}}, {name: fw_autogen, params: {dedup: true}}]
+
+  # [NUM] dedup TF-IDF shortlist (erratum 25) of churn_n1000; read by: dedup_compare
+  churn_n1000_fw_dd:
+    mirror_of: churn_n1000
+    methods: [{name: fw_langgraph, params: {dedup: true}}, {name: fw_autogen, params: {dedup: true}}]
+
+  # live n = 100: the rivals that only the n = 1,000 grid carried
+  # [HIST] coverage fill: rivals only the n = 10^3 grid carried, n = 100; read by: none
+  learned_n100_fill:
+    mirror_of: learned_n100
+    methods:
+      - cnp_self_bid
+      - cluster_head_router
+      - declared_softmax
+      - disrouter_cascade
+      - ucb_per_family
+      - thompson_per_family
+      - verify_on_claim
+      - linucb_honest
+      - flat_nsw_router
+      - referral_network
+      - gossip_reputation_greedy
+      - trueskill_per_family
+
+  # live n = 10,000, both liar selections
+  # [HIST] coverage fill: remaining rivals at n = 10^4; read by: none
+  learned_n10k_fill:
+    mirror_of: learned_n10k
+    methods:
+      - cnp_self_bid
+      - cluster_head_router
+      - declared_softmax
+      - disrouter_cascade
+      - ucb_per_family
+      - thompson_per_family
+      - flat_nsw_router
+      - referral_network
+      - gossip_reputation_greedy
+      - trueskill_per_family
+      - llm_supervisor
+
+  # live n = 100,000 (no TrueSkill: NotImplemented there)
+  # [FIG:E,F,G] coverage fill: remaining rivals at n = 10^5; read by: shortlist_figs
+  live_n100k_fill:
+    mirror_of: live_n100k
+    methods:
+      - cnp_self_bid
+      - cluster_head_router
+      - declared_softmax
+      - disrouter_cascade
+      - ucb_per_family
+      - thompson_per_family
+      - flat_nsw_router
+      - referral_network
+      - gossip_reputation_greedy
+      - llm_supervisor
+
+  # ---- 2026-09-17 expansions (COVERAGE.md §8): live β = 0.1 above 10^3; live heavy_tail / bimodal at 10^4; the
+  # frameworks on RouterEval with the MiniLM and MIDIAN cohort shortlists (dedup is a no-op there: every rendered
+  # description is unique).
+  # [FIG:E] beta = 0.1 cells of learned_n10k; read by: shortlist_figs
+  learned_n10k_beta01:      {mirror_of: learned_n10k,      beta: [0.1]}
+
+  # [HIST] beta = 0.1 cells of learned_n10k_fill; read by: none
+  learned_n10k_fill_beta01: {mirror_of: learned_n10k_fill, beta: [0.1]}
+
+  # [FIG:E,F,G] beta = 0.1 cells of live_n100k; read by: shortlist_figs
+  live_n100k_beta01:        {mirror_of: live_n100k,        beta: [0.1]}
+
+  # [HIST] beta = 0.1 cells of live_n100k_fill; read by: none
+  live_n100k_fill_beta01:   {mirror_of: live_n100k_fill,   beta: [0.1]}
+
+  # stage 1 warms each (shape, seed) population with flat_probe_argmax
+  # [HIST] heavy_tail / bimodal cells of learned_n10k; read by: none
+  learned_n10k_shapes:      {mirror_of: learned_n10k,      dist: [heavy_tail, bimodal]}
+
+  # [HIST] heavy_tail / bimodal cells of learned_n10k_fill; read by: none
+  learned_n10k_fill_shapes: {mirror_of: learned_n10k_fill, dist: [heavy_tail, bimodal]}
+
+  # ---- 2026-09-22: the one missing bar -- random at n = 10^4 under the beta = 0.5 low-skill cartel (live_n10k_v2 ran
+  # random only at beta in {0, 0.25}; learned_n10k and fw_live_n10k_cartel never listed it). Same cells as learned_n10k.
+  # [FIG:A] random at n = 10^4 under the beta = 0.5 cartel; read by: bar_figs
+  live_n10k_cartel_random: {mirror_of: learned_n10k, beta: [0.5], liar_select: [low_skill_first], methods: [random]}
+
+  # ---- 2026-09-22 rival tuning (CHANGES 8d): the warm-start bandit's claim weight n0, chosen on seeds NEVER reported
+  # (11-15; every reported live 10^3 cell uses seeds 1-10). Honest cell only: that is where the default n0 = 5 is weak.
+  # [HIST] tune warm_start_bandit n0 on unreported seeds 11-15; read by: none
+  tune_wsb_n1000:
+    backend: llm
+    n: [1000]
+    dist: [specialist]
+    beta: [0]
+    declared_source: [self_described]
+    b: [3]
+    seeds: "11-15"
+    Q: 1000
+    methods: [{name: warm_start_bandit, params: {n0: 0.5}}, {name: warm_start_bandit, params: {n0: 1.0}},
+              {name: warm_start_bandit, params: {n0: 2.0}}, {name: warm_start_bandit, params: {n0: 5.0}}]
+
+  # ---- 2026-09-22 PROBE-BUDGET axis for MIDIAN in condensed figures A / B: b in {1, 5} beside the existing b = 3,
+  # specialist, beta = 0 and the beta = 0.5 low-skill cartel only (b = 10 deferred). Each grid mirrors the cell source
+  # of A / B so rows pair with the b = 3 arms; at beta = 0 the liar selection is inert, so both regimes share one grid
+  # and a per-seed job builds each population's probes ONCE (cached for the second regime).
+  # [FIG:A] MIDIAN at b = 1 / 5 on fw_live_n100; read by: seed_tables
+  va_b_n100:
+    mirror_of: fw_live_n100
+    dist: [specialist]
+    beta: [0, 0.5]
+    liar_select: [low_skill_first]
+    b: [1, 5]
+    methods: [midian]
+
+  # [FIG:A,D] MIDIAN at b = 1 / 5 on fw_live_n1000; read by: efficiency_figs, seed_tables
+  va_b_n1000:
+    mirror_of: fw_live_n1000
+    dist: [specialist]
+    beta: [0, 0.5]
+    liar_select: [low_skill_first]
+    b: [1, 5]
+    methods: [midian]
+
+  # [FIG:A] MIDIAN at b = 1 / 5 on learned_n10k; read by: seed_tables
+  va_b_n10k:   {mirror_of: learned_n10k,  beta: [0, 0.5], liar_select: [low_skill_first], b: [1, 5], methods: [midian]}
+
+  # [FIG:A,B,D] MIDIAN at b = 1 / 5 on live_n100k; read by: efficiency_figs, seed_tables
+  va_b_n100k:  {mirror_of: live_n100k,    beta: [0, 0.5], liar_select: [low_skill_first], b: [1, 5], methods: [midian]}
+
+  # ---- 2026-09-22: the TUNED warm-start bandit (n0 = 0.5, chosen on unreported seeds 11-15 by tune_wsb_n1000: 0.762
+  # vs 0.745-0.750 for n0 in {1, 2, 5}) on the reported focus cells, reported BESIDE the pre-registered n0 = 5 arm.
+  # [FIG:A] warm_start_bandit[n0=0.5] (tuned on seeds 11-15) on fw_live_n100; read by: seed_tables
+  tuned_wsb_n100:
+    mirror_of: fw_live_n100
+    dist: [specialist]
+    beta: [0, 0.5]
+    liar_select: [low_skill_first]
+    methods: [{name: warm_start_bandit, params: {n0: 0.5}}]
+
+  # [FIG:A] warm_start_bandit[n0=0.5] (tuned on seeds 11-15) on fw_live_n1000; read by: seed_tables
+  tuned_wsb_n1000:
+    mirror_of: fw_live_n1000
+    dist: [specialist]
+    beta: [0, 0.5]
+    liar_select: [low_skill_first]
+    methods: [{name: warm_start_bandit, params: {n0: 0.5}}]
+
+  # [FIG:A] warm_start_bandit[n0=0.5] (tuned on seeds 11-15) on learned_n10k; read by: seed_tables
+  tuned_wsb_n10k:
+    mirror_of: learned_n10k
+    beta: [0, 0.5]
+    liar_select: [low_skill_first]
+    methods: [{name: warm_start_bandit, params: {n0: 0.5}}]
+
+  # [FIG:A,B] warm_start_bandit[n0=0.5] (tuned on seeds 11-15) on live_n100k; read by: seed_tables
+  tuned_wsb_n100k:
+    mirror_of: live_n100k
+    beta: [0, 0.5]
+    liar_select: [low_skill_first]
+    methods: [{name: warm_start_bandit, params: {n0: 0.5}}]
+
+  # ---- 2026-09-22 BUDGET-MATCHED RIVALS for MIDIAN's b axis: every probe-using rival the A / B cell already has at
+  # b = 3 (MIDIAN w/o defenses, flat probe argmax online, the learned-router and bandit pools, + the tuned warm-start
+  # bandit on live), at the same b as the va_b_* twin, so no bar compares MIDIAN at b = 5 with rivals at b = 3.
+  # [FIG:A] rivals at b = 1 / 5 on va_b_n100; read by: seed_tables
+  rivals_b_n100:
+    mirror_of: va_b_n100
+    methods:
+      - {name: midian, params: {audit: false, verify: false}}
+      - {name: flat_probe_argmax, params: {online: true}}
+      - {name: warm_start_bandit, params: {}}
+      - {name: knn_router, params: {}}
+      - {name: knn_router, params: {online: true}}
+      - {name: mlp_router, params: {}}
+      - {name: warm_start_bandit, params: {n0: 0.5}}
+
+  # [FIG:A] rivals at b = 1 / 5 on va_b_n1000; read by: seed_tables
+  rivals_b_n1000:
+    mirror_of: va_b_n1000
+    methods:
+      - {name: midian, params: {audit: false, verify: false}}
+      - {name: cluster_head_router, params: {}}
+      - {name: disrouter_cascade, params: {}}
+      - {name: flat_nsw_router, params: {}}
+      - {name: knn_router, params: {}}
+      - {name: linucb_honest, params: {}}
+      - {name: mlp_router, params: {}}
+      - {name: thompson_per_family, params: {}}
+      - {name: trueskill_per_family, params: {}}
+      - {name: ucb_per_family, params: {}}
+      - {name: warm_start_bandit, params: {}}
+      - {name: flat_probe_argmax, params: {online: true}}
+      - {name: knn_router, params: {online: true}}
+      - {name: warm_start_bandit, params: {n0: 0.5}}
+
+  # [FIG:A] rivals at b = 1 / 5 on va_b_n10k; read by: seed_tables
+  rivals_b_n10k:
+    mirror_of: va_b_n10k
+    methods:
+      - {name: midian, params: {audit: false, verify: false}}
+      - {name: flat_probe_argmax, params: {online: true}}
+      - {name: warm_start_bandit, params: {}}
+      - {name: knn_router, params: {}}
+      - {name: knn_router, params: {online: true}}
+      - {name: linucb_honest, params: {}}
+      - {name: warm_start_bandit, params: {n0: 0.5}}
+
+  # [FIG:A,B] rivals at b = 1 / 5 on va_b_n100k; read by: seed_tables
+  rivals_b_n100k:
+    mirror_of: va_b_n100k
+    methods:
+      - {name: knn_router, params: {}}
+      - {name: knn_router, params: {online: true}}
+      - {name: midian, params: {audit: false, verify: false}}
+      - {name: flat_probe_argmax, params: {online: true}}
+      - {name: linucb_honest, params: {}}
+      - {name: warm_start_bandit, params: {}}
+      - {name: warm_start_bandit, params: {n0: 0.5}}
+
+  # ---- 2026-09-23 STRONGEST DECLARED LIE (lie_mode: max -- every cartel member claims perfect skill in every family):
+  # does declaration-based discovery (declared argmax; frameworks on the declared top-k, i.e. an idealized A2A Agent-
+  # Card registry) collapse while MIDIAN holds? The cartel cell of live 10^3 / 10^4 / 10^5, seeds 1-3. Only D changes,
+  # so every probe build is already cached.
+  # [FIG:I] lie_mode max, cartel cell on fw_live_n1000_lowskill; read by: none
+  lie_max_n1000:
+    mirror_of: fw_live_n1000_lowskill
+    dist: [specialist]
+    seeds: 1-3
+    lie_mode: [max]
+    methods: {set: lie_max_arms}
+
+  # [FIG:I] lie_mode max, cartel cell on learned_n10k; read by: none
+  lie_max_n10k:
+    mirror_of: learned_n10k
+    beta: [0.5]
+    liar_select: [low_skill_first]
+    lie_mode: [max]
+    methods: {set: lie_max_arms}
+
+  # [FIG:I] lie_mode max, cartel cell on live_n100k; read by: none
+  lie_max_n100k:
+    mirror_of: live_n100k
+    beta: [0.5]
+    liar_select: [low_skill_first]
+    lie_mode: [max]
+    methods: {set: lie_max_arms}
+
+  # ---- 2026-09-23 POOL FILL for condensed A / B: "best learned router" / "best bandit" are chosen from the SAME
+  # candidate set at every b in a cell (the user: no arm may change between b values because a candidate did not run).
+  # Each cell's pool = LEARNED + BANDIT + warm_start_bandit[n0=0.5] (scripts/condensed_figs.py) minus the arms that
+  # cannot run there: trueskill_per_family at n >= 10^5 (NotImplemented), knn/mlp_router on bernoulli / replay (no
+  # prompt text: they embed n*K*b prompts), mlp_router at n >= 5,000 (agent one-hot over >= 2.4e5 probes, as
+  # learned_n10k). These grids hold ONLY arms no other grid ran in that cell, so nothing is run twice (tuned n0 = 0.5 at
+  # live b = 3 is tuned_wsb_*).
+  # [FIG:A] pool fill on va_b_n100; read by: seed_tables
+  pool_fill_n100:
+    mirror_of: va_b_n100
+    b: [1, 3, 5]
+    methods:
+      - flat_nsw_router
+      - cluster_head_router
+      - disrouter_cascade
+      - ucb_per_family
+      - thompson_per_family
+      - linucb_honest
+      - trueskill_per_family
+
+  # [FIG:A] pool fill on va_b_n10k; read by: seed_tables
+  pool_fill_n10k:
+    mirror_of: va_b_n10k
+    b: [1, 3, 5]
+    methods:
+      - flat_nsw_router
+      - cluster_head_router
+      - disrouter_cascade
+      - ucb_per_family
+      - thompson_per_family
+      - trueskill_per_family
+    blocks: [{}, {b: [3], beta: [0.5], methods: [linucb_honest]}]
+
+  # [FIG:A,B] pool fill on va_b_n100k; read by: seed_tables
+  pool_fill_n100k:
+    mirror_of: va_b_n100k
+    b: [1, 3, 5]
+    methods: [flat_nsw_router, cluster_head_router, disrouter_cascade, ucb_per_family, thompson_per_family]
+
+  # live 10^3 b = 3: seven pool candidates ran only seeds 1-5 (live_f1_n1000); every other arm there has 1-10. Same
+  # cells as variants_f1 / learned_f1 (self-described, Q = 1000), seeds 6-10 only, so each cross-fitted pool sees 10
+  # seeds.
+  # [FIG:A] seeds 6-10 for seven live 10^3 pool candidates; read by: seed_tables
+  pool_seeds_n1000:
+    mirror_of: va_b_n1000
+    b: [3]
+    seeds: 6-10
+    methods:
+      - cluster_head_router
+      - disrouter_cascade
+      - flat_nsw_router
+      - thompson_per_family
+      - trueskill_per_family
+      - ucb_per_family
+      - warm_start_bandit
+
+  # ---- 2026-09-23 LinUCB with the fixed bonus (bonus = own; post hoc, audit rivals F1 / erratum 30): every A/B cell, b
+  # = 1/3/5, queued AFTER everything else (lowest priority). Replay 10^6 gets it in the fix-B split grids.
+  # [FIG:A] LinUCB bonus=own, b = 1/3/5 on va_b_n100; read by: seed_tables
+  linucb_fix_n100:  {mirror_of: va_b_n100,  b: [1, 3, 5], methods: [{name: linucb_honest, params: {bonus: own}}]}
+
+  # [FIG:A] LinUCB bonus=own, b = 1/3/5 on va_b_n1000; read by: seed_tables
+  linucb_fix_n1000: {mirror_of: va_b_n1000, b: [1, 3, 5], methods: [{name: linucb_honest, params: {bonus: own}}]}
+
+  # [FIG:A] LinUCB bonus=own, b = 1/3/5 on va_b_n10k; read by: seed_tables
+  linucb_fix_n10k:  {mirror_of: va_b_n10k,  b: [1, 3, 5], methods: [{name: linucb_honest, params: {bonus: own}}]}
+
+  # [FIG:A,B] LinUCB bonus=own, b = 1/3/5 on va_b_n100k; read by: seed_tables
+  linucb_fix_n100k: {mirror_of: va_b_n100k, b: [1, 3, 5], methods: [{name: linucb_honest, params: {bonus: own}}]}
+
+  # TrueSkill after the World._probe duplicate-cell fix (erratum 30): a repeated (agent, family) cell in one probe call
+  # now draws fresh instances; trueskill_per_family is the only arm that sends repeats, so its earlier rows are pre-fix
+  # (handicapped).
+  # [FIG:A] TrueSkill after the erratum-30 probe fix on va_b_n100; read by: seed_tables
+  trueskill_fix_n100:  {mirror_of: va_b_n100,  b: [1, 3, 5], methods: [trueskill_per_family]}
+
+  # [FIG:A] TrueSkill after the erratum-30 probe fix on va_b_n1000; read by: seed_tables
+  trueskill_fix_n1000: {mirror_of: va_b_n1000, b: [1, 3, 5], methods: [trueskill_per_family]}
+
+  # [FIG:A] TrueSkill after the erratum-30 probe fix on va_b_n10k; read by: seed_tables
+  trueskill_fix_n10k:  {mirror_of: va_b_n10k,  b: [1, 3, 5], methods: [trueskill_per_family]}
