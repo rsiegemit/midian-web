@@ -11,3 +11,5 @@ va_b_bernoulli_1e7	200	200	63442a62fea9ebda	1
 rivals_b_bernoulli_1e7	200	1800	214f515daea0b660	1
 pool_fill_bernoulli_1e7	600	1000	4e705e76b1f5a55c	1
 linucb_fix_bernoulli_1e7	600	600	23fd669c38c2e2dd	1
+vc_live_n1000	6	12	f2a40d83652da025	0
+vc_lie_max_n1000	3	6	873d6d03d4bb1c67	0
