@@ -207,8 +207,14 @@ def compute_D(d):
     return pd.DataFrame(rec), refs
 
 
+BREAK_EVEN = dict(
+    marker="o", markerfacecolor="none", markeredgecolor="black", markersize=3.5, markeredgewidth=0.8
+)  # D's break-even marker (docs/figures.md section 3b)
+
+
 def render_D(ax, rec, refs):
-    """The framework band with both edges named, MIDIAN's (build J) / T + marginal J per (n, b), break-evens as x."""
+    """The framework band with both edges named, MIDIAN's (build J) / T + marginal J per (n, b), break-evens as open
+    black circles, and the break-even formula bottom right."""
     T = np.logspace(2, 9, 200)
     e = refs.set_index("key")
     ax.fill_between(T, e.value["cheapest"], e.value["costliest"], color=S.COLOR["fw_band"], lw=0, zorder=1)
@@ -228,20 +234,33 @@ def render_D(ax, rec, refs):
             zorder=3,
         )
         for _, q in rec.iloc[i : i + 2].iterrows():
-            ax.plot(q.break_even_queries, q.fw_J, "x", color="black", ms=3, zorder=5)
+            ax.plot(q.break_even_queries, q.fw_J, zorder=5, **BREAK_EVEN)
     ax.set_xscale("log")
     ax.set_yscale("log")
     ax.set_xlim(T[0], T[-1])
     ax.set_ylim(1e-6, None)  # room below the curves for the legend (bottom left)
     S.finish(ax, ylabel=S.AXIS["energy"], xlabel=S.AXIS["T"])
+    ax.text(
+        0.98,
+        0.04,
+        r"$T^\ast = J_{\mathrm{build}}/(J_{\mathrm{fw}}-J_{\mathrm{route}})$",
+        transform=ax.transAxes,
+        ha="right",
+        va="bottom",
+        fontsize=8,
+        family="serif",
+    )
     hs = [Line2D([], [], color=S.shade(S.COLOR["midian"], lvl), lw=2.5) for lvl in N_SHADE.values()] + [
         Line2D([], [], color="black", ls=ls, lw=1.2) for ls in S.B_LINESTYLE.values()
     ]
     S.legend(
         ax,
         [],
-        labels=[S.pow10(n, "n") for n in N_SHADE] + [f"b = {b}" for b in S.B_LINESTYLE],
-        handles=hs,
+        labels=[S.pow10(n, "n") for n in N_SHADE]
+        + [""]
+        + [f"b = {b}" for b in S.B_LINESTYLE]
+        + ["break-even (line meets band edge)"],  # a second row under the b column: below every curve
+        handles=hs[:3] + [Patch(visible=False)] + hs[3:] + [Line2D([], [], ls="none", **BREAK_EVEN)],
         where="lower left",
         ncol=2,
         labelspacing=0.2,

@@ -8,9 +8,10 @@ shortlist_figs.py).
   E  (appendix) live specialist, n = 10^2 .. 10^5: per n, one bar per shortlist (instruction variants apart) = the MEAN
      over frameworks (solid honest, hatched beta = 0.5 low-skill cartel); oracle and random dotted, MIDIAN with no
      framework solid, as lines over each group.
-  F  n = 10^5 (every shortlist ran there), the body shortlists sorted by the honest mean; dense (Qwen3-8B) and fusion +
-     reranker are each their best instruction variant at that n by honest mean (body(); the csv's `variant` names it);
-     a black dot = the best single framework. F_shortlists_1e5_appendix: every variant.
+  F  n = 10^5 (every shortlist ran there), the body shortlists in the fixed order (figspec.SHORTLIST_ORDER,
+     docs/figures.md section 3b); dense (Qwen3-8B) and fusion + reranker are each their best instruction variant at
+     that n by honest mean (body(); the csv's `variant` names it); a black dot = the best single framework.
+     F_shortlists_1e5_appendix: every variant.
   G  (appendix) n = 10^5: each shortlist's gain over hashed TF-IDF, paired WITHIN each framework, averaged over
      frameworks (whisker = +/- 1 s.e. across frameworks). At 10^5 hashed TF-IDF is the clone shortlist (0.379 for every
      framework, erratum 25), so G is the gain over that floor.
@@ -37,7 +38,7 @@ REG = ("beta0", "cartel")
 MAIN = [
     k for k in S.SHORTLIST_ORDER if k not in ("bm25", "dense")
 ]  # E: the shortlists run at every n; BM25 / plain dense are 10^3 only
-BODY_H = ["tfidf", "embed", "dense", "sota", "declared", "va_cohort"]  # H, in the spec's order
+BODY_H = ["va_cohort", "tfidf", "embed", "dense", "sota", "declared"]  # H, in the spec's order
 VARIANTS = {"dense": ("dense", "dense_icomp", "dense_idemo"), "sota": ("sota", "sota_icomp", "sota_idemo")}
 LINES = ["oracle", "random_line", "midian_ref"]  # the reference lines' legend keys
 INCOMPLETE = [False]  # set while drawing a figure: a slot left empty or a rerun outstanding
@@ -148,9 +149,9 @@ def by_n(s, ref, name, srcs, names, kind, var, ncol, out, ylim=(0.2, 0.95), line
 
 
 def fig_F(s, ref, name, names, kind, out, n=100000, rotate=False):
-    """x = shortlist at one n, sorted by the honest mean; black dots = the best single framework."""
+    """x = shortlist at one n, in the fixed order; black dots = the best single framework."""
     q = s[s.n == n]
-    order = q[q.regime == "beta0"].sort_values("mean", ascending=False).shortlist.tolist()
+    order = [k for k in S.SHORTLIST_ORDER if k in set(q[q.regime == "beta0"].shortlist)]
     fig, ax = S.figure(kind)
     w = 0.38
     for i, src in enumerate(order):
@@ -189,7 +190,7 @@ def fig_G(d, out, n=100000):
             )
         )
     t = pd.DataFrame(rows)
-    order = t[t.regime == "beta0"].sort_values("lift", ascending=False).shortlist.tolist()
+    order = [k for k in S.SHORTLIST_ORDER if k in set(t[t.regime == "beta0"].shortlist)]
     fig, ax = S.figure("appendix")
     w = 0.38
     for i, src in enumerate(order):

@@ -1319,7 +1319,7 @@ it. Routing a task walks down the tree from the root, about log_r n steps, inste
   `view.rng` is therefore seeded with a **different `needs` set** than a standalone `midian`, so its cohorts need not
   match the standalone arm's cohorts at the same seed.
 - The source key stays `va_cohort` in code and CSVs (`shortlist_figs.source`, `figspec.SHORTLIST_*`); its display name is
-  "MIDIAN cohort".
+  "MIDIAN shortlist" (docs/figures.md section 3b).
 
 ### 2.3.10 MIDIAN as the reference line in E, F and H ("MIDIAN, no framework")
 
@@ -2105,7 +2105,7 @@ Display names come from `SOURCES` (`shortlist_figs.py`); short legend names come
 | `sota`, "fusion + reranker" | `retrieval: sota, dedup: true, embed_model: Qwen3-8B, rerank_model: Qwen/Qwen3-Reranker-4B` | RRF(BM25, dense) → top 50 → cross-encoder → top 10 | as `tfidf` | GPU pre-warm; `shortlist_sota_..._k10p50_dd.npy` |
 | `sota_icomp` / `sota_idemo` | the above + `embed_instruct` | same; the instruction changes the dense query side only | as `tfidf` | GPU pre-warm; `..._k10p50_dd_i<hash>.npy` |
 | `declared`, "declared-claim top-k" | `retrieval: declared, dedup: true` | self-declared D[:, f], top 10 | **yes, directly** (inflate, max) | no |
-| `va_cohort`, "MIDIAN cohort" ("MIDIAN leaf cohort" in `figures/shortlist/`) | `retrieval: midian, r: 10` | MIDIAN's probed and audited pick + its random leaf cohort | only via peer reports (audited) and the fallback | no GPU; **spends 48n probes (+≤5 % audits)** + reports |
+| `va_cohort`, "MIDIAN shortlist" ("MIDIAN leaf cohort" in `figures/shortlist/`) | `retrieval: midian, r: 10` | MIDIAN's probed and audited pick + its random leaf cohort | only via peer reports (audited) and the fallback | no GPU; **spends 48n probes (+≤5 % audits)** + reports |
 | (not drawn) MIDIAN w/o audits cohort | `retrieval: midian_wo_audit, r: 10/5` | MIDIAN w/o audits pick + cohort | reports + fallback | spends probes |
 | (not drawn) shuffle | `retrieval: midian, r: 10, shuffle: true` | MIDIAN cohort, permuted | as `va_cohort` | as `va_cohort` |
 | (not drawn) lie_text | `lie_text: true` [+ `claim_threshold: 0.7`], tfidf/bm25 | text with the Declared-areas clause taken from D | **yes (partially)**, by construction | no |

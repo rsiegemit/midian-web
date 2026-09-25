@@ -6,7 +6,7 @@ beta0,embed,MiniLM,0.08209876543209875,0.021008885412376967,9,False
 beta0,sota,"fusion + reranker, no instr.",0.03211111111111109,0.01937178664888249,10,False
 beta0,sota_icomp,"fusion + reranker, competence instr.",0.05311111111111111,0.016804206149273172,10,False
 beta0,sota_idemo,"fusion + reranker, demonstration instr.",0.0442222222222222,0.01579862993486872,10,False
-beta0,va_cohort,MIDIAN cohort,0.19222222222222224,0.020295485250083366,10,False
+beta0,va_cohort,MIDIAN shortlist,0.19222222222222224,0.020295485250083366,10,False
 cartel,declared,declared top-k,0.16922222222222222,0.004969177976970015,10,False
 cartel,dense_icomp,"dense, competence instr.",0.10811111111111109,0.015959525280782285,10,False
 cartel,dense_idemo,"dense, demonstration instr.",0.08444444444444446,0.014239765414753695,10,False
@@ -14,4 +14,4 @@ cartel,embed,MiniLM,0.0635555555555555,0.01207521012605898,10,False
 cartel,sota,"fusion + reranker, no instr.",0.03055555555555551,0.015607716778736964,10,False
 cartel,sota_icomp,"fusion + reranker, competence instr.",0.04977777777777775,0.014892205269125786,10,False
 cartel,sota_idemo,"fusion + reranker, demonstration instr.",0.0383333333333333,0.016930625816400865,10,False
-cartel,va_cohort,MIDIAN cohort,0.17711111111111108,0.01982654550650558,10,False
+cartel,va_cohort,MIDIAN shortlist,0.17711111111111108,0.01982654550650558,10,False

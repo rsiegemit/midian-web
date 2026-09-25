@@ -81,7 +81,7 @@ ORDER = [
 ]
 SHORTLIST_BODY = {
     "declared": "declared top-k",
-    "va_cohort": "MIDIAN cohort",
+    "va_cohort": "MIDIAN shortlist",
     "dense": "dense (Qwen3-8B)",
     "embed": "MiniLM",
     "sota": "fusion + reranker",
@@ -98,6 +98,7 @@ SHORTLIST_APPENDIX = {
     "sota": "fusion + reranker, no instr.",
 }
 SHORTLIST_ORDER = [
+    "va_cohort",
     "tfidf",
     "bm25",
     "embed",
@@ -108,21 +109,31 @@ SHORTLIST_ORDER = [
     "sota_icomp",
     "sota_idemo",
     "declared",
-    "va_cohort",
-]  # left to right wherever a figure shows several shortlists
+]  # left to right wherever a figure shows several shortlists (docs/figures.md section 3b); variants follow their base
 SHORTLIST_COLOR = {
-    "tfidf": "#b0b0b0",
+    "va_cohort": "#2ecc71",
+    "tfidf": "#7f8c8d",
     "bm25": "#17becf",
-    "embed": "#1f77b4",
-    "dense": "#c5b0d5",
-    "dense_icomp": "#9467bd",
-    "dense_idemo": "#5b2c83",
-    "sota": "#ff9896",
-    "sota_icomp": "#d62728",
-    "sota_idemo": "#8b0000",
-    "declared": "#e7ba52",
-    "va_cohort": "#117a3d",
+    "embed": "#2980b9",
+    "dense": "#8e44ad",
+    "sota": "#a0522d",
+    "declared": "#f1c40f",
 }
+INSTR_TINT = {"icomp": 0.40, "idemo": 0.65}  # instruction variants: the base colour blended this far toward white
+SHORTLIST_EDGE = {"va_cohort": 0.8}  # bar edge width (pt): the MIDIAN shortlist emphasised, every other bar 0.3
+
+
+def _tint(color: str, t: float) -> str:
+    import matplotlib.colors as mc
+    import numpy as np
+
+    c = np.array(mc.to_rgb(color))
+    return mc.to_hex(c + (1 - c) * t)
+
+
+SHORTLIST_COLOR.update(
+    {f"{b}_{v}": _tint(SHORTLIST_COLOR[b], t) for b in ("dense", "sota") for v, t in INSTR_TINT.items()}
+)
 BACKEND = {
     "live": "live",
     "bernoulli": "Bernoulli",
@@ -246,7 +257,16 @@ def bar(ax, x, h, w, key: str, cartel: bool = False, b: int | None = None, botto
     """One bar in the arm's (or shortlist's) colour (budget-shaded when b is given), hatched under the cartel."""
     col = shade(color(key), b) if b else color(key)
     return ax.bar(
-        x, h, w, bottom=bottom, color=col, edgecolor="black", lw=0.3, hatch=HATCH if cartel else None, zorder=z, **kw
+        x,
+        h,
+        w,
+        bottom=bottom,
+        color=col,
+        edgecolor="black",
+        lw=SHORTLIST_EDGE.get(key, 0.3),
+        hatch=HATCH if cartel else None,
+        zorder=z,
+        **kw,
     )
 
 
@@ -262,12 +282,12 @@ def oracle(ax, x0, x1, y):
 
 
 def ref(ax, x0, x1, y, key: str = "midian_ref"):
-    """Whole-population reference line: MIDIAN green solid (E, F, H); random grey dotted."""
+    """Whole-population reference line: MIDIAN green solid 1.6 pt (E, F, H); random light-grey dotted."""
     style = {
-        "midian_ref": dict(colors=COLOR["midian"], linestyles="-"),
-        "random": dict(colors=COLOR["random"], linestyles=":"),
+        "midian_ref": dict(colors=COLOR["midian"], linestyles="-", lw=1.6),
+        "random": dict(colors=COLOR["random"], linestyles=":", lw=1.0),
     }[key]
-    ax.hlines(y, x0, x1, lw=1.0, zorder=7, **style)
+    ax.hlines(y, x0, x1, zorder=7, **style)
 
 
 def handle(key: str):
@@ -275,12 +295,12 @@ def handle(key: str):
     if key == "oracle":
         return Line2D([], [], color=COLOR["oracle"], ls=":", lw=1.0)
     if key == "midian_ref":
-        return Line2D([], [], color=COLOR["midian"], ls="-", lw=1.0)
+        return Line2D([], [], color=COLOR["midian"], ls="-", lw=1.6)
     if key == "random_line":
         return Line2D([], [], color=COLOR["random"], ls=":", lw=1.0)
     if key == "best_fw_dot":
         return Line2D([], [], color="black", marker="o", ms=3, ls="none")
-    return Patch(facecolor=color(key), edgecolor="black", lw=0.3)
+    return Patch(facecolor=color(key), edgecolor="black", lw=SHORTLIST_EDGE.get(key, 0.3))
 
 
 def budget_handles(pad: int = 0):
