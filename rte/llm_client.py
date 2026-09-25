@@ -62,6 +62,15 @@ def endpoints() -> dict[str, str]:
     return eps
 
 
+def model_urls(model: str) -> list[str]:
+    """Base URLs serving `model`, replicas ("<model>#<job>") included. NoEndpointsError when none does."""
+    eps = endpoints()
+    urls = [u for k, u in eps.items() if k == model or k.startswith(model + "#")]
+    if not urls:
+        raise NoEndpointsError(f"model {model!r} not served; have {sorted(eps)}")
+    return urls
+
+
 def _open(path: Path, readonly: bool = False) -> sqlite3.Connection:
     uri = f"file:{path}?nolock=1" + ("&mode=ro" if readonly else "")
     con = sqlite3.connect(uri if NOLOCK else str(path), uri=NOLOCK, check_same_thread=False,
@@ -170,10 +179,7 @@ def _generate(model: str, messages: Sequence[dict], max_tokens: int) -> str:
             if model in _clients and time.time() - _clients[model][1] > ENDPOINT_TTL:
                 _clients.pop(model)                               # re-pick: replicas may have joined since
             if model not in _clients:
-                eps = endpoints()
-                urls = [u for k, u in eps.items() if k == model or k.startswith(model + "#")]   # replicas: "<model>#<job>"
-                if not urls:                                      # a model served only by replicas is still served
-                    raise NoEndpointsError(f"model {model!r} not served; have {sorted(eps)}")
+                urls = model_urls(model)
                 from openai import OpenAI
                 # latency-aware: usually the endpoint with the lowest recent latency, sometimes a random one (explore)
                 url = random.choice(urls) if random.random() < 0.2 else min(urls, key=lambda u: _lat.get(u, 0.0))

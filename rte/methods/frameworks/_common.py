@@ -12,7 +12,7 @@ from pathlib import Path
 
 import numpy as np
 
-from ...config import RTE_DATA, count
+from ...config import count
 from ...stable_hash import stable_seed_32
 from .._learned import MINILM, resolve as _resolve
 from ..base import Method
@@ -86,24 +86,27 @@ def sota_shortlist(B, Xa, Xf, pool, desc, fdesc, rerank, k: int = 10, rerank_poo
     return np.stack(rows).astype(np.int64)
 
 
+def slug(model: str) -> str:
+    """A model id as it appears in cache file names."""
+    return "minilm" if model == MINILM else re.sub(r"[^a-z0-9]+", "_", model.lower()).strip("_")
+
+
+def _tag(prefix: str, text: str) -> str:
+    """"" for empty text, else prefix + a 4-byte blake2b of it: a cache-name suffix that misses on any text change."""
+    import hashlib
+    return "" if not text else prefix + hashlib.blake2b(text.encode(), digest_size=4).hexdigest()
+
+
 def sota_cache_name(embed_model: str, rerank_model: str, k: int, rerank_pool: int, dedup: bool, instruct: str = "") -> str:
     """The cache filename carries every input that changes the table, so a changed setting can never read a stale one."""
-    import hashlib
-    sl = lambda m: "minilm" if m == MINILM else re.sub(r"[^a-z0-9]+", "_", m.lower()).strip("_")
-    it = "" if not instruct else "_i" + hashlib.blake2b(instruct.encode(), digest_size=4).hexdigest()
-    return f"shortlist_sota_{sl(embed_model)}_{sl(rerank_model)}_k{k}p{rerank_pool}{'_dd' if dedup else ''}{it}.npy"
+    it = _tag("_i", instruct)
+    return f"shortlist_sota_{slug(embed_model)}_{slug(rerank_model)}_k{k}p{rerank_pool}{'_dd' if dedup else ''}{it}.npy"
 
 
 def _endpoint(model: str) -> str:
-    import json
-    p = os.path.join(RTE_DATA, "endpoints.json")
-    if not os.path.exists(p):
-        raise RuntimeError(f"no vLLM endpoints configured at {p}")
-    ep = json.load(open(p))
-    urls = [u for k, u in ep.items() if k == model or k.startswith(model + "#")]   # replicas register as "<model>#<job>"
-    if not urls:
-        raise RuntimeError(f"model {model!r} not served; endpoints.json has {list(ep)}")
-    return np.random.default_rng().choice(urls)
+    """A random replica of the supervisor model (rte.llm_client resolves the served endpoints)."""
+    from ... import llm_client
+    return np.random.default_rng().choice(llm_client.model_urls(model))
 
 
 class FrameworkMethod(Method):
@@ -220,10 +223,9 @@ class FrameworkMethod(Method):
         return "_lt" + hashlib.blake2b("\x00".join(self.desc).encode(), digest_size=4).hexdigest()
 
     def _itag(self):
-        import hashlib
-        return "" if not self.embed_instruct else "_i" + hashlib.blake2b(self.embed_instruct.encode(), digest_size=4).hexdigest()
+        return _tag("_i", self.embed_instruct)
 
-    def _slug(self, model): return "minilm" if model == MINILM else re.sub(r"[^a-z0-9]+", "_", model.lower()).strip("_")
+    _slug = staticmethod(slug)
 
     def _sota_table(self, view):
         """The (K, k) shortlist for retrieval='sota'. It depends only on the population, so it is computed once and

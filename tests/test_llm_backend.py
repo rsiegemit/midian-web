@@ -259,7 +259,6 @@ class _Mock(BaseHTTPRequestHandler):
 @pytest.fixture()
 def fleet(tmp_path, monkeypatch):
     from rte import llm_client
-    from rte.methods.frameworks import _common
     srv = ThreadingHTTPServer(("127.0.0.1", 0), _Mock)
     threading.Thread(target=srv.serve_forever, daemon=True).start()
     url = f"http://127.0.0.1:{srv.server_address[1]}/v1"
@@ -270,7 +269,6 @@ def fleet(tmp_path, monkeypatch):
     monkeypatch.setattr(llm_client, "_mem", None)
     monkeypatch.setattr(llm_client, "_shard", None)
     monkeypatch.setattr(llm_client, "_clients", {})
-    monkeypatch.setattr(_common, "RTE_DATA", str(tmp_path))       # its own _endpoint() lookup
     llm_client.reset_stats()
     _Mock.calls, _Mock.supervisor_reply = 0, None
     yield llm_client
