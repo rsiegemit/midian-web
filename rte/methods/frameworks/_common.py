@@ -32,9 +32,11 @@ DECLARED = "declared"                        # top-k by the declared claim; no t
 LEXICAL = ("bm25", "hybrid", "sota")        # modes that need the BM25 block
 # Framework errors that are the supervisor LLM's own invalid action, not infrastructure (every class that has failed a
 # unit): ADK / OpenAI Agents -- a tool named after the agent instead of the routing tool; MAF -- no next
-# speaker, or the orchestrator names a non-candidate. Anything else stays an infrastructure error (docs/errata.md).
+# speaker, or the orchestrator names a non-candidate; LlamaIndex -- a selection without its `choice` field;
+# Magentic-One -- its own orchestrator prompt outgrowing the supervisor's context window (deterministic, framework
+# behaviour). Anything else stays an infrastructure error (docs/errata.md, errata 29 and 31).
 INVALID_ACTION = re.compile(r"Tool '?[\w.-]+'? not found|ModelBehaviorError|next_speaker must be provided"
-                            r"|KeyError: '?agent_\d+'?")
+                            r"|KeyError: '?agent_\d+'?|KeyError: '?choice'?|maximum context length is \d+ tokens")
 _TOK = re.compile(r"[a-z0-9]+")
 
 

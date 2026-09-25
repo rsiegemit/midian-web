@@ -275,7 +275,9 @@ def test_a_framework_naming_nobody_is_still_a_fallback_not_an_error():
 @pytest.mark.parametrize("err", ["ValueError: Tool 'agent_000030' not found.\nAvailable tools: transfer_to_agent",
                                  "ModelBehaviorError: Tool transfer_to_agent_00128 not found in agent triage",
                                  "ValueError: next_speaker must be provided if not terminating the conversation.",
-                                 "KeyError: 'agent_005044'"])
+                                 "KeyError: 'agent_005044'", "KeyError: 'choice'",
+                                 "BadRequestError: Error code: 400 - {'error': {'message': \"This model's maximum context "
+                                 "length is 8192 tokens. However, you requested 0 output tokens\"}}"])
 def test_a_supervisor_invalid_action_is_a_non_pick_not_an_infrastructure_error(err):
     """Every error class that ever failed a unit (2026-09-23) was the supervisor LLM's own invalid action raised by the
     framework (ADK / OpenAI Agents: a tool named after the agent; MAF: no next speaker). That is the framework failing

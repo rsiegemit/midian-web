@@ -13,9 +13,8 @@ uses.
     SHORTLIST_SOURCES, NINE, DOC_REF, DOC_REF_CARTEL, VARIANTS
                       the framework-shortlist tables (doc_tables, fw_variant_numbers)
 
-INCONSISTENCY (flagged 2026-09-24, values unchanged): REF_GRIDS["live"][100] still pools live_core_n100, whose
-pre-09-02 probe instances LIVE_GRIDS[100] dropped, so the oracle / random lines of the n = 10^2 shortlist figures
-average in the old instances while the bars do not.
+REF_GRIDS["live"][100] leaves out live_core_n100 (pre-09-02 probe instances), as LIVE_GRIDS[100] does, so the
+reference lines of the n = 10^2 shortlist figures and the bars read the same instances (docs/errata.md, erratum 31).
 """
 
 from __future__ import annotations
@@ -40,7 +39,7 @@ LIVE_GRIDS = {
 }
 REF_GRIDS = {
     "live": {
-        100: ["fw_live_n100", "learned_n100", "live_core_n100", "fw_live_n100_lowskill"],
+        100: ["fw_live_n100", "learned_n100", "fw_live_n100_lowskill"],   # live_core_n100: pre-09-02 instances, dropped
         1000: ["fw_live_n1000", "live_f1_n1000", "variants_f1", "learned_f1", "fw_live_n1000_lowskill"],
         10000: ["learned_n10k", "live_n10k_v2", "fw_live_n10k_cartel", "learned_n10k_beta01"],
         100000: ["live_n100k", "live_n100k_fill", "live_n100k_beta01"],
