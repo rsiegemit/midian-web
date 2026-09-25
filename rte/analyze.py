@@ -14,8 +14,7 @@ from . import config, run as _run
 from .methods import keys
 
 RTE_DATA, consolidate = str(config.RTE_DATA), _run.consolidate   # str: scripts concatenate it
-CELL_COLS = tuple(getattr(_run, "CELL_FIELDS", None) or getattr(_run, "CELL", None) or (
-    "backend n K dist beta liar_select collude declared_source lie_mode demand b Q".split()))
+CELL_COLS = _run.CELL
 REF, FLOOR, B_BOOT = "midian_wo_defenses", "WITHIN_FLOOR", 2000   # the reference arm: pre-rename label "midian" (plain)
 FLAT, FLAT_ON = "flat_probe_argmax_frozen", "flat_probe_argmax_online"
 ALIAS = {"flat_probe_argmax": FLAT, "flat_probe_argmax[online=True]": FLAT_ON, "knn_router[online=True]": "knn_router_online",        # one name per arm everywhere
@@ -340,7 +339,6 @@ def targets(df, fits):
     return out
 
 # ------------------------------------------------------------------ pre-registered targets, v2 (TARGETS_rte_v2.md)
-SELF = lambda df: df[df.declared_source == "self_described"]
 def delta(df, a, b, metric="success"):
     """Mean paired (a - b) and pair count over (cell, seed); (nan, 0) without overlap."""
     d = pair(df, a, b, metric)

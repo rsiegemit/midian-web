@@ -42,6 +42,6 @@ class KNNRouter(Method):
         ids = np.asarray(arrived)
         for a in ids:
             Y, I = self.view.probe_text(a, np.arange(self.view.K), self.b)
-            m = self.E.shape[1]; self.E[a] = 0; self.Y[a] = 0
+            self.E[a] = 0; self.Y[a] = 0
             self.E[a, :self.view.K * self.b] = np.stack([vec(self.view, f, i, True) for f in range(self.view.K) for i in I[f]])
             self.Y[a, :self.view.K * self.b] = Y.reshape(-1); self.cnt[a] = self.view.K * self.b

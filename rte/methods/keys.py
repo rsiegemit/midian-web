@@ -1,4 +1,4 @@
-"""The one place that knows MIDIAN's old method keys (renamed 2026-09-24).
+"""The one place that knows MIDIAN's old method keys.
 
 MIDIAN is one method with two defenses as parameters, both on by default:
     old key                          new key                                   display label
@@ -10,15 +10,15 @@ Framework shortlists named after a MIDIAN cohort follow: retrieval "midian_va" -
 retrieval "midian" (the verified, unaudited cohort) -> "midian_wo_audit". midian_sh / midian_sha are withdrawn (no key).
 
 to_new(method, params) translates a stored or configured key; it is applied on every read, so rows written before the
-rename and after it load identically. legacy(method, params) is its inverse on the new keys: the world's random stream is
-seeded with the LEGACY key (rte.run), so a rerun of any cell reproduces the rows stored under the old keys bit for bit.
+rename and after it load identically. legacy(method, params) is its inverse on the new keys. No random stream depends on
+the method key (a View's rng is seeded by the world seed and the method's `needs`), so a rerun of any cell under the new
+keys reproduces the rows stored under the old ones.
 A results directory whose rows were rewritten carries SENTINEL; assert_v2 checks that it holds no old key."""
 from __future__ import annotations
 
 SENTINEL = ".method_keys_v2"
 OLD = frozenset({"midian_va", "midian_a", "midian_v", "midian_sh", "midian_sha"})
 WITHDRAWN = frozenset({"midian_sh", "midian_sha"})
-FLAGS = ("audit", "verify", "cached")
 RETRIEVAL = {"midian_va": "midian", "midian": "midian_wo_audit"}
 RETRIEVAL_LEGACY = {v: k for k, v in RETRIEVAL.items()}
 
@@ -54,7 +54,7 @@ def to_new(method: str, params: dict | None) -> tuple[str, dict] | None:
 
 
 def legacy(method: str, params: dict | None) -> tuple[str, dict]:
-    """The pre-rename key of a CURRENT key (the world's RNG salt). Inverse of to_new on its image."""
+    """The pre-rename key of a CURRENT key. Inverse of to_new on its image."""
     p = dict(params or {})
     if method.startswith("fw_") and p.get("retrieval") in RETRIEVAL_LEGACY:
         return method, {**p, "retrieval": RETRIEVAL_LEGACY[p["retrieval"]]}

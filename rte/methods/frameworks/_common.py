@@ -19,7 +19,6 @@ from ..base import Method
 from ._bridge import Bridge
 
 SUPERVISOR = "Qwen/Qwen2.5-7B-Instruct"
-STRONG_EMBED = "Qwen/Qwen3-Embedding-8B"      # top of MTEB; the SOTA stack's dense half
 RERANKER = "Qwen/Qwen3-Reranker-4B"          # cross-encoder over the fused pool
 DENSE = ("embed", "hybrid", "sota")          # modes that need the dense block
 DECLARED = "declared"                        # top-k by the declared claim; no text retrieval at all
