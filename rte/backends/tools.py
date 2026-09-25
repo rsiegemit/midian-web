@@ -81,7 +81,7 @@ RUN = {"calculator": calculator, "python": python}
 NAMES = ("calculator", "python", "none")
 
 # What the system prompt tells an agent that has the tool. Keyed the same way, so adding a tool
-# is one entry in RUN, one in HINT, one pattern in rte.backends.llm.TOOL_RE.
+# is one entry in RUN, one in HINT, one pattern in rte.backends.prompts.TOOL_RE.
 HINT = {
     "calculator": "You have a calculator. To use it, emit exactly one line "
                   "<calc>ARITHMETIC EXPRESSION</calc> and stop; the result will be given to you.",

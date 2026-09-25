@@ -22,7 +22,7 @@ def venv_python(env_name: str) -> str:
     from rte.config import RTE_DATA       # not at module level: workers import this file standalone, outside the package
     p = os.path.join(RTE_DATA, "env", env_name, "bin", "python")
     if not os.path.exists(p):
-        raise RuntimeError(f"framework venv missing: {p} (run scripts/04_build_fw_envs.sh {env_name})")
+        raise RuntimeError(f"framework venv missing: {p} (build it with scripts/fw_envs/{env_name.removeprefix('fw_')}.sh)")
     return p
 
 

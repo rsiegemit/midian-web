@@ -131,7 +131,8 @@ def content_key(model: str, messages: Sequence[dict], max_tokens: int,
     prompt -- reword a prompt while keeping such a key and the cache serves an answer that prompt
     never produced (it happened three times: the self-description, the self-rating and the tool
     follow-up). Hashing the content makes any wording change miss the cache automatically.
-    `prefix` is decoration for readability only; it is never a substitute for the hash."""
+    `prefix` (a caller's `cache_key`) is prepended to the hash and is therefore part of the key: the same request
+    under two prefixes is memoised twice. It is never a substitute for the hash."""
     blob = json.dumps([model, list(messages), int(max_tokens)], sort_keys=True)
     h = hashlib.blake2b(blob.encode(), digest_size=16).hexdigest()
     return f"{prefix}:{h}" if prefix else h
@@ -206,8 +207,8 @@ def memo_call(key: str, fn) -> str:
 
 def complete(model: str, messages: Sequence[dict], max_tokens: int = 512,
              cache_key: str | None = None) -> str:
-    """One deterministic completion, disk-memoized. `cache_key` is an optional readability PREFIX
-    on the content hash, never a replacement for it -- see `content_key`."""
+    """One deterministic completion, disk-memoized. `cache_key` is an optional prefix on the content hash (part
+    of the memo key, never a replacement for the hash) -- see `content_key`."""
     return complete_batch(model, [messages], [cache_key] if cache_key else None, max_tokens, 1)[0]
 
 
@@ -222,8 +223,8 @@ def complete_batch(model: str, batch: Sequence[Sequence[dict]], keys: Sequence[s
     Deduplicates WITHIN the batch as well as against the memo: agents that share a prompt
     signature emit a byte-identical prompt, so a measurement sweep hands us the same request
     hundreds of times in one call, and without this they would all miss in parallel and regenerate
-    the identical prompt once per agent. `keys` are readability PREFIXES only -- the memo key is
-    always the hash of the full request."""
+    the identical prompt once per agent. `keys` are optional prefixes on the hash of the full request (part
+    of the memo key, never a replacement for the hash) -- see `content_key`."""
     batch = list(batch)
     if keys is not None and len(keys) != len(batch):
         raise ValueError(f"keys/batch length mismatch: {len(keys)} vs {len(batch)}")

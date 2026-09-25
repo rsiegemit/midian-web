@@ -36,7 +36,7 @@ class LLMSupervisor(FrameworkMethod):
                  "task correctly. Reply with only the bracketed index number, nothing else."},
                 {"role": "user", "content": f"Task:\n{self._task_text(task)}\n\nCandidates:\n"
                                             f"{listing}\n\nIndex of your pick:"}]
-        # "supervisor" is a readability prefix only; llm_client hashes the full request.
+        # "supervisor" prefixes the memo key; llm_client hashes the full request behind it.
         m = _IDX.search(llm_client.complete(self.supervisor, msgs, self.max_tokens,
                                             cache_key="supervisor"))
         i = int(m.group(0)) if m else -1
