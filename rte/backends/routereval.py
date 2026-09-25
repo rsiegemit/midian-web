@@ -14,10 +14,11 @@ most once (task instance = the prompt's index in the family's test rows); defaul
 Data: $RTE_DATA/data/routereval/router_dataset/<dataset>_router_dataset.pkl (scripts: TARGETS_rte_v3.md part D)."""
 from __future__ import annotations
 import os, re, pickle, numpy as np
+from ..config import RTE_DATA
 from . import declared_for
 from ..stable_hash import stable_seed_32
 
-DATA = os.path.join(os.environ.get("RTE_DATA", os.path.expanduser("~/rte_data")), "data", "routereval", "router_dataset")
+DATA = os.path.join(RTE_DATA, "data", "routereval", "router_dataset")
 SUBJECT = re.compile(r"questions \(with answers\) about (.+?)\.")
 
 

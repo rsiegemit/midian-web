@@ -6,16 +6,17 @@ agent on the incoming task's text. Embeddings are all-MiniLM-L6-v2 on CPU (the s
 uses for RouterBench's own routers); the embedding arithmetic is not in the ledger, like the frameworks' TF-IDF shortlist.
 `embed(texts, model=...)` also serves the frameworks' SOTA retrieval stack, which passes a strong Qwen3 embedder."""
 import os, numpy as np
+from ..config import RTE_DATA, count, flag
 from ._est import CHUNK
 
-os.environ.setdefault("HF_HOME", os.path.join(os.environ.get("RTE_DATA", os.path.expanduser("~/rte_data")), "hf_cache"))
+os.environ.setdefault("HF_HOME", os.path.join(RTE_DATA, "hf_cache"))
 MINILM = "all-MiniLM-L6-v2"
 _models: dict[str, object] = {}
 
 
 def resolve(model: str) -> str:
     """Prefer weights staged at $RTE_DATA/models/<name>: compute nodes have no route to the hub."""
-    p = os.path.join(os.environ.get("RTE_DATA", ""), "models", model.split("/")[-1])
+    p = os.path.join(RTE_DATA, "models", model.split("/")[-1])
     return p if os.path.isdir(p) else model
 
 
@@ -27,7 +28,7 @@ def embed(texts, model: str = MINILM, prompt_name: str | None = None, prompt: st
         import torch
         from sentence_transformers import SentenceTransformer
         big = model != MINILM
-        dev = "cuda" if (big or os.environ.get("RTE_MINILM_CUDA") == "1") and torch.cuda.is_available() else "cpu"   # opt-in: MiniLM on GPU (fp32)
+        dev = "cuda" if (big or flag("RTE_MINILM_CUDA")) and torch.cuda.is_available() else "cpu"   # opt-in: MiniLM on GPU (fp32)
         kw = {"model_kwargs": {"dtype": torch.bfloat16}} if dev == "cuda" else {}
         _models[model] = SentenceTransformer(resolve(model), device=dev, **kw)
     m = _models[model]
@@ -42,7 +43,7 @@ def probe_set(view, b: int):
     for f in range(view.K):
         for lo in range(0, view.n, CHUNK):
             Y[lo:lo + CHUNK, f], I[lo:lo + CHUNK, f] = view.probe_text(np.arange(lo, min(view.n, lo + CHUNK)), f, b)
-    if os.environ.get("RTE_EMBED_BATCH") == "1" and view.embedding(0, int(I[0, 0, 0]), True) is None:   # opt-in: one batched encode
+    if flag("RTE_EMBED_BATCH") and view.embedding(0, int(I[0, 0, 0]), True) is None:   # opt-in: one batched encode
         import hashlib                                          # exact reuse: the same probe instances give the same texts
         key = (view.n, view.K, b, view.text(0, int(I[0, 0, 0]), True), hashlib.sha1(I.tobytes()).hexdigest())
         if _E_CACHE.get("key") != key:
@@ -65,7 +66,7 @@ def _text1(fi):
 def _texts(view, items):
     """Probe prompt texts; RTE_TEXT_PROCS > 1 (opt-in) generates them in forked worker processes (deterministic, same texts)."""
     global _V
-    n = int(os.environ.get("RTE_TEXT_PROCS", "1"))
+    n = count("RTE_TEXT_PROCS")
     if n <= 1: return [view.text(f, i, True) for f, i in items]
     import multiprocessing as mp
     _V = view

@@ -20,11 +20,11 @@ import os
 
 import numpy as np
 
+from ..config import RTE_DATA
 from . import declared_for
 from ._profiles import pick_k_per_agent, group_mask
 
-DEFAULT_CELLS_PATH = os.path.join(
-    os.environ.get("RTE_DATA", os.path.expanduser("~/rte_data")), "data", "routerbench_cells.npz")
+DEFAULT_CELLS_PATH = os.path.join(RTE_DATA, "data", "routerbench_cells.npz")
 
 
 def _draw_profiles(dist: str, n: int, K: int, model_rank: np.ndarray, rng: np.random.Generator):

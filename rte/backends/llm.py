@@ -22,6 +22,7 @@ from pathlib import Path
 import numpy as np
 
 from .. import llm_client                      # module-level: __init__ reads llm_client.CONCURRENCY (methods re-import lazily; harmless)
+from ..config import RTE_DATA, count, flag
 from ..stable_hash import stable_seed_32
 from . import families, prompts, tools
 from .population import bands, draw_profiles, ladder, signature
@@ -29,7 +30,6 @@ from .population import bands, draw_profiles, ladder, signature
 _OUTCOMES: dict = {}                           # RTE_OUTCOME_CACHE: (population, agent, family, instance) -> outcome
 from .prompts import build as build_prompt, extract_answer, find_tool_call, parse_rating  # re-export
 
-RTE_DATA = Path(os.environ.get("RTE_DATA", "/scratch/rte"))
 POP_DIR = Path(os.environ.get("RTE_POPULATIONS", RTE_DATA / "populations"))
 
 
@@ -150,11 +150,11 @@ class LLMBackend:
         return out
 
     def _outcomes(self, items) -> np.ndarray:
-        if os.environ.get("RTE_OUTCOME_CACHE") == "1":          # opt-in, exact: an (agent, family, instance) outcome is fixed
+        if flag("RTE_OUTCOME_CACHE"):          # opt-in, exact: an (agent, family, instance) outcome is fixed
             pop = str(self.dir)                                 # (memoised answer, deterministic scoring), so score it once per process
             miss = list(dict.fromkeys(it for it in items if (pop,) + it not in _OUTCOMES))
             args = [(self.families[f], i, x) for (_, f, i), x in zip(miss, self._answers(miss) if miss else [])]
-            n = int(os.environ.get("RTE_TEXT_PROCS", "1"))
+            n = count("RTE_TEXT_PROCS")
             if n > 1 and len(args) > 20000:                     # scoring rebuilds each instance: fork it (pure function, same result)
                 import multiprocessing as mp
                 with mp.get_context("fork").Pool(n) as pool: res = pool.starmap(families.correct, args, chunksize=5000)

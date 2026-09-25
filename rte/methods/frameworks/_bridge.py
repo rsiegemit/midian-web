@@ -15,11 +15,11 @@ import subprocess
 import sys
 import threading
 
-RTE_DATA = os.environ.get("RTE_DATA", "/scratch/rte")
 WORKERS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "workers")
 
 
 def venv_python(env_name: str) -> str:
+    from rte.config import RTE_DATA       # not at module level: workers import this file standalone, outside the package
     p = os.path.join(RTE_DATA, "env", env_name, "bin", "python")
     if not os.path.exists(p):
         raise RuntimeError(f"framework venv missing: {p} (run scripts/04_build_fw_envs.sh {env_name})")

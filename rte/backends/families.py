@@ -13,6 +13,7 @@ from __future__ import annotations
 
 from functools import lru_cache
 
+from ..config import flag
 from ..stable_hash import stable_seed_32
 
 DEFAULT_SOURCE = "rg"
@@ -77,8 +78,7 @@ def _rg_speedup():
 
 @lru_cache(maxsize=8192)
 def _rg_dataset(name: str, seed: int, params: tuple = ()):
-    import os
-    if os.environ.get("RTE_RG_CACHE") == "1" and not _RG_PATCHED: _rg_speedup()
+    if flag("RTE_RG_CACHE") and not _RG_PATCHED: _rg_speedup()
     from reasoning_gym.factory import create_dataset
     return create_dataset(name, size=1, seed=seed, **dict(params))
 

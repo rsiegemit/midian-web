@@ -10,10 +10,10 @@ verified_decentral | floor | ceiling) comes from its declared `needs` and the fw
 """
 import argparse, json, os, sys, warnings
 import numpy as np, pandas as pd
-from . import run as _run
+from . import config, run as _run
 from .methods import keys
 
-RTE_DATA, consolidate = _run.RTE_DATA, _run.consolidate
+RTE_DATA, consolidate = str(config.RTE_DATA), _run.consolidate   # str: scripts concatenate it
 CELL_COLS = tuple(getattr(_run, "CELL_FIELDS", None) or getattr(_run, "CELL", None) or (
     "backend n K dist beta liar_select collude declared_source lie_mode demand b Q".split()))
 REF, FLOOR, B_BOOT = "midian_wo_defenses", "WITHIN_FLOOR", 2000   # the reference arm: pre-rename label "midian" (plain)

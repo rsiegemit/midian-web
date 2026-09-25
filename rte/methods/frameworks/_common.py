@@ -12,10 +12,11 @@ from pathlib import Path
 
 import numpy as np
 
+from ...config import RTE_DATA, count
 from ...stable_hash import stable_seed_32
 from .._learned import MINILM, resolve as _resolve
 from ..base import Method
-from ._bridge import Bridge, RTE_DATA
+from ._bridge import Bridge
 
 SUPERVISOR = "Qwen/Qwen2.5-7B-Instruct"
 STRONG_EMBED = "Qwen/Qwen3-Embedding-8B"      # top of MTEB; the SOTA stack's dense half
@@ -342,7 +343,7 @@ class FrameworkMethod(Method):
         order. Only for stateless shortlists: the workers build a fresh team per request at temperature 0 and keep no
         memory, so a pick cannot depend on which requests came before it -- fetch() sees exactly the response a
         sequential run would. The MIDIAN cohorts learn online (retrieve depends on earlier observes) and stay sequential."""
-        n = int(os.environ.get("RTE_FW_PARALLEL", "1"))
+        n = count("RTE_FW_PARALLEL")
         if n <= 1 or self.retrieval in ("midian", "midian_wo_audit"): return
         import queue
         from concurrent.futures import ThreadPoolExecutor

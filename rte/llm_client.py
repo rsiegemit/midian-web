@@ -25,12 +25,13 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Sequence
 
-RTE_DATA = Path(os.environ.get("RTE_DATA", "/scratch/rte"))
+from .config import RTE_DATA, count
+
 ENDPOINTS_PATH = Path(os.environ.get("RTE_ENDPOINTS", RTE_DATA / "endpoints.json"))
 ENDPOINT_DIR = Path(os.environ.get("RTE_ENDPOINT_DIR", ENDPOINTS_PATH.parent / "endpoints.d"))
 CACHE_DIR = Path(os.environ.get("RTE_LLM_CACHE", RTE_DATA / "cache"))
 NOLOCK = os.environ.get("RTE_LLM_CACHE_NOLOCK", "1") == "1"
-MAX_RETRIES = int(os.environ.get("RTE_LLM_RETRIES", "20"))   # ~8 min of capped backoff: survives a registry restore or replica restart
+MAX_RETRIES = count("RTE_LLM_RETRIES", 20)   # ~8 min of capped backoff: survives a registry restore or replica restart
 
 _STATS = {"hits": 0, "misses": 0, "generations": 0, "errors": 0, "retries": 0}
 _LOCK = threading.Lock()
@@ -210,7 +211,7 @@ def complete(model: str, messages: Sequence[dict], max_tokens: int = 512,
     return complete_batch(model, [messages], [cache_key] if cache_key else None, max_tokens, 1)[0]
 
 
-CONCURRENCY = int(os.environ.get("RTE_CONCURRENCY", 64))   # in-flight requests per batch; raise it for a
+CONCURRENCY = count("RTE_CONCURRENCY", 64)   # in-flight requests per batch; raise it for a
                                                             # dedicated warm-up job that has the fleet to itself
 
 
