@@ -1,6 +1,7 @@
 """Refactor guard: fingerprint every pick, ledger count and estimate of the MIDIAN family on the bernoulli backend.
-python scripts/checks/equivalence.py before.json      # on the old code
-python scripts/checks/equivalence.py after.json       # on the new code, then diff the two files (must be identical)"""
+    python scripts/checks/equivalence.py before.json      # on the old code
+    python scripts/checks/equivalence.py after.json       # on the new code, then diff the two files (must be identical)
+    """
 
 import argparse, hashlib, json, os
 import numpy as np

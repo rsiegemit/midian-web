@@ -2,10 +2,9 @@
 
     read_rows(grid)           rows.d/*.json + rows.csv of one grid under the current method keys (rte.methods.keys)
     load_fw(grid)             read_rows de-duplicated the way the framework-shortlist scripts count (every row, b
-    included)
-    label(method, params)     the arm's label, as rte.analyze builds it
-    stat(df, key)             one number per row from the method_stats JSON column
-    pending_reruns()          {(grid, framework, dist, regime)} whose erratum-28 rerun is outstanding
+    included) label(method, params)     the arm's label, as rte.analyze builds it stat(df, key)             one number
+    per row from the method_stats JSON column pending_reruns()          {(grid, framework, dist, regime)} whose
+    erratum-28 rerun is outstanding
 RESULTS is $RTE_DATA/results (rte.config).
 """
 

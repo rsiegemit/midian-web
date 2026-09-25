@@ -7,11 +7,10 @@ Routers: `bert` = routellm/bert_gpt4_augmented with RouteLLM's BERTRouter.calcul
 helps most); the probe-family router (score = est_strong - est_weak of the PREDICTED family, b probes per family, same
 splits and embeddings as routerbench_terms.py); `knn_full` = k-NN on every train label of the pair (fully supervised
 reference); `knn_b20` = k-NN on the probe prompts only (equal labels).  causal_llm needs gated
-meta-llama/Meta-Llama-3-8B
-(no token here) and mf / sw_ranking need OpenAI embeddings: NOT RUN.
-Metrics, RouteLLM's evaluate.py verbatim: thresholds at the router-score quantiles so strong calls span 0..100% in 10%
-steps; accuracy = mean performance of the routed model; CPT(p) = strong % interpolated at p of the weak->strong gap;
-AUC = trapz(accuracy, strong%/100); APGR = (AUC - weak) / (strong - weak)."""
+meta-llama/Meta-Llama-3-8B (no token here) and mf / sw_ranking need OpenAI embeddings: NOT RUN. Metrics, RouteLLM's
+evaluate.py verbatim: thresholds at the router-score quantiles so strong calls span 0..100% in 10% steps; accuracy =
+mean performance of the routed model; CPT(p) = strong % interpolated at p of the weak->strong gap; AUC = trapz(accuracy,
+strong%/100); APGR = (AUC - weak) / (strong - weak)."""
 
 import os, sys, numpy as np, pandas as pd
 

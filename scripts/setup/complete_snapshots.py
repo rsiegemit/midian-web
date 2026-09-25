@@ -4,7 +4,7 @@
 WHY THIS EXISTS.  vLLM loads a model with `snapshot_download(repo, local_files_only=True)` and NO
 patterns, so a snapshot missing even a README refuses to boot (smoke job 43851943). Re-running the
 downloader to fetch those files hangs, because `fcntl.flock` BLOCKS FOREVER on this cluster's
-/n/netscratch mount -- where HF_HOME lives -- while the same call on $HOME or /tmp returns
+network scratch mount -- where HF_HOME lives -- while the same call on $HOME or /tmp returns
 instantly. huggingface_hub takes an flock per file, so any download into $HF_HOME wedges.
 
 This script fetches the still-missing files over plain HTTP and writes them into the cache layout

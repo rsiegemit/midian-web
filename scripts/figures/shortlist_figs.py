@@ -7,15 +7,13 @@ framework, one bar per shortlist source that has data in the condition (SOURCES:
 MiniLM, BM25, Qwen3-Embedding-8B dense with and without a task instruction, BM25+dense fusion + the Qwen3
 cross-encoder with and without an instruction, the declared-claim top-k and the MIDIAN leaf cohort). Not drawn:
 dedup TF-IDF, fusion without the reranker, the cohort of MIDIAN w/o audits; a condition with fewer than two shortlists
-is skipped).
-The oracle (dotted) and MIDIAN routing the whole population (solid) are horizontal lines across the panel
+is skipped). The oracle (dotted) and MIDIAN routing the whole population (solid) are horizontal lines across the panel
 with their +/- 1 s.e. band over seeds. A source is recognised from each row's params, so a new shortlist grid needs only
 an entry in SOURCES. Bars whose rows still have an erratum-28 rerun outstanding are flagged in the csv
-(rerun_outstanding), not drawn.
-Rows come from rows.csv AND rows.d (reruns write rows.d only). b = 3 only -- never pooled with b = 1.
-Do-not-add list (lib/exclusions.py) applies; MIDIAN cohorts other than r = 10, the shuffled MIDIAN cohort (a position
-control), the lying-text condition and the 14B
-Magentic-One supervisor arm are not shortlist sources and are never drawn."""
+(rerun_outstanding), not drawn. Rows come from rows.csv AND rows.d (reruns write rows.d only). b = 3 only -- never
+pooled with b = 1. Do-not-add list (lib/exclusions.py) applies; MIDIAN cohorts other than r = 10, the shuffled MIDIAN
+cohort (a position control), the lying-text condition and the 14B Magentic-One supervisor arm are not shortlist sources
+and are never drawn."""
 
 from __future__ import annotations
 
@@ -76,9 +74,8 @@ def h30():
 
 def source(params):
     """params JSON of a framework row -> shortlist source key, or None when the row is not drawn (not a shortlist arm,
-    or
-    dropped: dedup TF-IDF, fusion without the reranker, the cohort of MIDIAN w/o audits, the shuffled MIDIAN cohort, r
-    != 10)."""
+    or dropped: dedup TF-IDF, fusion without the reranker, the cohort of MIDIAN w/o audits, the shuffled MIDIAN cohort,
+    r != 10)."""
     p = json.loads(params) if isinstance(params, str) and params.startswith("{") else {}
     if "supervisor" in p or "lie_text" in p:
         return None

@@ -16,8 +16,8 @@ shortlist_figs.py).
      framework, erratum 25), so G is the gain over that floor.
   H  RouterEval (strong-to-weak pools, the 5,000-LLM leaderboard at m = 5,000): the body shortlists per m, lines as F.
 No titles and no incompleteness marks in the figures: a cell with too few full-seed frameworks is an empty slot, and the
-script prints INCOMPLETE for it; framework numbers with an erratum-28 rerun outstanding are flagged in the csv
-(star)."""
+script prints INCOMPLETE for it; framework numbers with an erratum-28 rerun outstanding are flagged in the csv (star).
+"""
 
 from __future__ import annotations
 
@@ -130,8 +130,7 @@ def finish(fig, ax, name, data, out, keys=(), labels=None, ylabel=S.AXIS["succes
 
 def by_n(s, ref, name, srcs, names, kind, var, ncol, out, ylim=(0.2, 0.95), lines_first=False):
     """x = n (E, H): fixed slots per n, one colour per shortlist; the reference lines over each group (first in the
-    legend
-    when `lines_first`)."""
+    legend when `lines_first`)."""
     fig, ax = S.figure(kind)
     ns = sorted(s.n.unique())
     w = 0.86 / (2 * len(srcs))

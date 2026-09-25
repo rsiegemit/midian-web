@@ -2,8 +2,8 @@
 (or the MIDIAN ablation labels in ARMS):
     PYTHONPATH=. python scripts/checks/check_methods.py flat_probe_argmax ucb_per_family midian_wo_defenses ...
 Per method, at n in {100, 1000} on bernoulli specialist beta=0: valid ids; build probes <= budget; build/per-fetch
-ledger vs the
-documented formula (EXPECT); success >= random; exact-estimate argmax check for methods with an `est`/`best` table."""
+ledger vs the documented formula (EXPECT); success >= random; exact-estimate argmax check for methods with an
+`est`/`best` table."""
 
 import math
 import numpy as np

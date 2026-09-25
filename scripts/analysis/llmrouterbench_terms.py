@@ -1,21 +1,18 @@
 """LLMRouterBench (Li et al. 2026, Findings@ACL'26) on its own terms — TARGETS_rte_v3.md part F.
-    python scripts/analysis/llmrouterbench_terms.py [--prep]      (--prep builds the score matrix + MiniLM embeddings
-    once)
+    python scripts/analysis/llmrouterbench_terms.py [--prep]   (--prep builds the score matrix + MiniLM embeddings once)
 
 Their performance-oriented setting: 15 datasets (AIME, MATH500, MATHBench, HumanEval, MBPP, LiveCodeBench, BBH,
-KORBench,
-Knights & Knaves, MMLU-Pro, GPQA, FinQA, MedQA, EmoryNLP, MELD) × the same 20 lightweight (~7–9B) models, per-instance
-score in [0, 1] from their bench-release JSON; protocol: 70/30 train/test split repeated with their five seeds (42, 999,
-2024, 2025, 3407); metrics: AvgAcc = mean over datasets of the routed accuracy, Gain@R / Gain@B = relative gain over the
-random / best-single-model router, Gap@O = relative gap to the per-instance oracle. Deviation: embeddings are MiniLM
-(they use gte-qwen2-7B-instruct); every embedding router here uses the same one. Routers: random, best single model
-(on train), oracle, KNN / linear / MLP predictive routers, EmbedLLM MF, Avengers top-1 (clusters on all train labels),
-and
-our probe table (b probes per dataset per model; the dataset id is the family — their routing records carry task_name,
-so every router may use it; a predicted-family variant via 5-NN over probe prompts is reported too). Hyperparameters
-of every router are chosen on a 20% validation slice of the train split (no failure-mode defaults). With truthful labels
-every MIDIAN variant is the probe table (max-tree = argmax; nothing to audit); MIDIAN with liars is grid
-`llmrouterbench_pool` (rte/backends/routereval.py, dataset=llmrouterbench)."""
+KORBench, Knights & Knaves, MMLU-Pro, GPQA, FinQA, MedQA, EmoryNLP, MELD) × the same 20 lightweight (~7–9B) models,
+per-instance score in [0, 1] from their bench-release JSON; protocol: 70/30 train/test split repeated with their five
+seeds (42, 999, 2024, 2025, 3407); metrics: AvgAcc = mean over datasets of the routed accuracy, Gain@R / Gain@B =
+relative gain over the random / best-single-model router, Gap@O = relative gap to the per-instance oracle. Deviation:
+embeddings are MiniLM (they use gte-qwen2-7B-instruct); every embedding router here uses the same one. Routers: random,
+best single model (on train), oracle, KNN / linear / MLP predictive routers, EmbedLLM MF, Avengers top-1 (clusters on
+all train labels), and our probe table (b probes per dataset per model; the dataset id is the family — their routing
+records carry task_name, so every router may use it; a predicted-family variant via 5-NN over probe prompts is reported
+too). Hyperparameters of every router are chosen on a 20% validation slice of the train split (no failure-mode
+defaults). With truthful labels every MIDIAN variant is the probe table (max-tree = argmax; nothing to audit); MIDIAN
+with liars is grid `llmrouterbench_pool` (rte/backends/routereval.py, dataset=llmrouterbench)."""
 
 import os, sys, json, glob, numpy as np, pandas as pd
 

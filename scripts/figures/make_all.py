@@ -4,9 +4,8 @@
 
 Full run (needs $RTE_DATA):
   [scale_matrix]      scripts/analysis/scale_matrix.py for the bernoulli / replay sweeps (--scale-matrix; only when
-  their
-                      rows changed: it rewrites $RTE_DATA/results/<grid>/matrix_success.csv, which bar_figs and A / B
-                      read)
+                      their rows changed: it rewrites $RTE_DATA/results/<grid>/matrix_success.csv, read by bar_figs
+                      and A / B)
   bar_figs            -> results/aggregates/bars/<family>.csv
   shortlist_figs      -> results/aggregates/shortlist/<family>.csv
   condensed_figs      A, B          (reads bars/, shortlist rows; writes the A / B display lists)

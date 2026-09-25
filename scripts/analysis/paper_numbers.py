@@ -66,8 +66,8 @@ def put(key, s, grid, note=None):
 
 
 def fws(w):
-    """The frameworks with rows in `w` -- after the erratum-28 quarantine some cells have none until their rerun
-    lands."""
+    """The frameworks with rows in `w` -- after the erratum-28 quarantine some cells have none until their rerun lands.
+    """
     return [f for f in FWS if f in w]
 
 
@@ -564,8 +564,8 @@ def v4_regimes(co):
 
 
 def v4_cohort_deltas():
-    """Kept in a function so its loop variables cannot shadow the module-level frames the appendix tables below
-    reuse."""
+    """Kept in a function so its loop variables cannot shadow the module-level frames the appendix tables below reuse.
+    """
     for pool, grid in V4_POOLS.items():
         try:
             co = rows(grid)

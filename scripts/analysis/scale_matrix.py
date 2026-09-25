@@ -1,10 +1,10 @@
-"""The big matrix for a scale sweep: every arm x every n, one table per regime, mean success with a 95% seed-bootstrap
-CI.
+"""The big matrix for a scale sweep: every arm x every n, one table per regime, mean success with a 95%
+seed-bootstrap CI.
 
     python scripts/analysis/scale_matrix.py bernoulli_scale_v5            # markdown to stdout, CSV beside the grid
     python scripts/analysis/scale_matrix.py replay_scale_v5 --metric comparisons_per_task
-    python scripts/analysis/scale_matrix.py replay_scale_v5 --dist specialist   # one shape (replay has three; default
-    pools them)
+    python scripts/analysis/scale_matrix.py replay_scale_v5 --dist specialist
+        # one shape (replay has three; the default pools them)
 
 Reads rows.csv directly (NOT rte.analyze.load, whose consolidate is a no-op on a grid with a .merge_owner) and runs it
 through rte.analyze.prepare for the same labels/aliases as every other table. Regimes follow RESULTS_rte_v4: beta = 0

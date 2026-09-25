@@ -6,9 +6,9 @@ summary = AIQ), their baselines (oracle, zero router = hull of the single models
 One deviation for every router alike: prompt embeddings are a local all-MiniLM-L6-v2, not OpenAI's.
 Our arm: the probe-family router (b probe prompts per eval_name, every model looked up on them, family PREDICTED at test
 time by k-NN over the probe prompts).  MIDIAN w/o defenses at n = 11 is a max-tree over the same scores (asserted ==
-argmax).
-AIQ here = mean over the cost range [cheapest model, dearest model] of the best performance reachable at that cost
-(step envelope of the router's lambda sweep), i.e. area under the non-decreasing quality-vs-cost curve, normalised."""
+argmax). AIQ here = mean over the cost range [cheapest model, dearest model] of the best performance reachable at that
+cost (step envelope of the router's lambda sweep), i.e. area under the non-decreasing quality-vs-cost curve, normalised.
+"""
 
 import os, sys, json, numpy as np, pandas as pd
 from sklearn.model_selection import StratifiedShuffleSplit
@@ -70,8 +70,8 @@ def sweep(pred, perf, cost, price):
 
 
 def aiq(pts, c_lo, c_hi, hull=False):
-    """Area under the non-decreasing quality-vs-cost envelope over [c_lo, c_hi], normalised to [0, 1] of the cost
-    range."""
+    """Area under the non-decreasing quality-vs-cost envelope over [c_lo, c_hi], normalised to [0, 1] of the cost range.
+    """
     grid = np.linspace(c_lo, c_hi, 2001)
     if hull:  # zero router: linear interpolation between single models
         o = np.argsort(pts[:, 0])

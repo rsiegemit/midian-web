@@ -40,10 +40,9 @@ def fit_and_score(
     work, prompts_tr, perf_tr, E_tr, prompts_te, E_te, models, task_tr, hp=None, label="onehot", llm_emb=None
 ):
     """Write their inputs, train GraphRouter, score every test prompt (batched route_single). Returns (picks (n_te,),
-    model names, best val).
-    label="onehot": their release's label (one-hot argmax of performance per query; under 0/1 ties argmax is the FIRST
-    tied model);
-    label="perf": the per-edge performance itself as the BCE target (the paper's edge-performance prediction)."""
+    model names, best val). label="onehot": their release's label (one-hot argmax of performance per query; under 0/1
+    ties argmax is the FIRST tied model); label="perf": the per-edge performance itself as the BCE target (the paper's
+    edge-performance prediction)."""
     hp = {**HP, **(hp or {})}
     os.makedirs(work, exist_ok=True)
     n_tr, m = perf_tr.shape
@@ -151,8 +150,7 @@ SWEEP = [
 
 def routerbench(n_splits, seeds=None):
     """Their defaults (label = one-hot, random LLM features) and a fair run: description embeddings for the LLM nodes,
-    label =
-    edge performance, hyperparameters selected on THEIR validation split (best val_result), test scored once."""
+    label = edge performance, hyperparameters selected on THEIR validation split (best val_result), test scored once."""
     prompts, fam, perf, cost, M = data()
     E = np.load(EMB)
     rows = []

@@ -1,7 +1,6 @@
 """Resubmit the units of framework grids whose rows are missing (planned vs landed, set comparison), one 1-CPU job per
 (method, dist, beta, liar_select, seed) exactly as cluster/slurm/launch_units.sh would. Refuses a grid that still has
-jobs queued
-(its units may be in flight). Log: logs/rerun_missing.txt.
+jobs queued (its units may be in flight). Log: logs/rerun_missing.txt.
     RTE_DATA=... RTE_ACCOUNT=... python cluster/ops/rerun_missing.py <grid> [<grid> ...] [--dry-run]
 Partitions: $RTE_CPU_PARTITIONS; account: $RTE_ACCOUNT (cluster/cluster.env.example)."""
 

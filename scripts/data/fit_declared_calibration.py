@@ -2,15 +2,12 @@
 backends.   $RTE_DATA/env/rte/bin/python scripts/data/fit_declared_calibration.py
 
 Model: D | S ~ the empirical distribution of the live self-rating D_self_described given S's decile (10 equal-width S
-bins
-x the 11 rating values the live models emit), i.i.d. per (agent, family). Fitted on the pooled live specialist n = 100
-and
-n = 1,000 populations (all seeds). Prints the table to paste into rte/backends/__init__.py (CAL_P), then validates the
-IN-CODE table (rte.backends.calibrated_declared) against live: mean, spread, corr(S, D), mass at 0 and 1, and the one
-number
-declared argmax depends on, E[S of argmax_a D[a, f]] in random sub-populations of n = 100 / 1,000. The rejected
-alternative, a censored-normal (Tobit) linear model D = clip(a + c S + N(0, s)), is fitted and validated beside it, and
-both are applied to the heavy_tail / bimodal populations as an out-of-sample transfer check."""
+bins x the 11 rating values the live models emit), i.i.d. per (agent, family). Fitted on the pooled live specialist n =
+100 and n = 1,000 populations (all seeds). Prints the table to paste into rte/backends/__init__.py (CAL_P), then
+validates the IN-CODE table (rte.backends.calibrated_declared) against live: mean, spread, corr(S, D), mass at 0 and 1,
+and the one number declared argmax depends on, E[S of argmax_a D[a, f]] in random sub-populations of n = 100 / 1,000.
+The rejected alternative, a censored-normal (Tobit) linear model D = clip(a + c S + N(0, s)), is fitted and validated
+beside it, and both are applied to the heavy_tail / bimodal populations as an out-of-sample transfer check."""
 
 import glob, os, sys
 import numpy as np

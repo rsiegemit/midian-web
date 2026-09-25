@@ -1,15 +1,15 @@
 """Per-seed success tables (seed x arm) for every condensed A / B cell and budget, read straight from the raw rows.
     from scripts.figures.lib.seed_tables import tables
 tables() -> {(family, group, n, regime): {b: DataFrame(index = seed, columns = arm label, values = success)}}
-  live n        b = 3: grids.LIVE_GRIDS[n] (specialist, self-described channel, grids averaged per seed as bar_figs
-  does)
+  live n        b = 3: grids.LIVE_GRIDS[n] (specialist, self-described channel, grids averaged per seed as
+                bar_figs does)
                 b = 1 / 5: va_b_* + rivals_b_*;  tuned_wsb_* (n0 = 0.5) at whatever b it ran
   every family  + pool_fill_* (the candidates a cell lacked at some b; configs/grids/)
   RouterEval    the 5,000-LLM leaderboard pool: routereval_mmlu5k (b = 3) + va_b / rivals_b routereval5k
   LLMRouterBench  llmrouterbench_pool (b = 3) + va_b / rivals_b llmrouterbench
   bernoulli 1e7 bernoulli_scale_v5 (b = 1, 3) + va_b / rivals_b bernoulli_1e7 (b = 5)
-  replay 1e6    replay_scale_v5 (b = 1, 3) + va_b / rivals_b replay_1e6; shapes pooled per seed, only seeds with ALL
-  three
+  replay 1e6    replay_scale_v5 (b = 1, 3) + va_b / rivals_b replay_1e6; shapes pooled per seed, only seeds with
+                ALL three
 Regimes: beta0 = beta 0 (any liar_select: no liars, so the tag is inert); cartel = beta 0.5, low_skill_first.
 The best of a pool is cross-fitted from these tables (stats.crossfit)."""
 
@@ -99,8 +99,7 @@ def planned(grid):
 
 def complete(grid, load=None):
     """True once EVERY planned row of `grid` has landed (set comparison, so stray or duplicate rows cannot stand in for
-    a
-    missing one). `load(grid)` returns its rows; default rows(), which drops framework arms -- pass a loader for
+    a missing one). `load(grid)` returns its rows; default rows(), which drops framework arms -- pass a loader for
     those."""
     if grid not in _done:
         want = planned(grid)

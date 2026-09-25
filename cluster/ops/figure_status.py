@@ -1,11 +1,9 @@
 """What the figures still lack, read from their own CSVs, plus planned-vs-landed rows of the grids still running.
     RTE_DATA=... python cluster/ops/figure_status.py [--out DIR]
 A / B: every (group, arm, regime, b) slot the figure draws (declared argmax / random: b = 3 only) -> missing slots, and
-bars whose
-pool is INCOMPLETE (a member absent or short of seeds). E-H: every (n, regime, shortlist) slot -> missing, rerun
-outstanding
-(star), fewer than MIN_FW frameworks. Grids: set comparison of planned vs landed (lib/seed_tables.planned / rows). DIR:
-the figures' directory ($RTE_FIG_OUT or figures/paper)."""
+bars whose pool is INCOMPLETE (a member absent or short of seeds). E-H: every (n, regime, shortlist) slot -> missing,
+rerun outstanding (star), fewer than MIN_FW frameworks. Grids: set comparison of planned vs landed
+(lib/seed_tables.planned / rows). DIR: the figures' directory ($RTE_FIG_OUT or figures/paper)."""
 
 import itertools, os, sys
 import pandas as pd

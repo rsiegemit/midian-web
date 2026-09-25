@@ -293,8 +293,7 @@ def budget_handles(pad: int = 0):
 
 def legend(ax, keys, labels=None, where: str = "above", ncol: int | None = None, extra=None, handles=None, **kw):
     """One frameless legend, entries in the given (fixed) order, never re-ranked (matplotlib's Legend is built directly,
-    so
-    the value-ranking wrapper of legend_rank.install() does not apply). where: "above" (rows over the axes) or a
+    so the value-ranking wrapper of legend_rank.install() does not apply). where: "above" (rows over the axes) or a
     matplotlib loc inside the axes. handles: proxies in place of handle(key) (e.g. lines instead of patches)."""
     from matplotlib.legend import Legend
 

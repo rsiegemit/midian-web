@@ -1,12 +1,10 @@
 """Runtime/energy ESTIMATE (*) per method from LLM-call counts x measured per-call GPU cost.
-    python scripts/analysis/energy.py      -> RESULTS_energy.md (tables and crossings; the H10 / H11 figures are
-    retired)
+    python scripts/analysis/energy.py [--out FILE]   -> the tables and crossings as markdown (stdout, or FILE); the
+    archived docs/archive/results/RESULTS_energy.md is this output as of 2026-09-24; the H10 / H11 figures are retired
 Wall-clock in the rows is not used for probe methods (memo hits). Model: GPU-seconds per call = params_b * (A*prompt_tok
-+ B*gen_tok),
-B = 5A (decode is ~5x prefill per token on H100/vLLM), A calibrated so a 7B supervisor call (1,900 prompt + 65 gen
-tokens) costs
-1/34 GPU-s = the throughput measured on the saturated 1-GPU 7B replicas (2026-09-03, 4 samples, 32-36 req/s). Energy =
-GPU-s * W."""
++ B*gen_tok), B = 5A (decode is ~5x prefill per token on H100/vLLM), A calibrated so a 7B supervisor call (1,900 prompt
++ 65 gen tokens) costs 1/34 GPU-s = the throughput measured on the saturated 1-GPU 7B replicas (2026-09-03, 4 samples,
+32-36 req/s). Energy = GPU-s * W."""
 
 import os
 import sys
@@ -160,6 +158,11 @@ def crossing(t, a, b, build="build_gpu_s", slope="per_task_gpu_s"):
 
 
 if __name__ == "__main__":
+    import argparse
+
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--out", help="write the markdown here instead of stdout")
+    OUT_MD = ap.parse_args().out
     t = table()
     pd.set_option("display.width", 250)
     fws = [m for m in t.index if m.startswith("fw_")]
@@ -265,6 +268,9 @@ if __name__ == "__main__":
         "messages dominate the latency of MIDIAN w/o defenses (6 ms of fetch hops vs 0.6 us of comparisons) while the "
         "supervisor call dominates every framework's (0.5-19 s).",
     ]
-    open(os.path.join(ROOT, "RESULTS_energy.md"), "w").write("\n".join(md) + "\n")
+    if OUT_MD:
+        open(OUT_MD, "w").write("\n".join(md) + "\n")
+    else:
+        print("\n".join(md))
     print(t.round(4).to_string())
     print({a: {b: round(crossing(t, a, b)) for b in fws} for a in mids})

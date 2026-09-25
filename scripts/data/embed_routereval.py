@@ -2,8 +2,7 @@
 so their routing units run on CPU nodes. For every (cell, seed) world the grids define and every distinct retrieval
 setting they use, it calls FrameworkMethod._index -- the exact code build() runs -- with RTE_EMBED_CACHE_DIR set.
     python scripts/data/embed_routereval.py re_sl_embed_small re_sl_embed_1k re_sl_embed_5k            # GPU job: fill
-    CUDA_VISIBLE_DEVICES= python scripts/data/embed_routereval.py --check re_sl_embed_small ...          # CPU: every
-    file hit
+    CUDA_VISIBLE_DEVICES= python scripts/data/embed_routereval.py --check re_sl_embed_small ...   # CPU: every file hit
 --check forbids the embedder and the reranker, so it passes only if a routing unit would never touch a GPU."""
 
 from __future__ import annotations

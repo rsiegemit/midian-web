@@ -1,19 +1,15 @@
 """Bar figures of success for EVERY arm, grouped by n, one figure per (experiment family, liar regime, grouping); the
-oracle
-is a dotted line across the top; error bars are the 95% seed bootstrap.
+oracle is a dotted line across the top; error bars are the 95% seed bootstrap.
     python scripts/figures/bar_figs.py [live bernoulli replay routereval llmrouterbench]
       -> results/aggregates/bars/<family>.csv (the input of the condensed A / B figures)
          figures/bars/<family>__<regime>__<group>.{png,pdf} + figures/bars/INDEX.md (exploratory, not tracked)
 One panel and one row per figure, always. No framework arms: they are drawn per shortlist in figures/shortlist
-(shortlist_figs.py).
-Families: live (RTE live backend, 10^2-10^5, grouped by population shape; self-described channel),
+(shortlist_figs.py). Families: live (RTE live backend, 10^2-10^5, grouped by population shape; self-described channel),
 bernoulli (calibrated synthetic, 10..10^7, 1000 seeds, b = 3), replay (RouterBench outcomes, 10..10^6, shapes pooled),
 routereval (real LLM pools 10 / 100 / 1,000 per pool config and the 5,000-LLM leaderboard pool), llmrouterbench (20
-models).
-The do-not-add list (lib/exclusions.py) applies.
-route_to_k_majority executes THREE agents per task and majority-votes, so it can sit above the single-agent oracle: it
-is drawn
-hatched and named so. Rendering: figspec.LEGACY_RC + EXPLORE_RC, legend_rank.install(), figspec.explore_colours."""
+models). The do-not-add list (lib/exclusions.py) applies. route_to_k_majority executes THREE agents per task and
+majority-votes, so it can sit above the single-agent oracle: it is drawn hatched and named so. Rendering:
+figspec.LEGACY_RC + EXPLORE_RC, legend_rank.install(), figspec.explore_colours."""
 
 from __future__ import annotations
 
@@ -160,8 +156,7 @@ def _panel(ax, labels, series, oracle, ns, ylim, legend=True):
 
 def draw(series, oracle, title, fname, ns, ylim=(0.2, 1.0), _jobs=None):
     """series: label -> {n: (mean, lo, hi, seeds)}; oracle: {n: mean}. ONE panel, ONE row, always (every n group side by
-    side,
-    every arm as a bar); the figure widens with the number of bars."""
+    side, every arm as a bar); the figure widens with the number of bars."""
     if _jobs is not None:
         _jobs.append((series, oracle, title, fname, ns, ylim))
         return fname  # deferred: colours are assigned once all labels are known

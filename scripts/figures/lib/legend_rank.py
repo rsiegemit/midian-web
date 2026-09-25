@@ -1,10 +1,8 @@
 """The value-ranked legend of the exploratory figures (figures/bars, figures/shortlist): entries ranked best first by
-the
-value each one plots, laid out ROW-MAJOR -- best top left, then left to right, then the next row. matplotlib fills
-legend
-columns top to bottom, so the ranked list is permuted to read row-major. Entries that plot nothing (style keys such as
-"hollow = honest") keep their order after the ranked ones. rank="asc" where lower is better (cost axes); rank=None keeps
-the given order (still row-major).
+the value each one plots, laid out ROW-MAJOR -- best top left, then left to right, then the next row. matplotlib fills
+legend columns top to bottom, so the ranked list is permuted to read row-major. Entries that plot nothing (style keys
+such as "hollow = honest") keep their order after the ranked ones. rank="asc" where lower is better (cost axes);
+rank=None keeps the given order (still row-major).
 
 Opt-in: install() patches Axes.legend and Figure.legend for the whole process; nothing happens at import. The paper
 figures never use it (figspec.legend builds its Legend directly, in the fixed figspec order).

@@ -6,8 +6,7 @@
     crossfit(T, pool)  winner's-curse-free best of a pool in a seed x arm table
 
 ci and bootstrap_ci are kept apart on purpose: they draw the same resamples when x is finite with >= 2 values, but
-differ
-on NaN and on a single value, and stored numbers depend on each.
+differ on NaN and on a single value, and stored numbers depend on each.
 """
 
 from __future__ import annotations
@@ -18,8 +17,7 @@ import pandas as pd
 
 def ci(x, B=2000):
     """95% bootstrap CI of the mean. If `x` is indexed by seed (cells x seeds), resample SEEDS: each seed's mean over
-    the
-    fixed cells is the unit, so the bar is sampling error over seeds, not the between-shape spread of the pooled
+    the fixed cells is the unit, so the bar is sampling error over seeds, not the between-shape spread of the pooled
     cells."""
     rng = np.random.default_rng(0)
     if isinstance(x, pd.Series) and "seed" in (x.index.names or []):

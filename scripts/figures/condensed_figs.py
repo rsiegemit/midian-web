@@ -1,35 +1,29 @@
 """Figures 1 / 2 of the submission (A_live_stacked, B_families_stacked) and their appendix versions (_allb); style,
-names,
-legend order and saving from scripts/figures/lib/figspec.py (docs/FIGURE_SPEC.md).
+names, legend order and saving from scripts/figures/lib/figspec.py (docs/FIGURE_SPEC.md).
     python scripts/figures/condensed_figs.py [--out DIR] [--from-csv]
       -> <out>/{A,B}_{allb,stacked}.{png,pdf,csv}; <out> = $RTE_FIG_OUT or figures/paper
       + results/aggregates/figures/<name>.{csv,draw.csv}: the figure's CSV and its display list (every bar, whisker,
         oracle segment, tick and legend key in drawing order); --from-csv redraws from those alone (no $RTE_DATA).
 b = 3 cells from results/aggregates/bars/<family>.csv; b = 1 / 5 from the va_b_* (MIDIAN) and rivals_b_* (budget-matched
-rivals)
-rows and, for bernoulli / replay b = 1, their scale matrices. b is NEVER pooled: every bar is one budget.
+rivals) rows and, for bernoulli / replay b = 1, their scale matrices. b is NEVER pooled: every bar is one budget.
   A  live headline: n = 10^2..10^5 (specialist), solid = honest, hatched = beta = 0.5 low-skill cartel.
   B  every family at its largest population, success / oracle, same arms and style.
-  Two versions of each: _allb  -- one bar per (arm, regime, b), shade light -> dark = b = 1, 3, 5, whiskers +/- 1 s.e.;
-                        _stacked -- one bar per (arm, regime) at b = 3; MIDIAN alone carries the budget overlay (b = 1
-                        light
-                                    in front, 3 mid, 5 dark behind, drawn tallest-first), no whiskers (see _allb).
+  Two versions of each:
+    _allb     one bar per (arm, regime, b), shade light -> dark = b = 1, 3, 5, whiskers +/- 1 s.e.;
+    _stacked  one bar per (arm, regime) at b = 3; MIDIAN alone carries the budget overlay (b = 1 light in front, 3 mid,
+              5 dark behind, drawn tallest-first), no whiskers (see _allb).
   declared argmax and random spend no probes: one bar (b does not apply). No markers on bars and no titles: a budget not
-  in
-  yet is an empty slot, and the script prints INCOMPLETE while any bar is missing or its pool is incomplete.
-  A also carries "best framework, best text shortlist" (b = 3; add_best_framework), cross-fitted per seed like the
-  pooled arms.
+  in yet is an empty slot, and the script prints INCOMPLETE while any bar is missing or its pool is incomplete. A also
+  carries "best framework, best text shortlist" (b = 3; add_best_framework), cross-fitted per seed like the pooled arms.
   C / D (routing work vs n; energy per query) are efficiency_figs.py.
 "Best learned router" / "best bandit" are CROSS-FITTED (lib/stats.crossfit over lib/seed_tables): for each seed the arm
-is chosen on the
-OTHER seeds and scored on this one, so no bar is the maximum of noisy means over the seeds it reports (no winner's
-curse).
-The pool is the same at every b in a cell (POOL minus the arms that cannot run there, NOT_RUNNABLE); a bar whose pool is
-still missing a candidate (or a seed of one) at that b is reported as INCOMPLETE (cluster/ops/figure_status.py; figures
-carry no marks). The csv lists how often each arm was chosen. Frameworks are not drawn (figures/shortlist). The
-do-not-add list applies, and with it the
-permanent halving exclusion (lib/exclusions.py). Rendered under
-figspec.LEGACY_RC (the rcParams these figures always inherited from the retired paper_figs.py), inside an rc_context."""
+is chosen on the OTHER seeds and scored on this one, so no bar is the maximum of noisy means over the seeds it reports
+(no winner's curse). The pool is the same at every b in a cell (POOL minus the arms that cannot run there,
+NOT_RUNNABLE); a bar whose pool is still missing a candidate (or a seed of one) at that b is reported as INCOMPLETE
+(cluster/ops/figure_status.py; figures carry no marks). The csv lists how often each arm was chosen. Frameworks are not
+drawn (figures/shortlist). The do-not-add list applies, and with it the permanent halving exclusion (lib/exclusions.py).
+Rendered under figspec.LEGACY_RC (the rcParams these figures always inherited from the retired paper_figs.py), inside an
+rc_context."""
 
 from __future__ import annotations
 
@@ -177,9 +171,8 @@ def arms_at(cell):
 
 def budget_bars(C, groups, name, norm=False, stacked=False, skip=()):
     """One group per (x label, cell). _allb: a bar per (arm, regime, b) with whiskers. _stacked: one slot per (arm,
-    regime)
-    at b = 3; MIDIAN's slot holds its b = 5, 3, 1 bars tallest-first (each level at its true height), no whiskers.
-    Returns (the figure CSV, the display list: one row per drawing call, in order)."""
+    regime) at b = 3; MIDIAN's slot holds its b = 5, 3, 1 bars tallest-first (each level at its true height), no
+    whiskers. Returns (the figure CSV, the display list: one row per drawing call, in order)."""
     A = {(key, r): arms_at(C[key[:3] + (r,)]) for _, key in groups for r in REG if key[:3] + (r,) in C}
     arms = [k for k in S.ORDER if k not in skip and any(k in v for v in A.values())]
     one = lambda k: k in BUDGETLESS or k == "best_framework"  # a single bar: no probes, or frameworks (b = 3 only)
@@ -249,8 +242,8 @@ def budget_bars(C, groups, name, norm=False, stacked=False, skip=()):
 
 
 def render(dl, name, out):
-    """Draw one A / B figure from its display list (figspec.LEGACY_RC inside an rc_context) ->
-    <out>/<name>.{pdf,png}."""
+    """Draw one A / B figure from its display list (figspec.LEGACY_RC inside an rc_context) -> <out>/<name>.{pdf,png}.
+    """
     norm, stacked = FIGS[name]
     num = lambda v: None if pd.isna(v) else v
     with plt.rc_context(S.LEGACY_RC):
@@ -334,9 +327,8 @@ def fig_B(C, out):
 
 def add_best_framework(C):
     """Per live n and regime, the seed x (framework | text shortlist) success table of every pair with the full seed
-    count
-    at that cell (framework rows via shortlist_figs.collect: b = 3, specialist); arms_at cross-fits the best pair per
-    seed."""
+    count at that cell (framework rows via shortlist_figs.collect: b = 3, specialist); arms_at cross-fits the best pair
+    per seed."""
     from scripts.figures.shortlist_figs import collect
 
     for (n, dist, reg), cell in collect("live").items():
@@ -352,10 +344,8 @@ def add_best_framework(C):
 
 def add_budgets(C):
     """b = 1 / 5 for every arm: live / RouterEval / LLMRouterBench / bernoulli 10^7 / replay 10^6 from the va_b_*
-    (MIDIAN)
-    and rivals_b_* (budget-matched rivals) rows (per-seed means, whiskers set by narrow()); bernoulli / replay b = 1
-    from their
-    scale matrices. A cell the runs have not reached simply has no bar (figure_status.py lists it)."""
+    (MIDIAN) and rivals_b_* (budget-matched rivals) rows (per-seed means, whiskers set by narrow()); bernoulli / replay
+    b = 1 from their scale matrices. A cell the runs have not reached simply has no bar (figure_status.py lists it)."""
     from scripts.figures.lib.regimes import tag as regime
     from scripts.figures.lib.rows import RESULTS as R, label, load_fw as rows
 
@@ -397,8 +387,8 @@ def add_budgets(C):
 
 
 def from_tables(C, T):
-    """A switched family's cell: every arm, b and the oracle from its erratum-30 per-seed tables (whiskers +/- 1
-    s.e.)."""
+    """A switched family's cell: every arm, b and the oracle from its erratum-30 per-seed tables (whiskers +/- 1 s.e.).
+    """
     for key, bb in T.items():
         if key[0] not in SW or key not in C:
             continue
@@ -415,8 +405,7 @@ def from_tables(C, T):
 
 def narrow(C, T):
     """Every whisker = +/- 1 s.e. over seeds, from the per-seed tables (the bar CSVs and scale matrices carry bootstrap
-    CIs).
-    A bar whose per-seed values are not in the tables keeps its mean and gets no whisker; the means must agree."""
+    CIs). A bar whose per-seed values are not in the tables keeps its mean and gets no whisker; the means must agree."""
     for key, c in C.items():
         bb = T.get(key, {})
 

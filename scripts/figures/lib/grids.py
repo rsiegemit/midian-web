@@ -10,8 +10,8 @@ uses.
     BUDGET_GRIDS      the b = 1 / 5 cells of A / B: (family, group, tag of va_b_* / rivals_b_*)
     MATRICES          scale sweeps read from their matrix_success.csv (bar_figs; A / B b = 1)
     VA_GRIDS          exact MIDIAN build ledgers by (n, b) (efficiency D)
-    SHORTLIST_SOURCES, NINE, DOC_REF, DOC_REF_CARTEL, VARIANTS   the framework-shortlist tables (doc_tables,
-    fw_variant_numbers)
+    SHORTLIST_SOURCES, NINE, DOC_REF, DOC_REF_CARTEL, VARIANTS
+                      the framework-shortlist tables (doc_tables, fw_variant_numbers)
 
 INCONSISTENCY (flagged 2026-09-24, values unchanged): REF_GRIDS["live"][100] still pools live_core_n100, whose
 pre-09-02 probe instances LIVE_GRIDS[100] dropped, so the oracle / random lines of the n = 10^2 shortlist figures

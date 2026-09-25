@@ -1,12 +1,9 @@
 """Appendix panel I_max_lie: the strongest declared lie (lie_mode max: every cartel member claims perfect skill in every
 family; grids lie_max_* / lie_max_fw_*, live specialist, beta = 0.5 low-skill-first cartel, b = 3, seeds 1-3) against
-the
-standard lie (true skill + 0.4, clipped) of Figure 1. Bars = max lie (hatched: cartel), +/- 1 s.e. over seeds; a black
-tick
-on each bar = the same arm under the standard lie (<out>/A_live_allb.csv, b = 3; frameworks:
+the standard lie (true skill + 0.4, clipped) of Figure 1. Bars = max lie (hatched: cartel), +/- 1 s.e. over seeds; a
+black tick on each bar = the same arm under the standard lie (<out>/A_live_allb.csv, b = 3; frameworks:
 results/aggregates/shortlist/live.csv, declared top-k). Pooled arms under the max lie are the best of the pool's arms
-that
-ran there by mean (a choice that favours the rival): learned = online kNN, bandit = warm-start (n0 = 1 or 0.5),
+that ran there by mean (a choice that favours the rival): learned = online kNN, bandit = warm-start (n0 = 1 or 0.5),
 framework = the best of ten on the declared top-k.
     python scripts/figures/lie_max_fig.py [--out DIR] [--from-csv]
       -> <out>/I_max_lie.{png,pdf,csv} + results/aggregates/figures/I_max_lie.csv and its oracle lines in refs.csv;

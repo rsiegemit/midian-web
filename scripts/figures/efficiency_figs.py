@@ -10,8 +10,8 @@ Two figures, one panel each (they replace the old C paired-gap and D heatmap fig
   D   energy per routed query vs queries served: (build J) / T + marginal J per query. MIDIAN at n = 10^3, 10^5, 10^7
      (its build probes from the same ledger); the frameworks' per-query supervisor energy (live n = 1,000 measurement,
      scripts/analysis/energy.py) as a band. Energy model = scripts/analysis/energy.py (probe 4.04 J on specialist, 7B
-     supervisor call
-     20.6 J, message 1e-3 J, comparison 1e-8 J; 700 W). The routed task's own execution is common to all and excluded.
+     supervisor call 20.6 J, message 1e-3 J, comparison 1e-8 J; 700 W). The routed task's own execution is common to all
+     and excluded.
 Costs come from bernoulli_scale_v5 rows, cached to results/aggregates/cost_by_n.csv (--refresh re-reads the rows).
 --from-csv: C from that cache, D from results/aggregates/figures/D_energy_per_query.csv + refs.csv (no $RTE_DATA)."""
 

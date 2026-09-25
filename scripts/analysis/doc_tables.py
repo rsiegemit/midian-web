@@ -1,23 +1,19 @@
 """The framework-shortlist tables the write-ups quote, generated from the rows so the docs can be verified against them.
     python scripts/analysis/doc_tables.py             # print every table (markdown)
-    python scripts/analysis/doc_tables.py --verify    # every generated table row must appear verbatim in RESULTS.md;
-    exit 1 otherwise
-    python scripts/analysis/doc_tables.py --sync      # rewrite every <!-- doc_tables:NAME --> ... <!-- /doc_tables -->
-    block in RESULTS.md
+    python scripts/analysis/doc_tables.py --verify    # every generated row must appear verbatim in the archived
+                                                      # docs/archive/results/RESULTS.md; exit 1 otherwise
+RESULTS.md is archived verbatim, so nothing rewrites it (the old --sync is retired).
 Sources: the pre-registered TF-IDF rows (source grids), dedup (_dd), MiniLM (_em), MIDIAN w/o audits cohort (_verified),
-MIDIAN
-cohort (_verified_va*). Cells: frameworks pooled (mean of per-framework seed means) and the best single framework.
-Asterisks mark
-cells whose framework set is incomplete (a framework with fewer seeds than the cell has) or that still has an erratum-28
-rerun outstanding.
-Nothing is read at import; the grid registry is scripts/figures/lib/grids.py (SHORTLIST_SOURCES, NINE, DOC_REF*)."""
+MIDIAN cohort (_verified_va*). Cells: frameworks pooled (mean of per-framework seed means) and the best single
+framework. Asterisks mark cells whose framework set is incomplete (a framework with fewer seeds than the cell has) or
+that still has an erratum-28 rerun outstanding. Nothing is read at import; the grid registry is
+scripts/figures/lib/grids.py (SHORTLIST_SOURCES, NINE, DOC_REF*)."""
 
 from __future__ import annotations
 
 import argparse
 import functools
 import os
-import re
 import sys
 
 import numpy as np
@@ -30,7 +26,7 @@ from scripts.figures.lib.figspec import FW_NAME as NAMES  # noqa: E402
 from scripts.figures.lib.grids import DOC_REF as REF, DOC_REF_CARTEL as REF_CARTEL, NINE  # noqa: E402
 from scripts.figures.lib.grids import SHORTLIST_SOURCES as SOURCES  # noqa: E402
 
-DOC = os.path.join(ROOT, "RESULTS.md")
+DOC = os.path.join(ROOT, "docs", "archive", "results", "RESULTS.md")
 _cache = {}
 PENDING = functools.cache(pending_reruns)  # read on first use, never at import
 
@@ -169,25 +165,10 @@ TABLES = {
 }
 
 
-def sync():
-    doc = open(DOC).read()
-    n = 0
-    for name, fn in TABLES.items():
-        pat = re.compile(rf"(<!-- doc_tables:{name} -->\n).*?(\n<!-- /doc_tables -->)", re.S)
-        doc, k = pat.subn(lambda m: m.group(1) + fn() + m.group(2), doc)
-        n += k
-    open(DOC, "w").write(doc)
-    print(f"synced {n} table blocks in RESULTS.md")
-
-
 def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    g = p.add_mutually_exclusive_group()
-    g.add_argument("--verify", action="store_true", help="every generated table row must appear verbatim in RESULTS.md")
-    g.add_argument("--sync", action="store_true", help="rewrite the doc_tables blocks in RESULTS.md")
+    p.add_argument("--verify", action="store_true", help="every generated row must be in the archived RESULTS.md")
     a = p.parse_args(argv)
-    if a.sync:
-        return sync()
     doc = open(DOC).read() if a.verify else ""
     bad = 0
     for name, fn in TABLES.items():

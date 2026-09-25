@@ -5,8 +5,7 @@
     python cluster/ops/progress.py --memo               # memo stats alone (cheap; use while a build is running)
     python cluster/ops/progress.py --memo --rows        # add row counts (SLOW: full scan; avoid while jobs write)
     python cluster/ops/progress.py --merge --prune g1 g2       # fold rows.d into rows.csv once, deleting what it folded
-    python cluster/ops/progress.py --merge --prune --every=900 # ... and keep doing it, for a sweep writing millions of
-    rows
+    python cluster/ops/progress.py --merge --prune --every=900 # ... and keep doing it (sweeps of millions of rows)
 
 Replaces the ad-hoc row counters and `du`-based progress guesses used during the 10^5 build. Two lessons are baked in:
 `du` on the cache is useless as a progress signal (SQLite grows in page chunks, so short windows read as stalls), and a
