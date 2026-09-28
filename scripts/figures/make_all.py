@@ -18,6 +18,8 @@ Full run (needs $RTE_DATA):
 does not exist): bars/ and shortlist/ are the inputs of A / B and E-H, cost_by_n.csv of C, figures/*.csv + *.draw.csv +
 refs.csv of A / B / D / I and the max-lie panels (A / B max lie: skipped while their csv is not shipped).
 Output: <out> = --out, else $RTE_FIG_OUT, else figures/paper.
+RTE_SEEDS_4_10=1 python scripts/figures/make_all.py: A / B with seeds 1-10 at live 10^4 / 10^5, written as <name>_new
+(bars_new/, A_*_new, B_*_new) beside the 3-seed originals; fails until every seeds 4-10 grid has landed.
 """
 
 from __future__ import annotations
@@ -42,6 +44,7 @@ STEPS = [
     "lie_max_ab",
 ]
 FROM_CSV = STEPS[3:]
+SEEDS_4_10_STEPS = ["bar_figs", "condensed_figs"]  # RTE_SEEDS_4_10=1: A / B as *_new (lib.NEW), nothing else
 
 
 def commands(step, out, from_csv):
@@ -69,6 +72,8 @@ def main(argv=None):
     os.makedirs(out, exist_ok=True)
     steps = FROM_CSV if a.from_csv else [s for s in STEPS if s != "scale_matrix" or a.scale_matrix]
     steps = [s for s in steps if not a.only or s in a.only]
+    if os.environ.get("RTE_SEEDS_4_10") == "1":  # the 10-seed A / B (*_new): only these steps read S4_10
+        steps = [s for s in steps if s in SEEDS_4_10_STEPS]
     env = {**os.environ, "PYTHONPATH": ROOT, "MPLBACKEND": "Agg"}
     if a.from_csv:
         env["RTE_DATA"] = os.path.join(out, ".no_rte_data")  # anything that still reads rows fails loudly

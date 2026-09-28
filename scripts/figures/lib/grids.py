@@ -10,7 +10,7 @@ uses.
     BUDGET_GRIDS      the b = 1 / 5 cells of A / B: (family, group, tag of va_b_* / rivals_b_*)
     MATRICES          scale sweeps read from their matrix_success.csv (bar_figs; A / B b = 1)
     VA_GRIDS          exact MIDIAN build ledgers by (n, b) (efficiency D)
-    S4_10, with_s4_10 seeds 4-10 of Figure 1's live 10^4 / 10^5 arms, pooled with their sources once all have landed
+    S4_10, with_s4_10 seeds 4-10 of Figure 1's live 10^4 / 10^5 arms, pooled with their sources only under RTE_SEEDS_4_10=1
     SHORTLIST_SOURCES, NINE, DOC_REF, DOC_REF_CARTEL, VARIANTS
                       the framework-shortlist tables (doc_tables, fw_variant_numbers)
 
@@ -105,8 +105,8 @@ def b_grids(tag):
 
 
 # Seeds 4-10 of Figure 1's non-framework arms at live 10^4 / 10^5: <source>_s4_10 (configs/grids/seeds_4_10.yaml).
-# They join their sources only once EVERY one is complete (seed_tables.complete), so no bar ever mixes 3 and 10 seeds
-# and, until then, every figure is unchanged.
+# They join their sources only under RTE_SEEDS_4_10=1 (the *_new versions of A / B; lib.NEW), and then only once EVERY
+# one is complete (seed_tables.complete), so no bar ever mixes 3 and 10 seeds and the 3-seed figures never change.
 S4_10 = [
     f"{g}_s4_10"
     for g in (
@@ -118,11 +118,14 @@ S4_10 = [
 
 
 def with_s4_10(gs):
-    """`gs` plus the seeds 4-10 mirror of each, once all of S4_10 has landed."""
+    """`gs` plus the seeds 4-10 mirror of each under RTE_SEEDS_4_10=1 (which fails until all of S4_10 has landed)."""
+    from scripts.figures.lib import SEEDS_4_10
     from scripts.figures.lib.seed_tables import complete
 
-    if not all(complete(g) for g in S4_10):
+    if not SEEDS_4_10:
         return list(gs)
+    if missing := [g for g in S4_10 if not complete(g)]:
+        raise SystemExit(f"RTE_SEEDS_4_10=1 but {len(missing)} seeds 4-10 grids are incomplete: {missing}")
     return list(gs) + [f"{g}_s4_10" for g in gs if f"{g}_s4_10" in S4_10]
 
 

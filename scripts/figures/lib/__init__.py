@@ -6,6 +6,10 @@ import os
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))))
 AGG = os.path.join(ROOT, "results", "aggregates")  # the CSVs every paper figure is drawn from (make_all --from-csv)
+# Opt-in: RTE_SEEDS_4_10=1 pools seeds 4-10 (grids.S4_10) into A / B and writes them as <name>_new, next to the
+# 3-seed originals, which are never replaced.
+SEEDS_4_10 = os.environ.get("RTE_SEEDS_4_10") == "1"
+NEW = "_new" if SEEDS_4_10 else ""
 
 
 def fig_out(path=None):

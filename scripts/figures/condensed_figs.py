@@ -38,7 +38,7 @@ import pandas as pd
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))))
 import matplotlib.pyplot as plt  # noqa: E402
 
-from scripts.figures.lib import AGG, fig_out  # noqa: E402
+from scripts.figures.lib import AGG, NEW, fig_out  # noqa: E402
 from scripts.figures.lib import figspec as S  # noqa: E402
 from scripts.figures.lib.exclusions import excluded  # noqa: E402
 from scripts.figures.lib.grids import BUDGET_GRIDS, MATRICES, with_s4_10  # noqa: E402
@@ -46,7 +46,7 @@ from scripts.figures.lib.regimes import AB as REG  # noqa: E402
 from scripts.figures.lib.regimes import MATRIX_REGIME
 from scripts.figures.lib.stats import crossfit, se  # noqa: E402
 
-BARS, DRAW = f"{AGG}/bars", f"{AGG}/figures"
+BARS, DRAW = f"{AGG}/bars{NEW}", f"{AGG}/figures"
 LEARNED = [
     "knn_router",
     "knn_router_online",
@@ -278,23 +278,23 @@ def render(dl, name, out):
             extra=None if stacked else S.budget_handles(-len(keys) % 3),
             **(dict(columnspacing=0.5, handlelength=1.0) if stacked else {}),
         )
-        S.save(fig, name, out)
+        S.save(fig, name + NEW, out)
 
 
 def publish(rec, dl, name, out):
     """The figure CSV to <out> and to results/aggregates/figures (with the display list), then the figure itself."""
     os.makedirs(DRAW, exist_ok=True)
-    rec.to_csv(f"{out}/{name}.csv", index=False)
-    rec.to_csv(f"{DRAW}/{name}.csv", index=False)
-    dl.to_csv(f"{DRAW}/{name}.draw.csv", index=False)
+    rec.to_csv(f"{out}/{name}{NEW}.csv", index=False)
+    rec.to_csv(f"{DRAW}/{name}{NEW}.csv", index=False)
+    dl.to_csv(f"{DRAW}/{name}{NEW}.draw.csv", index=False)
     render(dl, name, out)
 
 
 def from_csv(out):
     """Redraw A / B from results/aggregates/figures alone."""
     for name in FIGS:
-        render(pd.read_csv(f"{DRAW}/{name}.draw.csv"), name, out)
-        shutil.copyfile(f"{DRAW}/{name}.csv", f"{out}/{name}.csv")
+        render(pd.read_csv(f"{DRAW}/{name}{NEW}.draw.csv"), name, out)
+        shutil.copyfile(f"{DRAW}/{name}{NEW}.csv", f"{out}/{name}{NEW}.csv")
 
 
 def groups_A(C):
