@@ -2,6 +2,9 @@
 # THE launcher for llm-backend grids: one unit per job, sized from measurement, resumable. Use this, never a copy.
 #   [RTE_FW_PARALLEL=8 MEM=40G] [ONLY_MISSING=1] cluster/slurm/launch_units.sh <grid> [--nice N]   (parallel framework requests need the 40 G)
 #   ONLY_MISSING=1: plan only the units with a row still missing (the runner's own rid check), not every unit of the grid
+#   TIME=D-HH:MM:SS: one walltime for every unit, for grids job_time.py has no measurement for (1.5 x the source grid's p95)
+#   UNITS=<ERE>: submit only the planned units whose "method|only|seed" key matches (staging, e.g. a probe warm-up first);
+#     a later run without UNITS submits the rest (the log is the state)
 #   Needs RTE_DATA, RTE_ACCOUNT, RTE_CPU_PARTITIONS (cluster/cluster.env.example). scripts/launch_units.sh is a symlink here.
 # Enforces OPS_RULES.md:
 #   R1  units come from the GRID LOADER (midian.run), never a hand-written filter list (a hand list dropped a regime once)
@@ -41,8 +44,9 @@ echo "$G: $(wc -l < "$LOG.plan") units, $(wc -l < "$LOG") already submitted"
 sub=0
 while IFS=$'\t' read -r m only seed t; do
   key="$m|$only|$seed"; grep -qF "$key" "$LOG" && continue
+  [ -n "${UNITS:-}" ] && ! grep -qE "$UNITS" <<< "$key" && continue
   while :; do
-    jid=$(sbatch --parsable -p "$RTE_CPU_PARTITIONS" -A "$RTE_ACCOUNT" --nice="$NICE" -c 1 --mem="${MEM:-32G}" --time="$t" \
+    jid=$(sbatch --parsable -p "$RTE_CPU_PARTITIONS" -A "$RTE_ACCOUNT" --nice="$NICE" -c 1 --mem="${MEM:-32G}" --time="${TIME:-$t}" \
       --job-name="rte_${G}__${m}" -o "$RTE_DATA/logs/units/%x-%j.out" -e "$RTE_DATA/logs/units/%x-%j.err" \
       --export=ALL,RTE_PYTHON="$PY",RTE_WORKERS=1,RTE_CONSOLIDATE=0,RTE_FW_PARALLEL="${RTE_FW_PARALLEL:-1}" \
       cluster/slurm/run_grid.sbatch "$G" --methods "$m" --only "$only" --seeds "$seed" 2>&1)
