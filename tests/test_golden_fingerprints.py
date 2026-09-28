@@ -18,7 +18,7 @@ CHEAP = ["smoke", "bernoulli_cost_smoke", "churn_n1000", "churn_n1000_fw_dd", "v
          "routereval5k_norep_cal"]
 RTE_DATA_DEP = {"bernoulli_1e7_cal", "bernoulli_b_probe", "bernoulli_b_sweep", "bernoulli_scale", "bernoulli_scale_v5",
                 "linucb_fix_bernoulli_1e7", "pool_fill_bernoulli_1e7", "rivals5_bernoulli_1e7_cal",
-                "rivals_b_bernoulli_1e7", "scale_100k", "va_b_bernoulli_1e7"}
+                "lie_max_bernoulli_1e7_cal", "rivals_b_bernoulli_1e7", "scale_100k", "va_b_bernoulli_1e7"}
 
 
 @pytest.fixture(scope="module")

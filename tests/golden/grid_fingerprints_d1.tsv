@@ -18,3 +18,11 @@ lie_max_fw_n100k_tfidf	3	30	41723639720e4386	0
 lie_max_fw_n100k_em	3	30	b51c568db7cd0811	0
 lie_max_fw_n100k_dense_ic	3	30	d2655a291edbf030	0
 lie_max_fw_n100k_sota_ic	3	30	77b1a6a8f7b59f0b	0
+lie_max_bernoulli_1e7_cal	300	1300	908789cdbd838df5	1
+lie_max_replay_1e6_split_cal	270	1170	1d3dcfb11c66bfde	0
+lie_max_routereval5k_norep_cal	9	39	6e2d2088c9d0a2fc	0
+lie_max_llmrouterbench_norep_cal	15	65	7da0c17fb024d42b	0
+lie_max_arms_n100	30	130	6e6d21e87d6d4940	0
+lie_max_arms_n1000	30	130	fb61a2b1dd45f35a	0
+lie_max_arms_n10k	9	39	a39d335b54962be7	0
+lie_max_arms_n100k	9	39	cdc744d7d1b0eb72	0

@@ -1,0 +1,83 @@
+# Figures 1 and 2 under the strongest declared lie (lie_mode max: every cartel member claims perfect skill in every
+# family). Only the cartel cell and only the arms that read the declared claims can differ from the standard-lie rows
+# (cal_arms: cluster-head, DiSRouter cascade, warm-start bandit at n0 = 1 and 0.5; declared argmax at b = 3); every
+# probe- or outcome-based arm, MIDIAN included, would reproduce its standard-cartel row exactly, so it is not rerun.
+# Each grid mirrors the grid its Figure 1 / 2 bars come from and changes only beta / liar_select / lie_mode / methods.
+grids:
+  # [NUM] Figure 2's Bernoulli n = 10^7 cartel cell (bernoulli_1e7_cal) under the max lie; read by: none
+  lie_max_bernoulli_1e7_cal:
+    mirror_of: bernoulli_1e7_cal
+    lie_mode: [max]
+    methods: {set: cal_arms}
+    blocks:
+      - {n: [10000000], b: [1, 5], seeds: 1-100, beta: [0.5], liar_select: [low_skill_first]}
+      - n: [10000000]
+        b: [3]
+        seeds: 1-100
+        beta: [0.5]
+        liar_select: [low_skill_first]
+        methods: [{set: cal_arms}, declared_argmax]
+
+  # [NUM] Figure 2's RouterBench replay n = 10^6 cartel cell (replay_1e6_split_cal) under the max lie; read by: none
+  lie_max_replay_1e6_split_cal:
+    mirror_of: replay_1e6_split_cal
+    lie_mode: [max]
+    methods: {set: cal_arms}
+    blocks:
+      - {n: [1000000], b: [1, 5], seeds: 1-30, beta: [0.5], liar_select: [low_skill_first]}
+      - n: [1000000]
+        b: [3]
+        seeds: 1-30
+        beta: [0.5]
+        liar_select: [low_skill_first]
+        methods: [{set: cal_arms}, declared_argmax]
+
+  # [NUM] Figure 2's RouterEval 5k cartel cell (routereval5k_norep_cal) under the max lie; read by: none
+  lie_max_routereval5k_norep_cal:
+    mirror_of: routereval5k_norep_cal
+    beta: [0.5]
+    liar_select: [low_skill_first]
+    lie_mode: [max]
+    methods: {set: cal_arms}
+    blocks: [{b: [1, 5]}, {b: [3], methods: [{set: cal_arms}, declared_argmax]}]
+
+  # [NUM] Figure 2's LLMRouterBench cartel cell (llmrouterbench_norep_cal) under the max lie; read by: none
+  lie_max_llmrouterbench_norep_cal:
+    mirror_of: llmrouterbench_norep_cal
+    beta: [0.5]
+    liar_select: [low_skill_first]
+    lie_mode: [max]
+    methods: {set: cal_arms}
+    blocks: [{b: [1, 5]}, {b: [3], methods: [{set: cal_arms}, declared_argmax]}]
+
+  # [NUM] Figure 1's live n = 10^2 cartel cell (va_b_n100 cells) under the max lie; read by: none
+  lie_max_arms_n100:
+    mirror_of: va_b_n100
+    beta: [0.5]
+    lie_mode: [max]
+    methods: {set: cal_arms}
+    blocks: [{b: [1, 5]}, {b: [3], methods: [{set: cal_arms}, declared_argmax]}]
+
+  # [NUM] Figure 1's live n = 10^3 cartel cell (va_b_n1000 cells) under the max lie; read by: none
+  lie_max_arms_n1000:
+    mirror_of: va_b_n1000
+    beta: [0.5]
+    lie_mode: [max]
+    methods: {set: cal_arms}
+    blocks: [{b: [1, 5]}, {b: [3], methods: [{set: cal_arms}, declared_argmax]}]
+
+  # [NUM] Figure 1's live n = 10^4 cartel cell (va_b_n10k cells) under the max lie; read by: none
+  lie_max_arms_n10k:
+    mirror_of: va_b_n10k
+    beta: [0.5]
+    lie_mode: [max]
+    methods: {set: cal_arms}
+    blocks: [{b: [1, 5]}, {b: [3], methods: [{set: cal_arms}, declared_argmax]}]
+
+  # [NUM] Figure 1's live n = 10^5 cartel cell (va_b_n100k cells) under the max lie; read by: none
+  lie_max_arms_n100k:
+    mirror_of: va_b_n100k
+    beta: [0.5]
+    lie_mode: [max]
+    methods: {set: cal_arms}
+    blocks: [{b: [1, 5]}, {b: [3], methods: [{set: cal_arms}, declared_argmax]}]
