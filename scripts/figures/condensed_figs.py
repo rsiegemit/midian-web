@@ -297,9 +297,14 @@ def from_csv(out):
         shutil.copyfile(f"{DRAW}/{name}.csv", f"{out}/{name}.csv")
 
 
-def fig_A(C, out):
+def groups_A(C):
+    """A's x groups: (tick label, (family, group, n)) per live specialist n."""
     ns = sorted(n for (f, g, n, r) in C if f == "live" and g == "specialist" and r == "beta0")
-    g = list(zip(S.pow10_ticks(ns, "n"), [("live", "specialist", n) for n in ns]))
+    return list(zip(S.pow10_ticks(ns, "n"), [("live", "specialist", n) for n in ns]))
+
+
+def fig_A(C, out):
+    g = groups_A(C)
     publish(*budget_bars(C, g, "A_live_allb"), "A_live_allb", out)
     publish(*budget_bars(C, g, "A_live_stacked", stacked=True), "A_live_stacked", out)
 
@@ -308,8 +313,8 @@ def primary(f, g):
     return g == PRIMARY.get(f, g)
 
 
-def fig_B(C, out):
-    """Each family at its LARGEST population with both regimes, divided by that cell's oracle."""
+def groups_B(C):
+    """B's x groups: each family at its LARGEST population with both regimes."""
     groups = []
     for f in FAMILY:
         ns = [n for (ff, g, n, r) in C if ff == f and primary(f, g) and r == "cartel" and (ff, g, n, "beta0") in C]
@@ -318,6 +323,12 @@ def fig_B(C, out):
         n = max(ns)
         g = next(g for (ff, g, nn, r) in C if ff == f and nn == n and primary(f, g))
         groups.append((f"{S.BACKEND[f]}\n{S.pow10(n, 'n')}", (f, g, n)))
+    return groups
+
+
+def fig_B(C, out):
+    """Each family at its largest population with both regimes (groups_B), divided by that cell's oracle."""
+    groups = groups_B(C)
     publish(*budget_bars(C, groups, "B_families_allb", norm=True, skip=("best_framework",)), "B_families_allb", out)
     publish(
         *budget_bars(C, groups, "B_families_stacked", norm=True, stacked=True, skip=("best_framework",)),
@@ -435,6 +446,14 @@ def main(argv=None):
     out = fig_out(a.out)
     if a.from_csv:
         return from_csv(out)
+    C = build()
+    fig_A(C, out)
+    fig_B(C, out)  # C / D: efficiency_figs.py
+
+
+def build():
+    """Every A / B cell: b = 3 from the bar aggregates, b = 1 / 5, whiskers, the per-seed tables of the pooled arms
+    (C[key]["seeds"]) and the best-framework table."""
     from scripts.figures.lib.seed_tables import switched, tables
 
     d = load()
@@ -448,8 +467,7 @@ def main(argv=None):
         if key in C:
             C[key]["seeds"] = bb
     add_best_framework(C)
-    fig_A(C, out)
-    fig_B(C, out)  # C / D: efficiency_figs.py
+    return C
 
 
 if __name__ == "__main__":

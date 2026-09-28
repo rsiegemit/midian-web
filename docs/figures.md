@@ -22,6 +22,8 @@ in `results/aggregates/`.
 | App. | `E_shortlists_by_n` | `shortlist_condensed.py` | `results/aggregates/shortlist/live.csv` | the live framework shortlist grids at 10<sup>2</sup>-10<sup>5</sup> |
 | App. | `F_shortlists_1e5_appendix`, `G_shortlist_lift_1e5` | `shortlist_condensed.py` | as Fig. 3 | as Fig. 3 |
 | App. | `I_max_lie` | `lie_max_fig.py` | rows; `A_live_allb.csv`; `results/aggregates/shortlist/live.csv` (redrawn from `results/aggregates/figures/I_max_lie.csv` and `refs.csv`) | `lie_max_n{1000,10k,100k}`, `lie_max_fw_n{1000,10k,100k}` |
+| App. | `F_max_lie` | `lie_max_shortlists.py` | rows; `F_shortlists_1e5.csv`; `results/aggregates/shortlist/live.csv` (reference lines; redrawn from `results/aggregates/figures/F_max_lie.csv` and `refs.csv`) | `lie_max_fw_n100k{_va,_tfidf,_em,_dense_ic,_sota_ic,}` |
+| App. | `A_max_lie`, `B_max_lie` | `lie_max_ab.py` | as Figs. 1-2 (`condensed_figs.build`) + rows (redrawn from `results/aggregates/figures/{A,B}_max_lie.csv`) | as Figs. 1-2; `lie_max_arms_n{100,1000,10k,100k}`, `lie_max_{bernoulli_1e7_cal,replay_1e6_split_cal,routereval5k_norep_cal,llmrouterbench_norep_cal}` |
 
 `results/aggregates/bars/*.csv` are written from the rows by `bar_figs.py` and `results/aggregates/shortlist/*.csv` by
 `shortlist_figs.py`; `make_all.py` runs the whole chain, and `make_all.py --from-csv` redraws every figure from
@@ -122,6 +124,21 @@ Backend tick labels in B: `live`, `Bernoulli`, `RouterBench replay`, `RouterEval
 - `C_routing_work_vs_n`: arms MIDIAN, MIDIAN w/o defenses, `any flat scan` (one line replacing flat probe argmax / declared argmax / best bandit, which coincide at exactly n), learned band; legend entries carry the fitted growth in parentheses as now. y "messages + comparisons per query", x "population size n", both log.
 - `I_max_lie`: the Figure 1 arms without the oracle bar, all hatched (cartel), ±1 s.e.; the oracle as the dotted line; a
   short black tick on each bar for the same arm under the standard lie, with a "standard lie" legend entry.
+- `F_max_lie`: Figure 3's six shortlists at live $10^5$ under the max lie (every cartel member claims perfect skill in
+  every family; β = 0.5 low-skill-first cartel, ten frameworks × 3 seeds; `lie_max_fw_n100k_va`, `_tfidf`, `_em`,
+  `_dense_ic`, `_sota_ic` and `lie_max_fw_n100k` for declared top-k). Same order, palette, edge rule and full-seed rule
+  as Figure 3; one hatched bar per shortlist (mean over frameworks), black dots = best framework, a black tick = the
+  Figure 3 cartel bar (standard lie); Figure 3's oracle, random and `MIDIAN, no framework` lines (claim-free arms, which
+  the lie cannot move). The csv adds the strict mean (`method_stats.success_strict`) and the framework count k.
+- `A_max_lie`, `B_max_lie`: Figures 1-2 in the cartel cells under the max lie, every arm at b = 3 (hatched, ±1 s.e.;
+  black tick = the same arm's Figure 1-2 cartel bar; honest cells and the best framework not drawn). Each cell is the
+  standard pipeline's (`condensed_figs.build`) with ONLY the rows of the claim-reading arms (cluster-head router,
+  DisRouter cascade, warm-start bandit n0 = 5 and 0.5, declared argmax; `seed_tables.CLAIM_READERS`) replaced by their
+  rows from `lie_max_arms_n*` (live) or `lie_max_<erratum-30 grid>` (Bernoulli, replay, RouterEval, LLMRouterBench) on
+  the same seeds; every other arm (MIDIAN, probe-based pool members, random, oracle) reads no claim, so it keeps its
+  standard-cartel rows (the max-lie grids' oracle matches the standard one seed for seed). The pooled arms are re-cross-
+  fitted as in Figures 1-2. A cell whose max-lie grid lacks a claim reader on any seed at b = 3 is skipped (printed
+  MISSING); `--from-csv` skips a figure whose csv is not shipped.
 - If C and D are to share the body: one figure 5.5 × 2.0 in, two panels side by side labelled (a) and (b) in the bottom-left corner of each panel (8 pt, bold), one legend each inside the panel.
 
 ### 3b. Shortlist palette, order and emphasis; D break-even marker

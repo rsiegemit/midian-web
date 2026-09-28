@@ -4,3 +4,6 @@ D_energy_per_query,costliest,219.75412344826285,Magentic-One,
 I_max_lie,oracle,0.8620000000000001,,1000.0
 I_max_lie,oracle,0.8588888888888889,,10000.0
 I_max_lie,oracle,0.8622222222222221,,100000.0
+F_max_lie,oracle,0.8622222222222221,,100000.0
+F_max_lie,random_line,0.4422222222222222,,100000.0
+F_max_lie,midian_ref,0.8355555555555556,,100000.0

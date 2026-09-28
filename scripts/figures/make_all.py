@@ -12,9 +12,12 @@ Full run (needs $RTE_DATA):
   shortlist_condensed E, F, G, H    (reads shortlist/)
   efficiency_figs     C, D          (re-reads results/aggregates/cost_by_n.csv from the rows)
   lie_max_fig         I             (reads <out>/A_live_allb.csv)
---from-csv redraws A-I from results/aggregates alone ($RTE_DATA is pointed at a directory that does not exist):
-bars/ and shortlist/ are the inputs of A / B and E-H, cost_by_n.csv of C, figures/*.csv + *.draw.csv + refs.csv of
-A / B / D / I. Output: <out> = --out, else $RTE_FIG_OUT, else figures/paper.
+  lie_max_shortlists  F_max_lie     (reads <out>/F_shortlists_1e5.csv)
+  lie_max_ab          A_max_lie, B_max_lie  (condensed_figs.build + the lie_max_* rows)
+--from-csv redraws A-I and the max-lie panels from results/aggregates alone ($RTE_DATA is pointed at a directory that
+does not exist): bars/ and shortlist/ are the inputs of A / B and E-H, cost_by_n.csv of C, figures/*.csv + *.draw.csv +
+refs.csv of A / B / D / I and the max-lie panels (A / B max lie: skipped while their csv is not shipped).
+Output: <out> = --out, else $RTE_FIG_OUT, else figures/paper.
 """
 
 from __future__ import annotations
@@ -35,8 +38,10 @@ STEPS = [
     "shortlist_condensed",
     "efficiency_figs",
     "lie_max_fig",
+    "lie_max_shortlists",
+    "lie_max_ab",
 ]
-FROM_CSV = ["condensed_figs", "shortlist_condensed", "efficiency_figs", "lie_max_fig"]
+FROM_CSV = STEPS[3:]
 
 
 def commands(step, out, from_csv):
