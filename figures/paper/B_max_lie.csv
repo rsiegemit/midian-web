@@ -1,0 +1,71 @@
+group,tick,family,n,arm,key,max_lie,ci_lo,ci_hi,standard_lie,oracle,chosen,chosen_standard,grid
+live $n = 10^{5}$,"live
+$n = 10^{5}$",live,100000,MIDIAN,midian,0.9600515463917527,0.951601239015075,0.9685018537684306,0.9600515463917527,1.0,midian,midian,lie_max_arms_n100k
+live $n = 10^{5}$,"live
+$n = 10^{5}$",live,100000,MIDIAN w/o defenses,midian_wo_defenses,0.8182989690721651,0.7942248174068695,0.8423731207374607,0.8182989690721651,1.0,midian_wo_defenses,midian_wo_defenses,lie_max_arms_n100k
+live $n = 10^{5}$,"live
+$n = 10^{5}$",live,100000,flat probe argmax,flat_probe_argmax_online,0.8685567010309279,0.8332417793658642,0.9038716226959915,0.8685567010309279,1.0,flat_probe_argmax_online,flat_probe_argmax_online,lie_max_arms_n100k
+live $n = 10^{5}$,"live
+$n = 10^{5}$",live,100000,best learned/declared router,best_learned,0.859536082474227,0.8370675312188627,0.8820046337295913,0.859536082474227,1.0,knn_router_online x3,knn_router_online x3,lie_max_arms_n100k
+live $n = 10^{5}$,"live
+$n = 10^{5}$",live,100000,best bandit,best_bandit,0.8685567010309281,0.8506540670239052,0.886459335037951,0.9020618556701031,1.0,warm_start_bandit[n0=0.5] x3,warm_start_bandit x3,lie_max_arms_n100k
+live $n = 10^{5}$,"live
+$n = 10^{5}$",live,100000,declared argmax,declared_argmax,0.5695876288659794,0.5037776013669912,0.6353976563649675,0.6701030927835053,1.0,declared_argmax,declared_argmax,lie_max_arms_n100k
+live $n = 10^{5}$,"live
+$n = 10^{5}$",live,100000,random,random,0.5128865979381444,0.49430128208523727,0.5314719137910516,0.5128865979381444,1.0,random,random,lie_max_arms_n100k
+Bernoulli $n = 10^{7}$,"Bernoulli
+$n = 10^{7}$",bernoulli,10000000,MIDIAN,midian,0.9386404462513004,0.9366565529346009,0.9406243395680004,0.9386404462513004,1.0,midian,midian,lie_max_bernoulli_1e7_cal
+Bernoulli $n = 10^{7}$,"Bernoulli
+$n = 10^{7}$",bernoulli,10000000,MIDIAN w/o defenses,midian_wo_defenses,0.8462702089439351,0.8428829095163688,0.8496575083715021,0.8462702089439351,1.0,midian_wo_defenses,midian_wo_defenses,lie_max_bernoulli_1e7_cal
+Bernoulli $n = 10^{7}$,"Bernoulli
+$n = 10^{7}$",bernoulli,10000000,flat probe argmax,flat_probe_argmax_online,0.9088470265670805,0.906847244020069,0.9108468091140909,0.9088470265670805,1.0,flat_probe_argmax_online,flat_probe_argmax_online,lie_max_bernoulli_1e7_cal
+Bernoulli $n = 10^{7}$,"Bernoulli
+$n = 10^{7}$",bernoulli,10000000,best learned/declared router,best_learned,0.7832443036777919,0.7781104345718839,0.7883781727836998,0.7832443036777919,1.0,flat_nsw_router x100,flat_nsw_router x100,lie_max_bernoulli_1e7_cal
+Bernoulli $n = 10^{7}$,"Bernoulli
+$n = 10^{7}$",bernoulli,10000000,best bandit,best_bandit,0.9104779237969186,0.9086998381319391,0.9122560094618981,0.9254159969745681,1.0,warm_start_bandit[n0=0.5] x100,warm_start_bandit x100,lie_max_bernoulli_1e7_cal
+Bernoulli $n = 10^{7}$,"Bernoulli
+$n = 10^{7}$",bernoulli,10000000,declared argmax,declared_argmax,0.3825635813557722,0.36765938729512465,0.39746777541641976,0.4980027417982416,1.0,declared_argmax,declared_argmax,lie_max_bernoulli_1e7_cal
+Bernoulli $n = 10^{7}$,"Bernoulli
+$n = 10^{7}$",bernoulli,10000000,random,random,0.4936418644228045,0.49172514413322355,0.4955585847123854,0.4936418644228045,1.0,random,random,lie_max_bernoulli_1e7_cal
+RouterBench replay $n = 10^{6}$,"RouterBench replay
+$n = 10^{6}$",replay,1000000,MIDIAN,midian,0.9622427074125521,0.9591095565619253,0.9653758582631791,0.9622427074125521,1.0,midian,midian,lie_max_replay_1e6_split_cal
+RouterBench replay $n = 10^{6}$,"RouterBench replay
+$n = 10^{6}$",replay,1000000,MIDIAN w/o defenses,midian_wo_defenses,0.719703666287831,0.7073185160457026,0.7320888165299594,0.719703666287831,1.0,midian_wo_defenses,midian_wo_defenses,lie_max_replay_1e6_split_cal
+RouterBench replay $n = 10^{6}$,"RouterBench replay
+$n = 10^{6}$",replay,1000000,flat probe argmax,flat_probe_argmax_online,0.8976301721597847,0.8949681582725506,0.9002921860470188,0.8976301721597847,1.0,flat_probe_argmax_online,flat_probe_argmax_online,lie_max_replay_1e6_split_cal
+RouterBench replay $n = 10^{6}$,"RouterBench replay
+$n = 10^{6}$",replay,1000000,best learned/declared router,best_learned,0.9028917792650587,0.8993426186819287,0.9064409398481889,0.9028917792650587,1.0,flat_nsw_router x30,flat_nsw_router x30,lie_max_replay_1e6_split_cal
+RouterBench replay $n = 10^{6}$,"RouterBench replay
+$n = 10^{6}$",replay,1000000,best bandit,best_bandit,0.9391898528153108,0.9368544320158187,0.9415252736148028,0.9391898528153108,1.0,linucb_honest[bonus=own] x30,linucb_honest[bonus=own] x30,lie_max_replay_1e6_split_cal
+RouterBench replay $n = 10^{6}$,"RouterBench replay
+$n = 10^{6}$",replay,1000000,declared argmax,declared_argmax,0.24065889351910322,0.2221039369118622,0.25921385012634424,0.30287213593186574,1.0,declared_argmax,declared_argmax,lie_max_replay_1e6_split_cal
+RouterBench replay $n = 10^{6}$,"RouterBench replay
+$n = 10^{6}$",replay,1000000,random,random,0.2432546196910384,0.24159351276401878,0.24491572661805802,0.2432546196910384,1.0,random,random,lie_max_replay_1e6_split_cal
+"RouterEval $n = 5{,}000$","RouterEval
+$n = 5{,}000$",routereval,5000,MIDIAN,midian,0.7971014492753623,0.7833842793579704,0.8108186191927542,0.7971014492753623,1.0,midian,midian,lie_max_routereval5k_norep_cal
+"RouterEval $n = 5{,}000$","RouterEval
+$n = 5{,}000$",routereval,5000,MIDIAN w/o defenses,midian_wo_defenses,0.6642512077294686,0.6472140869810797,0.6812883284778573,0.6642512077294686,1.0,midian_wo_defenses,midian_wo_defenses,lie_max_routereval5k_norep_cal
+"RouterEval $n = 5{,}000$","RouterEval
+$n = 5{,}000$",routereval,5000,flat probe argmax,flat_probe_argmax_online,0.6896135265700483,0.6695129022015781,0.7097141509385185,0.6896135265700483,1.0,flat_probe_argmax_online,flat_probe_argmax_online,lie_max_routereval5k_norep_cal
+"RouterEval $n = 5{,}000$","RouterEval
+$n = 5{,}000$",routereval,5000,best learned/declared router,best_learned,0.7427536231884057,0.7364780767841707,0.7490291695926408,0.7729468599033816,1.0,flat_nsw_router x2; cluster_head_router x1,flat_nsw_router x3,lie_max_routereval5k_norep_cal
+"RouterEval $n = 5{,}000$","RouterEval
+$n = 5{,}000$",routereval,5000,best bandit,best_bandit,0.894927536231884,0.8778050158469108,0.9120500566168573,0.894927536231884,1.0,linucb_honest[bonus=own] x3,linucb_honest[bonus=own] x3,lie_max_routereval5k_norep_cal
+"RouterEval $n = 5{,}000$","RouterEval
+$n = 5{,}000$",routereval,5000,declared argmax,declared_argmax,0.4855072463768115,0.39784904680374844,0.5731654459498746,0.5567632850241546,1.0,declared_argmax,declared_argmax,lie_max_routereval5k_norep_cal
+"RouterEval $n = 5{,}000$","RouterEval
+$n = 5{,}000$",routereval,5000,random,random,0.572463768115942,0.5504247734409485,0.5945027627909356,0.572463768115942,1.0,random,random,lie_max_routereval5k_norep_cal
+LLMRouterBench $n = 20$,"LLMRouterBench
+$n = 20$",llmrouterbench,20,MIDIAN,midian,0.8346666666666667,0.8243962488815187,0.8449370844518146,0.8346666666666667,1.0,midian,midian,lie_max_llmrouterbench_norep_cal
+LLMRouterBench $n = 20$,"LLMRouterBench
+$n = 20$",llmrouterbench,20,MIDIAN w/o defenses,midian_wo_defenses,0.8106666666666666,0.7925804533783326,0.8287528799550007,0.8106666666666666,1.0,midian_wo_defenses,midian_wo_defenses,lie_max_llmrouterbench_norep_cal
+LLMRouterBench $n = 20$,"LLMRouterBench
+$n = 20$",llmrouterbench,20,flat probe argmax,flat_probe_argmax_online,0.8799999999999999,0.8713361828046141,0.8886638171953857,0.8799999999999999,1.0,flat_probe_argmax_online,flat_probe_argmax_online,lie_max_llmrouterbench_norep_cal
+LLMRouterBench $n = 20$,"LLMRouterBench
+$n = 20$",llmrouterbench,20,best learned/declared router,best_learned,0.9262222222222222,0.9089174023698384,0.943527042074606,0.9262222222222222,1.0,mlp_router x5,mlp_router x5,lie_max_llmrouterbench_norep_cal
+LLMRouterBench $n = 20$,"LLMRouterBench
+$n = 20$",llmrouterbench,20,best bandit,best_bandit,0.8693333333333332,0.8560296626248037,0.8826370040418627,0.8693333333333332,1.0,linucb_honest[bonus=own] x5,linucb_honest[bonus=own] x5,lie_max_llmrouterbench_norep_cal
+LLMRouterBench $n = 20$,"LLMRouterBench
+$n = 20$",llmrouterbench,20,declared argmax,declared_argmax,0.5502222222222223,0.4658784225496329,0.6345660218948116,0.6142222222222222,1.0,declared_argmax,declared_argmax,lie_max_llmrouterbench_norep_cal
+LLMRouterBench $n = 20$,"LLMRouterBench
+$n = 20$",llmrouterbench,20,random,random,0.6897777777777779,0.6651762622167147,0.714379293338841,0.6897777777777779,1.0,random,random,lie_max_llmrouterbench_norep_cal
