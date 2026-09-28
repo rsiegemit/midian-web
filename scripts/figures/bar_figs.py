@@ -26,7 +26,7 @@ import matplotlib.pyplot as plt  # noqa: E402
 from scripts.figures.lib import AGG, ROOT, legend_rank  # noqa: E402
 from scripts.figures.lib import figspec as S  # noqa: E402
 from scripts.figures.lib.exclusions import excluded  # noqa: E402
-from scripts.figures.lib.grids import LIVE_GRIDS, MATRICES  # noqa: E402
+from scripts.figures.lib.grids import LIVE_GRIDS, MATRICES, with_s4_10  # noqa: E402
 from scripts.figures.lib.regimes import MATRIX_REGIME, REGIMES  # noqa: E402
 from scripts.figures.lib.rows import RESULTS as R  # noqa: E402
 from scripts.figures.lib.stats import ci as _ci  # noqa: E402
@@ -180,7 +180,7 @@ def family_live(index, recs):
         for dist in ("specialist", "heavy_tail", "bimodal"):
             series, oracle, ns = {}, {}, []
             for n, grids in LIVE_GRIDS.items():
-                df = pd.concat([rows(g) for g in grids], ignore_index=True)
+                df = pd.concat([rows(g) for g in with_s4_10(grids)], ignore_index=True)
                 if df.empty:
                     continue
                 if "declared_source" in df:

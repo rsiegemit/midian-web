@@ -129,7 +129,7 @@ def tables():
     spec = [
         (
             ("live", "specialist", n),
-            grids.LIVE_GRIDS[n] + grids.b_grids(t) + [f"tuned_wsb_{t}", f"pool_seeds_{t}"],
+            grids.with_s4_10(grids.LIVE_GRIDS[n] + grids.b_grids(t) + [f"tuned_wsb_{t}", f"pool_seeds_{t}"]),
             "live",
         )
         for n, t in grids.SIZE.items()

@@ -10,6 +10,7 @@ uses.
     BUDGET_GRIDS      the b = 1 / 5 cells of A / B: (family, group, tag of va_b_* / rivals_b_*)
     MATRICES          scale sweeps read from their matrix_success.csv (bar_figs; A / B b = 1)
     VA_GRIDS          exact MIDIAN build ledgers by (n, b) (efficiency D)
+    S4_10, with_s4_10 seeds 4-10 of Figure 1's live 10^4 / 10^5 arms, pooled with their sources once all have landed
     SHORTLIST_SOURCES, NINE, DOC_REF, DOC_REF_CARTEL, VARIANTS
                       the framework-shortlist tables (doc_tables, fw_variant_numbers)
 
@@ -101,6 +102,28 @@ VA_GRIDS = ["va_b_bernoulli_1e7", "va_b_n1000", "va_b_n100k", "fw_live_n1000", "
 def b_grids(tag):
     """The grids that carry b = 1 / 5 (and pool fills) for one size tag."""
     return [f"va_b_{tag}", f"rivals_b_{tag}", f"pool_fill_{tag}", f"linucb_fix_{tag}", f"trueskill_fix_{tag}"]
+
+
+# Seeds 4-10 of Figure 1's non-framework arms at live 10^4 / 10^5: <source>_s4_10 (configs/grids/seeds_4_10.yaml).
+# They join their sources only once EVERY one is complete (seed_tables.complete), so no bar ever mixes 3 and 10 seeds
+# and, until then, every figure is unchanged.
+S4_10 = [
+    f"{g}_s4_10"
+    for g in (
+        "learned_n10k", "live_n10k_v2", "live_n10k_cartel_random", "va_b_n10k", "rivals_b_n10k", "pool_fill_n10k",
+        "tuned_wsb_n10k", "linucb_fix_n10k", "trueskill_fix_n10k",
+        "live_n100k", "va_b_n100k", "rivals_b_n100k", "pool_fill_n100k", "tuned_wsb_n100k", "linucb_fix_n100k",
+    )
+]
+
+
+def with_s4_10(gs):
+    """`gs` plus the seeds 4-10 mirror of each, once all of S4_10 has landed."""
+    from scripts.figures.lib.seed_tables import complete
+
+    if not all(complete(g) for g in S4_10):
+        return list(gs)
+    return list(gs) + [f"{g}_s4_10" for g in gs if f"{g}_s4_10" in S4_10]
 
 
 def shortlist_grid(family, grid, h30):

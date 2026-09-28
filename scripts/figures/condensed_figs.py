@@ -41,7 +41,7 @@ import matplotlib.pyplot as plt  # noqa: E402
 from scripts.figures.lib import AGG, fig_out  # noqa: E402
 from scripts.figures.lib import figspec as S  # noqa: E402
 from scripts.figures.lib.exclusions import excluded  # noqa: E402
-from scripts.figures.lib.grids import BUDGET_GRIDS, MATRICES  # noqa: E402
+from scripts.figures.lib.grids import BUDGET_GRIDS, MATRICES, with_s4_10  # noqa: E402
 from scripts.figures.lib.regimes import AB as REG  # noqa: E402
 from scripts.figures.lib.regimes import MATRIX_REGIME
 from scripts.figures.lib.stats import crossfit, se  # noqa: E402
@@ -367,7 +367,7 @@ def add_budgets(C):
         if fam in SW:
             continue  # every b comes from the erratum-30 per-seed tables (from_tables)
         for g in (f"va_b_{tag}", f"rivals_b_{tag}"):
-            df = rows(g)
+            df = pd.concat([rows(x) for x in with_s4_10([g])], ignore_index=True)
             if df.empty:
                 continue
             df = df.assign(label=[label(m, p) for m, p in zip(df.method, df.params)])
