@@ -1,0 +1,4 @@
+# 14B-only replica: 1 GPU. The seed-extension probes queue on the 14B (5.5k waiting on one packed H200, 2026-09-29),
+# so this is the throughput replica for it. Submit with --gres=gpu:1 -c 8 and RTE_AS_REPLICA=1.
+place:
+  Qwen/Qwen2.5-14B-Instruct: {gpu: 0, gpu_share: 0.90}
