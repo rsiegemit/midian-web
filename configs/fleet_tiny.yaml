@@ -1,0 +1,6 @@
+# gemma-2-2b + Qwen2.5-0.5B replica: 1 GPU. After the 9B / 7B / 3B / 1.5B replicas, the seed-extension agents queue on
+# gemma-2-2b (2026-09-30: 6.5k waiting on one packed H200). Submit with --gres=gpu:1 -c 8, RTE_AS_REPLICA=1 and
+# RTE_MAX_NUM_SEQS=1024.
+place:
+  google/gemma-2-2b-it:       {gpu: 0, gpu_share: 0.55}
+  Qwen/Qwen2.5-0.5B-Instruct: {gpu: 0, gpu_share: 0.30}
