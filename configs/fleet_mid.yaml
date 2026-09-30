@@ -1,0 +1,7 @@
+# 9B / 7B / 3B replica: 1 GPU. The seed-extension agents queue on these three (2026-09-30: 9b 11.6k, 7B 5.6k, 3B 3.3k
+# waiting on one packed H200), so this replica serves them alone at larger shares. Submit with --gres=gpu:1 -c 8 and
+# RTE_AS_REPLICA=1.
+place:
+  google/gemma-2-9b-it:     {gpu: 0, gpu_share: 0.40}
+  Qwen/Qwen2.5-7B-Instruct: {gpu: 0, gpu_share: 0.35}
+  Qwen/Qwen2.5-3B-Instruct: {gpu: 0, gpu_share: 0.15}
