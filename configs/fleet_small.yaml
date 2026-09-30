@@ -1,0 +1,5 @@
+# 1.5B-only replica: 1 GPU. The seed-extension agents queue on Qwen2.5-1.5B once the 9B / 7B / 3B replicas keep up
+# (2026-09-30: 11.7k waiting on the two packed H200s), so this replica serves it alone. Submit with --gres=gpu:1 -c 8,
+# RTE_AS_REPLICA=1 and RTE_MAX_NUM_SEQS=512.
+place:
+  Qwen/Qwen2.5-1.5B-Instruct: {gpu: 0, gpu_share: 0.85}
