@@ -174,28 +174,40 @@ def for_model(model: str, messages: Sequence[dict]) -> list[dict]:
     return [{"role": "user", "content": head["content"]}] + rest
 
 
+def pick_url(urls: list[str]) -> str:
+    """Power of two choices on this process's latency estimates: the faster of two random endpoints. Always taking the
+    fastest one made every process herd onto the same replica (2026-09-30: 11k requests queued on one server while
+    its peers idled); an unseen endpoint rates 0 and is tried first."""
+    return min(random.sample(urls, min(2, len(urls))), key=lambda u: _lat.get(u, 0.0))
+
+
+def _observe(url: str, seconds: float) -> None:
+    """EWMA of request latency per endpoint; failures and timeouts included, so a stuck server stops looking fast."""
+    _lat[url] = 0.7 * _lat.get(url, seconds) + 0.3 * seconds
+
+
 def _generate(model: str, messages: Sequence[dict], max_tokens: int) -> str:
     last: Exception | None = None
     for attempt in range(MAX_RETRIES):
+        u, t0 = None, time.time()
         try:
             if model in _clients and time.time() - _clients[model][1] > ENDPOINT_TTL:
                 _clients.pop(model)                               # re-pick: replicas may have joined since
             if model not in _clients:
-                urls = model_urls(model)
                 from openai import OpenAI
-                # latency-aware: usually the endpoint with the lowest recent latency, sometimes a random one (explore)
-                url = random.choice(urls) if random.random() < 0.2 else min(urls, key=lambda u: _lat.get(u, 0.0))
+                url = pick_url(model_urls(model))
                 _clients[model] = (OpenAI(base_url=url, api_key="EMPTY", timeout=600.0, max_retries=0), time.time())
-            t0 = time.time()
+            u, t0 = str(_clients[model][0].base_url), time.time()
             r = _clients[model][0].chat.completions.create(
                 model=model, messages=for_model(model, messages), max_tokens=int(max_tokens),
                 temperature=0.0, seed=0)
-            u = str(_clients[model][0].base_url)
-            _lat[u] = 0.7 * _lat.get(u, time.time() - t0) + 0.3 * (time.time() - t0)
+            _observe(u, time.time() - t0)
             _bump("generations")
             return r.choices[0].message.content or ""
         except Exception as e:                                    # noqa: BLE001
             last = e
+            if u:
+                _observe(u, time.time() - t0)                     # a timeout or error counts at its elapsed time
             _bump("retries")
             _clients.pop(model, None)                             # re-read endpoints on reconnect
             time.sleep(min(30.0, 1.5 * 2 ** attempt))
