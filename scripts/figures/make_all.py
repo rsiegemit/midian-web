@@ -18,8 +18,8 @@ Full run (needs $RTE_DATA):
 does not exist): bars/ and shortlist/ are the inputs of A / B and E-H, cost_by_n.csv of C, figures/*.csv + *.draw.csv +
 refs.csv of A / B / D / I and the max-lie panels (A / B max lie: skipped while their csv is not shipped).
 Output: <out> = --out, else $RTE_FIG_OUT, else figures/paper.
-RTE_SEEDS_4_10=1 python scripts/figures/make_all.py: A / B with seeds 1-10 at live 10^4 / 10^5, written as <name>_new
-(bars_new/, A_*_new, B_*_new) beside the 3-seed originals; fails until every seeds 4-10 grid has landed.
+RTE_SEEDS_4_10=1 python scripts/figures/make_all.py: A / B and A / B_max_lie with seeds 1-10 at live 10^4 / 10^5, written as
+<name>_new (bars_new/, A_*_new, B_*_new) beside the 3-seed originals; fails until every seeds 4-10 grid has landed.
 """
 
 from __future__ import annotations
@@ -44,7 +44,7 @@ STEPS = [
     "lie_max_ab",
 ]
 FROM_CSV = STEPS[3:]
-SEEDS_4_10_STEPS = ["bar_figs", "condensed_figs"]  # RTE_SEEDS_4_10=1: A / B as *_new (lib.NEW), nothing else
+SEEDS_4_10_STEPS = ["bar_figs", "condensed_figs", "lie_max_ab"]  # RTE_SEEDS_4_10=1: A / B and their max-lie panels as *_new
 
 
 def commands(step, out, from_csv):

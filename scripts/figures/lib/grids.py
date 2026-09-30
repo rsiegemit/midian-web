@@ -113,6 +113,7 @@ S4_10 = [
         "learned_n10k", "live_n10k_v2", "live_n10k_cartel_random", "va_b_n10k", "rivals_b_n10k", "pool_fill_n10k",
         "tuned_wsb_n10k", "linucb_fix_n10k", "trueskill_fix_n10k",
         "live_n100k", "va_b_n100k", "rivals_b_n100k", "pool_fill_n100k", "tuned_wsb_n100k", "linucb_fix_n100k",
+        "lie_max_arms_n10k", "lie_max_arms_n100k",
     )
 ]
 

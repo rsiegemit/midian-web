@@ -26,7 +26,7 @@ import sys
 import pandas as pd
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))))
-from scripts.figures.lib import AGG, fig_out  # noqa: E402
+from scripts.figures.lib import AGG, NEW, fig_out  # noqa: E402
 from scripts.figures.lib import figspec as S  # noqa: E402
 
 DRAW = f"{AGG}/figures"
@@ -37,12 +37,12 @@ FIGS = {"A_max_lie": False, "B_max_lie": True}  # name -> normalised by the hone
 def max_tables(key):
     """{(regime, b): seed x arm} of the max-lie grid of one A / B cell (family, group, n), read as seed_tables reads
     the standard grids (live / bernoulli: specialist; replay: shapes pooled per seed)."""
-    from scripts.figures.lib.grids import ERRATUM30, SIZE
+    from scripts.figures.lib.grids import ERRATUM30, SIZE, with_s4_10
     from scripts.figures.lib.seed_tables import _table, rows
 
     fam, _, n = key
     grid = f"lie_max_arms_{SIZE[n]}" if fam == "live" else f"lie_max_{ERRATUM30[fam]}"
-    df = rows(grid, n)
+    df = pd.concat([rows(g, n) for g in with_s4_10([grid])], ignore_index=True)  # + seeds 4-10 under RTE_SEEDS_4_10
     if fam in ("live", "bernoulli"):
         df = df[df.dist == "specialist"]
     return grid, _table(df, pooled_shapes=fam == "replay")
@@ -145,7 +145,7 @@ def render(rec, name, out):
         handlelength=1.0,
         extra=([Line2D([], [], color="black", lw=1.2)], ["standard lie"]),
     )
-    S.save(fig, name, out)
+    S.save(fig, name + NEW, out)
 
 
 def main(argv=None):
@@ -161,15 +161,15 @@ def main(argv=None):
         os.makedirs(DRAW, exist_ok=True)
     for name in FIGS:
         if a.from_csv:
-            if not os.path.exists(f"{DRAW}/{name}.csv"):
-                print(f"[{name}] no {DRAW}/{name}.csv shipped: skipped")
+            if not os.path.exists(f"{DRAW}/{name}{NEW}.csv"):
+                print(f"[{name}{NEW}] no {DRAW}/{name}{NEW}.csv shipped: skipped")
                 continue
-            rec = pd.read_csv(f"{DRAW}/{name}.csv")
-            shutil.copyfile(f"{DRAW}/{name}.csv", f"{out}/{name}.csv")
+            rec = pd.read_csv(f"{DRAW}/{name}{NEW}.csv")
+            shutil.copyfile(f"{DRAW}/{name}{NEW}.csv", f"{out}/{name}{NEW}.csv")
         else:
             rec = compute(C, name)
-            rec.to_csv(f"{out}/{name}.csv", index=False)
-            rec.to_csv(f"{DRAW}/{name}.csv", index=False)
+            rec.to_csv(f"{out}/{name}{NEW}.csv", index=False)
+            rec.to_csv(f"{DRAW}/{name}{NEW}.csv", index=False)
         render(rec, name, out)
 
 
