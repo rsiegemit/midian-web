@@ -625,6 +625,7 @@ All rows: `K = 16` unless noted, `collude = true`, `lie_mode = inflate`, `demand
 | `live_n100k_beta01` | llm | 10^5 | spec | .1 | random, lsf | self | 3 | 300 | 1–3 |
 | `va_b_n100` / `va_b_n1000` | llm | 100 / 1000 | spec | 0, .5 | lsf | self | **1, 5** | 1000 | 1–10 |
 | `va_b_n10k` / `va_b_n100k` | llm | 10^4 / 10^5 | spec | 0, .5 | lsf | self | **1, 5** | 300 | 1–3 |
+| `<source>_s4_10` (15 grids, `grids.S4_10`) and `lie_max_arms_n{10k,100k}_s4_10` | as their source, restricted to the cells and arms Figure 1 draws (`configs/grids/seeds_4_10.yaml`) | 10^4 / 10^5 | spec | 0, .5 | random (β 0, b 3), lsf | self | as source | 300 | **4–10** (read only by the `*_new` figures) |
 | `rivals_b_n100/n1000/n10k/n100k` | as their `va_b_*` twin | | | | | | 1, 5 | | |
 | `routereval_mmlu` | routereval, `mmlu` | 10, 100, 1000 | s2w, all_strong, all_weak | 0, .25, .5 | random, lsf | prog | 3 | 1000 | 1–5 |
 | `routereval_mmlu5k` | routereval, `leaderboard_mmlu` | 5000 | all | 0, .25, .5 | random, lsf | prog | 3 | 300 | 1–3 |

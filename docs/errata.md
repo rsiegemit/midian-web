@@ -74,5 +74,7 @@ The kNN rows of `rivals_b_n10k` (cartel), `rivals_b_n100k` and `routereval5k_nor
 batched MiniLM embeddings (`RTE_EMBED_BATCH=1`), which differ from the per-prompt path by at most 2.4e-7 and gave
 identical neighbour sets on every query checked. Rerun those rows with `RTE_EMBED_BATCH=1` to reproduce them bit for bit;
 the same reruns could also run MiniLM on a GPU in fp32 (`RTE_MINILM_CUDA=1`), which is the other setting to match.
+The seeds 4-10 kNN rows (`*_s4_10`, read only by the `*_new` figures) mix both paths: `rivals_b_n100k_s4_10` has four
+cells batched (β 0 seed 9; β 0.5 seeds 6, 7, 9) and the rest per-prompt; every other `*_s4_10` kNN row is per-prompt.
 `RTE_TEXT_PROCS`, `RTE_OUTCOME_CACHE`, `RTE_RG_CACHE` and `RTE_FW_PARALLEL` produce identical rows (same texts, outcomes,
 tasks and picks; the framework prefetch is tested for identical picks).

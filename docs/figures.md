@@ -23,6 +23,7 @@ in `results/aggregates/`.
 | App. | `F_shortlists_1e5_appendix`, `G_shortlist_lift_1e5` | `shortlist_condensed.py` | as Fig. 3 | as Fig. 3 |
 | App. | `I_max_lie` | `lie_max_fig.py` | rows; `A_live_allb.csv`; `results/aggregates/shortlist/live.csv` (redrawn from `results/aggregates/figures/I_max_lie.csv` and `refs.csv`) | `lie_max_n{1000,10k,100k}`, `lie_max_fw_n{1000,10k,100k}` |
 | App. | `F_max_lie` | `lie_max_shortlists.py` | rows; `F_shortlists_1e5.csv`; `results/aggregates/shortlist/live.csv` (reference lines; redrawn from `results/aggregates/figures/F_max_lie.csv` and `refs.csv`) | `lie_max_fw_n100k{_va,_tfidf,_em,_dense_ic,_sota_ic,}` |
+| (new) | `A_live_*_new`, `B_families_*_new`, `A_max_lie_new`, `B_max_lie_new` | `RTE_SEEDS_4_10=1 make_all.py` (`bar_figs`, `condensed_figs`, `lie_max_ab`) | as the originals, with seeds 4-10 pooled at live 10<sup>4</sup> / 10<sup>5</sup>; never replaces the 3-seed originals; refuses to run until every `*_s4_10` grid is complete | the originals' grids plus `grids.S4_10` (`configs/grids/seeds_4_10.yaml`) |
 | App. | `A_max_lie`, `B_max_lie` | `lie_max_ab.py` | as Figs. 1-2 (`condensed_figs.build`) + rows (redrawn from `results/aggregates/figures/{A,B}_max_lie.csv`) | as Figs. 1-2; `lie_max_arms_n{100,1000,10k,100k}`, `lie_max_{bernoulli_1e7_cal,replay_1e6_split_cal,routereval5k_norep_cal,llmrouterbench_norep_cal}` |
 
 `results/aggregates/bars/*.csv` are written from the rows by `bar_figs.py` and `results/aggregates/shortlist/*.csv` by
