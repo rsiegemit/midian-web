@@ -31,7 +31,7 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))))
-from scripts.figures.lib import AGG, fig_out  # noqa: E402
+from scripts.figures.lib import AGG, NEW, fig_out  # noqa: E402
 from scripts.figures.lib import figspec as S  # noqa: E402
 
 REG = ("beta0", "cartel")
@@ -45,7 +45,7 @@ INCOMPLETE = [False]  # set while drawing a figure: a slot left empty or a rerun
 
 
 def load(family="live"):
-    d = pd.read_csv(f"{AGG}/shortlist/{family}.csv")
+    d = pd.read_csv(f"{AGG}/shortlist{NEW}/{family}.csv")
     keep = (
         (d.dist == "specialist") if family == "live" else ((d.dist == "strong_to_weak") | (d.n == 5000))
     )  # RouterEval: the mixed pool; 5,000 = the leaderboard
@@ -125,8 +125,8 @@ def finish(fig, ax, name, data, out, keys=(), labels=None, ylabel=S.AXIS["succes
     if INCOMPLETE[0]:
         print(f"[{name}] INCOMPLETE: an empty slot or a framework rerun outstanding (see the csv)")
     INCOMPLETE[0] = False
-    S.save(fig, name, out)
-    data.to_csv(f"{out}/{name}.csv", index=False)
+    S.save(fig, name + NEW, out)
+    data.to_csv(f"{out}/{name}{NEW}.csv", index=False)
 
 
 def by_n(s, ref, name, srcs, names, kind, var, ncol, out, ylim=(0.2, 0.95), lines_first=False):

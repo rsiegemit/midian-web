@@ -18,8 +18,10 @@ Full run (needs $RTE_DATA):
 does not exist): bars/ and shortlist/ are the inputs of A / B and E-H, cost_by_n.csv of C, figures/*.csv + *.draw.csv +
 refs.csv of A / B / D / I and the max-lie panels (A / B max lie: skipped while their csv is not shipped).
 Output: <out> = --out, else $RTE_FIG_OUT, else figures/paper.
-RTE_SEEDS_4_10=1 python scripts/figures/make_all.py: A / B and A / B_max_lie with seeds 1-10 at live 10^4 / 10^5, written as
-<name>_new (bars_new/, A_*_new, B_*_new) beside the 3-seed originals; fails until every seeds 4-10 grid has landed.
+RTE_SEEDS_4_10=1 python scripts/figures/make_all.py: the 10-seed build. Every figure whose non-framework arms gain seeds
+from the seed mirrors (grids.TEN: configs/grids/seeds_4_10.yaml + seeds_to_10.yaml) is written as <name>_new (bars_new/,
+shortlist_new/, A_*_new, B_*_new, D_*_new, E-H *_new, I_max_lie_new, F_max_lie_new, A / B_max_lie_new) beside the
+originals, which are never replaced; C (bernoulli only) is not rebuilt. Fails until every seed-mirror grid has landed.
 """
 
 from __future__ import annotations
@@ -44,7 +46,7 @@ STEPS = [
     "lie_max_ab",
 ]
 FROM_CSV = STEPS[3:]
-SEEDS_4_10_STEPS = ["bar_figs", "condensed_figs", "lie_max_ab"]  # RTE_SEEDS_4_10=1: A / B and their max-lie panels as *_new
+SEEDS_4_10_STEPS = STEPS[1:]  # RTE_SEEDS_4_10=1 (10-seed build): every figure step, each writing *_new
 
 
 def commands(step, out, from_csv):
@@ -72,7 +74,7 @@ def main(argv=None):
     os.makedirs(out, exist_ok=True)
     steps = FROM_CSV if a.from_csv else [s for s in STEPS if s != "scale_matrix" or a.scale_matrix]
     steps = [s for s in steps if not a.only or s in a.only]
-    if os.environ.get("RTE_SEEDS_4_10") == "1":  # the 10-seed A / B (*_new): only these steps read S4_10
+    if os.environ.get("RTE_SEEDS_4_10") == "1":  # the 10-seed build (*_new): never the scale matrices
         steps = [s for s in steps if s in SEEDS_4_10_STEPS]
     env = {**os.environ, "PYTHONPATH": ROOT, "MPLBACKEND": "Agg"}
     if a.from_csv:

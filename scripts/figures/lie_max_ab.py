@@ -42,7 +42,7 @@ def max_tables(key):
 
     fam, _, n = key
     grid = f"lie_max_arms_{SIZE[n]}" if fam == "live" else f"lie_max_{ERRATUM30[fam]}"
-    df = pd.concat([rows(g, n) for g in with_s4_10([grid])], ignore_index=True)  # + seeds 4-10 under RTE_SEEDS_4_10
+    df = pd.concat([rows(g, n) for g in with_s4_10([grid])], ignore_index=True)  # + its seed mirror (10-seed build)
     if fam in ("live", "bernoulli"):
         df = df[df.dist == "specialist"]
     return grid, _table(df, pooled_shapes=fam == "replay")

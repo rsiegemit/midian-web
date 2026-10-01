@@ -21,10 +21,10 @@ import textwrap
 import pandas as pd
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))))
-from scripts.figures.lib import AGG, fig_out  # noqa: E402
+from scripts.figures.lib import AGG, NEW, fig_out  # noqa: E402
 from scripts.figures.lib import figspec as S  # noqa: E402
 
-NAME, DRAW, N = "F_max_lie", f"{AGG}/figures", 100000
+NAME, DRAW, N = "F_max_lie" + NEW, f"{AGG}/figures", 100000  # 10-seed build: F's reference lines at 10 seeds
 GRIDS = {
     "va_cohort": "lie_max_fw_n100k_va",
     "tfidf": "lie_max_fw_n100k_tfidf",
@@ -74,7 +74,7 @@ def compute(out):
     from scripts.figures.shortlist_condensed import load, summarise
 
     rec = pd.DataFrame([r for k, g in GRIDS.items() if (r := shortlist(k, g))])
-    f = pd.read_csv(f"{out}/F_shortlists_1e5.csv")
+    f = pd.read_csv(f"{out}/F_shortlists_1e5{NEW}.csv")
     f = f[f.regime == "cartel"].set_index("shortlist")
     rec = rec.assign(
         standard_mean=rec.shortlist.map(f["mean"]),

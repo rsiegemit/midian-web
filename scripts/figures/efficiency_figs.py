@@ -30,9 +30,9 @@ from matplotlib.transforms import blended_transform_factory
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))))
 from scripts.figures.condensed_figs import BANDIT, LEARNED, NOT_RUNNABLE, POOLS  # noqa: E402
-from scripts.figures.lib import AGG, fig_out  # noqa: E402
+from scripts.figures.lib import AGG, NEW, SEEDS_4_10, fig_out  # noqa: E402
 from scripts.figures.lib import figspec as S  # noqa: E402
-from scripts.figures.lib.grids import MATRICES, VA_GRIDS  # noqa: E402
+from scripts.figures.lib.grids import MATRICES, VA_GRIDS, with_s4_10  # noqa: E402
 from scripts.figures.lib.rows import label, read_rows  # noqa: E402
 
 COST, DRAW = f"{AGG}/cost_by_n.csv", f"{AGG}/figures"
@@ -76,7 +76,7 @@ def va_build(d):
     L = pd.concat(
         [
             f
-            for f in (read_rows(g, ("rid", "n", "b", "method", "params", "build_probes")) for g in VA_GRIDS)
+            for f in (read_rows(g, ("rid", "n", "b", "method", "params", "build_probes")) for g in with_s4_10(VA_GRIDS))
             if not f.empty
         ]
     )
@@ -200,7 +200,7 @@ def compute_D(d):
                 )
     refs = pd.DataFrame(
         [
-            dict(figure="D_energy_per_query", key=k, value=v, text=S.FW_NAME.get(m, m))
+            dict(figure="D_energy_per_query" + NEW, key=k, value=v, text=S.FW_NAME.get(m, m))
             for k, v, m in (("cheapest", fwJ.min(), fwJ.idxmin()), ("costliest", fwJ.max(), fwJ.idxmax()))
         ]
     )
@@ -278,10 +278,11 @@ def main(argv=None):
     a = p.parse_args(argv)
     out = fig_out(a.out)
     d = costs(a.refresh and not a.from_csv)
-    f, ax = S.figure("appendix")
-    draw_C(ax, d).to_csv(f"{out}/C_routing_work_vs_n.csv", index=False)
-    S.save(f, "C_routing_work_vs_n", out)
-    name, refs_csv = "D_energy_per_query", f"{DRAW}/refs.csv"
+    if not SEEDS_4_10:  # C reads bernoulli_scale_v5 alone, which no seed mirror adds to: no C_new
+        f, ax = S.figure("appendix")
+        draw_C(ax, d).to_csv(f"{out}/C_routing_work_vs_n.csv", index=False)
+        S.save(f, "C_routing_work_vs_n", out)
+    name, refs_csv = "D_energy_per_query" + NEW, f"{DRAW}/refs.csv"  # 10-seed build: the live 10^5 ledgers at 10 seeds
     if a.from_csv:
         rec, refs = pd.read_csv(f"{DRAW}/{name}.csv"), pd.read_csv(refs_csv)
         refs = refs[refs.figure == name]

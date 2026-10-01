@@ -10,6 +10,7 @@ tables() -> {(family, group, n, regime): {b: DataFrame(index = seed, columns = a
   bernoulli 1e7 bernoulli_scale_v5 (b = 1, 3) + va_b / rivals_b bernoulli_1e7 (b = 5)
   replay 1e6    replay_scale_v5 (b = 1, 3) + va_b / rivals_b replay_1e6; shapes pooled per seed, only seeds with
                 ALL three
+Under RTE_SEEDS_4_10=1 (the 10-seed build) every grid list above also reads its seed mirrors (grids.TEN).
 Regimes: beta0 = beta 0 (any liar_select: no liars, so the tag is inert); cartel = beta 0.5, low_skill_first.
 The best of a pool is cross-fitted from these tables (stats.crossfit)."""
 
@@ -129,7 +130,7 @@ def tables():
     spec = [
         (
             ("live", "specialist", n),
-            grids.with_s4_10(grids.LIVE_GRIDS[n] + grids.b_grids(t) + [f"tuned_wsb_{t}", f"pool_seeds_{t}"]),
+            grids.LIVE_GRIDS[n] + grids.b_grids(t) + [f"tuned_wsb_{t}", f"pool_seeds_{t}"],
             "live",
         )
         for n, t in grids.SIZE.items()
@@ -161,13 +162,14 @@ def tables():
         ),
     ]
     out = {}
-    for (fam, grp, n), gs, kind in spec:
-        df = pd.concat([rows(g, n) for g in gs], ignore_index=True)
+    for (fam, grp, n), gs, kind in spec:  # + the seed mirrors (grids.TEN) under RTE_SEEDS_4_10=1
+        df = pd.concat([rows(g, n) for g in grids.with_s4_10(gs)], ignore_index=True)
         if not df.empty:  # TrueSkill: post probe-duplicate-fix rows only (erratum 30)
+            src = df.grid.map(grids.source)
             df = df[
                 (df.method != "trueskill_per_family")
-                | df.grid.str.startswith("trueskill_fix_")
-                | df.grid.isin(list(E30.values()))
+                | src.str.startswith("trueskill_fix_")
+                | src.isin(list(E30.values()))
             ]
         if fam == "bernoulli" and fam in sw:  # claim readers: calibrated rows only
             reads = pd.Series([label(m, p) in CLAIM_READERS for m, p in zip(df.method, df.params)], index=df.index)

@@ -28,10 +28,10 @@ import pandas as pd
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))))
 import matplotlib.pyplot as plt  # noqa: E402
 
-from scripts.figures.lib import AGG, ROOT, legend_rank  # noqa: E402
+from scripts.figures.lib import AGG, NEW, ROOT, legend_rank  # noqa: E402
 from scripts.figures.lib import figspec as S  # noqa: E402
 from scripts.figures.lib.exclusions import excluded  # noqa: E402
-from scripts.figures.lib.grids import H30_FW, H30_REF, REF_GRIDS, shortlist_grid  # noqa: E402
+from scripts.figures.lib.grids import H30_FW, H30_REF, REF_GRIDS, shortlist_grid, with_s4_10  # noqa: E402
 from scripts.figures.lib.regimes import NAME as REGIME_NAME  # noqa: E402
 from scripts.figures.lib.regimes import tag as regime
 from scripts.figures.lib.rows import RESULTS as R  # noqa: E402
@@ -39,7 +39,7 @@ from scripts.figures.lib.rows import load_fw as load
 from scripts.figures.lib.rows import pending_reruns
 from scripts.figures.lib.stats import se as _ci  # noqa: E402  (whiskers +/- 1 s.e.)
 
-CSV_OUT, OUT = os.path.join(AGG, "shortlist"), os.path.join(ROOT, "figures", "shortlist")
+CSV_OUT, OUT = os.path.join(AGG, "shortlist" + NEW), os.path.join(ROOT, "figures", "shortlist" + NEW)
 
 # shortlist source -> (display name, colour); drawn left to right in this order (figspec.SHORTLIST_ORDER) wherever it
 # has data
@@ -156,7 +156,7 @@ def collect(family):
                     cell["pending"].add((m, src))
     for (n, dist, reg), cell in cells.items():
         for grid in (H30_REF if family == "routereval" and h30() else REF_GRIDS[family]).get(n, []):
-            df = rows(grid)
+            df = pd.concat([rows(g) for g in with_s4_10([grid])], ignore_index=True)  # + its seed mirrors (10-seed)
             if df.empty:
                 continue
             full = (df.method == "midian") & (df.params.fillna("{}").astype(str) == "{}")  # MIDIAN, the full method
