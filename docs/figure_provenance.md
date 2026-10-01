@@ -626,6 +626,7 @@ All rows: `K = 16` unless noted, `collude = true`, `lie_mode = inflate`, `demand
 | `va_b_n100` / `va_b_n1000` | llm | 100 / 1000 | spec | 0, .5 | lsf | self | **1, 5** | 1000 | 1–10 |
 | `va_b_n10k` / `va_b_n100k` | llm | 10^4 / 10^5 | spec | 0, .5 | lsf | self | **1, 5** | 300 | 1–3 |
 | `<source>_s4_10` (15 grids, `grids.S4_10`) and `lie_max_arms_n{10k,100k}_s4_10` | as their source, restricted to the cells and arms Figure 1 draws (`configs/grids/seeds_4_10.yaml`) | 10^4 / 10^5 | spec | 0, .5 | random (β 0, b 3), lsf | self | as source | 300 | **4–10** (read only by the `*_new` figures) |
+| `<source>_s<lo>_10` (8 grids, `grids.S_TO_10`, `configs/grids/seeds_to_10.yaml`) | as their source: `routereval5k_norep_cal`, `llmrouterbench_norep_cal` (every arm), `lie_max_{routereval5k,llmrouterbench}_norep_cal`, `routereval_mmlu_norep_cal` (β = 0 only: H's lines), `lie_max_n{1000,10k,100k}` (no claim readers: their seeds 4-10 are the rows of `lie_max_arms_n1000` / `lie_max_arms_n{10k,100k}_s4_10`, same row ids) | as source | as source | as source | as source | as source | as source | as source | **4–10** (RouterEval 5k, `lie_max_n*`) / **6–10** (LLMRouterBench, `routereval_mmlu_norep_cal`) (read only by the `*_new` figures) |
 | `rivals_b_n100/n1000/n10k/n100k` | as their `va_b_*` twin | | | | | | 1, 5 | | |
 | `routereval_mmlu` | routereval, `mmlu` | 10, 100, 1000 | s2w, all_strong, all_weak | 0, .25, .5 | random, lsf | prog | 3 | 1000 | 1–5 |
 | `routereval_mmlu5k` | routereval, `leaderboard_mmlu` | 5000 | all | 0, .25, .5 | random, lsf | prog | 3 | 300 | 1–3 |
@@ -671,7 +672,10 @@ cross-fitted pools (§2.1.3); `bar_figs.py` does not.
 
 Rows on disk: every grid in the table has rows. `linucb_fix_*` and `trueskill_fix_*` have landed (their arms have every
 seed in every A / B pool table); the five erratum-30 grids B and H use are complete by `seed_tables.complete`, and so
-are the 15 H framework mirrors (`shortlist_figs.h30()` is True). `rivals_b_n100k` has both regimes at b = 1 and 5 for
+are the 15 H framework mirrors (`shortlist_figs.h30()` is True). The seed mirrors (`grids.TEN`: `seeds_4_10.yaml`, `seeds_to_10.yaml`) bring every
+non-framework arm and reference line of A-I to 10 seeds; they are read only under `RTE_SEEDS_4_10=1` (the `*_new`
+figures) and only once all of them are complete (`grids.with_s4_10`); each mirrors cells and arms of its source on new
+seeds only, with no row id shared with its source or another mirror. `rivals_b_n100k` has both regimes at b = 1 and 5 for
 every rival; its kNN units, the cartel kNN units of `rivals_b_n10k` and the cartel kNN units of `routereval5k_norep_cal`
 were run with the speed-only opt-ins of §2.8.1. The live 10^5 cartel kNN seeds landed on 2026-09-24 11:20; every kNN row is complete in the pool tables. In the
 condensed A / B figures an absent bar is an empty slot, reported by the script and `cluster/ops/figure_status.py`
