@@ -14,7 +14,7 @@ import pandas as pd
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))))
 import scripts.figures.lib.seed_tables as t  # noqa: E402
 from scripts.figures.lib import fig_out  # noqa: E402
-from scripts.figures.lib.grids import H30_FW, H30_REF, S4_10  # noqa: E402
+from scripts.figures.lib.grids import H30_FW, H30_REF, TEN  # noqa: E402
 from scripts.figures.lib.rows import label  # noqa: E402
 from scripts.figures.shortlist_condensed import MAIN, MIN_FW  # noqa: E402
 
@@ -76,7 +76,7 @@ def shortlist(name, srcs=None):
 
 
 def grids():
-    for g in GRIDS + S4_10 + H30_FW + sorted({x for v in H30_REF.values() for x in v}):
+    for g in GRIDS + TEN + H30_FW + sorted({x for v in H30_REF.values() for x in v}):
         w = t.planned(g)
         if g.startswith(("fw_", "re_sl_")):  # framework grids: rows() drops fw_ arms, so read them directly
             from scripts.figures.shortlist_figs import rows as fwrows

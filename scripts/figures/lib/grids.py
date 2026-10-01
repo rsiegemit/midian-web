@@ -11,6 +11,8 @@ uses.
     MATRICES          scale sweeps read from their matrix_success.csv (bar_figs; A / B b = 1)
     VA_GRIDS          exact MIDIAN build ledgers by (n, b) (efficiency D)
     S4_10, with_s4_10 seeds 4-10 of Figure 1's live 10^4 / 10^5 arms, pooled with their sources only under RTE_SEEDS_4_10=1
+    S_TO_10, TEN      the other seed mirrors (every non-framework arm of A-I at 10 seeds); TEN = S4_10 + S_TO_10
+    source(grid)      the grid a seed mirror mirrors
     SHORTLIST_SOURCES, NINE, DOC_REF, DOC_REF_CARTEL, VARIANTS
                       the framework-shortlist tables (doc_tables, fw_variant_numbers)
 
@@ -19,6 +21,8 @@ reference lines of the n = 10^2 shortlist figures and the bars read the same ins
 """
 
 from __future__ import annotations
+
+import re
 
 
 def config():
@@ -118,16 +122,31 @@ S4_10 = [
 ]
 
 
+# Seeds up to 10 for every other non-framework arm a figure draws: <source>_s<lo>_10 (configs/grids/seeds_to_10.yaml):
+# B's RouterEval 5k / LLMRouterBench cells and their max-lie cells, H's reference lines, I_max_lie. Same rule as S4_10.
+S_TO_10 = [
+    "routereval5k_norep_cal_s4_10", "llmrouterbench_norep_cal_s6_10", "lie_max_routereval5k_norep_cal_s4_10",
+    "lie_max_llmrouterbench_norep_cal_s6_10", "routereval_mmlu_norep_cal_s6_10",
+    "lie_max_n1000_s4_10", "lie_max_n10k_s4_10", "lie_max_n100k_s4_10",
+]
+TEN = S4_10 + S_TO_10
+
+
+def source(grid):
+    """The grid a seeds mirror (<source>_s<lo>_10) mirrors; any other grid is its own source."""
+    return re.sub(r"_s\d+_10$", "", grid) if grid in TEN else grid
+
+
 def with_s4_10(gs):
-    """`gs` plus the seeds 4-10 mirror of each under RTE_SEEDS_4_10=1 (which fails until all of S4_10 has landed)."""
+    """`gs` plus the seed mirrors of each (TEN) under RTE_SEEDS_4_10=1 (which fails until every one has landed)."""
     from scripts.figures.lib import SEEDS_4_10
     from scripts.figures.lib.seed_tables import complete
 
     if not SEEDS_4_10:
         return list(gs)
-    if missing := [g for g in S4_10 if not complete(g)]:
-        raise SystemExit(f"RTE_SEEDS_4_10=1 but {len(missing)} seeds 4-10 grids are incomplete: {missing}")
-    return list(gs) + [f"{g}_s4_10" for g in gs if f"{g}_s4_10" in S4_10]
+    if missing := [g for g in TEN if not complete(g)]:
+        raise SystemExit(f"RTE_SEEDS_4_10=1 but {len(missing)} seed-mirror grids are incomplete: {missing}")
+    return list(gs) + [m for g in gs for m in TEN if source(m) == g]
 
 
 def shortlist_grid(family, grid, h30):

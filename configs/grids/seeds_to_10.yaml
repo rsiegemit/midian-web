@@ -1,0 +1,62 @@
+# Seeds up to 10 for every non-framework arm a paper figure draws that seeds_4_10.yaml does not already cover (user
+# decision 2026-09-30: "everything should have ten seeds other than frameworks"). Each grid <source>_s<lo>_10 mirrors
+# the grid a bar or reference line comes from and adds only the missing seeds; every (cell, method) is one of the
+# source's, and no row id is one the source or a seeds_4_10.yaml grid already plans. Covered already, so not here:
+# live n = 10^2 / 10^3 (seeds 1-10, live_f1_n1000's pool members through pool_seeds_n1000), live 10^4 / 10^5 in A / B
+# and A_max_lie / B_max_lie (seeds_4_10.yaml), Bernoulli (100 seeds) and replay (30). Left out: the frameworks, and
+# the five undrawn rivals (rivals5_*). scripts/figures/lib/grids.S_TO_10 joins these grids to their sources only under
+# RTE_SEEDS_4_10=1 (the 10-seed *_new figures), and only once every grid here and in seeds_4_10.yaml is complete.
+grids:
+  # ---- Figure 2's RouterEval 5k and LLMRouterBench cells (erratum-30 reruns; every arm at b = 1 / 3 / 5)
+  # [PENDING | FIG:B,H] seeds 4-10 of routereval5k_norep_cal (B; H at m = 5,000); read by: seed_tables, shortlist_figs
+  routereval5k_norep_cal_s4_10: {mirror_of: routereval5k_norep_cal, seeds: 4-10}
+
+  # [PENDING | FIG:B] seeds 6-10 of llmrouterbench_norep_cal (B's LLMRouterBench cell); read by: seed_tables
+  llmrouterbench_norep_cal_s6_10: {mirror_of: llmrouterbench_norep_cal, seeds: 6-10}
+
+  # ---- B_max_lie's RouterEval 5k and LLMRouterBench cartel cells (the claim readers under the max lie)
+  # [PENDING | FIG:B] seeds 4-10 of lie_max_routereval5k_norep_cal (B_max_lie); read by: lie_max_ab
+  lie_max_routereval5k_norep_cal_s4_10: {mirror_of: lie_max_routereval5k_norep_cal, seeds: 4-10}
+
+  # [PENDING | FIG:B] seeds 6-10 of lie_max_llmrouterbench_norep_cal (B_max_lie); read by: lie_max_ab
+  lie_max_llmrouterbench_norep_cal_s6_10: {mirror_of: lie_max_llmrouterbench_norep_cal, seeds: 6-10}
+
+  # ---- Figure 4's reference lines at m = 10 / 10^2 / 10^3 (H draws the honest lines only: MIDIAN, random, oracle)
+  # [PENDING | FIG:H] seeds 6-10 of routereval_mmlu_norep_cal, honest cells; read by: shortlist_figs
+  routereval_mmlu_norep_cal_s6_10: {mirror_of: routereval_mmlu_norep_cal, seeds: 6-10, beta: [0]}
+
+  # ---- I_max_lie: every non-framework arm at live 10^3 / 10^4 / 10^5 under the max lie (cartel, b = 3). The claim
+  # readers (warm-start bandit n0 = 5 / 0.5, declared argmax) are left out: their rows at seeds 4-10 have the same row
+  # ids as lie_max_arms_n1000 (seeds 1-10) / lie_max_arms_n{10k,100k}_s4_10, which lie_max_fig reads for them.
+  # [PENDING | FIG:I] seeds 4-10 of lie_max_n1000; read by: lie_max_fig
+  lie_max_n1000_s4_10:
+    mirror_of: lie_max_n1000
+    seeds: 4-10
+    methods:
+      - midian
+      - {name: midian, params: {audit: false, verify: false}}
+      - {name: flat_probe_argmax, params: {online: true}}
+      - {name: knn_router, params: {online: true}}
+      - random
+
+  # [PENDING | FIG:I] seeds 4-10 of lie_max_n10k; read by: lie_max_fig
+  lie_max_n10k_s4_10:
+    mirror_of: lie_max_n10k
+    seeds: 4-10
+    methods:
+      - midian
+      - {name: midian, params: {audit: false, verify: false}}
+      - {name: flat_probe_argmax, params: {online: true}}
+      - {name: knn_router, params: {online: true}}
+      - random
+
+  # [PENDING | FIG:I] seeds 4-10 of lie_max_n100k; read by: lie_max_fig
+  lie_max_n100k_s4_10:
+    mirror_of: lie_max_n100k
+    seeds: 4-10
+    methods:
+      - midian
+      - {name: midian, params: {audit: false, verify: false}}
+      - {name: flat_probe_argmax, params: {online: true}}
+      - {name: knn_router, params: {online: true}}
+      - random
