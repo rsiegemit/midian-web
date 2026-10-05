@@ -42,8 +42,11 @@ $RTE_DATA/
 - The live backend serves the model ladder of `configs/models.yaml` (seven models; id, parameter count, GPU share, tool
   gating) with vLLM, temperature 0. The framework arms need only the supervisor (Qwen2.5-7B).
 - Each server registers itself as one file in `$RTE_DATA/endpoints.d/` (lock-free); `endpoints.json` is the merged view.
-  Replicas register as `<model>#<job>`; a client picks among replicas by observed latency and re-picks periodically, so
-  replicas added mid-run get used.
+  Every server beyond the first registers as a replica, `<model>#<job>` (`RTE_AS_REPLICA=1`); a second server started
+  without it overwrites the first one's entries and leaves it idle. A client picks the faster of two randomly chosen
+  replicas by its own latency estimates, counts a failed or timed-out request at its elapsed time, and re-picks every
+  20 s, so replicas added mid-run get used. (Always taking the fastest replica made every client herd onto one server
+  while the others idled, and a stuck server kept looking fast because failures were never measured.)
 - Before a stage, wait until every model answers its health check; never trust the registry alone, since a cancelled
   server can leave a stale entry or remove another server's.
 - **Request only the GPUs that get traffic.** Agent answers are memoised, so after the first pass nearly all traffic is
@@ -52,7 +55,13 @@ $RTE_DATA/
   misses (`configs/fleet_packed_h200.yaml`).
 - **Never fewer than two supervisor replicas**, on different partitions or nodes; retire an old server only after its
   replacement is serving; resubmit each server with successors so a walltime limit never opens a gap.
-- Keep a watcher running during a campaign that alerts on a change in the replica count.
+- **When new seeds need fresh generations from every agent model** (not only the supervisor), serve each model group on
+  its own GPUs: `configs/fleet_14b.yaml`, `fleet_mid.yaml` (9B / 7B / 3B), `fleet_small.yaml` (1.5B) and `fleet_tiny.yaml`
+  (2B / 0.5B), with `RTE_MAX_NUM_SEQS` raised for the small models. The bottleneck moves from model to model as each gets
+  capacity; measure queue lengths per model (`/metrics`) rather than guessing.
+- **No model may ever have zero registered servers.** Servers end at the partition's walltime; submit replacements so
+  they start before the old ones end, and keep a watcher running that alerts when any model has no server or the replica
+  count changes.
 
 ## The answer memo
 
@@ -64,6 +73,9 @@ $RTE_DATA/
   `python -m midian.llm_client compact`.
 - On network file systems where `fcntl` locks hang, every database is opened without locking; this is safe only because
   no two processes write the same file.
+- Each process loads **every shard into memory** at start-up and keeps pulling rows other processes write, so its resident
+  memory is about the size of the memo and grows during a long run (about 40 GB per process with a 43 GB memo). Size live
+  units for the memo, not for the method: 64 GB for live units at n = 10<sup>5</sup>, 128 GB for kNN units with two cells.
 - Tests use a private memo (`RTE_LLM_CACHE`), never the production one.
 
 ## Running grids
@@ -84,6 +96,11 @@ $RTE_DATA/
   requests concurrently (identical picks; MIDIAN-cohort shortlists and churn stay sequential), about 40 GB of memory.
 - **Probe builds** keep `RTE_CONCURRENCY` requests in flight (default 64); a MIDIAN build costs about 16.5 n b probes, and
   only generations already in the memo are free.
+- A unit covers every budget b of its cell in turn; `--only ...,b=5` runs one budget, so the cells of a unit can run as
+  separate jobs in parallel. At n = 10<sup>5</sup> a kNN cell at b = 5 takes more than two days.
+- **Completion is judged by rows, not by job states.** A unit can exit normally while one of its arms failed (an
+  infrastructure error fails the arm, which writes no row), so compare the rows on disk with the plan and resubmit every
+  missing unit that no queued job covers.
 - Load any million-row CSV as a batch job, not on a shared login machine.
 
 ## Rules
@@ -120,3 +137,9 @@ Each rule was paid for by a real failure.
 13. Job scripts live on storage the compute nodes can see, never on node-local temporary space.
 14. Before quoting an ETA, count **running** jobs, not only pending ones; under fair-share scheduling the number of slots,
     not job speed, is the bottleneck.
+15. Long units never run on a **preemptible** partition: a preempted unit restarts from scratch (one lost 12 hours).
+    Walltimes for long units come from measured cell times with margin; a partition's minimum and maximum walltime are
+    checked before submitting (one partition rejects jobs shorter than three days).
+16. An unattended campaign is supervised by a **batch job**, not by an interactive session: it resubmits failed and
+    missing units, keeps every model served, removes registry entries of ended servers, and resubmits itself before its
+    walltime ends. A watcher inside an interactive session stops with the session.

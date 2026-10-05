@@ -33,6 +33,7 @@ The stored rows (4.5 M method rows under `$RTE_DATA/results/<grid>/`) are not in
 python scripts/figures/bar_figs.py            # rows -> results/aggregates/bars/*.csv (b = 3 bars of every family)
 python scripts/figures/shortlist_figs.py      # rows -> results/aggregates/shortlist/{live,routereval}.csv
 python scripts/figures/make_all.py --out new  # the whole chain (the two above included) -> new/*
+RTE_SEEDS_4_10=1 python scripts/figures/make_all.py   # 10-seed build: every affected figure as <name>_new (originals kept)
 python scripts/analysis/paper_numbers.py      # every quoted number -> paper/NUMBERS.json (value, grid, units, CI)
 python scripts/checks/figure_csvs.py figures/paper new   # value-identical to the shipped figure CSVs (atol 1e-12)?
 ```

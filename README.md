@@ -113,6 +113,9 @@ LLM fleet). The figures and the commands that draw them:
 
 `python scripts/figures/make_all.py [--out DIR]` runs all of them, from rows to aggregates to figures; with `--from-csv`
 it redraws every figure from the aggregates in `results/aggregates/` and needs neither result rows nor `$RTE_DATA`.
+`RTE_SEEDS_4_10=1 python scripts/figures/make_all.py` is the 10-seed build: it pools the seed extensions
+(`configs/grids/seeds_4_10.yaml`, `seeds_to_10.yaml`) and writes every affected figure as `<name>_new` beside the
+original, which it never replaces; it refuses to run until every extension grid is complete.
 Every plotted value, its grids, cells, seeds and aggregation are traced in
 [docs/figure_provenance.md](docs/figure_provenance.md); [docs/figures.md](docs/figures.md) has the style rules and the
 figure-to-grid table.
