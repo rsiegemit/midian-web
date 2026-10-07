@@ -185,7 +185,8 @@ class Midian(Method):
             mem, f = ag[cidx, surv], np.broadcast_to(fam, (C, K, s))                 # (C, K, s)
             rep = rep_ids[cidx, surv].reshape(-1, s - 1)                             # (V, s-1) reporters of each probe
             if outcomes is not None:
-                per = view.report_many(rep[:, :, None], mem.reshape(-1, 1, 1), outcomes[mem, f].reshape(-1, 1, b))
+                per = view.report_many(rep[:, :, None], mem.reshape(-1, 1, 1), outcomes[mem, f].reshape(-1, 1, b),
+                                       f.reshape(-1, 1, 1))
             else:
                 _, per = peer_estimate(view, mem.ravel(), f.ravel(), b, rep, self.delta)
             self._audit(view, mem.ravel(), f.ravel(), np.zeros(mem.size, np.int32), rep, per)   # claims per[V, s-1, b]
@@ -324,7 +325,7 @@ class Midian(Method):
         peers = peers[peers >= 0]
         if not peers.size:
             return
-        claims = self.view.report_many(peers, np.full(peers.shape, agent), np.full(peers.shape, outcome))
+        claims = self.view.report_many(peers, np.full(peers.shape, agent), np.full(peers.shape, outcome), task.family)
         for j in self._strike(peers, claims, outcome):                                  # newly excluded reporter j:
             # re-aggregate its cohort
             members = self.leaves[self.leaf_of[j]]

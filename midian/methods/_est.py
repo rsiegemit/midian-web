@@ -115,9 +115,10 @@ def trimmed_by_reporter(rep: np.ndarray, delta: float, s: int, exclude: np.ndarr
 def peer_estimate(view, agents, fams, reps: int, reporters: np.ndarray, delta: float, exclude=None):
     """Probe agents[i] on fams[i] `reps` times; each of reporters[i, :] reports EVERY outcome (one report per probe);
     trimmed per-reporter mean. Charges V*reps probes and V*k*reps reports. Returns (est[V], reports[V, k, reps])."""
-    agents, fams = np.asarray(agents), np.asarray(fams)
+    agents, fams = np.broadcast_arrays(np.asarray(agents), np.asarray(fams))
     out = view.probe_many(agents, fams, reps)                                                 # (V, reps)
-    per = view.report_many(reporters[:, :, None], agents[:, None, None], out[:, None, :])     # (V, k, reps)
+    per = view.report_many(reporters[:, :, None], agents[:, None, None], out[:, None, :],     # (V, k, reps)
+                           fams[:, None, None])
     return trimmed_by_reporter(per, delta, per.shape[1] + 1, exclude), per
 
 
@@ -128,6 +129,11 @@ def probe_outcomes(view, b: int) -> np.ndarray:
         agents = np.arange(lo, min(view.n, lo + CHUNK))
         out[lo:lo + CHUNK] = view.probe_many(agents[:, None], np.arange(view.K)[None, :], b)
     return out
+
+
+def FAM5(K):
+    """The family axis of a (C, s, K, reporter, b) report block."""
+    return np.arange(K).reshape(1, 1, K, 1, 1)
 
 
 def peer_reported_estimates(view, b: int, cohorts: np.ndarray, delta: float, by_reporter: bool = False,
@@ -158,12 +164,13 @@ def peer_reported_estimates(view, b: int, cohorts: np.ndarray, delta: float, by_
             obs = ag[:, peers] if k == s - 1 else np.take_along_axis(
                 ag[:, peers], np.argsort(view.rng.random((C, s, s - 1)), 2)[:, :, :k], 2)
             per = view.report_many(obs[:, :, None, :, None], ag[:, :, None, None, None],
-                                   out.reshape(C, s, K, 1, b)).reshape(C * s, K, k, b)
+                                   out.reshape(C, s, K, 1, b), FAM5(K)).reshape(C * s, K, k, b)
             est[ag.ravel()] = trimmed_by_reporter(per, delta, k + 1)
             continue
         rep = view.report_many(ag[:, peers][:, :, None, :, None],                        # reporter j
                                ag[:, :, None, None, None],                               # about member m
-                               out.reshape(C, s, K, 1, b)                                # what j saw
+                               out.reshape(C, s, K, 1, b),                               # what j saw
+                               FAM5(K)                                                   # about family f
                                ).reshape(C * s, K, (s - 1) * b)
         est[ag.ravel()] = trimmed_mean(rep, trim_k(delta, s, b))                         # trim single reports
     return est
@@ -174,7 +181,7 @@ def observed_reports(view, f: int, b: int, observers):
     for lo in range(0, view.n, CHUNK):
         ag = np.arange(lo, min(view.n, lo + CHUNK))
         obs = observers(ag, b)
-        yield ag, obs, view.report_many(obs, ag[:, None], view.probe_many(ag, f, b))
+        yield ag, obs, view.report_many(obs, ag[:, None], view.probe_many(ag, f, b), f)
 
 
 def greedy_walk(view, start: int, depth: int, neighbors, score) -> int:

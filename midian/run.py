@@ -416,7 +416,7 @@ def main(argv=None):
     units = []
     for blk in blocks(cfg, a.grid):
         specs = [s for s in method_specs(blk) if not a.methods or s["name"] in a.methods.split(",")]
-        only = dict(kv.split("=") for kv in a.only.split(",")) if a.only else {}
+        only = dict(kv.split("=", 1) for kv in a.only.split(",")) if a.only else {}     # lie_mode=inflate:q=0.05
         for cell in cells(blk):
             if any(cell[k] != yaml.safe_load(v) for k, v in only.items()):     # yaml-typed: beta=0 == 0.0, collude=true
                 continue

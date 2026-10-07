@@ -137,13 +137,33 @@ def select_liars(S: np.ndarray, beta: float, how: str, rng: np.random.Generator)
     return liars
 
 
+def parse_lie(lie_mode: str):
+    """lie_mode "<mode>[:k=v,...]" -> (mode, opts). The options are the adaptive attacks of the 2026-10-07 review
+    (defaults = the standard attack, so a bare mode is unchanged):
+      q=<p>    each liar report is a lie with probability p (else the honest outcome): an audit-evading cartel
+      fam=<f>  the cartel lies only about family f, in reports and in declarations (single-family cartel)
+      d=<x>    inflate the declared skill by x instead of DELTA_INFLATE (inflate only)"""
+    mode, _, rest = str(lie_mode).partition(":")
+    opts = {k: float(v) for k, v in (kv.split("=") for kv in rest.split(",") if kv)}
+    if set(opts) - {"q", "fam", "d"}:
+        raise ValueError(f"lie_mode options are q, fam, d; got {lie_mode!r}")
+    return mode, opts
+
+
 def apply_lying(D_honest: np.ndarray, liars: np.ndarray, mode: str = "inflate",
                 demand: np.ndarray | None = None, delta: float = DELTA_INFLATE) -> np.ndarray:
     """Declared-channel lie. `inflate`: D[a] = clip(D_honest[a] + delta). `max`: D[a] = 1 everywhere.
-    `squat`: D[a, f*] = 1 on the top-3 highest-demand families. Liars still execute at true skill."""
+    `squat`: D[a, f*] = 1 on the top-3 highest-demand families. Liars still execute at true skill.
+    Options after ":" (parse_lie): d sets delta; fam restricts the lie to that family."""
+    mode, opts = parse_lie(mode)
     D = D_honest.copy()
     if not liars.any():
         return D
+    if "fam" in opts:
+        cols = np.zeros(D.shape[1], bool)
+        cols[int(opts["fam"])] = True
+        return np.where(liars[:, None] & cols, apply_lying(D_honest, liars, mode, demand, opts.get("d", delta)), D)
+    delta = opts.get("d", delta)
     if mode == "inflate":
         D[liars] = np.clip(D[liars] + delta, 0.0, 1.0)
     elif mode == "max":
@@ -234,10 +254,11 @@ class View:
     def embedding(self, f: int, inst: int, probe: bool = False):
         return self._w.embedding(f, inst, probe)
 
-    def report_many(self, reporters, agents, outcomes) -> np.ndarray:
-        """Vectorized reports (one row per report). Liars' top-20% rule uses the means within this batch."""
+    def report_many(self, reporters, agents, outcomes, fams=None) -> np.ndarray:
+        """Vectorized reports (one row per report). Liars' top-20% rule uses the means within this batch. `fams`: the
+        family each report is about (World.report_many)."""
         self._require("reports")
-        return self._w.report_many(np.asarray(reporters), np.asarray(agents), np.asarray(outcomes))
+        return self._w.report_many(np.asarray(reporters), np.asarray(agents), np.asarray(outcomes), fams)
 
     def ask_confidence(self, agents, task, again: bool = False) -> list[str]:
         """Ask each agent how confident it is that it solves `task`: a query and a reply each (2 messages per agent),
@@ -261,6 +282,9 @@ class World:
         self.n, self.K, self.dist, self.beta = int(n), int(K), dist, float(beta)
         self.liar_select, self.collude, self.seed = liar_select, bool(collude), int(seed)
         self.lie_mode, self.declared_source, self.demand_kind = lie_mode, declared_source, demand
+        _, opts = parse_lie(lie_mode)
+        self.lie_q, self.lie_fam = opts.get("q", 1.0), (int(opts["fam"]) if "fam" in opts else None)
+        self._lie_rng = np.random.default_rng(stable_seed_32(seed, "lie_q"))
         self.backend_name = backend
         self.ledger = Ledger()
         self.rng = np.random.default_rng(stable_seed_32(seed, "world", n, K, dist, backend))
@@ -402,7 +426,9 @@ class World:
         return fn(int(f), int(inst), probe) if fn else None
 
     # ---- reports: the only channel decentralized methods learn through
-    def report_many(self, reporters: np.ndarray, agents: np.ndarray, outcomes: np.ndarray) -> np.ndarray:
+    def report_many(self, reporters: np.ndarray, agents: np.ndarray, outcomes: np.ndarray, fams=None) -> np.ndarray:
+        """`fams` (broadcast with the rest): the family each report is about; required only by a single-family
+        cartel (lie_mode fam=...), which lies about that family alone."""
         reporters, agents, outcomes = np.broadcast_arrays(reporters, agents, outcomes)
         # contiguous copy: the lie edits it in place
         out = np.array(outcomes, dtype=np.float32 if outcomes.dtype.kind == "f" else np.int8, order="C")
@@ -411,6 +437,10 @@ class World:
             return out
         rj, ra, ro = reporters.ravel(), agents.ravel(), out.ravel()
         lying_rows = self.liars[rj]
+        if self.lie_fam is not None:
+            if fams is None:
+                raise ValueError("a single-family cartel needs the family of every report (report_many fams=)")
+            lying_rows = lying_rows & (np.broadcast_to(fams, reporters.shape).ravel() == self.lie_fam)
         if not lying_rows.any():
             return out
         # rule 1: liar j vouches for liar a
@@ -431,6 +461,10 @@ class World:
             zero_pairs = np.empty(uk.size, dtype=bool)
             zero_pairs[order] = zero_sorted
             ro[idx[zero_pairs[inv]]] = 0
+        if self.lie_q < 1.0:
+            # the cartel picks its targets from everything it saw, then tells each lie only with probability q
+            keep = lying_rows & (self._lie_rng.random(lying_rows.size) >= self.lie_q)
+            ro[keep] = outcomes.ravel()[keep]
         return out
 
     def probe_at(self, agents, families, k) -> np.ndarray:
@@ -460,6 +494,7 @@ class World:
         before it (pairing is through the task stream + deterministic execute), and undo churn."""
         self.ledger.reset()
         self._probe_idx[:] = 0                      # every method starts at probe index 0 of every cell
+        self._lie_rng = np.random.default_rng(stable_seed_32(self.seed, "lie_q"))   # partial lies: run-order free
         if self.churn_events:                       # undo churn: same initial population for every method
             self.S, self.D, self.liars = (x.copy() for x in self._snap[:3])
             self.backend.restore(self._snap[3])

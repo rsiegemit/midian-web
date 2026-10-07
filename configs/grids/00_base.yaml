@@ -513,3 +513,18 @@ _sets:
     - {name: midian, params: {audit: false, verify: false, r: 5}}
     - {name: midian, params: {audit: false, r: 5}}
     - {name: sequential_halving, params: {peer_reported: true}}
+  # 2026-10-07 review (configs/grids/review.yaml): the matched-budget best-arm-identification baseline
+  halving_arms:
+    - sequential_halving
+    - {name: sequential_halving, params: {peer_reported: true}}
+    - {name: sequential_halving, params: {peer_reported: true, audit: true}}
+  # 2026-10-07 review: every arm that reads reports or claims, plus the probe-only control
+  attack_arms:
+    - midian
+    - {name: midian, params: {audit: false}}
+    - {name: midian, params: {audit: false, verify: false}}
+    - {name: sequential_halving, params: {peer_reported: true}}
+    - {name: sequential_halving, params: {peer_reported: true, audit: true}}
+    - warm_start_bandit
+    - declared_argmax
+    - {name: flat_probe_argmax, params: {online: true}}

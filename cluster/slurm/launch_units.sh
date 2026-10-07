@@ -31,10 +31,12 @@ if os.environ.get("ONLY_MISSING"):                                   # the runne
     if os.path.exists(f"{out}/rows.csv"):
         import pandas as pd; have |= set(pd.read_csv(f"{out}/rows.csv", usecols=["rid"]).rid.dropna())
 plan = {}
+# a grid that varies lie_mode (configs/grids/review.yaml) gets one unit per lie mode; other grids keep their old keys
+axes = ("dist", "beta", "liar_select") + (("lie_mode",) if len({c["lie_mode"] for b in blocks(cfg, g) for c in cells(b)}) > 1 else ())
 for blk in blocks(cfg, g):
     specs = method_specs(blk)
     for cell in cells(blk):
-        only = ",".join(f"{a}={cell[a]}" for a in ("dist", "beta", "liar_select"))
+        only = ",".join(f"{a}={cell[a]}" for a in axes)
         for seed in seeds(blk["seeds"]):
             for s in specs:
                 if have is None or row_id(cell, s["name"], s["params"], seed) not in have: plan[(s["name"], only, seed)] = 1
