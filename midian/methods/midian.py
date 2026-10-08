@@ -26,7 +26,7 @@ verification probe + (n - #leaves + #summaries - 1) messages; fetch = per level 
 (cached: 1 comparison, 2 messages); observe (online) = per level r comparisons + 1 message.
 Churn: per arrival K*b probes, K*b*(r-1) reports, (r-1) + depth messages.
 Params: r=10, delta=1/3, online=True, audit=True, verify=True, cached=verify, observers=r-1, b0=b-1, top=1,
-stratify=False, cohort="random"."""
+stratify=False, cohort="random", reagg="level0" (online-exclusion re-aggregation; "keep" = 2026-10-07 fix)."""
 import numpy as np
 
 from ._est import (
@@ -52,10 +52,17 @@ class Midian(Method):
     needs = frozenset({"probe", "reports"})
 
     def __init__(self, r=10, delta=1 / 3, online=True, audit=True, verify=True, observers=None, b0=None, cached=None,
-                 top=1, stratify=False, cohort=None, **p):
+                 top=1, stratify=False, cohort=None, reagg="level0", **p):
         cached = verify if cached is None else cached
         super().__init__(r=r, delta=delta, online=online, audit=audit, verify=verify, observers=observers, b0=b0,
-                         cached=cached, top=top, stratify=stratify, **({"cohort": cohort} if cohort else {}), **p)
+                         cached=cached, top=top, stratify=stratify, **({"cohort": cohort} if cohort else {}),
+                         **({"reagg": reagg} if reagg != "level0" else {}), **p)
+        # an online exclusion re-aggregates the cohort: "level0" (as published) replaces est by the level-0 reports
+        # alone, discarding verification and online evidence, and recomputes all K families on the cohort's path;
+        # "keep" (2026-10-07 fix) swaps only the level-0 part and leaves the path to the next observation
+        if reagg not in ("level0", "keep"):
+            raise ValueError(f"unknown reagg {reagg!r}")
+        self.reagg = reagg
         self.r, self.delta, self.online = int(r), float(delta), bool(online)
         self.verify, self.stratify = bool(verify), bool(stratify)
         self.rate = (AUDIT_RATE if audit is True else float(audit)) if audit else 0.0
@@ -194,6 +201,7 @@ class Midian(Method):
             np.add.at(self.rsum[:, :, :s - 1], (mem, f), per.sum(-1))
             np.add.at(self.rcnt[:, :, :s - 1], (mem, f), b)
             self.est[ag.ravel()] = self._estimates(ag[:, :, None], fam.reshape(1, 1, K), s).reshape(-1, K)
+        self.l0 = self.est.copy()                                                   # level-0 part (reagg="keep")
         return self.est
 
     def _estimates(self, mem, fam, s):
@@ -327,12 +335,22 @@ class Midian(Method):
             return
         claims = self.view.report_many(peers, np.full(peers.shape, agent), np.full(peers.shape, outcome), task.family)
         for j in self._strike(peers, claims, outcome):                                  # newly excluded reporter j:
-            # re-aggregate its cohort
-            members = self.leaves[self.leaf_of[j]]
-            members = members[members >= 0]
-            K = self.view.K
-            self.est[members] = self._estimates(members[:, None], np.arange(K)[None, :], len(members))
-            self._recompute(int(self.leaf_of[members[0]]), np.arange(K))                  # one path: the cohort's own
+            self._reaggregate(j)
+
+    def _reaggregate(self, j):
+        """Re-aggregate excluded reporter j's cohort without it (see reagg)."""
+        members = self.leaves[self.leaf_of[j]]
+        members = members[members >= 0]
+        K = self.view.K
+        new = self._estimates(members[:, None], np.arange(K)[None, :], len(members))
+        if self.reagg == "keep":                 # est is linear in the level-0 part: weight b0/k at build, then
+            w = np.array([[self.w0 / self.cnt.get((m, f), self.w0) for f in range(K)] for m in members])
+            self.est[members] += (new - self.l0[members]) * self.b / self.k[members] * w   # w0/cnt online
+            self.l0[members] = new
+            return                               # no all-family recompute: it re-picks unverified members over the
+                                                 # verified winner; a family's path updates when it is next observed
+        self.est[members] = new
+        self._recompute(int(self.leaf_of[members[0]]), np.arange(K))                      # one path: the cohort's own
 
     def churn(self, departed, arrived):
         """Repair (ids reused): each arrived agent is re-probed b times per family, reported by its cohort peers
@@ -350,6 +368,8 @@ class Midian(Method):
             else:
                 self.est[a] = view.probe_many(a, np.arange(K), self.b).mean(-1)
             self.k[a] = self.b
-            self.cnt = {kf: c for kf, c in self.cnt.items() if kf[0] != a}
+            if hasattr(self, "l0"):
+                self.l0[a] = self.est[a]
+            self.cnt ={kf: c for kf, c in self.cnt.items() if kf[0] != a}
             view.ledger.message(len(peers) + self.depth)
             self._recompute(leaf, np.arange(K))

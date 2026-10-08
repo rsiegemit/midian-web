@@ -51,3 +51,14 @@ routereval_mmlu_norep_cal_s6_10	15	30	7172fdd71eea7cde	0
 lie_max_n1000_s4_10	7	35	b762a0bdebdeeaf1	0
 lie_max_n10k_s4_10	7	35	7c223e4a2de4465d	0
 lie_max_n100k_s4_10	7	35	1766d08730f8a0ff	0
+halving_live_n100	60	180	6e29cc1707e15439	0
+halving_live_n1000	60	180	c43fd68bcd933e48	0
+halving_live_n10k	100	300	a71feaf80c919c1a	0
+halving_live_n100k	100	300	2232cb600e5c839f	0
+halving_bernoulli_1e7	600	1800	e6cff554a89cd461	1
+halving_replay_1e6	540	1620	2cbf07b1e6487a93	0
+halving_routereval5k	60	180	e75d789555b5b4f6	0
+halving_llmrouterbench	60	180	794153be05a7fd98	0
+attack_bernoulli	2160	19440	5aeb655ec6374e6a	1
+attack_live_n10k	180	1620	dc0865c3db3f3f7b	0
+attack_live_n100k	40	360	66e38a16ffe45076	0

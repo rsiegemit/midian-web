@@ -75,3 +75,38 @@ def test_halving_audits_stay_in_budget_and_catch_the_cartel():
 def test_audit_needs_peer_reports():
     with pytest.raises(ValueError):
         SequentialHalving(audit=True)
+
+
+def test_online_exclusion_keeps_verification_evidence():
+    """reagg="keep" swaps only the level-0 part of est (verification + online evidence kept); "level0" (as
+    published) resets est to the level-0 estimates."""
+    from midian.methods.midian import Midian
+    for mode in ("level0", "keep"):
+        w = World(300, 4, "specialist", 0.5, liar_select="low_skill_first", seed=3, lie_mode="inflate:q=0.25")
+        m = Midian(reagg=mode)
+        w.reset()
+        m.build(w.view(m.needs), Budget(3))
+        for t in w.tasks(200):
+            m.observe(t, m.fetch(t), 1)
+        j = int(np.flatnonzero(~m.excluded)[0])
+        mem = m.leaves[m.leaf_of[j]]
+        mem = mem[mem >= 0]
+        before, l0 = m.est[mem].copy(), m.l0[mem].copy()
+        assert not np.allclose(before, l0)                       # verification / online moved est off level 0
+        m.excluded[j] = True
+        m._reaggregate(j)
+        if mode == "keep":
+            moved = m.l0[mem] - l0                                # only the level-0 change, scaled, reaches est
+            assert np.all(np.abs(m.est[mem] - before) <= np.abs(moved) + 1e-6)
+            once = m.est[mem].copy()
+            m._reaggregate(j)                                     # idempotent: nothing new to swap in
+            assert np.allclose(m.est[mem], once)
+        else:
+            assert np.allclose(m.est[mem], m._estimates(mem[:, None], np.arange(4)[None, :], len(mem)))
+
+
+def test_reagg_default_keeps_row_ids():
+    from midian.methods.midian import Midian
+    assert "reagg" not in Midian().params and Midian(reagg="keep").params["reagg"] == "keep"
+    with pytest.raises(ValueError):
+        Midian(reagg="x")
