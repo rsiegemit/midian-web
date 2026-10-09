@@ -1,0 +1,142 @@
+# 2026-10-09 MIDIAN online-exclusion fix (commit 1663638, midian{reagg: keep}) on every beta > 0 MIDIAN cell a paper
+# figure draws (user decision 2026-10-09: rerun the cartel cells, folded into the *_new build). Each <source>_fix mirrors
+# its source with the one fixed arm; only beta > 0 units are launched (at beta = 0 nobody is excluded, so the fixed arm
+# reproduces midian{} exactly). Under RTE_SEEDS_4_10=1 the figures draw these rows as MIDIAN in beta > 0 cells.
+grids:
+  # [PENDING | FIG:B,C] fixed MIDIAN on bernoulli_scale_v5's beta > 0 cells; read by: bar_figs, condensed_figs +6
+  bernoulli_scale_v5_fix: {mirror_of: bernoulli_scale_v5, methods: {set: midian_fix}}
+
+  # [PENDING | FIG:A,E] fixed MIDIAN on fw_live_n100's beta > 0 cells; read by: bar_figs, dedup_compare, doc_tables
+  fw_live_n100_fix: {mirror_of: fw_live_n100, methods: {set: midian_fix}}
+
+  # [PENDING | FIG:A,D,E] fixed MIDIAN on fw_live_n1000's beta > 0 cells; read by: bar_figs +11
+  fw_live_n1000_fix: {mirror_of: fw_live_n1000, methods: {set: midian_fix}}
+
+  # [PENDING | FIG:A,E] fixed MIDIAN on fw_live_n1000_lowskill's beta > 0 cells; read by: bar_figs, dedup_compare, doc_tables +5
+  fw_live_n1000_lowskill_fix: {mirror_of: fw_live_n1000_lowskill, methods: {set: midian_fix}}
+
+  # [PENDING | FIG:A,E] fixed MIDIAN on fw_live_n100_lowskill's beta > 0 cells; read by: bar_figs, dedup_compare, doc_tables +3
+  fw_live_n100_lowskill_fix: {mirror_of: fw_live_n100_lowskill, methods: {set: midian_fix}}
+
+  # [PENDING | FIG:A,E] fixed MIDIAN on learned_n100's beta > 0 cells; read by: bar_figs, paper_numbers +2
+  learned_n100_fix: {mirror_of: learned_n100, methods: {set: midian_fix}}
+
+  # [PENDING | FIG:A,E] fixed MIDIAN on learned_n10k's beta > 0 cells; read by: bar_figs, doc_tables
+  learned_n10k_fix: {mirror_of: learned_n10k, methods: {set: midian_fix}}
+
+  # [PENDING | FIG:E] fixed MIDIAN on learned_n10k_beta01's beta > 0 cells; read by: shortlist_figs
+  learned_n10k_beta01_fix: {mirror_of: learned_n10k_beta01, methods: {set: midian_fix}}
+
+  # [PENDING | FIG:A] fixed MIDIAN on learned_n10k_s4_10's beta > 0 cells; read by: bar_figs, seed_tables
+  learned_n10k_s4_10_fix: {mirror_of: learned_n10k_s4_10, methods: {set: midian_fix}}
+
+  # [PENDING | FIG:I] fixed MIDIAN on lie_max_n1000's beta > 0 cells; read by: none
+  lie_max_n1000_fix: {mirror_of: lie_max_n1000, methods: {set: midian_fix}}
+
+  # [PENDING | FIG:I] fixed MIDIAN on lie_max_n1000_s4_10's beta > 0 cells; read by: lie_max_fig
+  lie_max_n1000_s4_10_fix: {mirror_of: lie_max_n1000_s4_10, methods: {set: midian_fix}}
+
+  # [PENDING | FIG:I] fixed MIDIAN on lie_max_n100k's beta > 0 cells; read by: none
+  lie_max_n100k_fix: {mirror_of: lie_max_n100k, methods: {set: midian_fix}}
+
+  # [PENDING | FIG:I] fixed MIDIAN on lie_max_n100k_s4_10's beta > 0 cells; read by: lie_max_fig
+  lie_max_n100k_s4_10_fix: {mirror_of: lie_max_n100k_s4_10, methods: {set: midian_fix}}
+
+  # [PENDING | FIG:I] fixed MIDIAN on lie_max_n10k's beta > 0 cells; read by: none
+  lie_max_n10k_fix: {mirror_of: lie_max_n10k, methods: {set: midian_fix}}
+
+  # [PENDING | FIG:I] fixed MIDIAN on lie_max_n10k_s4_10's beta > 0 cells; read by: lie_max_fig
+  lie_max_n10k_s4_10_fix: {mirror_of: lie_max_n10k_s4_10, methods: {set: midian_fix}}
+
+  # [PENDING | FIG:A,E] fixed MIDIAN on live_f1_n1000's beta > 0 cells; read by: analyze, bar_figs, energy
+  live_f1_n1000_fix: {mirror_of: live_f1_n1000, methods: {set: midian_fix}}
+
+  # [PENDING | FIG:A,B,D,E,F,G] fixed MIDIAN on live_n100k's beta > 0 cells; read by: bar_figs, cohort_table, dedup_compare, doc_tables +4
+  live_n100k_fix: {mirror_of: live_n100k, methods: {set: midian_fix}}
+
+  # [PENDING | FIG:E,F,G] fixed MIDIAN on live_n100k_beta01's beta > 0 cells; read by: shortlist_figs
+  live_n100k_beta01_fix: {mirror_of: live_n100k_beta01, methods: {set: midian_fix}}
+
+  # [PENDING | FIG:A,B] fixed MIDIAN on live_n100k_s4_10's beta > 0 cells; read by: bar_figs, seed_tables
+  live_n100k_s4_10_fix: {mirror_of: live_n100k_s4_10, methods: {set: midian_fix}}
+
+  # [PENDING | FIG:A,E] fixed MIDIAN on live_n10k_v2's beta > 0 cells; read by: analyze, bar_figs, dedup_compare +6
+  live_n10k_v2_fix: {mirror_of: live_n10k_v2, methods: {set: midian_fix}}
+
+  # [PENDING | FIG:B] fixed MIDIAN on llmrouterbench_norep_cal's beta > 0 cells; read by: seed_tables
+  llmrouterbench_norep_cal_fix:
+    mirror_of: llmrouterbench_norep_cal
+    methods: {set: midian_fix}
+    blocks: [{b: [1, 5]}, {b: [3]}]
+
+  # [PENDING | FIG:B] fixed MIDIAN on llmrouterbench_norep_cal_s6_10's beta > 0 cells; read by: seed_tables
+  llmrouterbench_norep_cal_s6_10_fix:
+    mirror_of: llmrouterbench_norep_cal_s6_10
+    methods: {set: midian_fix}
+    blocks: [{b: [1, 5]}, {b: [3]}]
+
+  # [PENDING] fixed MIDIAN on llmrouterbench_pool's beta > 0 cells; read by: bar_figs +4
+  llmrouterbench_pool_fix: {mirror_of: llmrouterbench_pool, methods: {set: midian_fix}}
+
+  # [PENDING | FIG:B] fixed MIDIAN on replay_1e6_split_cal's beta > 0 cells; read by: seed_tables
+  replay_1e6_split_cal_fix:
+    mirror_of: replay_1e6_split_cal
+    methods: {set: midian_fix}
+    blocks: [{n: [1000000], b: [1, 5], seeds: 1-30, beta: [0, 0.5], liar_select: [low_skill_first]}, {n: [1000000], b: [3], seeds: 1-30, beta: [0, 0.5], liar_select: [low_skill_first]}]
+
+  # [PENDING] fixed MIDIAN on replay_scale_v5's beta > 0 cells; read by: bar_figs, condensed_figs
+  replay_scale_v5_fix: {mirror_of: replay_scale_v5, methods: {set: midian_fix}}
+
+  # [PENDING | FIG:B,H] fixed MIDIAN on routereval5k_norep_cal's beta > 0 cells; read by: seed_tables, shortlist_figs
+  routereval5k_norep_cal_fix:
+    mirror_of: routereval5k_norep_cal
+    methods: {set: midian_fix}
+    blocks: [{b: [1, 5]}, {b: [3]}]
+
+  # [PENDING | FIG:B,H] fixed MIDIAN on routereval5k_norep_cal_s4_10's beta > 0 cells; read by: seed_tables, shortlist_figs
+  routereval5k_norep_cal_s4_10_fix:
+    mirror_of: routereval5k_norep_cal_s4_10
+    methods: {set: midian_fix}
+    blocks: [{b: [1, 5]}, {b: [3]}]
+
+  # [PENDING] fixed MIDIAN on routereval_mmlu's beta > 0 cells; read by: bar_figs +5
+  routereval_mmlu_fix: {mirror_of: routereval_mmlu, methods: {set: midian_fix}}
+
+  # [PENDING] fixed MIDIAN on routereval_mmlu5k's beta > 0 cells; read by: bar_figs +6
+  routereval_mmlu5k_fix: {mirror_of: routereval_mmlu5k, methods: {set: midian_fix}}
+
+  # [PENDING | FIG:H] fixed MIDIAN on routereval_mmlu_norep_cal's beta > 0 cells; read by: shortlist_figs
+  routereval_mmlu_norep_cal_fix: {mirror_of: routereval_mmlu_norep_cal, methods: {set: midian_fix}}
+
+  # [PENDING | FIG:B,D] fixed MIDIAN on va_b_bernoulli_1e7's beta > 0 cells; read by: efficiency_figs, seed_tables
+  va_b_bernoulli_1e7_fix: {mirror_of: va_b_bernoulli_1e7, methods: {set: midian_fix}}
+
+  # [PENDING] fixed MIDIAN on va_b_llmrouterbench's beta > 0 cells; read by: seed_tables
+  va_b_llmrouterbench_fix: {mirror_of: va_b_llmrouterbench, methods: {set: midian_fix}}
+
+  # [PENDING | FIG:A] fixed MIDIAN on va_b_n100's beta > 0 cells; read by: seed_tables
+  va_b_n100_fix: {mirror_of: va_b_n100, methods: {set: midian_fix}}
+
+  # [PENDING | FIG:A,D] fixed MIDIAN on va_b_n1000's beta > 0 cells; read by: efficiency_figs, seed_tables
+  va_b_n1000_fix: {mirror_of: va_b_n1000, methods: {set: midian_fix}}
+
+  # [PENDING | FIG:A,B,D] fixed MIDIAN on va_b_n100k's beta > 0 cells; read by: efficiency_figs, seed_tables
+  va_b_n100k_fix: {mirror_of: va_b_n100k, methods: {set: midian_fix}}
+
+  # [PENDING | FIG:A,B] fixed MIDIAN on va_b_n100k_s4_10's beta > 0 cells; read by: condensed_figs, seed_tables
+  va_b_n100k_s4_10_fix: {mirror_of: va_b_n100k_s4_10, methods: {set: midian_fix}}
+
+  # [PENDING | FIG:A] fixed MIDIAN on va_b_n10k's beta > 0 cells; read by: seed_tables
+  va_b_n10k_fix: {mirror_of: va_b_n10k, methods: {set: midian_fix}}
+
+  # [PENDING | FIG:A] fixed MIDIAN on va_b_n10k_s4_10's beta > 0 cells; read by: condensed_figs, seed_tables
+  va_b_n10k_s4_10_fix: {mirror_of: va_b_n10k_s4_10, methods: {set: midian_fix}}
+
+  # [PENDING] fixed MIDIAN on va_b_replay_1e6's beta > 0 cells; read by: seed_tables
+  va_b_replay_1e6_fix: {mirror_of: va_b_replay_1e6, methods: {set: midian_fix}}
+
+  # [PENDING] fixed MIDIAN on va_b_routereval5k's beta > 0 cells; read by: seed_tables
+  va_b_routereval5k_fix: {mirror_of: va_b_routereval5k, methods: {set: midian_fix}}
+
+  # [PENDING | FIG:A,E] fixed MIDIAN on variants_f1's beta > 0 cells; read by: analyze, bar_figs, energy
+  variants_f1_fix: {mirror_of: variants_f1, methods: {set: midian_fix}}

@@ -519,6 +519,10 @@ _sets:
     - {name: sequential_halving, params: {peer_reported: true}}
     - {name: sequential_halving, params: {peer_reported: true, audit: true}}
   # 2026-10-07 review: every arm that reads reports or claims, plus the probe-only control
+  # 2026-10-09: the fixed MIDIAN alone (configs/grids/midian_fix.yaml)
+  midian_fix:
+    - {name: midian, params: {reagg: keep}}
+
   attack_arms:
     - midian
     - {name: midian, params: {reagg: keep}}                    # 2026-10-07 fix: online exclusion keeps evidence

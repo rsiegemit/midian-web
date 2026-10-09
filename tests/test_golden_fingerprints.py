@@ -19,7 +19,8 @@ CHEAP = ["smoke", "bernoulli_cost_smoke", "churn_n1000", "churn_n1000_fw_dd", "v
 RTE_DATA_DEP = {"bernoulli_1e7_cal", "bernoulli_b_probe", "bernoulli_b_sweep", "bernoulli_scale", "bernoulli_scale_v5",
                 "linucb_fix_bernoulli_1e7", "pool_fill_bernoulli_1e7", "rivals5_bernoulli_1e7_cal",
                 "lie_max_bernoulli_1e7_cal", "rivals_b_bernoulli_1e7", "scale_100k", "va_b_bernoulli_1e7",
-                "halving_bernoulli_1e7", "attack_bernoulli"}
+                "halving_bernoulli_1e7", "attack_bernoulli",
+                "bernoulli_scale_v5_fix", "va_b_bernoulli_1e7_fix"}
 
 
 @pytest.fixture(scope="module")
@@ -39,7 +40,7 @@ def test_fingerprint_matches_golden(cfg, golden, grid):
 
 
 def test_grid_set_and_rte_data_dependence(cfg, golden):
-    """Same grids as the golden files; exactly the 11 known grids expand $RTE_DATA (decision D1)."""
+    """Same grids as the golden files; exactly the known grids expand $RTE_DATA (decision D1)."""
     names = gf.grid_names(cfg)
     assert sorted(names) == sorted(golden)
     dep = {g for g in names if any(gf.env_dependent(b) for b in gf.run.blocks(cfg, g))}
