@@ -36,7 +36,7 @@ from scripts.figures.lib.regimes import NAME as REGIME_NAME  # noqa: E402
 from scripts.figures.lib.regimes import tag as regime
 from scripts.figures.lib.rows import RESULTS as R  # noqa: E402
 from scripts.figures.lib.rows import load_fw as load
-from scripts.figures.lib.rows import pending_reruns
+from scripts.figures.lib.rows import pending_reruns, swap_fixed
 from scripts.figures.lib.stats import se as _ci  # noqa: E402  (whiskers +/- 1 s.e.)
 
 CSV_OUT, OUT = os.path.join(AGG, "shortlist" + NEW), os.path.join(ROOT, "figures", "shortlist" + NEW)
@@ -156,7 +156,7 @@ def collect(family):
                     cell["pending"].add((m, src))
     for (n, dist, reg), cell in cells.items():
         for grid in (H30_REF if family == "routereval" and h30() else REF_GRIDS[family]).get(n, []):
-            df = pd.concat([rows(g) for g in with_s4_10([grid])], ignore_index=True)  # + its seed mirrors (10-seed)
+            df = swap_fixed(pd.concat([rows(g) for g in with_s4_10([grid])], ignore_index=True))  # + seed / fix mirrors
             if df.empty:
                 continue
             full = (df.method == "midian") & (df.params.fillna("{}").astype(str) == "{}")  # MIDIAN, the full method

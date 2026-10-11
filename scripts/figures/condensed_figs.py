@@ -362,12 +362,13 @@ def add_budgets(C):
     from scripts.figures.lib.rows import RESULTS as R
     from scripts.figures.lib.rows import label
     from scripts.figures.lib.rows import load_fw as rows
+    from scripts.figures.lib.rows import swap_fixed
 
     for fam, grp, tag in BUDGET_GRIDS:
         if fam in SW:
             continue  # every b comes from the erratum-30 per-seed tables (from_tables)
         for g in (f"va_b_{tag}", f"rivals_b_{tag}"):
-            df = pd.concat([rows(x) for x in with_s4_10([g])], ignore_index=True)
+            df = swap_fixed(pd.concat([rows(x) for x in with_s4_10([g])], ignore_index=True))
             if df.empty:
                 continue
             df = df.assign(label=[label(m, p) for m, p in zip(df.method, df.params)])
@@ -392,7 +393,7 @@ def add_budgets(C):
     ):
         if fam in SW:
             continue
-        m = pd.read_csv(f"{R}/{g}/matrix_success.csv")
+        m = pd.read_csv(f"{R}/{g}/matrix_success{NEW}.csv")  # _new: + the MIDIAN-fix rows (scale_matrix.py)
         m = m[(m.b == 1) & (m.metric == "success") & m.regime.isin(list(names))]
         for r in m.itertuples():
             key = (fam, grp, int(r.n), names[r.regime])

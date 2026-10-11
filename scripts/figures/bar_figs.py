@@ -29,6 +29,7 @@ from scripts.figures.lib.exclusions import excluded  # noqa: E402
 from scripts.figures.lib.grids import LIVE_GRIDS, MATRICES, with_s4_10  # noqa: E402
 from scripts.figures.lib.regimes import MATRIX_REGIME, REGIMES  # noqa: E402
 from scripts.figures.lib.rows import RESULTS as R  # noqa: E402
+from scripts.figures.lib.rows import swap_fixed  # noqa: E402
 from scripts.figures.lib.stats import ci as _ci  # noqa: E402
 
 CSV_OUT, OUT = os.path.join(AGG, "bars" + NEW), os.path.join(ROOT, "figures", "bars" + NEW)
@@ -180,7 +181,7 @@ def family_live(index, recs):
         for dist in ("specialist", "heavy_tail", "bimodal"):
             series, oracle, ns = {}, {}, []
             for n, grids in LIVE_GRIDS.items():
-                df = pd.concat([rows(g) for g in with_s4_10(grids)], ignore_index=True)
+                df = swap_fixed(pd.concat([rows(g) for g in with_s4_10(grids)], ignore_index=True))
                 if df.empty:
                     continue
                 if "declared_source" in df:
@@ -214,7 +215,7 @@ def family_live(index, recs):
 
 
 def family_matrix(fam, grid, index, recs, group="all shapes pooled"):
-    m = pd.read_csv(f"{R}/{grid}/matrix_success.csv")
+    m = pd.read_csv(f"{R}/{grid}/matrix_success{NEW}.csv")  # _new: + the MIDIAN-fix rows (scale_matrix.py)
     m = m[(m.b == 3) & (m.metric == "success")]
     for reg, _, _, rtitle in REGIMES:
         if reg not in MATRIX_REGIME:
@@ -255,11 +256,11 @@ def family_matrix(fam, grid, index, recs, group="all shapes pooled"):
 
 
 def family_routereval(index, recs):
-    small = pd.concat(
-        [rows("routereval_mmlu"), rows("fw_routereval_1k")], ignore_index=True
+    small = swap_fixed(
+        pd.concat([rows(g) for g in with_s4_10(["routereval_mmlu", "fw_routereval_1k"])], ignore_index=True)
     )  # the nine frameworks ran on the m = 1,000 pools (fw_routereval_1k)
-    big = pd.concat(
-        [rows("routereval_mmlu5k"), rows("fw_routereval_5k")], ignore_index=True
+    big = swap_fixed(
+        pd.concat([rows(g) for g in with_s4_10(["routereval_mmlu5k", "fw_routereval_5k"])], ignore_index=True)
     )  # ... and on the 5,000-LLM pool (fw_routereval_5k)
     for reg, beta, liar, rtitle in REGIMES:
         if reg == "beta01_random":
@@ -323,7 +324,7 @@ def family_routereval(index, recs):
 
 
 def family_llmrouterbench(index, recs):
-    df = rows("llmrouterbench_pool")
+    df = swap_fixed(pd.concat([rows(g) for g in with_s4_10(["llmrouterbench_pool"])], ignore_index=True))
     for reg, beta, liar, rtitle in REGIMES:
         st = stats_from_rows(df, beta, liar)
         if not st:

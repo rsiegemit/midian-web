@@ -5,6 +5,7 @@
     included) label(method, params)     the arm's label, as midian.analyze builds it stat(df, key)          one number
     per row from the method_stats JSON column pending_reruns()          {(grid, framework, dist, regime)} whose
     erratum-28 rerun is outstanding
+    swap_fixed(df)            the 10-seed build's MIDIAN: fixed-MIDIAN rows in place of midian{} where they exist
 RESULTS is $RTE_DATA/results (midian.config).
 """
 
@@ -80,6 +81,40 @@ def label(method, params):
     short = ",".join(f"{k}={v:.3g}" if isinstance(v, float) else f"{k}={v}" for k, v in sorted(p.items()))
     lab = method if not p else f"{method}[{short}]"
     return ALIAS.get(lab, lab)
+
+
+FIXED = {"reagg": "keep"}  # the fixed MIDIAN (commit 1663638): the grids.fixes() mirrors run it on beta > 0 cells
+
+
+def swap_fixed(df):
+    """The 10-seed build's MIDIAN: wherever a (cell, seed) has a fixed-MIDIAN row (midian{reagg: keep}), that cell's
+    plain midian{} rows are dropped and the fixed rows relabelled as plain MIDIAN (params "{}", label "midian").
+    Cell = the midian.run.CELL columns present (+ backend_kwargs). Every other row is untouched; a frame without fixed
+    rows comes back as it is."""
+    from midian.run import CELL
+
+    if df.empty or "method" not in df:
+        return df
+    p = [v if isinstance(v, dict) else json.loads(v) if isinstance(v, str) and v.startswith("{") else {}
+         for v in df.get("params", pd.Series("{}", index=df.index))]
+    mid = (df.method == "midian").to_numpy()
+    fixed = mid & np.array([q == FIXED for q in p], dtype=bool)
+    if not fixed.any():
+        return df
+    plain = mid & np.array([q == {} for q in p], dtype=bool)
+    k = df[[c for c in (*CELL, "backend_kwargs", "seed") if c in df]].fillna("nan")
+    if "backend_kwargs" in k:  # one spelling for a rows.d dict and its rows.csv JSON
+        k["backend_kwargs"] = [
+            json.dumps(json.loads(v) if isinstance(v, str) and v.startswith("{") else v, sort_keys=True, default=str)
+            for v in k.backend_kwargs
+        ]
+    k = pd.MultiIndex.from_frame(k.astype(str))
+    keep = ~(plain & k.isin(k[fixed]))
+    out, relabel = df[keep].copy(), fixed[keep]
+    out.loc[relabel, "params"] = "{}"
+    if "label" in out:
+        out.loc[relabel, "label"] = label("midian", "{}")
+    return out
 
 
 def stat(df, key):

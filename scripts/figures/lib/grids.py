@@ -8,11 +8,13 @@ uses.
     ERRATUM30         per non-live family, the rerun grid its B cell switches to once complete
     SIZE              live n -> grid-name size tag (va_b_<tag>, rivals_b_<tag>, lie_max_<tag>, ...)
     BUDGET_GRIDS      the b = 1 / 5 cells of A / B: (family, group, tag of va_b_* / rivals_b_*)
-    MATRICES          scale sweeps read from their matrix_success.csv (bar_figs; A / B b = 1)
+    MATRICES          scale sweeps read from their matrix_success{,_new}.csv (bar_figs; A / B b = 1)
     VA_GRIDS          exact MIDIAN build ledgers by (n, b) (efficiency D)
     S4_10, with_s4_10 seeds 4-10 of Figure 1's live 10^4 / 10^5 arms, pooled with their sources only under RTE_SEEDS_4_10=1
     S_TO_10, TEN      the other seed mirrors (every non-framework arm of A-I at 10 seeds); TEN = S4_10 + S_TO_10
     source(grid)      the grid a seed mirror mirrors
+    fixes()           the MIDIAN-fix mirrors <g>_fix (configs/grids/midian_fix.yaml: midian{reagg: keep}, beta > 0
+                      only); with_s4_10 adds them too, and the readers draw them as MIDIAN (rows.swap_fixed)
     SHORTLIST_SOURCES, NINE, DOC_REF, DOC_REF_CARTEL, VARIANTS
                       the framework-shortlist tables (doc_tables, fw_variant_numbers)
 
@@ -23,6 +25,7 @@ reference lines of the n = 10^2 shortlist figures and the bars read the same ins
 from __future__ import annotations
 
 import re
+from functools import cache
 
 
 def config():
@@ -137,16 +140,30 @@ def source(grid):
     return re.sub(r"_s\d+_10$", "", grid) if grid in TEN else grid
 
 
+# The fixed MIDIAN (midian{reagg: keep}, commit 1663638) on every beta > 0 MIDIAN cell a figure draws: <g>_fix mirrors
+# g, sources and seed mirrors alike (configs/grids/midian_fix.yaml). Same rule as TEN: they join only under
+# RTE_SEEDS_4_10=1, once every one is complete (its beta > 0 rows: beta = 0 is never run), and the readers draw them as
+# MIDIAN in place of midian{} (rows.swap_fixed).
+@cache
+def fixes():
+    """The MIDIAN-fix mirrors: every grid <g>_fix of the config that mirrors g."""
+    gs = config()["grids"]
+    return [g for g in gs if g.endswith("_fix") and gs[g].get("mirror_of") == g[:-4]]
+
+
 def with_s4_10(gs):
-    """`gs` plus the seed mirrors of each (TEN) under RTE_SEEDS_4_10=1 (which fails until every one has landed)."""
+    """`gs` plus the seed mirrors of each (TEN), and the MIDIAN-fix mirror of each of those (fixes()), under
+    RTE_SEEDS_4_10=1 (which fails until every one has landed)."""
     from scripts.figures.lib import SEEDS_4_10
     from scripts.figures.lib.seed_tables import complete
 
     if not SEEDS_4_10:
         return list(gs)
-    if missing := [g for g in TEN if not complete(g)]:
-        raise SystemExit(f"RTE_SEEDS_4_10=1 but {len(missing)} seed-mirror grids are incomplete: {missing}")
-    return list(gs) + [m for g in gs for m in TEN if source(m) == g]
+    if missing := [g for g in TEN + fixes() if not complete(g)]:
+        raise SystemExit(f"RTE_SEEDS_4_10=1 but {len(missing)} seed-mirror / MIDIAN-fix grids are incomplete: "
+                         f"{missing}")
+    out = list(gs) + [m for g in gs for m in TEN if source(m) == g]
+    return out + [f"{g}_fix" for g in out if f"{g}_fix" in fixes()]
 
 
 def shortlist_grid(family, grid, h30):

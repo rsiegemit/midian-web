@@ -22,6 +22,8 @@ RTE_SEEDS_4_10=1 python scripts/figures/make_all.py: the 10-seed build. Every fi
 from the seed mirrors (grids.TEN: configs/grids/seeds_4_10.yaml + seeds_to_10.yaml) is written as <name>_new (bars_new/,
 shortlist_new/, A_*_new, B_*_new, D_*_new, E-H *_new, I_max_lie_new, F_max_lie_new, A / B_max_lie_new) beside the
 originals, which are never replaced; C (bernoulli only) is not rebuilt. Fails until every seed-mirror grid has landed.
+It also draws the fixed MIDIAN (midian{reagg: keep}, grids.fixes()) as MIDIAN in every beta > 0 cell, the scale
+matrices included: --scale-matrix writes matrix_success_new.csv (with the fixed rows), which bar_figs / A / B read.
 """
 
 from __future__ import annotations
@@ -46,7 +48,6 @@ STEPS = [
     "lie_max_ab",
 ]
 FROM_CSV = STEPS[3:]
-SEEDS_4_10_STEPS = STEPS[1:]  # RTE_SEEDS_4_10=1 (10-seed build): every figure step, each writing *_new
 
 
 def commands(step, out, from_csv):
@@ -74,8 +75,6 @@ def main(argv=None):
     os.makedirs(out, exist_ok=True)
     steps = FROM_CSV if a.from_csv else [s for s in STEPS if s != "scale_matrix" or a.scale_matrix]
     steps = [s for s in steps if not a.only or s in a.only]
-    if os.environ.get("RTE_SEEDS_4_10") == "1":  # the 10-seed build (*_new): never the scale matrices
-        steps = [s for s in steps if s in SEEDS_4_10_STEPS]
     env = {**os.environ, "PYTHONPATH": ROOT, "MPLBACKEND": "Agg"}
     if a.from_csv:
         env["RTE_DATA"] = os.path.join(out, ".no_rte_data")  # anything that still reads rows fails loudly

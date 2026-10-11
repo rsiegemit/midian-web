@@ -10,7 +10,8 @@ tables() -> {(family, group, n, regime): {b: DataFrame(index = seed, columns = a
   bernoulli 1e7 bernoulli_scale_v5 (b = 1, 3) + va_b / rivals_b bernoulli_1e7 (b = 5)
   replay 1e6    replay_scale_v5 (b = 1, 3) + va_b / rivals_b replay_1e6; shapes pooled per seed, only seeds with
                 ALL three
-Under RTE_SEEDS_4_10=1 (the 10-seed build) every grid list above also reads its seed mirrors (grids.TEN).
+Under RTE_SEEDS_4_10=1 (the 10-seed build) every grid list above also reads its seed mirrors (grids.TEN) and their
+MIDIAN-fix mirrors (grids.fixes(); drawn as MIDIAN, rows.swap_fixed).
 Regimes: beta0 = beta 0 (any liar_select: no liars, so the tag is inert); cartel = beta 0.5, low_skill_first.
 The best of a pool is cross-fitted from these tables (stats.crossfit)."""
 
@@ -22,7 +23,7 @@ import pandas as pd
 
 from scripts.figures.lib import grids
 from scripts.figures.lib.regimes import ab
-from scripts.figures.lib.rows import label, read_rows
+from scripts.figures.lib.rows import label, read_rows, swap_fixed
 
 COLS = ["rid", "n", "b", "dist", "beta", "liar_select", "declared_source", "seed", "method", "params", "success"]
 
@@ -101,9 +102,9 @@ def planned(grid):
 def complete(grid, load=None):
     """True once EVERY planned row of `grid` has landed (set comparison, so stray or duplicate rows cannot stand in for
     a missing one). `load(grid)` returns its rows; default rows(), which drops framework arms -- pass a loader for
-    those."""
+    those. A MIDIAN-fix grid (grids.fixes()) plans only its beta > 0 rows: beta = 0 is never run."""
     if grid not in _done:
-        want = planned(grid)
+        want = {k for k in planned(grid) if k[3] > 0 or grid not in grids.fixes()}
         df = load(grid) if load else pd.concat([rows(grid, n) for n in {k[0] for k in want}], ignore_index=True)
         have = (
             set()
@@ -163,7 +164,7 @@ def tables():
     ]
     out = {}
     for (fam, grp, n), gs, kind in spec:  # + the seed mirrors (grids.TEN) under RTE_SEEDS_4_10=1
-        df = pd.concat([rows(g, n) for g in grids.with_s4_10(gs)], ignore_index=True)
+        df = swap_fixed(pd.concat([rows(g, n) for g in grids.with_s4_10(gs)], ignore_index=True))
         if not df.empty:  # TrueSkill: post probe-duplicate-fix rows only (erratum 30)
             src = df.grid.map(grids.source)
             df = df[

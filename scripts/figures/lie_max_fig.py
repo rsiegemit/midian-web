@@ -21,7 +21,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.realp
 from scripts.figures.lib import AGG, NEW, SEEDS_4_10, fig_out  # noqa: E402
 from scripts.figures.lib import figspec as S  # noqa: E402
 from scripts.figures.lib.grids import SIZE, with_s4_10  # noqa: E402
-from scripts.figures.lib.rows import read_rows  # noqa: E402
+from scripts.figures.lib.rows import read_rows, swap_fixed  # noqa: E402
 
 NAME, DRAW = "I_max_lie" + NEW, f"{AGG}/figures"
 NS = [n for n in SIZE if n >= 1000]
@@ -57,7 +57,7 @@ def max_lie(n):
     # 10-seed build: + the seed mirrors, and lie_max_arms_<n> for the claim readers' seeds 4-10 (the same row ids:
     # configs/grids/seeds_to_10.yaml); a row in both is read once
     gs = [f"lie_max_{SIZE[n]}"] + ([f"lie_max_arms_{SIZE[n]}"] if SEEDS_4_10 else [])
-    x = pd.concat([rows(g) for g in with_s4_10(gs)], ignore_index=True).drop_duplicates("rid")
+    x = swap_fixed(pd.concat([rows(g) for g in with_s4_10(gs)], ignore_index=True).drop_duplicates("rid"))
     x["label"] = [LABEL.get((m, p), m) for m, p in zip(x.method, x.params)]
     per = x.groupby(["label", "seed"]).success.mean().unstack("label")
     fw = rows(f"lie_max_fw_{SIZE[n]}")

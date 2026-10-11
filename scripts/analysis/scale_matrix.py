@@ -8,7 +8,9 @@ seed-bootstrap CI.
 
 Reads rows.csv directly (NOT midian.analyze.load, whose consolidate is a no-op on a grid with a .merge_owner) and runs
 it through midian.analyze.prepare for the same labels/aliases as every other table. Regimes follow RESULTS_rte_v4:
-beta = 0 once (liar-free, so liar-selection is degenerate) and each beta > 0 per liar-selection cell."""
+beta = 0 once (liar-free, so liar-selection is degenerate) and each beta > 0 per liar-selection cell.
+Under RTE_SEEDS_4_10=1 (the 10-seed build) the grid's MIDIAN-fix rows (grids.with_s4_10) join, drawn as MIDIAN
+(lib.rows.swap_fixed), and the CSV is matrix_<metric>_new.csv: the original matrix is never overwritten."""
 
 import argparse
 import os
@@ -19,6 +21,7 @@ import pandas as pd
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 from midian.analyze import RTE_DATA, prepare
+from scripts.figures.lib import NEW, SEEDS_4_10
 from scripts.figures.lib.regimes import matrix_title
 from scripts.figures.lib.stats import ci
 
@@ -39,7 +42,14 @@ def main():
     ap.add_argument("--dist")
     a = ap.parse_args()
     d = f"{RTE_DATA}/results/{a.grid}"
-    df = prepare(pd.read_csv(f"{d}/rows.csv", low_memory=False))
+    df = pd.read_csv(f"{d}/rows.csv", low_memory=False)
+    if SEEDS_4_10:  # + the MIDIAN-fix rows (rows.d / rows.csv), in place of midian{} wherever they exist
+        from scripts.figures.lib.grids import with_s4_10
+        from scripts.figures.lib.rows import read_rows, swap_fixed
+
+        extra = [read_rows(g).drop_duplicates("rid") for g in with_s4_10([a.grid])[1:]]
+        df = swap_fixed(pd.concat([df, *extra], ignore_index=True))
+    df = prepare(df)
     if a.dist:
         df = df[df.dist == a.dist]
     multi_b = df.b.nunique() > 1  # top rungs carry b=1 (control) and b=3
@@ -98,7 +108,7 @@ def main():
                     else f"{v['mean']:.3f} ± {v['std_seed']:.3f} [{v['ci_lo']:.3f},{v['ci_hi']:.3f}] ({v['seeds']})"
                 )
             print(f"| {l} | " + " | ".join(cells) + " |")
-    csv = f"{d}/matrix_{a.metric}" + (f"_{a.dist}" if a.dist else "") + ".csv"  # --dist must not clobber the pooled CSV
+    csv = f"{d}/matrix_{a.metric}" + (f"_{a.dist}" if a.dist else "") + f"{NEW}.csv"  # --dist: never the pooled CSV
     pd.DataFrame(out).to_csv(csv, index=False)
     print(f"\n(csv: {csv})", file=sys.stderr)
 

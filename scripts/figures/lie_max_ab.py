@@ -38,11 +38,12 @@ def max_tables(key):
     """{(regime, b): seed x arm} of the max-lie grid of one A / B cell (family, group, n), read as seed_tables reads
     the standard grids (live / bernoulli: specialist; replay: shapes pooled per seed)."""
     from scripts.figures.lib.grids import ERRATUM30, SIZE, with_s4_10
+    from scripts.figures.lib.rows import swap_fixed
     from scripts.figures.lib.seed_tables import _table, rows
 
     fam, _, n = key
     grid = f"lie_max_arms_{SIZE[n]}" if fam == "live" else f"lie_max_{ERRATUM30[fam]}"
-    df = pd.concat([rows(g, n) for g in with_s4_10([grid])], ignore_index=True)  # + its seed mirror (10-seed build)
+    df = swap_fixed(pd.concat([rows(g, n) for g in with_s4_10([grid])], ignore_index=True))  # + seed / fix mirrors
     if fam in ("live", "bernoulli"):
         df = df[df.dist == "specialist"]
     return grid, _table(df, pooled_shapes=fam == "replay")
