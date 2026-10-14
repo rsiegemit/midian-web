@@ -402,6 +402,7 @@ def main(argv=None):
     p.add_argument("--workers", type=int)
     p.add_argument("--dry-run", action="store_true")
     p.add_argument("--only", help="cell filter, e.g. beta=0.25,collude=true (splits one grid over many jobs)")
+    p.add_argument("--params", help='one param variant of --methods, as JSON, e.g. {"peer_reported": true}')
     a = p.parse_args(argv)
     cfg = load_config(a.config)
     out = f"{RTE_DATA}/results/{a.grid}"
@@ -416,6 +417,8 @@ def main(argv=None):
     units = []
     for blk in blocks(cfg, a.grid):
         specs = [s for s in method_specs(blk) if not a.methods or s["name"] in a.methods.split(",")]
+        if a.params is not None:                                       # one variant per job (long units, 2026-10-14)
+            specs = [s for s in specs if s["params"] == json.loads(a.params)]
         only = dict(kv.split("=", 1) for kv in a.only.split(",")) if a.only else {}     # lie_mode=inflate:q=0.05
         for cell in cells(blk):
             if any(cell[k] != yaml.safe_load(v) for k, v in only.items()):     # yaml-typed: beta=0 == 0.0, collude=true
