@@ -1,0 +1,38 @@
+# 2026-10-16 de-cloned live populations (review point 2: "a population of 10^5 is a few thousand clones of about seven
+# models"). backend_kwargs declone: 36 -> each agent holds one of 36 prompt variants (persona x reasoning style x
+# sampling temperature, midian.backends.prompts.VARIANTS) and every request is sampled per agent (LLMBackend declone):
+# ~500 behaviours per family on specialist instead of 14, no two agents share an answer. Populations live in
+# <dist>_n<n>_K16_seed<s>_dc36. User decision 2026-10-16 ("the faster alternative"): 10^3 and 10^4 on all three shapes,
+# 10^5 specialist; Figure A's arms (declone_arms) at b = 3, b = 1 / 5 on specialist; honest and the beta 0.5 cartel.
+grids:
+  # [PENDING] Figure A's arms on de-cloned live populations, n = 10^3, three shapes; read by: none yet
+  declone_n1000:
+    backend: llm
+    n: [1000]
+    dist: [specialist, heavy_tail, bimodal]
+    beta: [0, 0.5]
+    liar_select: [low_skill_first]
+    declared_source: [self_described]
+    backend_kwargs: {declone: 36}
+    b: [3]
+    seeds: 1-10
+    Q: 300
+    methods:                     # + peer-reported halving with and without audits (review point 1; trusted halving never)
+      - {set: declone_arms}
+      - {name: sequential_halving, params: {peer_reported: true}}
+      - {name: sequential_halving, params: {peer_reported: true, audit: true}}
+    blocks: [{}, {dist: [specialist], b: [1, 5]}]
+
+  # [PENDING] Figure A's arms on de-cloned live populations, n = 10^4, three shapes; read by: none yet
+  declone_n10k:
+    mirror_of: declone_n1000
+    n: [10000]
+
+  # [PENDING] Figure A's arms on de-cloned live populations, n = 10^5 specialist (3 seeds, as A's source); read by: none yet
+  declone_n100k:
+    mirror_of: declone_n1000
+    n: [100000]
+    dist: [specialist]
+    seeds: 1-3
+    methods: [{set: declone_arms}]
+    blocks: [{}, {b: [1, 5]}]

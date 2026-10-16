@@ -9,6 +9,13 @@ its PROMPT SIGNATURE `(model, handicapped_on_f, tool_on_f, max_tokens)`, of whic
 most |ladder| x 2 x 3. Equal signatures emit an identical prompt and, at temperature 0, the
 identical answer, so the memo is keyed on the signature: `true_skill()` costs
 `#signatures x K x measure_probes` generations, independent of n.
+
+DE-CLONED POPULATIONS (`declone=V`, 2026-10-16). The plain population has at most 14 behaviours per family, so most
+agents are exact clones. With declone each agent also holds one of V prompt variants (prompts.VARIANTS: persona,
+reasoning style, sampling temperature), which joins its signature (distinct skills), and every request an agent makes
+is SAMPLED at its variant's temperature with a seed of (population, agent, family, instance) (distinct answers: no
+two agents share a generation). S is still measured per signature (same signature, same expected skill). The
+population lives in its own directory (`..._dc<V>`); a plain population is unchanged.
 """
 from __future__ import annotations
 
@@ -24,6 +31,7 @@ from .. import llm_client
 from ..config import RTE_DATA, count, flag
 from ..stable_hash import stable_seed_32
 from . import families, noisy_declared, prompts, tools
+from .outcome_store import OutcomeStore
 from .population import bands, draw_profiles, ladder, signature
 
 _OUTCOMES: dict = {}                           # RTE_OUTCOME_CACHE: (population, agent, family, instance) -> outcome
@@ -35,7 +43,7 @@ class LLMBackend:
                  families: list[str] | None = None, measure_probes: int = 200,
                  measure_probes_large: int = 60, max_tokens: int = 512,
                  handicap_max_tokens: int | None = None, declared_noise: float = 0.05,
-                 population_dir: str | None = None, concurrency: int | None = None, **_):
+                 population_dir: str | None = None, concurrency: int | None = None, declone: int = 0, **_):
         from . import families as fam  # the module; `families` is the kwarg here
         self.n, self.K, self.seed, self.dist = int(n), int(K), int(seed), dist
         self.cfg = ladder()
@@ -49,18 +57,31 @@ class LLMBackend:
         # in-flight requests per batch; RTE_CONCURRENCY lets a dedicated warm-up job raise it (was a hard 64 here,
         # which silently bypassed the same knob on llm_client.complete_batch)
         self.declared_noise, self.concurrency = float(declared_noise), int(concurrency or llm_client.CONCURRENCY)
-        self.profiles = draw_profiles(self.n, self.K, dist, self.seed, self.cfg)
+        self.declone = int(declone)
+        assert self.declone <= len(prompts.VARIANTS), f"declone={declone} > {len(prompts.VARIANTS)} variants"
+        self.profiles = draw_profiles(self.n, self.K, dist, self.seed, self.cfg, self.declone)
         self.dir = Path(population_dir) if population_dir else \
-            POP_DIR / f"{dist}_n{self.n}_K{self.K}_seed{self.seed}"
+            POP_DIR / (f"{dist}_n{self.n}_K{self.K}_seed{self.seed}" + (f"_dc{self.declone}" if self.declone else ""))
         self._S = self._desc = None
         self._dir0 = self.dir
         self._counts = {"executions": 0, "tool_calls": 0}
+        self._store = OutcomeStore(self.dir) if self.declone else None   # de-cloned: outcomes, not texts
         self._lock = threading.Lock()
         global _CURRENT
         _CURRENT = self
 
     def _sig(self, a: int, f: int) -> tuple:
         return signature(self.profiles[a], f, self.max_tokens, self.handicap_max_tokens)
+
+    def _variant(self, a: int) -> dict | None:
+        return prompts.VARIANTS[self.profiles[a]["variant"]] if self.declone else None
+
+    def _sample(self, a: int, *what) -> tuple[float, int]:
+        """(temperature, seed) of one request by agent a: greedy in a plain population; sampled at the agent's variant
+        temperature with a seed of (population, agent, *what) in a de-cloned one."""
+        if not self.declone:
+            return (0.0, 0)
+        return (self._variant(a)["temperature"], int(stable_seed_32("declone", self.dir.name, a, *what)))
 
     # ---- churn: fresh profiles for `ids`; S / self-ratings / descriptions are recomputed lazily under a per-event
     # population dir (every signature is already measured, so only the new agents' descriptions cost generations)
@@ -70,47 +91,54 @@ class LLMBackend:
         self.profiles, self.dir, self._S, self._desc = [dict(p) for p in snap[0]], snap[1], snap[2], snap[3]
     def redraw(self, ids, rng):
         tag = int(rng.integers(2 ** 31))
-        new = draw_profiles(len(ids), self.K, self.dist, tag, self.cfg)
+        new = draw_profiles(len(ids), self.K, self.dist, tag, self.cfg, self.declone)
         for i, prof in zip(ids, new):
             self.profiles[int(i)] = {**prof, "id": int(i)}
         self.dir, self._S, self._desc = self._dir0 / f"churn_{tag}", None, None
+        self._store = OutcomeStore(self.dir) if self.declone else None
 
-    def _ask(self, jobs: dict, prompt, max_tokens: int) -> dict:
+    def _ask(self, jobs: dict, prompt, max_tokens: int, sample=None) -> dict:
         """`jobs` maps a job key to the model that must answer it; returns {key: text}, batched
         per model. Self-rating keys on the SIGNATURE (the answer depends only on model, tool and
-        family), self-description keys on the agent (it names the agent's own specialty list)."""
+        family), self-description keys on the agent (it names the agent's own specialty list).
+        `sample(key)` -> (temperature, seed) for the de-cloned populations (default greedy)."""
         by_model: dict[str, list] = {}
         for k, model in jobs.items():
             by_model.setdefault(model, []).append(k)
         out = {}
         for model, ks in by_model.items():
             for k, t in zip(ks, llm_client.complete_batch(
-                    model, [prompt(k) for k in ks], None, max_tokens, self.concurrency)):
+                    model, [prompt(k) for k in ks], None, max_tokens, self.concurrency,
+                    [sample(k) for k in ks] if sample and self.declone else None)):
                 out[k] = t
         return out
 
-    def _answers(self, items: list[tuple[int, int, int]]) -> list[str]:
+    def _answers(self, items: list[tuple[int, int, int]], measure: bool = False) -> list[str]:
         """items = [(agent, family_idx, instance)] -> answers, in order. Grouped by
         (model, max_tokens): the budget is part of the memo key, so a capped agent must never
-        ride on an uncapped agent's batch."""
+        ride on an uncapped agent's batch. `measure`: the S measurement, sampled per SIGNATURE (seed of signature,
+        family, instance), so every de-cloned population shares one measurement, as the greedy memo does."""
         out: list[str] = [""] * len(items)
         groups: dict[tuple, list[int]] = {}
         for i, (a, f, _) in enumerate(items):
-            model, _h, _t, mt = self._sig(a, f)
-            groups.setdefault((model, mt), []).append(i)
+            sig = self._sig(a, f)
+            groups.setdefault((sig[0], sig[3]), []).append(i)
 
         def run(group) -> None:
             (model, mt), idx = group
-            msgs = []
+            msgs, samp = [], []
             for i in idx:
-                a, f, _ = items[i]
-                _m, hand, tool, _ = self._sig(a, f)
+                a, f, inst = items[i]
+                _m, hand, tool = self._sig(a, f)[:3]
                 fam = self.families[f]
-                msgs.append(prompts.build(fam, families.question(fam, items[i][2]), hand, tool))
+                msgs.append(prompts.build(fam, families.question(fam, inst), hand, tool, self._variant(a)))
+                sig = self._sig(a, f)
+                samp.append(self._sample(a, f, inst) if not (measure and self.declone) else
+                            (self._variant(a)["temperature"], int(stable_seed_32("declone_measure", *sig, f, inst))))
             # No caller-supplied keys anywhere: midian.llm_client hashes the full request, so two
             # agents with the same prompt still share one entry and a reworded prompt cannot
             # collide with a stale one.
-            texts = llm_client.complete_batch(model, msgs, None, mt, self.concurrency)
+            texts = llm_client.complete_batch(model, msgs, None, mt, self.concurrency, samp if self.declone else None)
 
             follow = []                                     # one tool round for whoever asked
             for j, i in enumerate(idx):
@@ -122,10 +150,11 @@ class LLMBackend:
                     continue
                 with self._lock:
                     self._counts["tool_calls"] += 1
-                follow.append((i, prompts.follow_up(msgs[j], texts[j], tools.RUN[tool](call))))
+                follow.append((i, prompts.follow_up(msgs[j], texts[j], tools.RUN[tool](call)), samp[j]))
             if follow:
-                for (i, _), t in zip(follow, llm_client.complete_batch(
-                        model, [m for _, m in follow], None, mt, self.concurrency)):
+                for (i, _, _), t in zip(follow, llm_client.complete_batch(
+                        model, [m for _, m, _ in follow], None, mt, self.concurrency,
+                        [x for _, _, x in follow] if self.declone else None)):
                     out[i] = prompts.extract_answer(t)
 
         # One thread per (model, budget) group, each keeping its own client-side concurrency: the
@@ -141,24 +170,34 @@ class LLMBackend:
             self._counts["executions"] += len(items)
         return out
 
-    def _outcomes(self, items) -> np.ndarray:
+    def _outcomes(self, items, measure: bool = False) -> np.ndarray:
+        if self._store is not None and not measure:     # de-cloned: the population's outcome store, misses added
+            have = self._store.get(items)
+            miss = list(dict.fromkeys(it for it, v in zip(items, have) if v is None))
+            if miss:
+                self._store.put(zip(miss, self._score(miss, self._answers(miss))))
+                have = self._store.get(items)
+            return np.array(have, dtype=np.int8)
         if flag("RTE_OUTCOME_CACHE"):          # opt-in, exact: an (agent, family, instance) outcome is fixed
             # (memoised answer, deterministic scoring), so score it once per process
             pop = str(self.dir)
             miss = list(dict.fromkeys(it for it in items if (pop,) + it not in _OUTCOMES))
-            args = [(self.families[f], i, x) for (_, f, i), x in zip(miss, self._answers(miss) if miss else [])]
-            n = count("RTE_TEXT_PROCS")
-            if n > 1 and len(args) > 20000:
-                # scoring rebuilds each instance: fork it (pure function, same result)
-                import multiprocessing as mp
-                with mp.get_context("fork").Pool(n) as pool:
-                    res = pool.starmap(families.correct, args, chunksize=5000)
-            else:
-                res = [families.correct(*a) for a in args]
+            res = self._score(miss, self._answers(miss, measure) if miss else [])
             _OUTCOMES.update({(pop,) + it: r for it, r in zip(miss, res)})
             return np.array([_OUTCOMES[(pop,) + it] for it in items], dtype=np.int8)
         return np.array([families.correct(self.families[f], i, x)
-                         for (_, f, i), x in zip(items, self._answers(items))], dtype=np.int8)
+                         for (_, f, i), x in zip(items, self._answers(items, measure))], dtype=np.int8)
+
+    def _score(self, items, answers) -> list[int]:
+        """0/1 per (agent, family, instance) answer. Scoring rebuilds each instance: past 20k answers it forks
+        RTE_TEXT_PROCS workers (pure function, same result)."""
+        args = [(self.families[f], i, x) for (_, f, i), x in zip(items, answers)]
+        n = count("RTE_TEXT_PROCS")
+        if n > 1 and len(args) > 20000:
+            import multiprocessing as mp
+            with mp.get_context("fork").Pool(n) as pool:
+                return pool.starmap(families.correct, args, chunksize=5000)
+        return [families.correct(*a) for a in args]
 
     # ---- backend protocol -------------------------------------------------
     def execute(self, a: int, task) -> int:
@@ -179,6 +218,9 @@ class LLMBackend:
             self._S = S.astype(np.float32)
             return self._S
         S = np.zeros((self.n, self.K), dtype=np.float32)
+        # de-cloned: one measurement for every population beside this one
+        shared = self.dir.parent / f"declone{self.declone}_signature_S.json"
+        known = json.loads(shared.read_text()) if self.declone and shared.exists() else {}
         for f, fam in enumerate(self.families):
             # Instances are NOT seeded by the population: S is a property of the prompt SIGNATURE,
             # not of the population that happens to contain it. A fixed project-wide probe set
@@ -189,19 +231,29 @@ class LLMBackend:
             # at most 2 signatures per model on a given family (specialty / handicapped), so this
             # is ~14 cells whatever n is; scoring per agent would run 32M verifier calls at n=1e4
             # to learn those same 14 numbers.
-            rep = {}
+            rep, S_sig = {}, {}
             for a in range(self.n):
                 rep.setdefault(self._sig(a, f), a)
+            key = lambda sig: f"{fam}|{json.dumps(list(sig))}"                          # noqa: E731
+            S_sig.update({sig: known[key(sig)] for sig in rep if key(sig) in known})
+            rep = {sig: a for sig, a in rep.items() if sig not in S_sig}
             n_probe = {sig: (self.measure_probes_large if sig[0] in self._large
                              else self.measure_probes) for sig in rep}
-            o, t, S_sig = self._outcomes([(a, f, s) for sig, a in rep.items()
-                                          for s in seeds[:n_probe[sig]]]), 0, {}
+            items = [(a, f, s) for sig, a in rep.items() for s in seeds[:n_probe[sig]]]
+            o, t = (self._outcomes(items, **({"measure": True} if self.declone else {})) if items else []), 0
             for sig, a in rep.items():
-                S_sig[sig] = o[t:t + n_probe[sig]].mean()
+                S_sig[sig] = float(o[t:t + n_probe[sig]].mean())
                 t += n_probe[sig]
+            if self.declone and rep:                    # re-read first: another population may have added signatures
+                known = {**(json.loads(shared.read_text()) if shared.exists() else {}),
+                         **{key(sig): S_sig[sig] for sig in rep}}
+                tmp = shared.with_suffix(f".tmp{os.getpid()}")
+                tmp.parent.mkdir(parents=True, exist_ok=True)
+                tmp.write_text(json.dumps(known))
+                os.replace(tmp, shared)
             for a in range(self.n):
                 S[a, f] = S_sig[self._sig(a, f)]
-            print(f"[llm] family {f+1}/{self.K} {fam}: {len(rep)} signatures, "
+            print(f"[llm] family {f+1}/{self.K} {fam}: {len(S_sig)} signatures ({len(rep)} measured now), "
                   f"mean={S[:, f].mean():.3f} max={S[:, f].max():.3f}", flush=True)
         self._write("S.npy", S)
         (self.dir / "profiles.json").write_text(json.dumps(
@@ -225,6 +277,13 @@ class LLMBackend:
         D = np.zeros((self.n, self.K), dtype=np.float32)
         for f, fam in enumerate(self.families):             # the agent's OWN model rates itself
             q, _ = families.exemplar(fam)
+            if self.declone:                                # per agent: its own variant, its own sample
+                text = self._ask({a: self.profiles[a]["model"] for a in range(self.n)},
+                                 lambda a, fam=fam, q=q: prompts.rate_self(fam, self._sig(a, f)[2], q, self._variant(a)),
+                                 64, lambda a, f=f: self._sample(a, f, "rate_self"))
+                D[:, f] = [prompts.parse_rating(text[a]) for a in range(self.n)]
+                print(f"[llm] self-rated {f+1}/{self.K} {fam}: per agent, mean={D[:, f].mean():.3f}", flush=True)
+                continue
             sigs = {self._sig(a, f) for a in range(self.n)}
             text = self._ask({sig: sig[0] for sig in sigs},
                              lambda sig, fam=fam, q=q: prompts.rate_self(fam, sig[2], q), 64)
@@ -250,7 +309,8 @@ class LLMBackend:
         # agents sharing a signature need not share. Identical prompts still cost one generation.
         texts = self._ask({a: self.profiles[a]["model"] for a in range(self.n)},
                           lambda a: prompts.describe_self(self.profiles[a]["model"],
-                                                          self.profiles[a]["tool"], spec(a)), 160)
+                                                          self.profiles[a]["tool"], spec(a), self._variant(a)), 160,
+                          lambda a: self._sample(a, "describe"))
         self._desc = [f"{' '.join(texts[a].split())} Declared areas: {spec(a) or 'general tasks'}."
                       for a in range(self.n)]
         self.dir.mkdir(parents=True, exist_ok=True)
@@ -261,13 +321,15 @@ class LLMBackend:
         """Each agent's raw verbal confidence on instance `inst` of family f, asked by its own model in its own solve
         prompt (prompts.rate_task); `again` continues that conversation once (prompts.rate_again: the first reply is a
         memo hit). Memoised by content hash: agents sharing a signature share one generation."""
-        fam, sig = self.families[f], [self._sig(int(a), f) for a in agents]
+        agents = [int(a) for a in agents]
+        fam, sig = self.families[f], [self._sig(a, f) for a in agents]
         q = families.question(fam, int(inst))
-        first = lambda i: prompts.rate_task(fam, q, sig[i][1], sig[i][2])                  # noqa: E731
+        first = lambda i: prompts.rate_task(fam, q, sig[i][1], sig[i][2], self._variant(agents[i]))  # noqa: E731
         jobs = {i: s[0] for i, s in enumerate(sig)}
-        text = self._ask(jobs, first, 32)
+        conf = lambda i: self._sample(agents[i], f, int(inst), "confidence")                       # noqa: E731
+        text = self._ask(jobs, first, 32, conf)
         if again:
-            text = self._ask(jobs, lambda i: prompts.rate_again(first(i), text[i]), 32)
+            text = self._ask(jobs, lambda i: prompts.rate_again(first(i), text[i]), 32, conf)
         return [text[i] for i in range(len(sig))]
 
     def family_descriptions(self) -> list[str]:

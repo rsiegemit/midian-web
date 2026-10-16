@@ -103,3 +103,6 @@ va_b_n10k_s4_10_fix	28	28	819753ad0445c391	0
 va_b_replay_1e6_fix	600	600	b65c77bb2089b197	0
 va_b_routereval5k_fix	12	12	78e3ddfe915c19f4	0
 variants_f1_fix	240	240	fce0fafa8884e6b8	0
+declone_n1000	100	2000	b791dc122b6c8f66	0
+declone_n10k	100	2000	1452c2e0db4237a2	0
+declone_n100k	18	324	4f8a9cedd017e1c7	0

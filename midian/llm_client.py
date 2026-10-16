@@ -1,4 +1,4 @@
-"""The single place any LLM call goes through. OpenAI-compatible, temperature 0, disk-memoized.
+"""The single place any LLM call goes through. OpenAI-compatible, temperature 0 (or seeded sampling), disk-memoized.
 
 Endpoints: one file per served model under `$RTE_DATA/endpoints.d/` (written lock-free by
 cluster/slurm/_register_endpoint.py), merged into `$RTE_DATA/endpoints.json` for the contract.
@@ -186,7 +186,7 @@ def _observe(url: str, seconds: float) -> None:
     _lat[url] = 0.7 * _lat.get(url, seconds) + 0.3 * seconds
 
 
-def _generate(model: str, messages: Sequence[dict], max_tokens: int) -> str:
+def _generate(model: str, messages: Sequence[dict], max_tokens: int, temperature: float = 0.0, seed: int = 0) -> str:
     last: Exception | None = None
     for attempt in range(MAX_RETRIES):
         u, t0 = None, time.time()
@@ -200,7 +200,7 @@ def _generate(model: str, messages: Sequence[dict], max_tokens: int) -> str:
             u, t0 = str(_clients[model][0].base_url), time.time()
             r = _clients[model][0].chat.completions.create(
                 model=model, messages=for_model(model, messages), max_tokens=int(max_tokens),
-                temperature=0.0, seed=0)
+                temperature=float(temperature), seed=int(seed))
             _observe(u, time.time() - t0)
             _bump("generations")
             return r.choices[0].message.content or ""
@@ -239,18 +239,31 @@ CONCURRENCY = count("RTE_CONCURRENCY", 64)   # in-flight requests per batch; rai
 
 
 def complete_batch(model: str, batch: Sequence[Sequence[dict]], keys: Sequence[str] | None = None,
-                   max_tokens: int = 512, concurrency: int | None = None) -> list[str]:
+                   max_tokens: int = 512, concurrency: int | None = None,
+                   sampling: Sequence[tuple[float, int]] | None = None) -> list[str]:
     """Fan out over a thread pool — vLLM batches server-side. Results follow `batch` order.
 
     Deduplicates WITHIN the batch as well as against the memo: agents that share a prompt
     signature emit a byte-identical prompt, so a measurement sweep hands us the same request
     hundreds of times in one call, and without this they would all miss in parallel and regenerate
     the identical prompt once per agent. `keys` are optional prefixes on the hash of the full request (part
-    of the memo key, never a replacement for the hash) -- see `content_key`."""
+    of the memo key, never a replacement for the hash) -- see `content_key`. `sampling` (one (temperature, seed) per
+    request; default greedy) samples instead, deduplicated within the batch but never memoised (the de-cloned live
+    populations, LLMBackend declone, store scored outcomes instead)."""
     batch = list(batch)
     if keys is not None and len(keys) != len(batch):
         raise ValueError(f"keys/batch length mismatch: {len(keys)} vs {len(batch)}")
     prefixes = list(keys) if keys is not None else [None] * len(batch)
+    if sampling is not None:     # seeded samples: deduplicated within the batch, never memoised (the de-cloned
+        # populations store scored outcomes instead, midian.backends.outcome_store: their texts would bloat the memo
+        # every process loads)
+        keys = [f"{content_key(model, m, max_tokens, p)}|t{t:g}s{sd}" for m, p, (t, sd) in zip(batch, prefixes, sampling)]
+        first = {k: i for i, k in reversed(list(enumerate(keys)))}
+        _bump("misses", len(first))
+        with ThreadPoolExecutor(max_workers=max(1, min(concurrency or CONCURRENCY, len(first)))) as ex:
+            texts = dict(zip(first, ex.map(lambda i: _generate(model, batch[i], max_tokens, *sampling[i]),
+                                           first.values())))
+        return [texts[k] for k in keys]
     keys = [content_key(model, m, max_tokens, pre) for m, pre in zip(batch, prefixes)]
     with _LOCK:
         mem, shard = _memo()

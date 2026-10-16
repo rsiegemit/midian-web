@@ -17,8 +17,25 @@ TOOL_RE = {"calculator": re.compile(r"<calc>(.*?)</calc>", re.DOTALL | re.IGNORE
            "python": re.compile(r"```(?:python)?\s*\n(.*?)```", re.DOTALL)}
 FORMAT = "Give your final answer inside <answer></answer> tags, with nothing else inside the tags."
 
+# De-cloned populations (LLMBackend declone, 2026-10-16): each agent holds one VARIANT -- a persona line, a reasoning
+# style and a sampling temperature -- so agents of one model differ in skill, not only in identity. Index = variant id;
+# the order is part of every de-cloned population (append, never reorder).
+PERSONAS = ["", "You are a careful, methodical assistant who double-checks every step.",
+            "You are a fast, confident expert who answers decisively.", "You are a helpful generalist assistant."]
+REASONING = ["", "Think step by step before giving the final answer.",
+             "Answer as concisely as possible and do not show your working."]
+TEMPERATURES = [0.2, 0.7, 1.0]
+VARIANTS = [{"persona": p, "reasoning": r, "temperature": t} for p in PERSONAS for r in REASONING for t in TEMPERATURES]
 
-def build(family: str, question: str, handicapped: bool, tool: str) -> list[dict]:
+
+def _styled(parts: list[str], variant: dict | None) -> list[str]:
+    """A variant's persona first and its reasoning style last (before the answer format); no variant: unchanged."""
+    if not variant:
+        return parts
+    return [x for x in [variant["persona"], *parts, variant["reasoning"]] if x]
+
+
+def build(family: str, question: str, handicapped: bool, tool: str, variant: dict | None = None) -> list[dict]:
     """A handicapped agent keeps the answer-format instruction: withholding that would measure
     format compliance rather than skill, and all agents are scored by the same verifier."""
     if handicapped:
@@ -28,7 +45,7 @@ def build(family: str, question: str, handicapped: bool, tool: str) -> list[dict
         parts = [f"You are solving a '{family}' task.", families.describe(family),
                  f"Worked example.\nQuestion: {q}\nAnswer: {a}"]
     parts += [tools.HINT[tool]] if tool in tools.HINT else []
-    return [{"role": "system", "content": "\n\n".join(parts + [FORMAT])},
+    return [{"role": "system", "content": "\n\n".join(_styled(parts, variant) + [FORMAT])},
             {"role": "user", "content": question}]
 
 
@@ -63,11 +80,11 @@ def parse_rating(text: str) -> float:
     return 0.5
 
 
-def rate_self(family: str, tool: str, example: str) -> list[dict]:
-    return [{"role": "system", "content":
-             f"Rate your own competence at a class of problems. Your tool: {tool}. Answer with a "
-             "single number between 0 and 1 (0 = never solve one, 1 = always) inside "
-             "<answer></answer> tags."},
+def rate_self(family: str, tool: str, example: str, variant: dict | None = None) -> list[dict]:
+    head = (f"Rate your own competence at a class of problems. Your tool: {tool}. Answer with a "
+            "single number between 0 and 1 (0 = never solve one, 1 = always) inside "
+            "<answer></answer> tags.")
+    return [{"role": "system", "content": "\n\n".join(_styled([head], variant and {**variant, "reasoning": ""}))},
             {"role": "user", "content": f"Task family: {family}.\n{families.describe(family)}\n\n"
                                         f"Example problem:\n{example}\n\nWhat fraction of problems "
                                         "like this do you solve correctly?"}]
@@ -76,9 +93,9 @@ def rate_self(family: str, tool: str, example: str) -> list[dict]:
 CONF_MAX = "<answer>10</answer>"        # the top of rate_task's scale: what a liar says (midian.world.World.confidence)
 
 
-def rate_task(family: str, question: str, handicapped: bool, tool: str) -> list[dict]:
+def rate_task(family: str, question: str, handicapped: bool, tool: str, variant: dict | None = None) -> list[dict]:
     """The agent's own solve prompt (`build`), the question followed by a request for its confidence on THIS problem."""
-    msgs = build(family, question, handicapped, tool)
+    msgs = build(family, question, handicapped, tool, variant)
     msgs[-1] = {"role": "user",
                 "content": f"{question}\n\nDo not solve it yet and do not write code. "
                 "How confident are you that you would solve this problem correctly? Answer with a single integer from "
@@ -95,11 +112,11 @@ def rate_again(msgs: list[dict], reply: str) -> list[dict]:
                                "<answer></answer> tags."}]
 
 
-def describe_self(model: str, tool: str, specialty: str) -> list[dict]:
-    return [{"role": "system", "content":
-             "Write one short paragraph (<=70 words) describing yourself as a service in an agent "
-             "marketplace: what problems you handle well and what tools you have. No lists, no "
-             "headings."},
+def describe_self(model: str, tool: str, specialty: str, variant: dict | None = None) -> list[dict]:
+    head = ("Write one short paragraph (<=70 words) describing yourself as a service in an agent "
+            "marketplace: what problems you handle well and what tools you have. No lists, no "
+            "headings.")
+    return [{"role": "system", "content": "\n\n".join(_styled([head], variant and {**variant, "reasoning": ""}))},
             {"role": "user", "content":
              f"Your base model is {model}. Your tool is: {tool}. You are equipped for these task "
              f"families: {specialty or 'no particular area'}. Others you handle without examples "

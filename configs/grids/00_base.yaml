@@ -518,11 +518,33 @@ _sets:
     - sequential_halving
     - {name: sequential_halving, params: {peer_reported: true}}
     - {name: sequential_halving, params: {peer_reported: true, audit: true}}
-  # 2026-10-07 review: every arm that reads reports or claims, plus the probe-only control
+  # 2026-10-16 de-cloned live populations (configs/grids/declone.yaml): every arm Figure A draws, each best-of pool
+  # complete (condensed_figs.POOLS), MIDIAN as published and fixed
+  declone_arms:
+    - midian
+    - {name: midian, params: {reagg: keep}}
+    - {name: midian, params: {audit: false, verify: false}}
+    - {name: flat_probe_argmax, params: {online: true}}
+    - declared_argmax
+    - random
+    - knn_router
+    - {name: knn_router, params: {online: true}}
+    - mlp_router
+    - flat_nsw_router
+    - cluster_head_router
+    - disrouter_cascade
+    - ucb_per_family
+    - thompson_per_family
+    - warm_start_bandit
+    - {name: warm_start_bandit, params: {n0: 0.5}}
+    - {name: linucb_honest, params: {bonus: own}}
+    - trueskill_per_family
+
   # 2026-10-09: the fixed MIDIAN alone (configs/grids/midian_fix.yaml)
   midian_fix:
     - {name: midian, params: {reagg: keep}}
 
+  # 2026-10-07 review: every arm that reads reports or claims, plus the probe-only control
   attack_arms:
     - midian
     - {name: midian, params: {reagg: keep}}                    # 2026-10-07 fix: online exclusion keeps evidence

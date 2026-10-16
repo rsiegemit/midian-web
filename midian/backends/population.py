@@ -48,7 +48,9 @@ def bands(cfg: dict) -> tuple[list[str], list[str], list[str], frozenset[str]]:
             frozenset(x["id"] for x in m if x["params_b"] >= cfg["large_min_b"]))
 
 
-def draw_profiles(n: int, K: int, dist: str, seed: int, cfg: dict | None = None) -> list[dict]:
+def draw_profiles(n: int, K: int, dist: str, seed: int, cfg: dict | None = None, variants: int = 0) -> list[dict]:
+    """`variants` > 0 (a de-cloned population): each agent also draws a prompt variant in [0, variants) from its own
+    stream, after the main draws, so every other profile field is the same as in the plain population."""
     cfg = cfg or ladder()
     ids, small, big, _ = bands(cfg)
     rng = np.random.default_rng(stable_seed_32(seed, "profiles", n, K, dist))
@@ -79,15 +81,21 @@ def draw_profiles(n: int, K: int, dist: str, seed: int, cfg: dict | None = None)
             raise ValueError(f"unknown skill_dist {dist!r}")
         out.append({"id": a, "model": model, "specialty": list(spec),
                     "tool": tool_for(model, cfg)})
+    if variants:
+        vr = np.random.default_rng(stable_seed_32(seed, "variants", n, K, dist))
+        for p, v in zip(out, vr.integers(variants, size=n)):
+            p["variant"] = int(v)
     return out
 
 
 def signature(profile: dict, f: int, max_tokens: int, handicap_max_tokens: int) -> tuple:
     """Everything that determines an agent's prompt on family f, hence (at temperature 0) its
-    answer. Agents sharing a signature share memo entries — see midian.backends.llm."""
+    answer. Agents sharing a signature share memo entries — see midian.backends.llm. A de-cloned
+    agent's prompt variant joins it (its answers are also sampled per agent: same signature, same skill)."""
     hand = f not in profile["specialty"]
-    return (profile["model"], hand, "none" if hand else profile["tool"],
-            handicap_max_tokens if hand else max_tokens)
+    sig = (profile["model"], hand, "none" if hand else profile["tool"],
+           handicap_max_tokens if hand else max_tokens)
+    return sig + (profile["variant"],) if "variant" in profile else sig
 
 
 def pinned_cfg(models: list[str]) -> dict:
