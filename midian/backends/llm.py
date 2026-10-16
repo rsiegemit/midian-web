@@ -140,7 +140,7 @@ class LLMBackend:
             # collide with a stale one.
             texts = llm_client.complete_batch(model, msgs, None, mt, self.concurrency, samp if self.declone else None)
 
-            follow = []                                     # one tool round for whoever asked
+            calls = []                                      # one tool round for whoever asked
             for j, i in enumerate(idx):
                 a, f, _ = items[i]
                 tool = self._sig(a, f)[2]
@@ -148,9 +148,15 @@ class LLMBackend:
                 if call is None:
                     out[i] = prompts.extract_answer(texts[j])
                     continue
-                with self._lock:
-                    self._counts["tool_calls"] += 1
-                follow.append((i, prompts.follow_up(msgs[j], texts[j], tools.RUN[tool](call)), samp[j]))
+                calls.append((j, i, tool, call))
+            with self._lock:
+                self._counts["tool_calls"] += len(calls)
+            # de-cloned: sampled code rarely repeats, so run the sandbox directly (no memo) and in parallel
+            run_tool = lambda c: tools.python(c[3], memo=False) if self.declone and c[2] == "python" \
+                else tools.RUN[c[2]](c[3])                                                    # noqa: E731
+            with ThreadPoolExecutor(max_workers=16 if self.declone else 1) as ex:
+                results = list(ex.map(run_tool, calls))
+            follow = [(i, prompts.follow_up(msgs[j], texts[j], r), samp[j]) for (j, i, _, _), r in zip(calls, results)]
             if follow:
                 for (i, _, _), t in zip(follow, llm_client.complete_batch(
                         model, [m for _, m, _ in follow], None, mt, self.concurrency,

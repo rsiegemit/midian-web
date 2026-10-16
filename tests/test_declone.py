@@ -109,3 +109,17 @@ def test_plain_population_still_uses_the_memo(gen, tmp_path):
     b = LLMBackend(n=10, K=2, dist="specialist", seed=1, families=["basic_arithmetic", "gcd"])
     b.execute_many(np.arange(10), np.zeros(10, int), np.full(10, 3))
     assert llm_client._memo()[0] and b._store is None
+
+
+def test_declone_tool_round_skips_the_memo(gen, tmp_path, monkeypatch):
+    from midian.backends import tools
+    seen = []
+    monkeypatch.setattr(tools, "_python", lambda code, timeout: seen.append(code) or "6")
+    monkeypatch.setattr(llm_client, "memo_call", lambda *a, **k: (_ for _ in ()).throw(AssertionError("memo used")))
+    replies = iter(["```python\nprint(6)\n```", "<answer>6</answer>"] * 50)
+    monkeypatch.setattr(llm_client, "_generate", lambda *a, **k: next(replies))
+    b = LLMBackend(n=1, K=1, dist="bimodal", seed=1, families=["basic_arithmetic"], declone=36,
+                   population_dir=str(tmp_path / "pop"))
+    b.profiles[0].update(specialty=[0], tool="python")
+    b.execute_many(np.array([0]), np.array([0]), np.array([3]))
+    assert seen == ["print(6)\n"] and b.stats()["llm_tool_calls"] == 1

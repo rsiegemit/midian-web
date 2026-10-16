@@ -51,9 +51,11 @@ def calculator(expr: str) -> str:
         return f"ERROR: {type(e).__name__}: {e}"
 
 
-def python(code: str, timeout: float = 5.0) -> str:
+def python(code: str, timeout: float = 5.0, memo: bool = True) -> str:
     if len(code) > 8000:
         return "ERROR: code too long"                # no exception-type prefix (commit 20304d0)
+    if not memo:      # de-cloned populations: sampled code rarely repeats, and the memo would load every shard
+        return _python(code, timeout)
     # runs are deterministic (PYTHONHASHSEED=0): memoise like a generation
     from ..llm_client import memo_call
     key = "tool:python:" + hashlib.blake2b(code.encode(), digest_size=16).hexdigest()
