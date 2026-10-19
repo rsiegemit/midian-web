@@ -7,3 +7,11 @@ I_max_lie,oracle,0.8622222222222221,,100000.0
 F_max_lie,oracle,0.8622222222222221,,100000.0
 F_max_lie,random_line,0.4422222222222222,,100000.0
 F_max_lie,midian_ref,0.8355555555555556,,100000.0
+D_energy_per_query_new,cheapest,20.60023539411765,AutoGen,
+D_energy_per_query_new,costliest,219.75412344826285,Magentic-One,
+I_max_lie_new,oracle,0.8612,,1000.0
+I_max_lie_new,oracle,0.8630000000000001,,10000.0
+I_max_lie_new,oracle,0.8636666666666667,,100000.0
+F_max_lie_new,oracle,0.8636666666666667,,100000.0
+F_max_lie_new,random_line,0.434,,100000.0
+F_max_lie_new,midian_ref,0.8213333333333332,,100000.0

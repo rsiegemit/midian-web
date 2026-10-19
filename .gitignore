@@ -7,6 +7,8 @@ slurm-*.err
 cluster/cluster.env
 figures/bars/
 figures/shortlist/
+figures/bars_new/
+figures/shortlist_new/
 context_files/
 *.log
 slurm-*

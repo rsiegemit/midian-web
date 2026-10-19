@@ -1,0 +1,29 @@
+group,tick,family,n,arm,key,max_lie,ci_lo,ci_hi,standard_lie,oracle,chosen,chosen_standard,grid
+$n = 10^{2}$,$n = 10^{2}$,live,100,MIDIAN,midian,0.7743,0.7611050643733281,0.7847949356266719,0.7743,0.8449,midian,midian,lie_max_arms_n100
+$n = 10^{2}$,$n = 10^{2}$,live,100,MIDIAN w/o defenses,midian_wo_defenses,0.7405,0.7321078740608963,0.7488921259391038,0.7405,0.8449,midian_wo_defenses,midian_wo_defenses,lie_max_arms_n100
+$n = 10^{2}$,$n = 10^{2}$,live,100,flat probe argmax,flat_probe_argmax_online,0.7805,0.773182972674037,0.7878170273259629,0.7805,0.8449,flat_probe_argmax_online,flat_probe_argmax_online,lie_max_arms_n100
+$n = 10^{2}$,$n = 10^{2}$,live,100,best learned/declared router,best_learned,0.7375999999999999,0.7261571953709862,0.7490428046290136,0.7375999999999999,0.8449,knn_router_online x10,knn_router_online x10,lie_max_arms_n100
+$n = 10^{2}$,$n = 10^{2}$,live,100,best bandit,best_bandit,0.7524,0.7438739614513342,0.7609260385486657,0.7524,0.8449,linucb_honest[bonus=own] x10,linucb_honest[bonus=own] x10,lie_max_arms_n100
+$n = 10^{2}$,$n = 10^{2}$,live,100,declared argmax,declared_argmax,0.3659,0.3259426755428022,0.4058573244571978,0.5181,0.8449,declared_argmax,declared_argmax,lie_max_arms_n100
+$n = 10^{2}$,$n = 10^{2}$,live,100,random,random,0.4258,0.41670445774629744,0.4348955422537026,0.4258,0.8449,random,random,lie_max_arms_n100
+$10^{3}$,$10^{3}$,live,1000,MIDIAN,midian,0.8132999999999999,0.8071397855800898,0.8162602144199099,0.8132999999999999,0.8612,midian,midian,lie_max_arms_n1000
+$10^{3}$,$10^{3}$,live,1000,MIDIAN w/o defenses,midian_wo_defenses,0.7379166666666667,0.7312038058756178,0.7446295274577155,0.7379166666666667,0.8612,midian_wo_defenses,midian_wo_defenses,lie_max_arms_n1000
+$10^{3}$,$10^{3}$,live,1000,flat probe argmax,flat_probe_argmax_online,0.7869,0.7836189093954059,0.7901810906045942,0.7869,0.8612,flat_probe_argmax_online,flat_probe_argmax_online,lie_max_arms_n1000
+$10^{3}$,$10^{3}$,live,1000,best learned/declared router,best_learned,0.7656,0.7595571897634001,0.7716428102365998,0.7656,0.8612,knn_router_online x10,knn_router_online x10,lie_max_arms_n1000
+$10^{3}$,$10^{3}$,live,1000,best bandit,best_bandit,0.7715000000000001,0.7677784411868144,0.7752215588131858,0.7636000000000001,0.8612,warm_start_bandit[n0=0.5] x10,warm_start_bandit x7; warm_start_bandit[n0=0.5] x3,lie_max_arms_n1000
+$10^{3}$,$10^{3}$,live,1000,declared argmax,declared_argmax,0.3519,0.3116379555633072,0.3921620444366928,0.5202000000000001,0.8612,declared_argmax,declared_argmax,lie_max_arms_n1000
+$10^{3}$,$10^{3}$,live,1000,random,random,0.43215,0.4273080249667907,0.43699197503320936,0.43215,0.8612,random,random,lie_max_arms_n1000
+$10^{4}$,$10^{4}$,live,10000,MIDIAN,midian,0.8220000000000001,0.8144936241093091,0.829506375890691,0.8220000000000001,0.8630000000000001,midian,midian,lie_max_arms_n10k
+$10^{4}$,$10^{4}$,live,10000,MIDIAN w/o defenses,midian_wo_defenses,0.7306666666666667,0.7168620333417801,0.7444712999915533,0.7306666666666667,0.8630000000000001,midian_wo_defenses,midian_wo_defenses,lie_max_arms_n10k
+$10^{4}$,$10^{4}$,live,10000,flat probe argmax,flat_probe_argmax_online,0.7726666666666667,0.7618277792015492,0.7835055541317842,0.7726666666666667,0.8630000000000001,flat_probe_argmax_online,flat_probe_argmax_online,lie_max_arms_n10k
+$10^{4}$,$10^{4}$,live,10000,best learned/declared router,best_learned,0.7209999999999999,0.706427490789457,0.7355725092105427,0.7209999999999999,0.8630000000000001,knn_router_online x5; flat_nsw_router x5,knn_router_online x5; flat_nsw_router x5,lie_max_arms_n10k
+$10^{4}$,$10^{4}$,live,10000,best bandit,best_bandit,0.7773333333333333,0.7655660424045567,0.7891006242621099,0.784,0.8630000000000001,trueskill_per_family x10,warm_start_bandit x10,lie_max_arms_n10k
+$10^{4}$,$10^{4}$,live,10000,declared argmax,declared_argmax,0.41600000000000004,0.38147035626745773,0.45052964373254234,0.5240000000000001,0.8630000000000001,declared_argmax,declared_argmax,lie_max_arms_n10k
+$10^{4}$,$10^{4}$,live,10000,random,random,0.4146666666666666,0.4056509054332885,0.42368242790004473,0.4146666666666666,0.8630000000000001,random,random,lie_max_arms_n10k
+$10^{5}$,$10^{5}$,live,100000,MIDIAN,midian,0.8230000000000001,0.8128462026166632,0.8308204640500036,0.8230000000000001,0.8636666666666667,midian,midian,lie_max_arms_n100k
+$10^{5}$,$10^{5}$,live,100000,MIDIAN w/o defenses,midian_wo_defenses,0.7136666666666666,0.7039363525738082,0.723396980759525,0.7136666666666666,0.8636666666666667,midian_wo_defenses,midian_wo_defenses,lie_max_arms_n100k
+$10^{5}$,$10^{5}$,live,100000,flat probe argmax,flat_probe_argmax_online,0.7649999999999999,0.7547530492340403,0.7752469507659595,0.7649999999999999,0.8636666666666667,flat_probe_argmax_online,flat_probe_argmax_online,lie_max_arms_n100k
+$10^{5}$,$10^{5}$,live,100000,best learned/declared router,best_learned,0.7523333333333333,0.7447639016309995,0.7599027650356671,0.7523333333333333,0.8636666666666667,knn_router_online x10,knn_router_online x10,lie_max_arms_n100k
+$10^{5}$,$10^{5}$,live,100000,best bandit,best_bandit,0.7573333333333333,0.74896230746585,0.7657043592008166,0.7813333333333332,0.8636666666666667,warm_start_bandit[n0=0.5] x10,warm_start_bandit x10,lie_max_arms_n100k
+$10^{5}$,$10^{5}$,live,100000,declared argmax,declared_argmax,0.4383333333333333,0.40643360617787644,0.47023306048879016,0.538,0.8636666666666667,declared_argmax,declared_argmax,lie_max_arms_n100k
+$10^{5}$,$10^{5}$,live,100000,random,random,0.434,0.4273741993262775,0.4406258006737225,0.434,0.8636666666666667,random,random,lie_max_arms_n100k
