@@ -5,7 +5,8 @@
 Measures S (per signature, shared beside the population: declone<V>_signature_S.json), the self-described claims (per
 agent) and every probe outcome a b <= reps method reads: the first `reps` index-seeded probes of every (agent, family),
 the same instances every method sees (World._probe). Outcomes go to the population's outcome store
-(midian.backends.outcome_store), chunk by chunk, so a killed build resumes where it stopped. The World is built exactly
+(midian.backends.outcome_store), chunk by chunk, so a killed build resumes where it stopped; a finished build writes
+<population>/BUILT. The World is built exactly
 as the grid builds it (beta = 0: liars change reports and claims, never answers), so the probe instances match."""
 from __future__ import annotations
 
@@ -35,6 +36,7 @@ def main(argv=None):
         ag = np.arange(lo, min(lo + a.chunk, w.n))
         o = w.probe_many(ag[:, None], fams[None, :], a.reps)   # k = 0..reps-1 for every cell: a fresh World
         print(f"[build] agents {lo}-{ag[-1]}: mean outcome {o.mean():.3f}  ({time.time() - t0:.0f}s)", flush=True)
+    (w.backend.dir / "BUILT").write_text(f"reps={a.reps}\n")       # the grid driver launches units once this exists
     print(f"[build] done {w.backend.dir.name} in {time.time() - t0:.0f}s", flush=True)
 
 
