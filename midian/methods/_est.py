@@ -82,11 +82,18 @@ class BetaBandit(Method):
 
 
 REPORT_ELEMS = 8_000_000       # cap on one report tensor: n*K*b*(r-1) is never materialized at once
+AUDIT_RATE = 0.05              # audit=True
+STRIKES = 2                    # mismatches before a reporter is excluded
+
+
+def _trim(delta: float, s: int) -> int:
+    """floor(delta*(s-1)): what a cohort of size s trims from each side."""
+    return int(delta * (s - 1) + 1e-9)
 
 
 def trim_k(delta: float, s: int, b: int) -> int:
     """Reports trimmed from each side for a cohort of size s, clamped to leave one report."""
-    return max(0, min(int(delta * (s - 1) + 1e-9), ((s - 1) * b - 1) // 2))
+    return max(0, min(_trim(delta, s), ((s - 1) * b - 1) // 2))
 
 
 def trimmed_mean(x: np.ndarray, t: int) -> np.ndarray:
@@ -98,14 +105,15 @@ def trimmed_mean(x: np.ndarray, t: int) -> np.ndarray:
 def trimmed_by_reporter(rep: np.ndarray, delta: float, s: int, exclude: np.ndarray | None = None):
     """rep[..., s-1, b] -> mean after dropping the floor(delta*(s-1)) highest- and lowest-reporting PEERS
     (a colluding peer corrupts all b of its reports at once, so trimming reports one by one under-trims).
-    `exclude[..., s-1]` (bool) drops reporters before trimming (MIDIAN's audits); the trim then adapts to how many
-    remain."""
+    `exclude[..., s-1]` (bool) drops reporters before trimming (MIDIAN's audits), unless it excludes every reporter of
+    a member (then all count); the trim then adapts to how many remain."""
     per = rep.mean(-1)
     if exclude is None:
-        return trimmed_mean(per, min(int(delta * (s - 1) + 1e-9), (s - 2) // 2))
+        return trimmed_mean(per, min(_trim(delta, s), (s - 2) // 2))
+    exclude = exclude & ~exclude.all(-1, keepdims=True)
     per = np.sort(np.where(exclude, np.nan, per), axis=-1)                       # NaN sorts last
     v = (~exclude).sum(-1, keepdims=True)
-    t = np.clip(np.minimum(int(delta * (s - 1) + 1e-9), (v - 2) // 2), 0, None)
+    t = np.clip(np.minimum(_trim(delta, s), (v - 2) // 2), 0, None)
     cs = np.cumsum(np.nan_to_num(per), -1)
     hi = np.maximum(v - t, 1)
     tot = np.take_along_axis(cs, hi - 1, -1) - np.where(t > 0, np.take_along_axis(cs, np.maximum(t - 1, 0), -1), 0)
@@ -120,6 +128,32 @@ def peer_estimate(view, agents, fams, reps: int, reporters: np.ndarray, delta: f
     per = view.report_many(reporters[:, :, None], agents[:, None, None], out[:, None, :],     # (V, k, reps)
                            fams[:, None, None])
     return trimmed_by_reporter(per, delta, per.shape[1] + 1, exclude), per
+
+
+def audit_rate(audit) -> float:
+    """The `audit` param as a rate: True = AUDIT_RATE, False/0 = off, a number = that rate."""
+    return (AUDIT_RATE if audit is True else float(audit)) if audit else 0.0
+
+
+def strike(hits, excluded, reporters, claims, truth) -> np.ndarray:
+    """Count claim != truth per reporter in hits; exclude (in place) at STRIKES mismatches; return the ids newly
+    excluded."""
+    np.add.at(hits, reporters[claims != truth], 1)
+    new = (hits >= STRIKES) & ~excluded
+    excluded |= new
+    return np.flatnonzero(new)
+
+
+def audit_reports(view, rate, hits, excluded, agents, fams, k0, reporters, claims) -> int:
+    """MIDIAN's report audit: re-run a uniform `rate` of the (probe v, pull j) instances (`view.probe_at`: the same
+    index-seeded instance agents[v], fams[v], k0[v] + j, charged as a probe) and strike every reporter whose
+    claims[v, :, j] differs from the truth (reporters[V, peers], claims[V, peers, pulls]). Returns the instances
+    audited."""
+    v, j = np.nonzero(view.rng.random(claims[:, 0].shape) < rate)
+    if v.size:
+        truth = view.probe_at(agents[v], fams[v], k0[v] + j)
+        strike(hits, excluded, reporters[v], claims[v, :, j], truth[:, None])
+    return v.size
 
 
 def probe_outcomes(view, b: int) -> np.ndarray:
@@ -137,12 +171,12 @@ def FAM5(K):
 
 
 def peer_reported_estimates(view, b: int, cohorts: np.ndarray, delta: float, by_reporter: bool = False,
-                            observers: int | None = None, outcomes: np.ndarray | None = None) -> np.ndarray:
+                            outcomes: np.ndarray | None = None) -> np.ndarray:
     """MIDIAN's level-0 estimates: b probes per (agent, family), each outcome reported by
     every other member of the agent's cohort, aggregated by a trimmed mean. `cohorts` is int32[N, r]
     of agent ids with -1 padding, which (padding being contiguous) can only shorten the last cohort.
     Spends exactly n*K*b probes and sum_c size_c*(size_c-1)*K*b reports, in cohort-sized chunks.
-    `by_reporter`: trim by peer (each peer's b reports averaged first), optionally a random `observers` peers.
+    `by_reporter`: trim by peer (each peer's b reports averaged first) instead of report by report.
     `outcomes[n, K, b]`: already-spent probes (stratified cohorts probe before grouping); reports are still charged."""
     K, r = view.K, cohorts.shape[1]
     est = np.zeros((view.n, K), np.float32)
@@ -157,22 +191,13 @@ def peer_reported_estimates(view, b: int, cohorts: np.ndarray, delta: float, by_
             est[ag.ravel()] = out.mean(2)
             continue
         peers = others(s)                                                                # (s, s-1)
-        if by_reporter:
-            # every peer reports every probe,
-            # trimmed by PEER (a random k of them)
-            k = min(observers or s - 1, s - 1)
-            obs = ag[:, peers] if k == s - 1 else np.take_along_axis(
-                ag[:, peers], np.argsort(view.rng.random((C, s, s - 1)), 2)[:, :, :k], 2)
-            per = view.report_many(obs[:, :, None, :, None], ag[:, :, None, None, None],
-                                   out.reshape(C, s, K, 1, b), FAM5(K)).reshape(C * s, K, k, b)
-            est[ag.ravel()] = trimmed_by_reporter(per, delta, k + 1)
-            continue
         rep = view.report_many(ag[:, peers][:, :, None, :, None],                        # reporter j
                                ag[:, :, None, None, None],                               # about member m
                                out.reshape(C, s, K, 1, b),                               # what j saw
                                FAM5(K)                                                   # about family f
-                               ).reshape(C * s, K, (s - 1) * b)
-        est[ag.ravel()] = trimmed_mean(rep, trim_k(delta, s, b))                         # trim single reports
+                               ).reshape(C * s, K, s - 1, b)
+        est[ag.ravel()] = (trimmed_by_reporter(rep, delta, s) if by_reporter            # trim by peer
+                           else trimmed_mean(rep.reshape(C * s, K, -1), trim_k(delta, s, b)))  # trim single reports
     return est
 
 def observed_reports(view, f: int, b: int, observers):

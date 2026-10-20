@@ -5,7 +5,7 @@ and incompleteness marks belong in the caption.
 
     from scripts.figures.lib import figspec as S
     S.apply()                                  # rcParams: serif (Times / STIX), 8 / 9 / 8 pt, fonttype 42, spines, grid
-    fig, ax = S.figure("body")                 # 5.5 x 1.9 in ("d" 5.5 x 1.8, "appendix" 5.5 x 2.4, "pair" 5.5 x 2.0)
+    fig, ax = S.figure("body")                 # 5.5 x 1.9 in ("d" 5.5 x 1.8, "appendix" 5.5 x 2.4)
     ... S.bar(ax, x, m, w, "midian", cartel=False) ... S.whisker(ax, x, m, lo, hi) ... S.oracle(ax, x0, x1, y)
     S.legend(ax, keys)                         # fixed order (ORDER), frameless, inside if room else one row above
     S.save(fig, name)                          # <OUT>/<name>.pdf (vector) + .png (300 dpi)
@@ -26,7 +26,7 @@ from matplotlib.patches import Patch
 cm = lambda x: x / 2.54  # noqa: E731  (cm -> inches)
 
 # ---- canvas (inches) -------------------------------------------------------------------------------------------------
-CANVAS = {"body": (5.5, 1.9), "d": (5.5, 1.8), "appendix": (5.5, 2.4), "pair": (5.5, 2.0)}
+CANVAS = {"body": (5.5, 1.9), "d": (5.5, 1.8), "appendix": (5.5, 2.4)}
 DPI_PNG = 300
 
 # ---- colours (unchanged palette) and regime encoding -----------------------------------------------------------------
@@ -48,8 +48,7 @@ HATCH = "////"  # beta = 0.5 low-skill-first cartel; solid = honest (beta = 0)
 B_SHADE = {1: 0.5, 3: 0.0, 5: -0.4}  # b = 1 light, 3 as is, 5 dark (lighten > 0, darken < 0)
 B_LINESTYLE = {1: ":", 3: "-", 5: "--"}  # line figures (D): b = 1 dotted, 3 solid, 5 dashed
 
-# ---- names: legend strings and tick labels (spec section 2)
-# -----------------------------------------------------------
+# ---- names: legend strings and tick labels (spec section 2) ----------------------------------------------------------
 NAME = {
     "oracle": "oracle",
     "midian": "MIDIAN",
@@ -65,6 +64,7 @@ NAME = {
     "best_fw_dot": "best framework",
     "flat_scan": "any flat scan",
     "random_line": "random",
+    "standard_lie": "standard lie",  # the max-lie panels' tick: the same arm under the standard lie
 }
 ORDER = [
     "oracle",
@@ -76,9 +76,8 @@ ORDER = [
     "declared_argmax",
     "best_framework",
     "random",
-    # best_framework beside declared argmax: both route on descriptions                                   # the
-    # same in every figure that shares arms
-]
+]  # the same in every figure that shares arms; best_framework beside declared argmax: both route on descriptions
+REF_LINES = ["oracle", "random_line", "midian_ref"]  # the shortlist figures' reference lines (E, F, H, F_max_lie)
 SHORTLIST_BODY = {
     "declared": "declared top-k",
     "va_cohort": "MIDIAN shortlist",
@@ -96,6 +95,19 @@ SHORTLIST_APPENDIX = {
     "sota_idemo": "fusion + reranker, demonstration instr.",
     "dense": "dense (Qwen3-8B), no instr.",
     "sota": "fusion + reranker, no instr.",
+}
+SHORTLIST_LONG = {  # the exploratory shortlist figures' names (figures/shortlist)
+    "tfidf": "hashed TF-IDF (pre-registered)",
+    "bm25": "BM25",
+    "embed": "MiniLM",
+    "dense": "Qwen3-8B dense",
+    "dense_icomp": "Qwen3-8B dense, I-competent",
+    "dense_idemo": "Qwen3-8B dense, I-demonstrated",
+    "sota": "fusion + reranker",
+    "sota_icomp": "fusion + reranker, I-competent",
+    "sota_idemo": "fusion + reranker, I-demonstrated",
+    "declared": "declared-claim top-k",
+    "va_cohort": "MIDIAN leaf cohort",
 }
 SHORTLIST_ORDER = [
     "va_cohort",
@@ -234,9 +246,10 @@ def apply():
     )
 
 
-def figure(kind: str = "body", ncols: int = 1):
+def figure(kind: str = "body"):
+    """apply(), then one panel on the CANVAS[kind] canvas: (fig, ax)."""
     apply()
-    return plt.subplots(1, ncols, figsize=CANVAS[kind])
+    return plt.subplots(figsize=CANVAS[kind])
 
 
 def shade(color: str, b: int) -> tuple:
@@ -253,14 +266,13 @@ def color(key: str) -> str:
     return COLOR[key] if key in COLOR else SHORTLIST_COLOR[key]
 
 
-def bar(ax, x, h, w, key: str, cartel: bool = False, b: int | None = None, bottom: float = 0.0, z: float = 2, **kw):
+def bar(ax, x, h, w, key: str, cartel: bool = False, b: int | None = None, z: float = 2, **kw):
     """One bar in the arm's (or shortlist's) colour (budget-shaded when b is given), hatched under the cartel."""
     col = shade(color(key), b) if b else color(key)
     return ax.bar(
         x,
         h,
         w,
-        bottom=bottom,
         color=col,
         edgecolor="black",
         lw=SHORTLIST_EDGE.get(key, 0.3),
@@ -279,6 +291,16 @@ def whisker(ax, x, m, lo, hi):
 
 def oracle(ax, x0, x1, y):
     ax.hlines(y, x0, x1, colors=COLOR["oracle"], linestyles=":", lw=1.0, zorder=7)
+
+
+def std_tick(ax, x0, x1, y):
+    """The max-lie panels' black tick: the same arm (or shortlist) under the standard lie."""
+    ax.hlines(y, x0, x1, colors="black", lw=1.2, zorder=8)
+
+
+def best_dot(ax, x, y):
+    """The best single framework of a shortlist bar: a black dot."""
+    ax.plot(x, y, "o", ms=3, color="black", zorder=8)
 
 
 def ref(ax, x0, x1, y, key: str = "midian_ref"):
@@ -300,6 +322,8 @@ def handle(key: str):
         return Line2D([], [], color=COLOR["random"], ls=":", lw=1.0)
     if key == "best_fw_dot":
         return Line2D([], [], color="black", marker="o", ms=3, ls="none")
+    if key == "standard_lie":
+        return Line2D([], [], color="black", lw=1.2)
     return Patch(facecolor=color(key), edgecolor="black", lw=SHORTLIST_EDGE.get(key, 0.3))
 
 
@@ -337,7 +361,7 @@ def legend(ax, keys, labels=None, where: str = "above", ncol: int | None = None,
     return leg
 
 
-def finish(ax, ylabel: str | None = None, xlabel: str | None = None, ylim=None, decimals: int = 2):
+def finish(ax, ylabel: str | None = None, xlabel: str | None = None, ylim=None):
     """Axis labels (sentence case), value-axis limits, two-decimal ticks, no title."""
     from matplotlib.ticker import FormatStrFormatter
 
@@ -347,8 +371,8 @@ def finish(ax, ylabel: str | None = None, xlabel: str | None = None, ylim=None, 
         ax.set_xlabel(xlabel)
     if ylim:
         ax.set_ylim(*ylim)
-    if decimals is not None and ax.get_yscale() == "linear":
-        ax.yaxis.set_major_formatter(FormatStrFormatter(f"%.{decimals}f"))
+    if ax.get_yscale() == "linear":
+        ax.yaxis.set_major_formatter(FormatStrFormatter("%.2f"))
     ax.set_title("")
 
 
@@ -360,12 +384,35 @@ def save(fig, name: str, out: str):
     print(f"[{name}] written")
 
 
-# ---- exploratory figures (figures/bars, figures/shortlist) and legacy rcParams
-# --------------------------------------------
+def max_lie(groups, keys, name, out, ylabel, ylim):
+    """A max-lie panel (A / B / I_max_lie) -> <out>/<name>.{pdf,png}. groups: [(tick, rows, oracle)], one x group each;
+    rows carry key, max_lie, lo, hi, standard_lie: a hatched bar in the key's slot of `keys`, its +/- 1 s.e. whisker
+    (none where lo is NaN) and the standard-lie tick (where known); the oracle (None: not drawn) over the group."""
+    import pandas as pd
+
+    fig, ax = figure("appendix")
+    w = 0.86 / len(keys)
+    for i, (_, rows, o) in enumerate(groups):
+        for r in rows.itertuples():
+            x = i + (keys.index(r.key) - (len(keys) - 1) / 2) * w
+            bar(ax, x, r.max_lie, w * 0.95, r.key, cartel=True)
+            if r.lo == r.lo:
+                whisker(ax, x, r.max_lie, r.lo, r.hi)
+            if pd.notna(r.standard_lie):
+                std_tick(ax, x - w * 0.45, x + w * 0.45, r.standard_lie)
+        if o is not None:
+            oracle(ax, i - 0.46, i + 0.46, o)
+    ax.set_xticks(range(len(groups)))
+    ax.set_xticklabels([t for t, _, _ in groups])
+    ax.set_xlim(-0.5, len(groups) - 0.5)
+    finish(ax, ylabel=ylabel, ylim=ylim)
+    legend(ax, ["oracle"] + keys + ["standard_lie"], ncol=5, columnspacing=0.5, handlelength=1.0)
+    save(fig, name, out)
+
+
+# ---- exploratory figures (figures/bars, figures/shortlist) and legacy rcParams ---------------------------------------
 LONG_NAME = {
     "oracle": "oracle",
-    "sequential_halving_peer": "seq. halving (peer)",
-    "sequential_halving": "seq. halving (trusted)",
     "midian": "MIDIAN",
     "midian_wo_audit": "MIDIAN w/o audits",
     "midian_wo_verify": "MIDIAN w/o verification",
@@ -439,9 +486,9 @@ EXPLORE_RC = {
     "figure.constrained_layout.use": True,
 }
 # LEGACY_RC: set at import by the retired scripts/paper_figs.py. Every script that imported it (bar_figs,
-# shortlist_figs,
-# and condensed_figs through them) drew under it, so A / B carried its tick widths, line defaults and layout pads under
-# apply(). Those scripts now set it explicitly, so their figures render as before; no other figure gets it.
+# shortlist_figs, and condensed_figs through them) drew under it, so A / B carried its tick widths, line defaults and
+# layout pads under apply(). Those scripts now set it explicitly, so their figures render as before; no other figure
+# gets it.
 LEGACY_RC = {
     "pdf.fonttype": 42,
     "ps.fonttype": 42,

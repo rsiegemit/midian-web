@@ -18,8 +18,8 @@ rivals) rows and, for bernoulli / replay b = 1, their scale matrices. b is NEVER
   C / D (routing work vs n; energy per query) are efficiency_figs.py.
 "Best learned router" / "best bandit" are CROSS-FITTED (lib/stats.crossfit over lib/seed_tables): for each seed the arm
 is chosen on the OTHER seeds and scored on this one, so no bar is the maximum of noisy means over the seeds it reports
-(no winner's curse). The pool is the same at every b in a cell (POOL minus the arms that cannot run there,
-NOT_RUNNABLE); a bar whose pool is still missing a candidate (or a seed of one) at that b is reported as INCOMPLETE
+(no winner's curse). The pool is the same at every b in a cell (lib/pools.POOLS minus pools.not_runnable); a bar
+whose pool is still missing a candidate (or a seed of one) at that b is reported as INCOMPLETE
 (cluster/ops/figure_status.py; figures carry no marks). The csv lists how often each arm was chosen. Frameworks are not
 drawn (figures/shortlist). The do-not-add list applies, and with it the permanent halving exclusion (lib/exclusions.py).
 Rendered under figspec.LEGACY_RC (the rcParams these figures always inherited from the retired paper_figs.py), inside an
@@ -30,7 +30,6 @@ from __future__ import annotations
 import argparse
 import os
 import re
-import shutil
 import sys
 
 import pandas as pd
@@ -38,25 +37,16 @@ import pandas as pd
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))))
 import matplotlib.pyplot as plt  # noqa: E402
 
-from scripts.figures.lib import AGG, NEW, fig_out  # noqa: E402
+from scripts.figures.lib import AGG, DRAW, NEW, fig_out, publish, republish  # noqa: E402
 from scripts.figures.lib import figspec as S  # noqa: E402
 from scripts.figures.lib.exclusions import excluded  # noqa: E402
-from scripts.figures.lib.grids import BUDGET_GRIDS, MATRICES, with_s4_10  # noqa: E402
+from scripts.figures.lib.grids import BUDGET_GRIDS, MATRICES  # noqa: E402
+from scripts.figures.lib.pools import ARMS, B_INVARIANT, CLAIM_KEY, POOLS, not_runnable  # noqa: E402
 from scripts.figures.lib.regimes import AB as REG  # noqa: E402
-from scripts.figures.lib.regimes import MATRIX_REGIME
+from scripts.figures.lib.regimes import MATRIX_REGIME  # noqa: E402
 from scripts.figures.lib.stats import crossfit, se  # noqa: E402
 
-BARS, DRAW = f"{AGG}/bars{NEW}", f"{AGG}/figures"
-LEARNED = [
-    "knn_router",
-    "knn_router_online",
-    "mlp_router",
-    "flat_nsw_router",
-    "cluster_head_router",
-    "disrouter_cascade",
-]
-BANDIT = ["ucb_per_family", "thompson_per_family", "warm_start_bandit", "linucb_honest", "trueskill_per_family"]
-ARMS = [k for k in S.ORDER if k not in ("oracle", "best_framework")]  # the arms read from the rows, in legend order
+BARS = f"{AGG}/bars{NEW}"
 TEXT = {
     "tfidf",
     "bm25",
@@ -68,28 +58,7 @@ TEXT = {
     "sota_icomp",
     "sota_idemo",
 }  # text shortlists (not declared / cohort)
-POOLS = {
-    "best_learned": LEARNED,  # the bandit pool takes the TUNED warm-start bandit (n0 = 0.5) and drops the
-    "best_bandit": [a for a in BANDIT if a != "linucb_honest"]
-    + ["linucb_honest[bonus=own]", "warm_start_bandit[n0=0.5]"],
-}
-# linucb_honest -> the fixed bonus (post hoc, audit 2026-09-23: the context bonus picks the WEAKEST tied agent).
-# The pre-registered warm-start bandit (n0 = 5) trusts the declared claims; on the non-live backends those are true
-# skill
-# + 5 % noise (an answer key), so it counts there only on the calibrated-claims reruns (erratum 30), not on these rows.
-CLAIM_KEY = {"bernoulli", "replay", "routereval", "llmrouterbench"}
-SW = set()  # families on the erratum-30 rows (seed_tables.switched): n0 = 5 counts there
-B_INVARIANT = {
-    "declared_argmax",
-    "random",
-    "cluster_head_router",
-    "disrouter_cascade",
-}  # never probe (needs has no probe / reports)
-NOT_RUNNABLE = (
-    lambda fam, n: ({"trueskill_per_family"} if n >= 10**5 else set())
-    | ({"mlp_router"} if n >= 5000 else set())
-    | ({"knn_router", "knn_router_online", "mlp_router"} if fam in ("bernoulli", "replay") else set())
-)  # configs/grids pool_fill_*
+SW = set()  # families on the erratum-30 rows (seed_tables.switched): n0 = 5 counts there (pools.CLAIM_KEY)
 BUDGETLESS = {"declared_argmax", "random"}
 BS = (1, 3, 5)
 PRIMARY = {"live": "specialist", "routereval": "strong_to_weak"}  # one population shape per family in A / B
@@ -128,6 +97,17 @@ def cells(d):
     return out
 
 
+def best(T, pool):
+    """The cross-fitted best of `pool` in a seed x arm table: ((mean, lo, hi, picks), the seeds scored), or None below
+    two seeds (one seed cannot be cross-fitted: no bar, never the biased pick)."""
+    vals, picks = crossfit(T, pool)
+    if len(vals) < 2:
+        return None
+    lo, hi = se(vals.values)
+    chosen = "; ".join(f"{a} x{c}" for a, c in picks.value_counts().items())
+    return (float(vals.mean()), float(lo), float(hi), chosen), vals.index
+
+
 def arms_at(cell):
     """{arm key: {b: (mean, lo, hi, chosen)}}; best learned router / best bandit are cross-fitted from the per-seed
     tables."""
@@ -138,31 +118,17 @@ def arms_at(cell):
             want = [
                 a
                 for a in pool
-                if a not in NOT_RUNNABLE(fam, n) and not (a == "warm_start_bandit" and fam in CLAIM_KEY - SW)
+                if a not in not_runnable(fam, n) and not (a == "warm_start_bandit" and fam in CLAIM_KEY - SW)
             ]
-            vals, picks = crossfit(T, want)
-            if len(vals) < 2:
-                continue  # one seed cannot be cross-fitted: no bar, never the biased pick
-            lo, hi = se(vals.values)
-            miss = [
-                a for a in want if a not in T.columns or T.loc[vals.index, a].isna().any()
-            ]  # absent, or missing a seed
-            chosen = "; ".join(f"{a} x{c}" for a, c in picks.value_counts().items()) + (
-                f" | INCOMPLETE POOL, missing or partial {', '.join(miss)}" if miss else ""
-            )
-            out.setdefault(k, {})[b] = (float(vals.mean()), float(lo), float(hi), chosen)
+            if (got := best(T, want)) is None:
+                continue
+            (m, lo, hi, chosen), seeds = got
+            miss = [a for a in want if a not in T.columns or T.loc[seeds, a].isna().any()]  # absent, or missing a seed
+            note = f" | INCOMPLETE POOL, missing or partial {', '.join(miss)}" if miss else ""
+            out.setdefault(k, {})[b] = (m, lo, hi, chosen + note)
     if cell.get("fw_seeds") is not None:  # best framework, best text shortlist: cross-fitted over the pairs
-        vals, picks = crossfit(cell["fw_seeds"], list(cell["fw_seeds"].columns))
-        if len(vals) >= 2:
-            lo, hi = se(vals.values)
-            out["best_framework"] = {
-                3: (
-                    float(vals.mean()),
-                    float(lo),
-                    float(hi),
-                    "; ".join(f"{a} x{c}" for a, c in picks.value_counts().items()),
-                )
-            }
+        if got := best(cell["fw_seeds"], list(cell["fw_seeds"].columns)):
+            out["best_framework"] = {3: got[0]}
     for b, raw in cell["raw"].items():
         for k in ARMS:
             if k in raw and (b == 3 or k not in BUDGETLESS):
@@ -281,32 +247,10 @@ def render(dl, name, out):
         S.save(fig, name + NEW, out)
 
 
-def publish(rec, dl, name, out):
-    """The figure CSV to <out> and to results/aggregates/figures (with the display list), then the figure itself."""
-    os.makedirs(DRAW, exist_ok=True)
-    rec.to_csv(f"{out}/{name}{NEW}.csv", index=False)
-    rec.to_csv(f"{DRAW}/{name}{NEW}.csv", index=False)
-    dl.to_csv(f"{DRAW}/{name}{NEW}.draw.csv", index=False)
-    render(dl, name, out)
-
-
-def from_csv(out):
-    """Redraw A / B from results/aggregates/figures alone."""
-    for name in FIGS:
-        render(pd.read_csv(f"{DRAW}/{name}{NEW}.draw.csv"), name, out)
-        shutil.copyfile(f"{DRAW}/{name}{NEW}.csv", f"{out}/{name}{NEW}.csv")
-
-
 def groups_A(C):
     """A's x groups: (tick label, (family, group, n)) per live specialist n."""
     ns = sorted(n for (f, g, n, r) in C if f == "live" and g == "specialist" and r == "beta0")
     return list(zip(S.pow10_ticks(ns, "n"), [("live", "specialist", n) for n in ns]))
-
-
-def fig_A(C, out):
-    g = groups_A(C)
-    publish(*budget_bars(C, g, "A_live_allb"), "A_live_allb", out)
-    publish(*budget_bars(C, g, "A_live_stacked", stacked=True), "A_live_stacked", out)
 
 
 def primary(f, g):
@@ -324,17 +268,6 @@ def groups_B(C):
         g = next(g for (ff, g, nn, r) in C if ff == f and nn == n and primary(f, g))
         groups.append((f"{S.BACKEND[f]}\n{S.pow10(n, 'n')}", (f, g, n)))
     return groups
-
-
-def fig_B(C, out):
-    """Each family at its largest population with both regimes (groups_B), divided by that cell's oracle."""
-    groups = groups_B(C)
-    publish(*budget_bars(C, groups, "B_families_allb", norm=True, skip=("best_framework",)), "B_families_allb", out)
-    publish(
-        *budget_bars(C, groups, "B_families_stacked", norm=True, stacked=True, skip=("best_framework",)),
-        "B_families_stacked",
-        out,
-    )
 
 
 def add_best_framework(C):
@@ -360,15 +293,13 @@ def add_budgets(C):
     b = 1 from their scale matrices. A cell the runs have not reached simply has no bar (figure_status.py lists it)."""
     from scripts.figures.lib.regimes import tag as regime
     from scripts.figures.lib.rows import RESULTS as R
-    from scripts.figures.lib.rows import label
-    from scripts.figures.lib.rows import load_fw as rows
-    from scripts.figures.lib.rows import swap_fixed
+    from scripts.figures.lib.rows import label, load_fw, pooled
 
     for fam, grp, tag in BUDGET_GRIDS:
         if fam in SW:
             continue  # every b comes from the erratum-30 per-seed tables (from_tables)
         for g in (f"va_b_{tag}", f"rivals_b_{tag}"):
-            df = swap_fixed(pd.concat([rows(x) for x in with_s4_10([g])], ignore_index=True))
+            df = pooled(load_fw, [g])
             if df.empty:
                 continue
             df = df.assign(label=[label(m, p) for m, p in zip(df.method, df.params)])
@@ -430,9 +361,7 @@ def narrow(C, T):
             t = bb.get(b)
             if t is None or l not in t or t[l].notna().sum() == 0:
                 return (v[0], v[0], v[0], *v[3:])
-            assert (
-                abs(t[l].mean() - v[0]) < 0.01 or l == "oracle" and b != 3
-            ), f"{key} b={b} {l}: {t[l].mean():.3f} vs {v[0]:.3f}"
+            assert abs(t[l].mean() - v[0]) < 0.01, f"{key} b={b} {l}: {t[l].mean():.3f} vs {v[0]:.3f}"
             return (v[0], *map(float, se(t[l].dropna().values)), *v[3:])
 
         c["raw"] = {b: {l: fix(v, b, l) for l, v in r.items()} for b, r in c["raw"].items()}
@@ -445,11 +374,16 @@ def main(argv=None):
     p.add_argument("--from-csv", action="store_true", help="redraw from results/aggregates/figures only")
     a = p.parse_args(argv)
     out = fig_out(a.out)
-    if a.from_csv:
-        return from_csv(out)
-    C = build()
-    fig_A(C, out)
-    fig_B(C, out)  # C / D: efficiency_figs.py
+    C = None if a.from_csv else build()
+    for name, (norm, stacked) in FIGS.items():  # A: live by n; B: each family's largest cell / its oracle (groups_B)
+        if a.from_csv:  # redraw from results/aggregates/figures alone
+            dl = pd.read_csv(f"{DRAW}/{name}{NEW}.draw.csv")
+            republish(name + NEW, out)
+        else:
+            groups = groups_B(C) if norm else groups_A(C)
+            rec, dl = budget_bars(C, groups, name, norm, stacked, skip=("best_framework",) if norm else ())
+            publish(name + NEW, out, rec, dl)
+        render(dl, name, out)
 
 
 def build():

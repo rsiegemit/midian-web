@@ -11,30 +11,17 @@ import numpy as np
 import pytest
 
 from midian.backends import CAL_VALUES, calibrated_declared
+from midian.config import RTE_DATA as DATA
 from midian.run import run_method
 from midian.world import World, apply_lying
+from tests.conftest import fake_cells
 
-DATA = os.environ.get("RTE_DATA", os.path.expanduser("~/rte_data"))
 REPLAY_NPZ = f"{DATA}/data/routerbench_cells.npz"
 LRB = f"{DATA}/data/llmrouterbench/perf_matrix.npz"
 MMLU = f"{DATA}/data/routereval/router_dataset/mmlu_router_dataset.pkl"
 LIVE_S = f"{DATA}/populations/specialist_n1000_K16_seed1/S.npy"
 METHODS = [{"name": "declared_argmax", "params": {}}, {"name": "flat_probe_argmax", "params": {"online": True}},
            {"name": "warm_start_bandit", "params": {}}, {"name": "midian", "params": {}}]
-
-
-def fake_cells(path, K=8, M=4, prompts=40):
-    rng = np.random.default_rng(0)
-    bias = rng.uniform(0.2, 0.9, M)
-    np.savez(
-        path,
-        model_names=np.array([f"m{m}" for m in range(M)]),
-        category_names=np.array([f"c{k}" for k in range(K)]),
-        offsets=np.arange(K + 1, dtype=np.int64) * prompts,
-        n_prompts=np.full(K, prompts, np.int64),
-        outcomes=(rng.random((K * prompts, M)) < bias).astype(np.int8),
-    )
-    return path
 
 
 def fingerprint(kw, Q=200):

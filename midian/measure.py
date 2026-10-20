@@ -25,16 +25,13 @@ def main(argv=None) -> int:
     for flag, default in (("--n", 100), ("--K", 16), ("--seed", 1), ("--measure-probes", 200),
                           ("--measure-probes-large", 60), ("--concurrency", 64)):
         ap.add_argument(flag, type=int, default=default)
-    ap.add_argument("--measure", action="store_true", help="accepted for symmetry; this IS measuring")
-    ap.add_argument("--skip-self-described", action="store_true")
     a = ap.parse_args(argv)
 
     b = LLMBackend(n=a.n, K=a.K, dist=a.dist, seed=a.seed, measure_probes=a.measure_probes,
                    measure_probes_large=a.measure_probes_large, concurrency=a.concurrency)
     summary = skill_summary(b.true_skill(), a.measure_probes)
     np.save(b.dir / "D_programmatic.npy", b.declared("programmatic"))
-    if not a.skip_self_described:
-        b.declared("self_described")
+    b.declared("self_described")
     b.descriptions()
     (b.dir / "summary.json").write_text(json.dumps(summary, indent=2))
 

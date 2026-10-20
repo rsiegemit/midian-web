@@ -10,7 +10,8 @@ uses.
     BUDGET_GRIDS      the b = 1 / 5 cells of A / B: (family, group, tag of va_b_* / rivals_b_*)
     MATRICES          scale sweeps read from their matrix_success{,_new}.csv (bar_figs; A / B b = 1)
     VA_GRIDS          exact MIDIAN build ledgers by (n, b) (efficiency D)
-    S4_10, with_s4_10 seeds 4-10 of Figure 1's live 10^4 / 10^5 arms, pooled with their sources only under RTE_SEEDS_4_10=1
+    S4_10, with_s4_10 seeds 4-10 of Figure 1's live 10^4 / 10^5 arms, pooled with their sources only under
+                      RTE_SEEDS_4_10=1
     S_TO_10, TEN      the other seed mirrors (every non-framework arm of A-I at 10 seeds); TEN = S4_10 + S_TO_10
     source(grid)      the grid a seed mirror mirrors
     fixes()           the MIDIAN-fix mirrors <g>_fix (configs/grids/midian_fix.yaml: midian{reagg: keep}, beta > 0

@@ -1,4 +1,5 @@
-"""Grid runner (SPEC §7).   python -m midian.run --grid smoke [--seeds 1-3] [--methods a,b] [--workers N] [--dry-run]
+"""Grid runner (docs/experimental_design.md).
+    python -m midian.run --grid smoke [--seeds 1-3] [--methods a,b] [--workers N] [--dry-run]
 
 A cell = one point of the CELL axes; a unit = (cell, seed): one World, one paired task stream shared by every
 method, the oracle line executed once. Each row is its own JSON file under results/<grid>/rows.d (atomic, resumable);
@@ -12,6 +13,7 @@ import pkgutil
 import sys
 import time
 import traceback
+from concurrent.futures import ThreadPoolExecutor
 from itertools import product
 from multiprocessing import get_context
 
@@ -20,6 +22,7 @@ import yaml
 
 import midian.methods
 from midian.methods import keys
+from midian.methods.keys import jkey
 
 from .budget import Budget
 from .config import RTE_DATA as _DATA
@@ -30,7 +33,6 @@ RTE_DATA = str(_DATA)                        # str: expanded into backend_kwargs
 CELL = ("backend", "n", "K", "dist", "beta", "liar_select", "collude", "declared_source", "lie_mode", "demand",
         "b", "Q")
 log = lambda m: print(m, file=sys.stderr, flush=True)
-jkey = lambda d: json.dumps(d, sort_keys=True, separators=(",", ":"), default=str)
 
 
 # ------------------------------------------------------------------ config files
@@ -166,11 +168,15 @@ def blocks(cfg, grid):
     return out
 
 
+def _typed(cell: dict) -> dict:
+    """The CELL axes with the types row ids hash: n, K, b, Q int and beta float."""
+    return {**cell, **{k: int(cell[k]) for k in ("n", "K", "b", "Q")}, "beta": float(cell["beta"])}
+
+
 def cells(blk):
     axes = [blk[f] if f != "backend" else [blk["backend"]] for f in CELL]
     for combo in product(*axes):
-        c = dict(zip(CELL, combo))
-        c.update(n=int(c["n"]), K=int(c["K"]), b=int(c["b"]), Q=int(c["Q"]), beta=float(c["beta"]))
+        c = _typed(dict(zip(CELL, combo)))
         c["backend_kwargs"] = dict(blk.get("backend_kwargs") or {})   # as written: "$RTE_DATA/..." unexpanded (D1)
         c["churn"] = blk.get("churn")                                   # optional {frac, every}; absent -> None
         cal = expand(c["backend_kwargs"]).get("calibrate_from")
@@ -199,10 +205,7 @@ def rid_of_row(r) -> str:
 
     It hashes the backend_kwargs the row stores. Rows written before D1 store the $RTE_DATA-expanded path and keep
     their old id here; scripts/checks/migrate_rte_data_ids.py rewrites them to the unexpanded string and the new id."""
-    cell = {f: r[f] for f in CELL}
-    for k in ("n", "K", "b", "Q"):
-        cell[k] = int(cell[k])
-    cell["beta"] = float(cell["beta"])
+    cell = _typed({f: r[f] for f in CELL})
     for k in list(cell):
         if hasattr(cell[k], "item"):
             cell[k] = cell[k].item()         # numpy scalars -> python, so jkey matches
@@ -217,7 +220,7 @@ def rid_of_row(r) -> str:
 
 
 # ------------------------------------------------------------------ one unit
-COMM = ("probes", "reports", "messages", "tasks")      # total communication = these four (CONTRACT)
+COMM = ("probes", "reports", "messages", "tasks")      # total communication = these four (docs/architecture.md)
 
 
 def metrics(outcomes, liar, build, run, Q, wall_build, wall_route, wall_total):
@@ -236,7 +239,7 @@ def metrics(outcomes, liar, build, run, Q, wall_build, wall_route, wall_total):
 
 
 def execute(world, task, ret):
-    """int -> execute it. list -> route-to-many: execute all, majority of outcomes (ties -> 0), see DEVIATIONS."""
+    """int -> execute it. list -> route-to-many: execute all, majority of outcomes (ties -> 0); docs/architecture.md."""
     agents = [int(a) for a in np.atleast_1d(ret)]
     outs = [world.execute(a, task) for a in agents]
     return (outs[0] if len(outs) == 1 else int(2 * sum(outs) > len(outs))), agents, outs
@@ -263,14 +266,15 @@ def run_method(world, stream, spec, b, churn=None):
     m = load_method(spec["name"])(**spec["params"])
     view = world.view(m.needs)
     world.reset()
+    budget = Budget(b)
     t0 = time.perf_counter()
-    m.build(view, Budget(b))
+    m.build(view, budget)
     wall_build = time.perf_counter() - t0
     build = world.ledger.snapshot()
     world.ledger.reset()
-    if build["probes"] > Budget(b).total_probes(world.n, world.K):
+    if build["probes"] > budget.total_probes(world.n, world.K):
         log(f"  [WARNING] {spec['name']}: build spent {build['probes']} probes"
-            f" > budget {Budget(b).total_probes(world.n, world.K)}")
+            f" > budget {budget.total_probes(world.n, world.K)}")
     outcomes, liar, route, t_run, repair, events = [], [], 0.0, time.perf_counter(), dict.fromkeys(build, 0), 0
     if not churn and hasattr(m, "prefetch"):  # concurrent framework requests (FrameworkMethod.prefetch)
         t = time.perf_counter()
@@ -327,7 +331,8 @@ def run_unit(cell, seed, specs, rows_dir, grid):
         r = {**base, **r, "oracle_success": rows["oracle"]["success"]}
         r["regret"] = r["oracle_success"] - r["success"]
         tmp = f"{rows_dir}/{rid}.json.tmp{os.getpid()}"
-        json.dump(r, open(tmp, "w"), default=str)
+        with open(tmp, "w") as fh:
+            json.dump(r, fh, default=str)
         os.replace(tmp, f"{rows_dir}/{rid}.json")
     return failed
 
@@ -362,8 +367,7 @@ def consolidate(out, prune: bool = False, force: bool = False):
                     return {**json.load(fh), "rid": f[:-5]}
             except (FileNotFoundError, json.JSONDecodeError):
                 return None  # gone, or caught mid-write: it is in the CSV already or will be next pass
-        from concurrent.futures import ThreadPoolExecutor  # NFS small-file reads are latency-bound: fan out
-        with ThreadPoolExecutor(max_workers=32) as ex:
+        with ThreadPoolExecutor(max_workers=32) as ex:  # NFS small-file reads are latency-bound: fan out
             got = [r for r in ex.map(_read, names, chunksize=256) if r is not None]
         names = [r["rid"] + ".json" for r in got]        # prune only what was actually read
         if got:
@@ -371,7 +375,7 @@ def consolidate(out, prune: bool = False, force: bool = False):
     if not frames:
         return 0
     df = pd.concat(frames, ignore_index=True)
-    df = df.drop_duplicates(subset="rid", keep="last") if df.rid.notna().all() else df
+    df = df.drop_duplicates(subset="rid", keep="last")
     lead = [c for c in (*CELL, "method", "params", "seed") if c in df.columns]
     tmp = f"{csv}.tmp{os.getpid()}"
     df[lead + [c for c in df.columns if c not in lead]].sort_values(lead).to_csv(tmp, index=False)
@@ -383,8 +387,7 @@ def consolidate(out, prune: bool = False, force: bool = False):
                 os.unlink(f"{out}/rows.d/{f}")
             except FileNotFoundError:
                 pass
-        from concurrent.futures import ThreadPoolExecutor  # NFS unlinks are latency-bound too: ~80/s serial
-        with ThreadPoolExecutor(max_workers=32) as ex:
+        with ThreadPoolExecutor(max_workers=32) as ex:  # NFS unlinks are latency-bound too: ~80/s serial
             list(ex.map(_rm, [f for f in names if f[:-5] in done], chunksize=256))
     return len(df)
 
@@ -436,7 +439,8 @@ def main(argv=None):
         return
     if not os.path.isdir(out):                   # a new directory holds current keys only: mark it (keys.SENTINEL)
         os.makedirs(out, exist_ok=True)          # exist_ok: units of a new grid may start at the same moment
-        open(f"{out}/{keys.SENTINEL}", "w").write('{"created": "new"}')
+        with open(f"{out}/{keys.SENTINEL}", "w") as fh:
+            fh.write('{"created": "new"}')
     os.makedirs(rows_dir, exist_ok=True)
     t0 = time.perf_counter()
     fails = []

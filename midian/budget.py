@@ -10,11 +10,7 @@ from dataclasses import dataclass
 @dataclass(frozen=True)
 class Budget:
     """Build budget. Every probing method gets the same n*K*b probes."""
-    probes_per_agent_family: int = 3
-
-    @property
-    def b(self) -> int:
-        return self.probes_per_agent_family
+    b: int = 3                       # probes per (agent, family)
 
     def total_probes(self, n: int, K: int) -> int:
-        return int(n) * int(K) * int(self.probes_per_agent_family)
+        return int(n) * int(K) * int(self.b)

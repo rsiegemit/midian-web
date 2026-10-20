@@ -10,38 +10,16 @@ import numpy as np
 import pytest
 
 from midian.backends.replay import ReplayBackend
+from midian.config import RTE_DATA
 from midian.world import Task, World
+from tests.conftest import fake_cells as make_fake_cells
 
-REAL_CELLS_PATH = os.path.join(
-    os.environ.get("RTE_DATA", os.path.expanduser("~/rte_data")), "data", "routerbench_cells.npz")
-
-
-def _make_fake_cells(path, K=8, M=4, prompts_per_cat=40, seed=0):
-    """A small synthetic RouterBench-shaped cell table with the same on-disk
-    layout scripts/data/02_download_routerbench.py writes."""
-    rng = np.random.default_rng(seed)
-    model_names = np.array([f"model{m}" for m in range(M)])
-    category_names = np.array([f"cat{k}" for k in range(K)])
-    # give models distinct per-category accuracies so "weakest" is well defined
-    model_bias = rng.uniform(0.2, 0.9, size=M)
-    n_prompts = np.full(K, prompts_per_cat, dtype=np.int64)
-    offsets = np.concatenate([[0], np.cumsum(n_prompts)]).astype(np.int64)
-    total = int(offsets[-1])
-    outcomes = np.zeros((total, M), dtype=np.int8)
-    for k in range(K):
-        lo, hi = offsets[k], offsets[k + 1]
-        for m in range(M):
-            p = np.clip(model_bias[m] + rng.normal(0, 0.05), 0.0, 1.0)
-            outcomes[lo:hi, m] = (rng.random(hi - lo) < p).astype(np.int8)
-    np.savez(path, model_names=model_names, category_names=category_names,
-              offsets=offsets, n_prompts=n_prompts, outcomes=outcomes)
+REAL_CELLS_PATH = os.path.join(RTE_DATA, "data", "routerbench_cells.npz")
 
 
 @pytest.fixture(scope="module")
 def fake_cells(tmp_path_factory):
-    path = tmp_path_factory.mktemp("replay") / "fake_cells.npz"
-    _make_fake_cells(str(path))
-    return str(path)
+    return make_fake_cells(str(tmp_path_factory.mktemp("replay") / "fake_cells.npz"))
 
 
 DISTS = ["specialist", "heavy_tail", "bimodal", "correlated", "iid_uniform"]

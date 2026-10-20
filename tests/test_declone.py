@@ -32,7 +32,7 @@ def test_plain_population_and_prompts_are_unchanged():
     assert all("variant" not in p for p in plain)
     assert [{k: v for k, v in p.items() if k != "variant"} for p in dc] == plain   # same models / specialties
     assert {p["variant"] for p in dc} == set(range(36))
-    assert len(signature(plain[0], 0, 512, 512)) == 4 and signature(dc[0], 0, 512, 512)[4] == dc[0]["variant"]
+    assert len(signature(plain[0], 0, 512)) == 4 and signature(dc[0], 0, 512)[4] == dc[0]["variant"]
     assert prompts.build("gcd", "q", False, "python") == prompts.build("gcd", "q", False, "python", None)
     assert prompts.describe_self("m", "python", "gcd") == prompts.describe_self("m", "python", "gcd", None)
 
@@ -114,7 +114,7 @@ def test_plain_population_still_uses_the_memo(gen, tmp_path):
 def test_declone_tool_round_skips_the_memo(gen, tmp_path, monkeypatch):
     from midian.backends import tools
     seen = []
-    monkeypatch.setattr(tools, "_python", lambda code, timeout: seen.append(code) or "6")
+    monkeypatch.setattr(tools, "_python", lambda code: seen.append(code) or "6")
     monkeypatch.setattr(llm_client, "memo_call", lambda *a, **k: (_ for _ in ()).throw(AssertionError("memo used")))
     replies = iter(["```python\nprint(6)\n```", "<answer>6</answer>"] * 50)
     monkeypatch.setattr(llm_client, "_generate", lambda *a, **k: next(replies))

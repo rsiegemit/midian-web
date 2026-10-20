@@ -5,11 +5,12 @@ node's r children changes (the LLM sees each child's best estimate for the famil
 unparseable or out-of-range answer falls back to the argmax and is counted in `stats`.
 
 Ledger: as midian w/o defenses; the LLM calls (one per level with >= 2 live children) are not charged.
-Params: model="Qwen/Qwen2.5-7B-Instruct", plus every midian parameter."""
+Params: model (default: `supervisor` in configs/models.yaml), plus every midian parameter."""
 import re
 
 import numpy as np
 
+from ..backends.population import ladder
 from ..stable_hash import stable_seed_32
 from .midian import Midian
 
@@ -21,9 +22,9 @@ class MidianLLMDescent(Midian):
     name = "midian_llm_descent"
     requires_llm = True
 
-    def __init__(self, model="Qwen/Qwen2.5-7B-Instruct", **p):
+    def __init__(self, model=None, **p):
         super().__init__(**{"audit": False, "verify": False, **p})          # the undefended tree
-        self.params["model"] = self.model = model
+        self.params["model"] = self.model = model or ladder()["supervisor"]
         self.stats = {"calls": 0, "fallbacks": 0}
 
     def _choose(self, l, node, f):

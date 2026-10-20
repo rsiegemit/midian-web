@@ -32,6 +32,11 @@ _sets:
     - random
     - declared_argmax
     - flat_probe_argmax
+  midian4:                          # MIDIAN and its three ablations
+    - {name: midian, params: {audit: false, verify: false}}
+    - {name: midian, params: {audit: false}}
+    - {name: midian, params: {verify: false}}
+    - midian
   budget:
     - {name: midian, params: {audit: false, verify: false}}
     - {name: midian, params: {audit: false, verify: false, r: 5}}
@@ -385,26 +390,6 @@ _sets:
     - {name: fw_llamaindex, params: {retrieval: midian, r: 10}}
     - {name: fw_smolagents, params: {retrieval: midian, r: 10}}
     - {name: fw_camel_workforce, params: {retrieval: midian, r: 10}}
-  fw9_em:
-    - {name: fw_langgraph, params: {retrieval: embed, dedup: true}}
-    - {name: fw_crewai, params: {retrieval: embed, dedup: true}}
-    - {name: fw_autogen, params: {retrieval: embed, dedup: true}}
-    - {name: fw_maf, params: {retrieval: embed, dedup: true}}
-    - {name: fw_openai_agents, params: {retrieval: embed, dedup: true}}
-    - {name: fw_google_adk, params: {retrieval: embed, dedup: true}}
-    - {name: fw_llamaindex, params: {retrieval: embed, dedup: true}}
-    - {name: fw_smolagents, params: {retrieval: embed, dedup: true}}
-    - {name: fw_camel_workforce, params: {retrieval: embed, dedup: true}}
-  fw9_va:
-    - {name: fw_langgraph, params: {retrieval: midian, r: 10}}
-    - {name: fw_crewai, params: {retrieval: midian, r: 10}}
-    - {name: fw_autogen, params: {retrieval: midian, r: 10}}
-    - {name: fw_maf, params: {retrieval: midian, r: 10}}
-    - {name: fw_openai_agents, params: {retrieval: midian, r: 10}}
-    - {name: fw_google_adk, params: {retrieval: midian, r: 10}}
-    - {name: fw_llamaindex, params: {retrieval: midian, r: 10}}
-    - {name: fw_smolagents, params: {retrieval: midian, r: 10}}
-    - {name: fw_camel_workforce, params: {retrieval: midian, r: 10}}
   fw10_backfill:
     - {set: fw10_dense_ic}
     - {set: fw10_dense_id}
@@ -428,6 +413,21 @@ _sets:
     - disrouter_cascade
     - warm_start_bandit
     - {name: warm_start_bandit, params: {n0: 0.5}}
+  # max-lie cartel cell (configs/grids/max_lie.yaml): the claim readers at b = 1 / 5, plus declared argmax at b = 3
+  lie_max_cartel:
+    beta: [0.5]
+    lie_mode: [max]
+    methods: {set: cal_arms}
+    blocks: [{b: [1, 5]}, {b: [3], methods: [{set: cal_arms}, declared_argmax]}]
+  # seeds 4-10 of I_max_lie's non-claim-reading arms (configs/grids/seeds_to_10.yaml)
+  lie_max_s4_10:
+    seeds: 4-10
+    methods:
+      - midian
+      - {name: midian, params: {audit: false, verify: false}}
+      - {name: flat_probe_argmax, params: {online: true}}
+      - {name: knn_router, params: {online: true}}
+      - random
   replay_arms:
     - midian
     - {name: midian, params: {audit: false, verify: false}}

@@ -2,7 +2,7 @@
 
     needs   subset of {"declared", "probe", "reports", "bus"}; the View raises
             on any access outside it (see midian.world.View).
-    build   pre-emptive step; may spend budget.probes_per_agent_family * n * K
+    build   pre-emptive step; may spend budget.b * n * K
             probes through view.probe / view.probe_many.
     fetch   returns an agent id in [0, n); charges hops/comparisons/messages
             through view.ledger.

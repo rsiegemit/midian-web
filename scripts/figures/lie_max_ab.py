@@ -20,33 +20,31 @@ otherwise it prints MISSING and is skipped (rerun this script once the grid land
 
 import argparse
 import os
-import shutil
 import sys
 
 import pandas as pd
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))))
-from scripts.figures.lib import AGG, NEW, fig_out  # noqa: E402
+from scripts.figures.lib import DRAW, NEW, fig_out, publish, republish  # noqa: E402
 from scripts.figures.lib import figspec as S  # noqa: E402
+from scripts.figures.lib.pools import ARMS as KEYS  # noqa: E402
 
-DRAW = f"{AGG}/figures"
-KEYS = [k for k in S.ORDER if k not in ("oracle", "best_framework")]
 FIGS = {"A_max_lie": False, "B_max_lie": True}  # name -> normalised by the honest oracle
 
 
 def max_tables(key):
     """{(regime, b): seed x arm} of the max-lie grid of one A / B cell (family, group, n), read as seed_tables reads
     the standard grids (live / bernoulli: specialist; replay: shapes pooled per seed)."""
-    from scripts.figures.lib.grids import ERRATUM30, SIZE, with_s4_10
-    from scripts.figures.lib.rows import swap_fixed
-    from scripts.figures.lib.seed_tables import _table, rows
+    from scripts.figures.lib.grids import ERRATUM30, SIZE
+    from scripts.figures.lib.rows import pooled
+    from scripts.figures.lib.seed_tables import rows, table
 
     fam, _, n = key
     grid = f"lie_max_arms_{SIZE[n]}" if fam == "live" else f"lie_max_{ERRATUM30[fam]}"
-    df = swap_fixed(pd.concat([rows(g, n) for g in with_s4_10([grid])], ignore_index=True))  # + seed / fix mirrors
+    df = pooled(lambda g: rows(g, n), [grid])  # + seed / fix mirrors
     if fam in ("live", "bernoulli"):
         df = df[df.dist == "specialist"]
-    return grid, _table(df, pooled_shapes=fam == "replay")
+    return grid, table(df, pooled_shapes=fam == "replay")
 
 
 def substitute(cell, Tm):
@@ -120,33 +118,11 @@ def compute(C, name):
 
 
 def render(rec, name, out):
-    fig, ax = S.figure("appendix")
-    groups = list(dict.fromkeys(rec.tick))
-    w = 0.86 / len(KEYS)
-    for i, g in enumerate(groups):
-        q = rec[rec.tick == g]
-        for r in q.itertuples():
-            x = i + (KEYS.index(r.key) - (len(KEYS) - 1) / 2) * w
-            S.bar(ax, x, r.max_lie, w * 0.95, r.key, cartel=True)
-            S.whisker(ax, x, r.max_lie, r.ci_lo, r.ci_hi)
-            if pd.notna(r.standard_lie):
-                ax.hlines(r.standard_lie, x - w * 0.45, x + w * 0.45, colors="black", lw=1.2, zorder=8)
-        S.oracle(ax, i - 0.46, i + 0.46, q.oracle.iloc[0])
-    ax.set_xticks(range(len(groups)))
-    ax.set_xticklabels(groups)
-    ax.set_xlim(-0.5, len(groups) - 0.5)
-    S.finish(ax, ylabel=S.AXIS["rel" if FIGS[name] else "success"], ylim=(0.0, 1.05 if FIGS[name] else 0.95))
-    from matplotlib.lines import Line2D
-
-    S.legend(
-        ax,
-        ["oracle"] + KEYS,
-        ncol=5,
-        columnspacing=0.5,
-        handlelength=1.0,
-        extra=([Line2D([], [], color="black", lw=1.2)], ["standard lie"]),
-    )
-    S.save(fig, name + NEW, out)
+    """One group per x tick (A: live n; B: family), in csv order."""
+    rec = rec.rename(columns={"ci_lo": "lo", "ci_hi": "hi"})
+    groups = [(t, q, q.oracle.iloc[0]) for t, q in rec.groupby("tick", sort=False)]
+    norm = FIGS[name]
+    S.max_lie(groups, KEYS, name + NEW, out, S.AXIS["rel" if norm else "success"], (0.0, 1.05 if norm else 0.95))
 
 
 def main(argv=None):
@@ -159,18 +135,15 @@ def main(argv=None):
         from scripts.figures.condensed_figs import build
 
         C = build()
-        os.makedirs(DRAW, exist_ok=True)
     for name in FIGS:
         if a.from_csv:
             if not os.path.exists(f"{DRAW}/{name}{NEW}.csv"):
                 print(f"[{name}{NEW}] no {DRAW}/{name}{NEW}.csv shipped: skipped")
                 continue
-            rec = pd.read_csv(f"{DRAW}/{name}{NEW}.csv")
-            shutil.copyfile(f"{DRAW}/{name}{NEW}.csv", f"{out}/{name}{NEW}.csv")
+            rec = republish(name + NEW, out)
         else:
             rec = compute(C, name)
-            rec.to_csv(f"{out}/{name}{NEW}.csv", index=False)
-            rec.to_csv(f"{DRAW}/{name}{NEW}.csv", index=False)
+            publish(name + NEW, out, rec)
         render(rec, name, out)
 
 

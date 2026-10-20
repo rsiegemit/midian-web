@@ -42,10 +42,10 @@ View                                                   # what a method sees; Acc
   .declared -> D[n, K], read-only                     # needs "declared"
   .probe(a, f) -> 0/1 ; .probe_many(agents, families, reps) -> int8[len(agents), reps]    # needs "probe"; charged
   .report_channel(j, a, outcome) ; .report_many(reporters, agents, outcomes)              # needs "reports"; charged
-  .bus.send(src, dst, payload) / .bus.send_many(k) / .bus.broadcast(src, payload)         # needs "bus"; charged
+  .bus.send_many(k) / .bus.broadcast(src, payload)                                         # needs "bus"; charged
 
 Ledger: .probe(k) .report(k) .message(k) .hop(k) .compare(k) .task(k) .snapshot() .diff(before) .reset()
-Budget(probes_per_agent_family=3): .b ; .total_probes(n, K) = n * K * b
+Budget(b=3): .total_probes(n, K) = n * K * b
 
 class Method:                                          # one subclass per file in midian/methods/, file name == method name
     name: str; needs: frozenset                        # subset of {"declared", "probe", "reports", "bus"}
@@ -156,7 +156,7 @@ for value). They are in `scripts/checks/`.
 
 ## Framework arms
 
-Each framework arm (`midian/methods/frameworks/fw_*.py`, 6 to 11 lines) hands a shortlist and the task to a worker process
+Each framework arm (`midian/methods/frameworks/fw_*.py`, 8 to 12 lines) hands a shortlist and the task to a worker process
 running inside that framework's own virtual environment (`workers/*_worker.py`, JSON lines over `_bridge.py`) and returns
 the agent the framework's own selection primitive chose. The shared adapter (`_common.FrameworkMethod`) does what a
 practitioner would: a retriever picks the top k = 10 agents by their self-descriptions, the framework's supervisor

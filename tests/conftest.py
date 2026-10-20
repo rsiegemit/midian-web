@@ -7,9 +7,11 @@ import os
 import sys
 import tempfile
 
+import numpy as np
 import pytest
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, REPO)
 # never load the production memo (GBs)
 os.environ.setdefault("RTE_LLM_CACHE", tempfile.mkdtemp(prefix="rte_test_memo_"))
 
@@ -26,17 +28,23 @@ DATA = {"test_default_bit_identical", "test_calibrated_reproduces_live_stats",
         "test_real_cells_summary"}
 
 
-def _echo_env_missing():
-    from midian.methods.frameworks._bridge import venv_python
-    try:
-        venv_python("rte")
-        return False
-    except RuntimeError:
-        return True
+def fake_cells(path, K=8, M=4, prompts=40):
+    """A tiny RouterBench-shaped cell table in the layout scripts/data/02_download_routerbench.py writes (no download).
+    test_erratum30's GOLDEN hashes it: change nothing here."""
+    rng = np.random.default_rng(0)
+    bias = rng.uniform(0.2, 0.9, M)
+    np.savez(
+        path,
+        model_names=np.array([f"m{m}" for m in range(M)]),
+        category_names=np.array([f"c{k}" for k in range(K)]),
+        offsets=np.arange(K + 1, dtype=np.int64) * prompts,
+        n_prompts=np.full(K, prompts, np.int64),
+        outcomes=(rng.random((K * prompts, M)) < bias).astype(np.int8),
+    )
+    return path
 
 
 def pytest_collection_modifyitems(config, items):
-    echo_skip = None
     for it in items:
         fn, params = it.originalname, set(map(str, getattr(getattr(it, "callspec", None), "params", {}).values()))
         if it.path.name == "test_each_method.py" and params & SLOW_PARAMS:
@@ -49,7 +57,3 @@ def pytest_collection_modifyitems(config, items):
             it.add_marker(pytest.mark.data)
         if (it.path.name == "test_each_method.py" and "fw_echo" in params) or fn in ECHO:
             it.add_marker(pytest.mark.fwenv)
-            if echo_skip is None:
-                echo_skip = _echo_env_missing()
-            if echo_skip:
-                it.add_marker(pytest.mark.skip(reason="echo worker interpreter not found ($RTE_DATA/env/rte)"))
