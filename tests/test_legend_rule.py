@@ -36,11 +36,11 @@ def test_best_is_top_left_and_reads_row_major():
     assert rows == [["v0.9", "v0.7", "v0.5"], ["v0.3", "v0.1", "style key"]]
 
 
-def test_ascending_for_costs_and_uneven_last_row():
+def test_uneven_last_row():
     fig, ax = plt.subplots()
     for v in (5, 1, 3, 2):
         ax.plot([0, 1], [v, v], label=f"c{v}")
-    assert _grid(ax.legend(ncol=3, rank="asc"), 3) == [["c1", "c2", "c3"], ["c5"]]
+    assert _grid(ax.legend(ncol=3), 3) == [["c5", "c3", "c2"], ["c1"]]
 
 
 def test_rowmajor_permutation():

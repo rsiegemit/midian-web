@@ -1,10 +1,10 @@
-"""Scored outcomes of a de-cloned live population (LLMBackend declone), kept beside the population.
+"""Scored outcomes of a de-cloned live population (LLMBackend declone), kept beside the population instead of its
+sampled texts (why: midian.backends.llm, DE-CLONED POPULATIONS).
 
-A de-cloned agent's answers are sampled per agent, so the shared text memo would grow by one long answer per
-(agent, family, instance): tens of GB that every process loads at startup. Only the 0/1 outcome matters, so it is
-stored here instead, per population: `<population dir>/outcomes/<host>_<pid>.sqlite`, one writer per process as in
-midian.llm_client (NFS: `nolock`), every shard read at first use. The build (scripts/data/build_declone.py) fills it;
-a method that probes past the build adds its outcomes, so every later method sees the same answer."""
+Per population: `<population dir>/outcomes/<host>_<pid>.sqlite`, one writer per process as in midian.llm_client (NFS:
+`nolock`), every shard read at first use, this process's shard opened at its first write. The build
+(scripts/data/build_declone.py) fills it; a method that probes past the build adds its outcomes, so every later method
+sees the same answer."""
 from __future__ import annotations
 
 import os
@@ -38,7 +38,6 @@ class OutcomeStore:
                     con.close()
                 except sqlite3.Error:
                     continue                                    # mid-write: its rows come next process
-            self._shard = _open(self.dir / f"{socket.gethostname()}_{os.getpid()}.sqlite")
         return self._mem
 
     def get(self, keys) -> list:
@@ -50,5 +49,7 @@ class OutcomeStore:
         """rows: ((agent, family, instance), outcome)."""
         mem, rows = self._load(), [(int(a), int(f), int(i), int(v)) for (a, f, i), v in rows]
         mem.update(((a, f, i), v) for a, f, i, v in rows)
+        if self._shard is None:
+            self._shard = _open(self.dir / f"{socket.gethostname()}_{os.getpid()}.sqlite")
         self._shard.executemany("INSERT OR REPLACE INTO o VALUES (?, ?, ?, ?)", rows)
         self._shard.commit()

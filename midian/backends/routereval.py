@@ -1,10 +1,11 @@
 """RouterEval backend: a candidate pool of REAL LLMs from RouterEval (Huang et al. 2025) with their recorded per-prompt
 scores, inside our World — so every method, the report channel and the liars run on real outcomes at n up to 1,000.
 
-Agents = the m LLMs of one of RouterEval's hard-setting pools (`dataset`, `m`, `pool` in {all_strong, all_weak,
-strong_to_weak}); n must equal m. Families = the K largest MMLU subjects named in the prompt text (or, on datasets
-without subjects, K KMeans clusters of their RoBERTa prompt embeddings). Probes = index-seeded TRAIN prompts of the
-family (a fresh one per (agent, family, k), like the llm backend's instances); tasks = TEST prompts of the family.
+Agents = the m = n LLMs of one of RouterEval's hard-setting pools (`dataset`; the grid's `dist` axis names the pool:
+all_strong, all_weak or strong_to_weak). Families = the K largest MMLU subjects named in the prompt text (or, on
+datasets without subjects, K KMeans clusters of their RoBERTa prompt embeddings). Probes = index-seeded TRAIN prompts
+of the family (a fresh one per (agent, family, k), like the llm backend's instances); tasks = TEST prompts of the
+family.
 True skill S[a, f] = the agent's mean train score on the family (used for the oracle and liar selection only; never
 shown to a method). Declarations = noisy_declared(S) (no self-descriptions exist here; programmatic and
 self_described are the honest control, as in replay; `calibrated` draws the live self-rating pattern).
@@ -31,9 +32,8 @@ SUBJECT = re.compile(r"questions \(with answers\) about (.+?)\.")
 
 
 class RouterEvalBackend:
-    def __init__(self, n: int, K: int, dist: str, seed: int, rng, dataset: str = "mmlu", pool: str | None = None,
+    def __init__(self, n: int, K: int, dist: str, seed: int, rng, dataset: str = "mmlu",
                  no_repeat: bool = False, shuffle: bool = False, **_):
-        pool = pool or dist                                              # the grid's `dist` axis names the pool config
         self.n, self.dist, self.seed, self.no_repeat = int(n), dist, int(seed), bool(no_repeat)
         if dataset == "llmrouterbench":
             # LLMRouterBench performance setting: 20 models × 15 datasets (perf_matrix.npz, see docs/reproducing.md)
@@ -58,7 +58,7 @@ class RouterEvalBackend:
         else:
             d = pickle.load(open(f"{DATA}/{dataset}_router_dataset.pkl", "rb"))
             assert int(n) in d["hard"], f"n={n} is not a RouterEval pool size {list(d['hard'])}"
-            c = d["hard"][int(n)][pool]
+            c = d["hard"][int(n)][dist]                                  # the grid's `dist` axis names the pool
             self.model_names = [str(x) for x in c["model"]]
             key = "train_label" if dataset == "harness_truthfulqa_mc_0" else "train_score"
             # (prompts, n)
@@ -68,10 +68,8 @@ class RouterEvalBackend:
             self._Etr = np.asarray(d["embedding"]["train_embed"], np.float32)
             self._Ete = np.asarray(d["embedding"]["test_embed"], np.float32)
         if shuffle:
-            # per-seed agent order: pools are stored weak ->
-            # strong, so index
+            # per-seed agent order: pools are stored weak -> strong, so lowest-index tie-breaks were not random
             perm = np.random.default_rng(stable_seed_32(seed, "agent_order")).permutation(Ytr.shape[1])
-            # tie-breaks were not random
             Ytr, Yte, self.model_names = Ytr[:, perm], Yte[:, perm], [self.model_names[i] for i in perm]
         self.families = names
         self.K = len(names)
