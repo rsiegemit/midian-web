@@ -219,10 +219,7 @@ grids:
     mirror_of: variants_f1
     n: [100]
     methods:
-      - {name: midian, params: {audit: false, verify: false}}
-      - {name: midian, params: {audit: false}}
-      - {name: midian, params: {verify: false}}
-      - midian
+      - {set: midian4}
       - flat_probe_argmax
       - {name: flat_probe_argmax, params: {online: true}}
       - sequential_halving
@@ -247,10 +244,7 @@ grids:
     seeds: "1-3"
     Q: 300
     methods:
-      - {name: midian, params: {audit: false, verify: false}}
-      - {name: midian, params: {audit: false}}
-      - {name: midian, params: {verify: false}}
-      - midian
+      - {set: midian4}
       - flat_probe_argmax
       - {name: flat_probe_argmax, params: {online: true}}
       - {name: sequential_halving, params: {peer_reported: true}}
@@ -559,7 +553,7 @@ grids:
   # does declaration-based discovery (declared argmax; frameworks on the declared top-k, i.e. an idealized A2A Agent-
   # Card registry) collapse while MIDIAN holds? The cartel cell of live 10^3 / 10^4 / 10^5, seeds 1-3. Only D changes,
   # so every probe build is already cached.
-  # [FIG:I] lie_mode max, cartel cell on fw_live_n1000_lowskill; read by: none
+  # [FIG:I] lie_mode max, cartel cell on fw_live_n1000_lowskill; read by: lie_max_fig
   lie_max_n1000:
     mirror_of: fw_live_n1000_lowskill
     dist: [specialist]
@@ -567,7 +561,7 @@ grids:
     lie_mode: [max]
     methods: {set: lie_max_arms}
 
-  # [FIG:I] lie_mode max, cartel cell on learned_n10k; read by: none
+  # [FIG:I] lie_mode max, cartel cell on learned_n10k; read by: lie_max_fig
   lie_max_n10k:
     mirror_of: learned_n10k
     beta: [0.5]
@@ -575,7 +569,7 @@ grids:
     lie_mode: [max]
     methods: {set: lie_max_arms}
 
-  # [FIG:I] lie_mode max, cartel cell on live_n100k; read by: none
+  # [FIG:I] lie_mode max, cartel cell on live_n100k; read by: lie_max_fig
   lie_max_n100k:
     mirror_of: live_n100k
     beta: [0.5]

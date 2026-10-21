@@ -15,8 +15,9 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.realp
 import scripts.figures.lib.seed_tables as t  # noqa: E402
 from scripts.figures.lib import fig_out  # noqa: E402
 from scripts.figures.lib.grids import H30_FW, H30_REF, TEN  # noqa: E402
+from scripts.figures.lib.pools import MIN_FW  # noqa: E402
 from scripts.figures.lib.rows import label  # noqa: E402
-from scripts.figures.shortlist_condensed import MAIN, MIN_FW  # noqa: E402
+from scripts.figures.shortlist_condensed import MAIN  # noqa: E402
 
 OUT = None
 GRIDS = [
