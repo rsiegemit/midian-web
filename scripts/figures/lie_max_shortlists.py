@@ -5,8 +5,8 @@ Grids: lie_max_fw_n100k_va (MIDIAN shortlist), _tfidf (hashed TF-IDF), _em (Mini
 fusion + reranker with the competence instruction, the variant Figure F draws at 10^5), lie_max_fw_n100k (declared
 top-k). Bar (hatched: cartel) = the mean over frameworks of each framework's seed mean; black dot = the best framework;
 black tick = the same shortlist's standard-lie cartel bar (<out>/F_shortlists_1e5.csv). Same order, palette, edge rule
-and full-seed rule as F (a framework counts only with every seed its grid ran, a bar needs shortlist_condensed.MIN_FW
-of them); the reference lines are F's (oracle, random, MIDIAN with no framework; the claim-free arms, unchanged by the
+and full-seed rule as F (a framework counts only with every seed its grid ran, a bar needs lib/pools.MIN_FW of
+them); the reference lines are F's (oracle, random, MIDIAN with no framework; the claim-free arms, unchanged by the
 lie). The csv adds the strict mean (method_stats.success_strict) and the framework count k.
     python scripts/figures/lie_max_shortlists.py [--out DIR] [--from-csv]
       -> <out>/F_max_lie.{png,pdf,csv} + results/aggregates/figures/F_max_lie.csv and its lines in refs.csv;
@@ -14,17 +14,16 @@ lie). The csv adds the strict mean (method_stats.success_strict) and the framewo
 
 import argparse
 import os
-import shutil
 import sys
 import textwrap
 
 import pandas as pd
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))))
-from scripts.figures.lib import AGG, NEW, fig_out  # noqa: E402
+from scripts.figures.lib import NEW, fig_out, publish, republish  # noqa: E402
 from scripts.figures.lib import figspec as S  # noqa: E402
 
-NAME, DRAW, N = "F_max_lie" + NEW, f"{AGG}/figures", 100000  # 10-seed build: F's reference lines at 10 seeds
+NAME, N = "F_max_lie" + NEW, 100000  # 10-seed build: F's reference lines at 10 seeds
 GRIDS = {
     "va_cohort": "lie_max_fw_n100k_va",
     "tfidf": "lie_max_fw_n100k_tfidf",
@@ -33,15 +32,13 @@ GRIDS = {
     "sota": "lie_max_fw_n100k_sota_ic",
     "declared": "lie_max_fw_n100k",
 }  # in SHORTLIST_ORDER
-LINES = ["oracle", "random_line", "midian_ref"]
 
 
 def shortlist(key, grid):
     """One shortlist under the max lie: the row of the figure csv, or None (printed) when too few frameworks."""
     from scripts.figures.lib.exclusions import excluded
+    from scripts.figures.lib.pools import MIN_FW, source
     from scripts.figures.lib.rows import read_rows, stat
-    from scripts.figures.shortlist_condensed import MIN_FW
-    from scripts.figures.shortlist_figs import source
 
     x = read_rows(grid).drop_duplicates("rid")
     x = x[x.method.astype(str).str.startswith("fw_") & ~x.method.map(excluded)]
@@ -87,7 +84,7 @@ def compute(out):
     orc = pd.DataFrame(
         [
             dict(figure=NAME, key=k, n=N, value=ref[c])
-            for k, c in zip(LINES, ["oracle", "random", S.NAME["midian_ref"]])
+            for k, c in zip(S.REF_LINES, ["oracle", "random", S.NAME["midian_ref"]])
         ]
     )
     return rec, orc
@@ -100,9 +97,9 @@ def render(rec, orc, out):
     for i, key in enumerate(order):
         r = rec[rec.shortlist == key].iloc[0]
         S.bar(ax, i, r["mean"], w, key, cartel=True)
-        ax.plot(i, r["best"], "o", ms=3, color="black", zorder=8)
+        S.best_dot(ax, i, r["best"])
         if pd.notna(r["standard_mean"]):
-            ax.hlines(r["standard_mean"], i - w / 2, i + w / 2, colors="black", lw=1.2, zorder=8)
+            S.std_tick(ax, i - w / 2, i + w / 2, r["standard_mean"])
     line = dict(zip(orc.key, orc.value))
     S.oracle(ax, -0.5, len(order) - 0.5, line["oracle"])
     S.ref(ax, -0.5, len(order) - 0.5, line["random_line"], "random")
@@ -111,9 +108,7 @@ def render(rec, orc, out):
     ax.set_xlim(-0.5, len(order) - 0.5)
     ax.set_xticklabels([textwrap.fill(S.SHORTLIST_BODY[k], 14) for k in order], linespacing=0.95)
     S.finish(ax, ylabel=S.AXIS["success"], ylim=(0.2, 0.95))
-    from matplotlib.lines import Line2D
-
-    S.legend(ax, LINES + ["best_fw_dot"], extra=([Line2D([], [], color="black", lw=1.2)], ["standard lie"]))
+    S.legend(ax, S.REF_LINES + ["best_fw_dot", "standard_lie"])
     S.save(fig, NAME, out)
 
 
@@ -124,18 +119,12 @@ def main(argv=None):
     )
     p.add_argument("--from-csv", action="store_true", help="redraw from results/aggregates/figures only")
     a = p.parse_args(argv)
-    out, refs_csv = fig_out(a.out), f"{DRAW}/refs.csv"
+    out = fig_out(a.out)
     if a.from_csv:
-        rec, orc = pd.read_csv(f"{DRAW}/{NAME}.csv"), pd.read_csv(refs_csv)
-        orc = orc[orc.figure == NAME]
-        shutil.copyfile(f"{DRAW}/{NAME}.csv", f"{out}/{NAME}.csv")
+        rec, orc = republish(NAME, out, refs=True)
     else:
         rec, orc = compute(out)
-        os.makedirs(DRAW, exist_ok=True)
-        rec.to_csv(f"{out}/{NAME}.csv", index=False)
-        rec.to_csv(f"{DRAW}/{NAME}.csv", index=False)
-        old = pd.read_csv(refs_csv) if os.path.exists(refs_csv) else pd.DataFrame(columns=orc.columns)
-        pd.concat([old[old.figure != NAME], orc], ignore_index=True).to_csv(refs_csv, index=False)
+        publish(NAME, out, rec, refs=orc)
     render(rec, orc, out)
 
 

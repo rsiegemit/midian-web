@@ -33,6 +33,7 @@ import pandas as pd
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))))
 from scripts.figures.lib import AGG, NEW, fig_out  # noqa: E402
 from scripts.figures.lib import figspec as S  # noqa: E402
+from scripts.figures.lib.pools import MIN_FW  # noqa: E402
 
 REG = ("beta0", "cartel")
 MAIN = [
@@ -40,7 +41,6 @@ MAIN = [
 ]  # E: the shortlists run at every n; BM25 / plain dense are 10^3 only
 BODY_H = ["va_cohort", "tfidf", "embed", "dense", "sota", "declared"]  # H, in the spec's order
 VARIANTS = {"dense": ("dense", "dense_icomp", "dense_idemo"), "sota": ("sota", "sota_icomp", "sota_idemo")}
-LINES = ["oracle", "random_line", "midian_ref"]  # the reference lines' legend keys
 INCOMPLETE = [False]  # set while drawing a figure: a slot left empty or a rerun outstanding
 
 
@@ -50,9 +50,6 @@ def load(family="live"):
         (d.dist == "specialist") if family == "live" else ((d.dist == "strong_to_weak") | (d.n == 5000))
     )  # RouterEval: the mixed pool; 5,000 = the leaderboard
     return d[keep & d.regime.isin(list(REG))]
-
-
-MIN_FW = 6  # a bar needs >= 6 frameworks, each with the full seed count
 
 
 def summarise(d):
@@ -115,7 +112,7 @@ def pair(ax, x, w, q, key, dots=False):
         xx = x + (h - 0.5) * w
         S.bar(ax, xx, v["mean"], w * 0.95, key, cartel=bool(h))
         if dots:
-            ax.plot(xx, v["best"], "o", ms=3, color="black", zorder=8)
+            S.best_dot(ax, xx, v["best"])
 
 
 def finish(fig, ax, name, data, out, keys=(), labels=None, ylabel=S.AXIS["success"], ylim=(0.2, 0.95), **kw):
@@ -142,9 +139,10 @@ def by_n(s, ref, name, srcs, names, kind, var, ncol, out, ylim=(0.2, 0.95), line
     ax.set_xticks(range(len(ns)))
     ax.set_xticklabels(S.pow10_ticks(ns, var))
     ax.set_xlim(-0.5, len(ns) - 0.5)
-    keys, labels = list(srcs) + LINES, [names[k] for k in srcs] + [S.NAME[k] for k in LINES]
+    L = S.REF_LINES
+    keys, labels = list(srcs) + L, [names[k] for k in srcs] + [S.NAME[k] for k in L]
     if lines_first:
-        keys, labels = keys[-len(LINES) :] + keys[: -len(LINES)], labels[-len(LINES) :] + labels[: -len(LINES)]
+        keys, labels = keys[-len(L) :] + keys[: -len(L)], labels[-len(L) :] + labels[: -len(L)]
     finish(fig, ax, name, s, out, keys, labels, ylim=ylim, ncol=ncol)
 
 
@@ -163,7 +161,7 @@ def fig_F(s, ref, name, names, kind, out, n=100000, rotate=False):
         [names[x] if rotate else textwrap.fill(names[x], 14) for x in order],  # horizontal: long names on two lines
         **(dict(rotation=30, ha="right", rotation_mode="anchor") if rotate else dict(linespacing=0.95)),
     )
-    finish(fig, ax, name, q, out, LINES + ["best_fw_dot"])  # one row above: inside, it meets the dots
+    finish(fig, ax, name, q, out, S.REF_LINES + ["best_fw_dot"])  # one row above: inside, it meets the dots
 
 
 def fig_G(d, out, n=100000):

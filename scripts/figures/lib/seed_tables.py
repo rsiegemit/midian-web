@@ -1,15 +1,17 @@
 """Per-seed success tables (seed x arm) for every condensed A / B cell and budget, read straight from the raw rows.
+
     from scripts.figures.lib.seed_tables import tables
-tables() -> {(family, group, n, regime): {b: DataFrame(index = seed, columns = arm label, values = success)}}
-  live n        b = 3: grids.LIVE_GRIDS[n] (specialist, self-described channel, grids averaged per seed as
-                bar_figs does)
-                b = 1 / 5: va_b_* + rivals_b_*;  tuned_wsb_* (n0 = 0.5) at whatever b it ran
-  every family  + pool_fill_* (the candidates a cell lacked at some b; configs/grids/)
-  RouterEval    the 5,000-LLM leaderboard pool: routereval_mmlu5k (b = 3) + va_b / rivals_b routereval5k
-  LLMRouterBench  llmrouterbench_pool (b = 3) + va_b / rivals_b llmrouterbench
-  bernoulli 1e7 bernoulli_scale_v5 (b = 1, 3) + va_b / rivals_b bernoulli_1e7 (b = 5)
-  replay 1e6    replay_scale_v5 (b = 1, 3) + va_b / rivals_b replay_1e6; shapes pooled per seed, only seeds with
-                ALL three
+    tables() -> {(family, group, n, regime): {b: DataFrame(index = seed, columns = arm label, values = success)}}
+
+  live n          grids.LIVE_GRIDS[n] (b = 3; specialist, self-described channel, grids averaged per seed as bar_figs
+                  does) + grids.b_grids (va_b_* / rivals_b_*: b = 1 / 5; pool_fill_*, linucb_fix_*, trueskill_fix_*)
+                  + tuned_wsb_* (n0 = 0.5, at whatever b it ran) + pool_seeds_*
+  RouterEval      the 5,000-LLM leaderboard pool: routereval_mmlu5k (b = 3) + b_grids("routereval5k")
+  LLMRouterBench  llmrouterbench_pool (b = 3) + b_grids("llmrouterbench")
+  bernoulli 1e7   bernoulli_scale_v5 (b = 1, 3) + b_grids("bernoulli_1e7")
+  replay 1e6      replay_scale_v5 (b = 1, 3) + b_grids("replay_1e6"); shapes pooled per seed, only seeds with ALL three
+A non-live family reads its erratum-30 grid (grids.ERRATUM30) once that grid is complete (switched()): in place of the
+grids above; bernoulli on top of them, its claim readers then from the calibrated rows only.
 Under RTE_SEEDS_4_10=1 (the 10-seed build) every grid list above also reads its seed mirrors (grids.TEN) and their
 MIDIAN-fix mirrors (grids.fixes(); drawn as MIDIAN, rows.swap_fixed).
 Regimes: beta0 = beta 0 (any liar_select: no liars, so the tag is inert); cartel = beta 0.5, low_skill_first.
@@ -23,7 +25,7 @@ import pandas as pd
 
 from scripts.figures.lib import grids
 from scripts.figures.lib.regimes import ab
-from scripts.figures.lib.rows import label, read_rows, swap_fixed
+from scripts.figures.lib.rows import label, pooled, read_rows
 
 COLS = ["rid", "n", "b", "dist", "beta", "liar_select", "declared_source", "seed", "method", "params", "success"]
 
@@ -39,7 +41,7 @@ def rows(grid, n):
     return df.assign(grid=grid, params=df.params.astype(str))
 
 
-def _table(df, pooled_shapes=False):
+def table(df, pooled_shapes=False):
     """rows -> {(regime, b): seed x arm}. Rows of one (seed, arm) from several grids are averaged, as bar_figs does."""
     if df.empty:
         return {}
@@ -60,12 +62,10 @@ def _table(df, pooled_shapes=False):
     return out
 
 
-# Erratum 30: the non-live families switch to the calibrated-claims / split / no-repeat reruns once that grid has
-# every row
-# (complete()); until then the old rows stand. bernoulli: only the claim-reading arms change (the world, liars, stream
-# and probes
-# do not depend on declared_source), so their programmatic rows are swapped for the calibrated ones; the others move
-# wholesale.
+# Erratum 30: the non-live families switch to the calibrated-claims / split / no-repeat reruns once that grid has every
+# row (complete()); until then the old rows stand. bernoulli: only the claim-reading arms change (the world, liars,
+# stream and probes do not depend on declared_source), so their programmatic rows are swapped for the calibrated ones;
+# the others move wholesale.
 CLAIM_READERS = {
     "cluster_head_router",
     "disrouter_cascade",
@@ -164,7 +164,7 @@ def tables():
     ]
     out = {}
     for (fam, grp, n), gs, kind in spec:  # + the seed mirrors (grids.TEN) under RTE_SEEDS_4_10=1
-        df = swap_fixed(pd.concat([rows(g, n) for g in grids.with_s4_10(gs)], ignore_index=True))
+        df = pooled(lambda g: rows(g, n), gs)
         if not df.empty:  # TrueSkill: post probe-duplicate-fix rows only (erratum 30)
             src = df.grid.map(grids.source)
             df = df[
@@ -179,6 +179,6 @@ def tables():
             df = df[df.dist == "specialist"]
         if kind == "live" and "declared_source" in df:  # the live headline is the self-described channel (bar_figs)
             df = df[df.declared_source.isna() | (df.declared_source == "self_described")]
-        for (reg, b), T in _table(df, pooled_shapes=kind == "pooled").items():
+        for (reg, b), T in table(df, pooled_shapes=kind == "pooled").items():
             out.setdefault((fam, grp, n, reg), {})[b] = T
     return out

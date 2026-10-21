@@ -34,7 +34,9 @@ import subprocess
 import sys
 import time
 
-ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))))
+from scripts.figures.lib import ROOT, fig_out  # noqa: E402
+
 FIG = "scripts/figures"
 STEPS = [
     "scale_matrix",
@@ -54,7 +56,6 @@ def commands(step, out, from_csv):
     """The command lines of one step."""
     py = [sys.executable]
     if step == "scale_matrix":
-        sys.path.insert(0, ROOT)
         from scripts.figures.lib.grids import MATRICES
 
         return [py + ["scripts/analysis/scale_matrix.py", g] for g in MATRICES.values()]
@@ -71,8 +72,7 @@ def main(argv=None):
     p.add_argument("--scale-matrix", action="store_true", help="rebuild the scale matrices first (full run only)")
     p.add_argument("--only", nargs="+", choices=STEPS, help="run just these steps (in the fixed order)")
     a = p.parse_args(argv)
-    out = os.path.abspath(a.out or os.environ.get("RTE_FIG_OUT") or os.path.join(ROOT, "figures", "paper"))
-    os.makedirs(out, exist_ok=True)
+    out = os.path.abspath(fig_out(a.out))
     steps = FROM_CSV if a.from_csv else [s for s in STEPS if s != "scale_matrix" or a.scale_matrix]
     steps = [s for s in steps if not a.only or s in a.only]
     env = {**os.environ, "PYTHONPATH": ROOT, "MPLBACKEND": "Agg"}

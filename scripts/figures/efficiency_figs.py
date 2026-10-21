@@ -19,7 +19,6 @@ from __future__ import annotations
 
 import argparse
 import os
-import shutil
 import sys
 
 import numpy as np
@@ -29,13 +28,13 @@ from matplotlib.patches import Patch
 from matplotlib.transforms import blended_transform_factory
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))))
-from scripts.figures.condensed_figs import BANDIT, LEARNED, NOT_RUNNABLE, POOLS  # noqa: E402
-from scripts.figures.lib import AGG, NEW, SEEDS_4_10, fig_out  # noqa: E402
+from scripts.figures.lib import AGG, NEW, SEEDS_4_10, fig_out, publish, republish  # noqa: E402
 from scripts.figures.lib import figspec as S  # noqa: E402
 from scripts.figures.lib.grids import MATRICES, VA_GRIDS, with_s4_10  # noqa: E402
+from scripts.figures.lib.pools import BANDIT, LEARNED, POOLS, not_runnable  # noqa: E402
 from scripts.figures.lib.rows import label, read_rows  # noqa: E402
 
-COST, DRAW = f"{AGG}/cost_by_n.csv", f"{AGG}/figures"
+COST = f"{AGG}/cost_by_n.csv"
 COLS = [
     "n",
     "b",
@@ -121,7 +120,7 @@ def draw_C(ax, d):
     d = d[d.b == 3].assign(work=lambda x: x.messages_per_task + x.comparisons_per_task)
     rec = []
     hs, ls = [], []
-    runnable = lambda q: q[~pd.Series([l in NOT_RUNNABLE("bernoulli", n) for l, n in zip(q.label, q.n)], index=q.index)]
+    runnable = lambda q: q[~pd.Series([l in not_runnable("bernoulli", n) for l, n in zip(q.label, q.n)], index=q.index)]
     flat = runnable(d[d.label.isin(FLAT_SCAN) & (d.n >= 100)]).groupby("n").work
     dev = float(((flat.max() - flat.min()) / flat.min()).max())
     print(
@@ -282,18 +281,12 @@ def main(argv=None):
         f, ax = S.figure("appendix")
         draw_C(ax, d).to_csv(f"{out}/C_routing_work_vs_n.csv", index=False)
         S.save(f, "C_routing_work_vs_n", out)
-    name, refs_csv = "D_energy_per_query" + NEW, f"{DRAW}/refs.csv"  # 10-seed build: the live 10^5 ledgers at 10 seeds
+    name = "D_energy_per_query" + NEW  # 10-seed build: the live 10^5 ledgers at 10 seeds
     if a.from_csv:
-        rec, refs = pd.read_csv(f"{DRAW}/{name}.csv"), pd.read_csv(refs_csv)
-        refs = refs[refs.figure == name]
-        shutil.copyfile(f"{DRAW}/{name}.csv", f"{out}/{name}.csv")
+        rec, refs = republish(name, out, refs=True)
     else:
         rec, refs = compute_D(d)
-        os.makedirs(DRAW, exist_ok=True)
-        rec.to_csv(f"{out}/{name}.csv", index=False)
-        rec.to_csv(f"{DRAW}/{name}.csv", index=False)
-        old = pd.read_csv(refs_csv) if os.path.exists(refs_csv) else pd.DataFrame(columns=refs.columns)
-        pd.concat([old[old.figure != name], refs], ignore_index=True).to_csv(refs_csv, index=False)
+        publish(name, out, rec, refs=refs)
     f, ax = S.figure("d")
     render_D(ax, rec, refs)
     S.save(f, name, out)
