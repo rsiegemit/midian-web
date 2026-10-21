@@ -4,7 +4,8 @@ Every module reads its data root and its optional switches from here, never from
 
     RTE_DATA            data root: populations/, data/, models/, cache/, results/, endpoints.json.
                         Default ~/rte_data. Set it explicitly on a cluster.
-    RTE_WORKERS         processes for non-LLM grids (midian.run --workers overrides).
+    RTE_LLM_RETRIES     attempts per LLM request before it fails (midian.llm_client; default 20).
+    RTE_CONCURRENCY     in-flight LLM requests per batch (midian.llm_client; default 64).
     RTE_FW_PARALLEL     concurrent framework requests per unit (identical picks; speed only).
     RTE_TEXT_PROCS      processes that render prompt texts for the learned routers (speed only).
     RTE_EMBED_BATCH     embed prompts in batches (speed only; embeddings differ by <= 2.4e-7 from the per-prompt path).

@@ -12,27 +12,14 @@ from __future__ import annotations
 
 import hashlib
 
-__all__ = ["stable_seed", "stable_seed_32"]
+__all__ = ["stable_seed_32"]
 
 _SEP = "\x1f"          # unit separator: cannot occur in an arm or protocol name
 
 
-def stable_seed(*parts, bits: int = 64) -> int:
-    """A deterministic non-negative int derived from `parts`.
-
-    Identical in every process, on every platform, in every Python build --
-    which is the whole point.  `parts` are rendered with `repr` and joined on a
-    separator that cannot appear inside a name, so ("a", "b") and ("a\\x1fb",)
-    cannot collide into the same seed.
-    """
-    if not 8 <= bits <= 512:
-        raise ValueError(f"bits must be in [8, 512], got {bits}")
-    key = _SEP.join(repr(p) for p in parts).encode("utf-8")
-    n_bytes = max(1, bits // 8)
-    digest = hashlib.blake2b(key, digest_size=n_bytes).digest()
-    return int.from_bytes(digest, "big")
-
-
 def stable_seed_32(*parts) -> int:
-    """`stable_seed` masked to 32 bits, the width the call sites used."""
-    return stable_seed(*parts, bits=64) & 0xFFFFFFFF
+    """A deterministic non-negative 32-bit int derived from `parts`, identical in every process, on every platform, in
+    every Python build. `parts` are rendered with `repr` and joined on a separator that cannot appear inside a name, so
+    ("a", "b") and ("a\\x1fb",) cannot collide into the same seed; the 8-byte digest is masked to its low 32 bits."""
+    key = _SEP.join(repr(p) for p in parts).encode("utf-8")
+    return int.from_bytes(hashlib.blake2b(key, digest_size=8).digest(), "big") & 0xFFFFFFFF
