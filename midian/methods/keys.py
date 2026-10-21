@@ -15,6 +15,8 @@ seed and the method's `needs`), so a rerun of any cell under the new keys reprod
 A results directory whose rows were rewritten carries SENTINEL; assert_v2 checks that it holds no old key."""
 from __future__ import annotations
 
+from ._est import AUDIT_RATE
+
 SENTINEL = ".method_keys_v2"
 OLD = frozenset({"midian_va", "midian_a", "midian_v", "midian_sh", "midian_sha"})
 WITHDRAWN = frozenset({"midian_sh", "midian_sha"})
@@ -25,7 +27,7 @@ def _canon(p: dict) -> dict:
     """Drop MIDIAN flags equal to their defaults (audit on at 5 %, verify on, cached = verify)."""
     p = dict(p)
     audit = p.get("audit", True)
-    if audit is True or audit == 0.05:
+    if audit is True or audit == AUDIT_RATE:
         p.pop("audit", None)
     elif not audit:
         p["audit"] = False
@@ -70,7 +72,8 @@ def assert_v2(method: str, params: dict | None, where: str = "") -> None:
         raise AssertionError(f"{where}: old retrieval 'midian_va' in a migrated directory")
 
 
-def _jkey(d):
+def jkey(d) -> str:
+    """Compact key-sorted JSON: the one canonical form of params and cells in row ids and stored rows (midian.run)."""
     import json
     return json.dumps(d, sort_keys=True, separators=(",", ":"), default=str)
 
@@ -90,12 +93,12 @@ def normalize(df, results_dir: str):
             assert_v2(m, load(p), results_dir)
         return df
     new = {mp: to_new(mp[0], load(mp[1])) for mp in set(old)}
-    if all(v is not None and v[0] == mp[0] and _jkey(v[1]) == _jkey(load(mp[1])) for mp, v in new.items()):
+    if all(v is not None and v[0] == mp[0] and jkey(v[1]) == jkey(load(mp[1])) for mp, v in new.items()):
         return df
     keep = [new[mp] is not None for mp in old]
     df = df[keep].copy()
     kept = [mp for mp, k in zip(old, keep) if k]
     df["method"] = [new[mp][0] for mp in kept]
     if "params" in df:
-        df["params"] = [_jkey(new[mp][1]) for mp in kept]
+        df["params"] = [jkey(new[mp][1]) for mp in kept]
     return df

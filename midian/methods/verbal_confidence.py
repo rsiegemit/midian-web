@@ -15,6 +15,7 @@ import re
 import numpy as np
 
 from ..backends.prompts import ANSWER_RE
+from ._decl import declared
 from .base import Method
 from .frameworks._common import FrameworkMethod
 
@@ -62,7 +63,7 @@ class VerbalConfidence(Method):
 
     def build(self, view, budget):
         self.view = view
-        view.ledger.message(view.n)                                    # declarations / descriptions to the registry
+        declared(view)                                                 # declarations / descriptions to the registry
         self.sl = FrameworkMethod(k=self.k, retrieval=self.shortlist)   # its retrieval only: no supervisor, no bridge
         self.sl.view = view
         self.sl._index(view)

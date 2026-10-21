@@ -8,6 +8,7 @@ Churn: |arrived| messages + |arrived|*K*b probes (fresh prior and warm-up for th
 Params: n0=5.0."""
 import numpy as np
 
+from ._decl import declared
 from ._est import BetaBandit, reprobe
 
 
@@ -20,8 +21,11 @@ class WarmStartBandit(BetaBandit):
         self.n0 = n0
 
     def prior(self, view):
-        view.ledger.message(view.n)                          # collect declarations
-        D = np.clip(view.declared, 1e-3, 1 - 1e-3)          # Beta shape params must be > 0
+        return self._prior(declared(view))
+
+    def _prior(self, D):
+        """(alpha0, beta0) = n0 * (D, 1 - D), D clipped: Beta shape params must be > 0."""
+        D = np.clip(D, 1e-3, 1 - 1e-3)
         return self.n0 * D, self.n0 * (1 - D)
 
     def build(self, view, budget):
@@ -32,6 +36,6 @@ class WarmStartBandit(BetaBandit):
         """Fresh prior from the arrivals' declarations (len(arrived) messages) plus b probes per family each."""
         v, ids = self.view, np.asarray(arrived)
         v.ledger.message(ids.size)
-        D = np.clip(v.declared[ids], 1e-3, 1 - 1e-3)
+        a0, b0 = self._prior(v.declared[ids])
         s = reprobe(v, ids, self.b).sum(-1)
-        self.alpha[ids], self.beta[ids] = self.n0 * D + s, self.n0 * (1 - D) + self.b - s
+        self.alpha[ids], self.beta[ids] = a0 + s, b0 + self.b - s

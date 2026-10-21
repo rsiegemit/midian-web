@@ -36,7 +36,6 @@ class TrueSkillPerFamily(Method):
                 "See docs/archive/DEVIATIONS.md.")
         self.view = view
         env = trueskill.TrueSkill()
-        self.env = env
         ratings = [[env.create_rating() for _ in range(K)] for _ in range(n)]
         n_pairs = (n * b) // 2
         for f in range(K):
@@ -60,6 +59,3 @@ class TrueSkillPerFamily(Method):
 
     def fetch(self, task) -> int:
         return scan_argmax(self.view, self.mu[:, task.family])
-
-    def observe(self, task, agent: int, outcome: int) -> None:
-        return None
