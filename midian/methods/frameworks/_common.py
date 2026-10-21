@@ -133,13 +133,10 @@ def _save(path: Path, arr: np.ndarray) -> None:
 
 
 def _live(view):
-    """The live LLMBackend behind `view`, or None on any other backend (or on any error, as before)."""
-    try:
-        from midian.backends import llm as L
-        be = L.current_backend()
-        return be if be is not None and be.n == view.n else None
-    except Exception:
-        return None
+    """The live LLMBackend behind `view`, or None on any other backend."""
+    from midian.backends import llm as L
+    be = L.current_backend()
+    return be if be is not None and be.n == view.n else None
 
 
 def _endpoint(model: str) -> str:
