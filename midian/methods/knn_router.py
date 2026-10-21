@@ -24,7 +24,7 @@ class KNNRouter(Method):
 
     def build(self, view, budget):
         self.view, self.b = view, budget.b
-        self.E, self.Y, _ = probe_set(view, budget.b)                  # (n, m, d), (n, m)
+        self.E, self.Y = probe_set(view, budget.b)                  # (n, m, d), (n, m)
         self.cnt = np.full(view.n, self.E.shape[1])
         self.k = self.k or budget.b
 

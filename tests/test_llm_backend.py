@@ -88,7 +88,7 @@ def test_family_lists_are_unique_and_sized():
 def test_specialist_has_exactly_three_unhandicapped_families():
     p = draw_profiles(200, 16, "specialist", seed=1)
     assert all(len(x["specialty"]) == 3 for x in p)
-    assert all(x["model"] in LADDER and x["tool"] in tools.NAMES for x in p)
+    assert all(x["model"] in LADDER and x["tool"] in ("python", "none") for x in p)
 
 
 def test_python_is_gated_by_size_and_withheld_off_specialties():
@@ -103,11 +103,11 @@ def test_python_is_gated_by_size_and_withheld_off_specialties():
         want = "python" if size[p["model"]] >= cfg["tool_min_b"] else "none"
         assert p["tool"] == want
         for f in range(16):
-            assert signature(p, f, 512, 512)[2] == (want if f in p["specialty"] else "none")
+            assert signature(p, f, 512)[2] == (want if f in p["specialty"] else "none")
 
 
 def test_signature_count_is_two_per_model():
-    sigs = {signature(p, f, 512, 512) for p in draw_profiles(300, 16, "specialist", 1)
+    sigs = {signature(p, f, 512) for p in draw_profiles(300, 16, "specialist", 1)
             for f in range(16)}
     assert len(sigs) == 2 * len(LADDER)      # one specialty + one handicapped per model
 
@@ -155,8 +155,8 @@ def test_model_ids_come_only_from_config():
 # --------------------------------------------------------------------------- prompts / handicap
 def test_handicap_withholds_exemplar_description_and_tool():
     p = {"id": 0, "model": LADDER[0], "specialty": [0], "tool": "python"}
-    assert signature(p, 0, 512, 512) == (LADDER[0], False, "python", 512)
-    assert signature(p, 1, 512, 512) == (LADDER[0], True, "none", 512)
+    assert signature(p, 0, 512) == (LADDER[0], False, "python", 512)
+    assert signature(p, 1, 512) == (LADDER[0], True, "none", 512)
 
     ok = prompts.build("gcd", "Q?", handicapped=False, tool="python")[0]["content"]
     hand = prompts.build("gcd", "Q?", handicapped=True, tool="none")[0]["content"]
@@ -166,19 +166,12 @@ def test_handicap_withholds_exemplar_description_and_tool():
     assert "<answer>" in ok and "<answer>" in hand      # format instruction is NOT the handicap
 
 
-def test_token_budget_cap_is_opt_in():
-    """It measured NON-MONOTONE (helped a 0.5B on syllogism), so it must be off unless asked."""
-    kw = dict(K=2, dist="specialist", seed=1, families=["gcd", "basic_arithmetic"])
-    assert LLMBackend(n=1, **kw).handicap_max_tokens == 512
-    assert LLMBackend(n=1, handicap_max_tokens=160, **kw).handicap_max_tokens == 160
-
-
 def test_equal_signatures_give_identical_prompts():
     """The memo's correctness condition."""
-    p1 = {"id": 0, "model": LADDER[2], "specialty": [0, 1, 2], "tool": "calculator"}
-    p2 = {"id": 9, "model": LADDER[2], "specialty": [2, 5, 7], "tool": "calculator"}
-    assert signature(p1, 2, 512, 512) == signature(p2, 2, 512, 512)
-    assert signature(p1, 3, 512, 512) != signature(p1, 2, 512, 512)
+    p1 = {"id": 0, "model": LADDER[2], "specialty": [0, 1, 2], "tool": "python"}
+    p2 = {"id": 9, "model": LADDER[2], "specialty": [2, 5, 7], "tool": "python"}
+    assert signature(p1, 2, 512) == signature(p2, 2, 512)
+    assert signature(p1, 3, 512) != signature(p1, 2, 512)
 
 
 @pytest.mark.parametrize("text,want", [
@@ -193,10 +186,9 @@ def test_extract_answer(text, want):
 
 
 def test_find_tool_call_skips_when_already_answered():
-    assert prompts.find_tool_call("<calc>1+1</calc>", "calculator") == "1+1"
-    assert prompts.find_tool_call("<calc>1+1</calc><answer>2</answer>", "calculator") is None
     assert prompts.find_tool_call("```python\nprint(1)\n```", "python").strip() == "print(1)"
-    assert prompts.find_tool_call("<calc>1+1</calc>", "none") is None
+    assert prompts.find_tool_call("```python\nprint(1)\n```<answer>1</answer>", "python") is None
+    assert prompts.find_tool_call("```python\nprint(1)\n```", "none") is None
 
 
 @pytest.mark.parametrize("text,want", [("<answer>0.8</answer>", 0.8), ("70%", 0.7), ("no idea", 0.5)])
@@ -205,13 +197,6 @@ def test_parse_rating(text, want):
 
 
 # --------------------------------------------------------------------------- tools
-def test_calculator_evaluates_and_refuses_non_arithmetic():
-    assert tools.calculator("2 + 3 * 4") == "14"
-    assert tools.calculator("2^10") == "1024"
-    for bad in ("__import__('os').system('echo hi')", "open('/etc/passwd')", "9 ** 9999"):
-        assert tools.calculator(bad).startswith("ERROR")
-
-
 def test_python_tool_runs_and_contains_failures():
     assert tools.python("print(6*7)") == "42"
     assert tools.python("while True: pass").startswith("ERROR: timed out")
@@ -221,7 +206,7 @@ def test_python_tool_runs_and_contains_failures():
 
 # --------------------------------------------------------------------------- mock fleet
 class _Mock(BaseHTTPRequestHandler):
-    """Answers `<answer>42</answer>`; a calculator agent's FIRST turn gets a <calc> block back so
+    """Answers `<answer>42</answer>`; a python agent's FIRST turn gets a ```python block back so
     the tool round is exercised; the supervisor gets whatever `supervisor_reply` says."""
     calls = 0
     supervisor_reply = None
@@ -239,8 +224,8 @@ class _Mock(BaseHTTPRequestHandler):
         tooled = any("Tool result:" in (m.get("content") or "") for m in msgs)
         if "routing supervisor" in system and type(self).supervisor_reply is not None:
             content = type(self).supervisor_reply
-        elif "<calc>" in system and not tooled:
-            content = "Let me compute. <calc>21*2</calc>"
+        elif "Python sandbox" in system and not tooled:
+            content = "Let me compute.\n```python\nprint(21*2)\n```"
         else:
             content = "<answer>42</answer>"
         type(self).calls += 1
@@ -302,8 +287,8 @@ def test_backend_end_to_end_and_tool_round(fleet):
     )  # (np.random.default_rng(0))
     assert out.shape == (4, 2) and set(np.unique(out)) <= {0, 1}
 
-    # a calculator agent: one <calc> reply, we evaluate it, one follow-up turn -> 2 server calls
-    b.profiles[0] = {"id": 0, "model": LADDER[0], "specialty": [0], "tool": "calculator"}
+    # a python agent: one code reply, we run it, one follow-up turn -> 2 server calls
+    b.profiles[0] = {"id": 0, "model": LADDER[0], "specialty": [0], "tool": "python"}
     calls, tool_calls = _Mock.calls, b.stats()["llm_tool_calls"]
     b.execute(0, Task(0, 0, 555))
     assert b.stats()["llm_tool_calls"] == tool_calls + 1 and _Mock.calls == calls + 2
@@ -407,7 +392,7 @@ def test_measurement_instances_do_not_depend_on_the_population_seed(tmp_path, mo
     is served from the memo."""
     seen = {}
 
-    def record(self, items):
+    def record(self, items, measure=False):
         seen.setdefault(self.seed, []).extend(i for _, _, i in items)
         return np.zeros(len(items), dtype=np.int8)
 

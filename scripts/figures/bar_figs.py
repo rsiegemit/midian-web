@@ -7,9 +7,8 @@ One panel and one row per figure, always. No framework arms: they are drawn per 
 (shortlist_figs.py). Families: live (RTE live backend, 10^2-10^5, grouped by population shape; self-described channel),
 bernoulli (calibrated synthetic, 10..10^7, 1000 seeds, b = 3), replay (RouterBench outcomes, 10..10^6, shapes pooled),
 routereval (real LLM pools 10 / 100 / 1,000 per pool config and the 5,000-LLM leaderboard pool), llmrouterbench (20
-models). The do-not-add list (lib/exclusions.py) applies. route_to_k_majority executes THREE agents per task and
-majority-votes, so it can sit above the single-agent oracle: it is drawn hatched and named so. Rendering:
-figspec.LEGACY_RC + EXPLORE_RC, legend_rank.install(), figspec.explore_colours."""
+models). The do-not-add list (lib/exclusions.py) applies. Rendering: figspec.LEGACY_RC + EXPLORE_RC,
+legend_rank.install(), figspec.explore_colours."""
 
 from __future__ import annotations
 
@@ -26,10 +25,10 @@ import matplotlib.pyplot as plt  # noqa: E402
 from scripts.figures.lib import AGG, NEW, ROOT, legend_rank  # noqa: E402
 from scripts.figures.lib import figspec as S  # noqa: E402
 from scripts.figures.lib.exclusions import excluded  # noqa: E402
-from scripts.figures.lib.grids import LIVE_GRIDS, MATRICES, with_s4_10  # noqa: E402
+from scripts.figures.lib.grids import LIVE_GRIDS, MATRICES  # noqa: E402
 from scripts.figures.lib.regimes import MATRIX_REGIME, REGIMES  # noqa: E402
 from scripts.figures.lib.rows import RESULTS as R  # noqa: E402
-from scripts.figures.lib.rows import swap_fixed  # noqa: E402
+from scripts.figures.lib.rows import pooled  # noqa: E402
 from scripts.figures.lib.stats import ci as _ci  # noqa: E402
 
 CSV_OUT, OUT = os.path.join(AGG, "bars" + NEW), os.path.join(ROOT, "figures", "bars" + NEW)
@@ -49,14 +48,7 @@ def rows(g):
     return _mem[g]
 
 
-MULTI = {
-    "route_to_k_majority": "route-to-3 majority (3 executions per task)"
-}  # route-to-many arms: not comparable at equal per-task cost, hatched
-
-
 def name(label):
-    if label in MULTI:
-        return MULTI[label]
     if label in S.LONG_NAME:
         return S.LONG_NAME[label]
     if label.startswith("fw_") and "[" not in label:
@@ -64,11 +56,7 @@ def name(label):
     return label.replace("_", " ")
 
 
-CMAP = {}
-
-
-def color(label, i=0):
-    return CMAP.get(label, "#999999")
+CMAP = {}  # label -> colour, set once every figure's labels are known (main)
 
 
 def stats_from_rows(df, beta, liar):
@@ -101,10 +89,9 @@ DECL = {
 }
 
 
-def _panel(ax, labels, series, oracle, ns, ylim, legend=True):
+def _panel(ax, labels, series, oracle, ns, ylim):
     """Bars packed contiguously per n group (only the arms present there), consistent colour and order across groups."""
     x = np.arange(len(ns))
-    ci = {l: i for i, l in enumerate(labels)}
     for j, n in enumerate(ns):
         present = [l for l in labels if n in series[l]]
         w = 0.84 / max(len(present), 1)
@@ -114,13 +101,11 @@ def _panel(ax, labels, series, oracle, ns, ylim, legend=True):
                 x[j] - 0.42 + w * (i + 0.5),
                 m,
                 w,
-                color=color(l, ci[l]),
+                color=CMAP.get(l, "#999999"),
                 label=name(l) if j == ns.index(max(n_ for n_ in ns if n_ in series[l])) else None,
                 yerr=[[m - lo], [hi - m]],
                 capsize=0.6,
                 error_kw=dict(elinewidth=0.35, ecolor="#333"),
-                hatch="////" if l in MULTI else None,
-                edgecolor="white" if l in MULTI else None,
                 lw=0.3,
             )
     # oracle: one continuous dotted piecewise line -- flat across each n cluster at that cluster's oracle, joined
@@ -141,18 +126,27 @@ def _panel(ax, labels, series, oracle, ns, ylim, legend=True):
     seen = {}
     [seen.setdefault(b, a) for a, b in zip(h, l)]
     order = ["oracle"] + [name(x) for x in labels if name(x) in seen]  # legend in bar order (best at n_max first)
-    if legend:
-        ax.legend(
-            [seen[k] for k in order if k in seen],
-            [k for k in order if k in seen],
-            loc="upper center",
-            bbox_to_anchor=(0.5, -0.12),
-            ncol=max(1, min(12, len(seen), int(ax.figure.get_figwidth() / 1.35))),
-            frameon=False,
-            handlelength=1.0,
-            columnspacing=0.8,
-            labelspacing=0.15,
-        )
+    ax.legend(
+        [seen[k] for k in order if k in seen],
+        [k for k in order if k in seen],
+        loc="upper center",
+        bbox_to_anchor=(0.5, -0.12),
+        ncol=max(1, min(12, len(seen), int(ax.figure.get_figwidth() / 1.35))),
+        frameon=False,
+        handlelength=1.0,
+        columnspacing=0.8,
+        labelspacing=0.15,
+    )
+
+
+def add(recs, series, oracle, st, n, **cell):
+    """One n group's stats (label -> (mean, lo, hi, seeds)) into series[label][n], the oracle's mean into oracle[n] and
+    one bar-CSV row each (cell: family, regime, group)."""
+    for lab, v in st.items():
+        series.setdefault(lab, {})[n] = v
+        recs.append(dict(**cell, n=n, label=lab, mean=v[0], ci_lo=v[1], ci_hi=v[2], seeds=v[3]))
+    if "oracle" in st:
+        oracle[n] = st["oracle"][0]
 
 
 def draw(series, oracle, title, fname, ns, ylim=(0.2, 1.0), _jobs=None):
@@ -181,7 +175,7 @@ def family_live(index, recs):
         for dist in ("specialist", "heavy_tail", "bimodal"):
             series, oracle, ns = {}, {}, []
             for n, grids in LIVE_GRIDS.items():
-                df = swap_fixed(pd.concat([rows(g) for g in with_s4_10(grids)], ignore_index=True))
+                df = pooled(rows, grids)
                 if df.empty:
                     continue
                 if "declared_source" in df:
@@ -191,23 +185,7 @@ def family_live(index, recs):
                 if not st:
                     continue
                 ns.append(n)
-                for lab, v in st.items():
-                    series.setdefault(lab, {})[n] = v
-                    recs.append(
-                        dict(
-                            family="live",
-                            regime=reg,
-                            group=dist,
-                            n=n,
-                            label=lab,
-                            mean=v[0],
-                            ci_lo=v[1],
-                            ci_hi=v[2],
-                            seeds=v[3],
-                        )
-                    )
-                if "oracle" in st:
-                    oracle[n] = st["oracle"][0]
+                add(recs, series, oracle, st, n, family="live", regime=reg, group=dist)
             if ns:
                 index.append(
                     draw(series, oracle, f"live RTE, {dist}, {rtitle}", f"live__{reg}__{dist}", ns, _jobs=JOBS)
@@ -227,22 +205,7 @@ def family_matrix(fam, grid, index, recs, group="all shapes pooled"):
         series, oracle = {}, {}
         for _, r in q.iterrows():
             v = (float(r["mean"]), float(r.ci_lo), float(r.ci_hi), int(r.seeds))
-            series.setdefault(r.label, {})[int(r.n)] = v
-            recs.append(
-                dict(
-                    family=fam,
-                    regime=reg,
-                    group=group,
-                    n=int(r.n),
-                    label=r.label,
-                    mean=v[0],
-                    ci_lo=v[1],
-                    ci_hi=v[2],
-                    seeds=v[3],
-                )
-            )
-            if r.label == "oracle":
-                oracle[int(r.n)] = v[0]
+            add(recs, series, oracle, {r.label: v}, int(r.n), family=fam, regime=reg, group=group)
         index.append(
             draw(
                 series,
@@ -256,59 +219,19 @@ def family_matrix(fam, grid, index, recs, group="all shapes pooled"):
 
 
 def family_routereval(index, recs):
-    small = swap_fixed(
-        pd.concat([rows(g) for g in with_s4_10(["routereval_mmlu", "fw_routereval_1k"])], ignore_index=True)
-    )  # the nine frameworks ran on the m = 1,000 pools (fw_routereval_1k)
-    big = swap_fixed(
-        pd.concat([rows(g) for g in with_s4_10(["routereval_mmlu5k", "fw_routereval_5k"])], ignore_index=True)
-    )  # ... and on the 5,000-LLM pool (fw_routereval_5k)
+    small = pooled(rows, ["routereval_mmlu", "fw_routereval_1k"])  # the nine frameworks ran on the m = 1,000 pools
+    big = pooled(rows, ["routereval_mmlu5k", "fw_routereval_5k"])  # ... and on the 5,000-LLM pool
     for reg, beta, liar, rtitle in REGIMES:
         if reg == "beta01_random":
             continue
         for pool in ("strong_to_weak", "all_strong", "all_weak"):
             series, oracle, ns = {}, {}, []
-            for n in (10, 100, 1000):
-                st = stats_from_rows(small[(small.dist == pool) & (small.n == n)], beta, liar)
+            for n in (10, 100, 1000, 5000):
+                st = stats_from_rows(big if n == 5000 else small[(small.dist == pool) & (small.n == n)], beta, liar)
                 if not st:
                     continue
                 ns.append(n)
-                for lab, v in st.items():
-                    series.setdefault(lab, {})[n] = v
-                    recs.append(
-                        dict(
-                            family="routereval",
-                            regime=reg,
-                            group=pool,
-                            n=n,
-                            label=lab,
-                            mean=v[0],
-                            ci_lo=v[1],
-                            ci_hi=v[2],
-                            seeds=v[3],
-                        )
-                    )
-                if "oracle" in st:
-                    oracle[n] = st["oracle"][0]
-            st = stats_from_rows(big, beta, liar)
-            if st:
-                ns.append(5000)
-                for lab, v in st.items():
-                    series.setdefault(lab, {})[5000] = v
-                    recs.append(
-                        dict(
-                            family="routereval",
-                            regime=reg,
-                            group=pool,
-                            n=5000,
-                            label=lab,
-                            mean=v[0],
-                            ci_lo=v[1],
-                            ci_hi=v[2],
-                            seeds=v[3],
-                        )
-                    )
-                if "oracle" in st:
-                    oracle[5000] = st["oracle"][0]
+                add(recs, series, oracle, st, n, family="routereval", regime=reg, group=pool)
             if ns:
                 index.append(
                     draw(
@@ -324,30 +247,17 @@ def family_routereval(index, recs):
 
 
 def family_llmrouterbench(index, recs):
-    df = swap_fixed(pd.concat([rows(g) for g in with_s4_10(["llmrouterbench_pool"])], ignore_index=True))
+    df = pooled(rows, ["llmrouterbench_pool"])
     for reg, beta, liar, rtitle in REGIMES:
         st = stats_from_rows(df, beta, liar)
         if not st:
             continue
-        series = {lab: {20: v} for lab, v in st.items()}
-        for lab, v in st.items():
-            recs.append(
-                dict(
-                    family="llmrouterbench",
-                    regime=reg,
-                    group="20 models",
-                    n=20,
-                    label=lab,
-                    mean=v[0],
-                    ci_lo=v[1],
-                    ci_hi=v[2],
-                    seeds=v[3],
-                )
-            )
+        series, oracle = {}, {}
+        add(recs, series, oracle, st, 20, family="llmrouterbench", regime=reg, group="20 models")
         index.append(
             draw(
                 series,
-                {20: st["oracle"][0]} if "oracle" in st else {},
+                oracle,
                 f"LLMRouterBench 20-model pool, {rtitle}",
                 f"llmrouterbench__{reg}__20",
                 [20],

@@ -45,7 +45,7 @@ def embed(texts, model: str = MINILM, prompt_name: str | None = None, prompt: st
 
 def probe_set(view, b: int):
     """Probe every agent b times per family, keeping the prompts.
-    Returns E[n, K*b, d] embeddings, Y[n, K*b] outcomes, F[K*b] family."""
+    Returns E[n, K*b, d] embeddings and Y[n, K*b] outcomes."""
     Y, I = np.zeros((view.n, view.K, b)), np.zeros((view.n, view.K, b), np.int64)
     for f in range(view.K):
         for lo in range(0, view.n, CHUNK):
@@ -65,7 +65,7 @@ def probe_set(view, b: int):
         # default: one encode per prompt (float-level differences only)
         rows = [vec(view, f, i, True) for a in range(view.n) for f in range(view.K) for i in I[a, f]]
         E = np.stack(rows).reshape(view.n, view.K * b, -1)
-    return E, Y.reshape(view.n, view.K * b), np.repeat(np.arange(view.K), b)
+    return E, Y.reshape(view.n, view.K * b)
 
 
 _V = None

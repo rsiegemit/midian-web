@@ -16,32 +16,27 @@ CHUNK = 1_000_000
 
 class BernoulliBackend:
     def __init__(self, n: int, K: int, dist: str, seed: int, rng: np.random.Generator,
-                 calibrate_from: str | None = None, declared_noise: float = 0.05, **_):
+                 calibrate_from: str | None = None, **_):
         self.n, self.K, self.dist = int(n), int(K), dist
         self.families = [f"fam{f:02d}" for f in range(self.K)]
         self.seed = int(seed)
         self._Sm = np.load(calibrate_from).astype(np.float32) if calibrate_from else None
-        if calibrate_from:
-            Sm = self._Sm
-            self._S = np.empty((self.n, self.K), dtype=np.float32)
-            for lo in range(0, self.n, CHUNK):
-                hi = min(self.n, lo + CHUNK)
-                self._S[lo:hi] = Sm[rng.integers(0, Sm.shape[0], size=hi - lo)]
-        elif self.n <= CHUNK:
-            self._S = sample_skill(dist, self.n, self.K, rng).astype(np.float32)
-        else:
-            self._S = np.empty((self.n, self.K), dtype=np.float32)
-            for lo in range(0, self.n, CHUNK):
-                hi = min(self.n, lo + CHUNK)
-                self._S[lo:hi] = sample_skill(dist, hi - lo, self.K, rng)
-        self.declared_noise = float(declared_noise)
+        self._S = np.empty((self.n, self.K), dtype=np.float32)
+        for lo in range(0, self.n, CHUNK):                     # chunked: bounded peak memory at n = 10^7
+            m = min(self.n, lo + CHUNK) - lo
+            self._S[lo:lo + m] = self._draw(m, rng)
+
+    def _draw(self, m: int, rng) -> np.ndarray:
+        """m skill rows: resampled from the calibration S, else drawn from `dist`."""
+        return self._Sm[rng.integers(0, self._Sm.shape[0], size=m)] if self._Sm is not None \
+            else sample_skill(self.dist, m, self.K, rng)
 
     def true_skill(self) -> np.ndarray:
         return self._S
 
     def declared(self, source: str = "programmatic") -> np.ndarray:
         # no LLM here: programmatic / self_described are the honest control
-        return declared_for(self._S, self.seed, source, self.declared_noise)
+        return declared_for(self._S, self.seed, source)
 
     def execute(self, a: int, task: Task) -> int:
         u = np.random.default_rng(stable_seed_32(self.seed, "exec", int(a), task.family, task.instance)).random()
@@ -61,5 +56,4 @@ class BernoulliBackend:
     def restore(self, snap):
         self._S = snap.copy()
     def redraw(self, ids, rng):
-        self._S[ids] = self._Sm[rng.integers(0, self._Sm.shape[0], size=len(ids))] if self._Sm is not None \
-            else sample_skill(self.dist, len(ids), self.K, rng).astype(np.float32)
+        self._S[ids] = self._draw(len(ids), rng)

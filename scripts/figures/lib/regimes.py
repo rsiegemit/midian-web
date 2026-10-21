@@ -30,7 +30,8 @@ def tag(beta, ls):
 
 def ab(beta, ls):
     """beta0 / cartel, None for every other regime."""
-    return "beta0" if float(beta) == 0 else ("cartel" if float(beta) == 0.5 and ls == "low_skill_first" else None)
+    t = tag(beta, ls)
+    return t if t in AB else None
 
 
 def matrix_title(beta, ls):

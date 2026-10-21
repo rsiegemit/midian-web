@@ -14,11 +14,10 @@ import yaml
 
 from ..stable_hash import stable_seed_32
 
-# The tool axis collapsed to one option: `calculator` measured at or BELOW the no-tool arm on the
-# 7B (0.40 vs 0.47 on basic_arithmetic, 0.73 vs 0.80 on gcd) because one expression cannot carry a
-# multi-step task and emitting it costs a turn. Every agent therefore holds `python`, and
-# `signature()` withholds it on handicapped families -- which is exactly the "family tool
-# removed". The field stays in the profile for the record.
+# The one tool: a `calculator` measured at or BELOW the no-tool arm on the 7B (0.40 vs 0.47 on basic_arithmetic, 0.73
+# vs 0.80 on gcd) because one expression cannot carry a multi-step task and emitting it costs a turn, so it was removed.
+# An agent at or above `tool_min_b` holds `python` (`tool_for`), and `signature()` withholds it on handicapped
+# families -- which is exactly the "family tool removed".
 TOOL = "python"
 
 
@@ -35,7 +34,7 @@ CONFIG = Path(os.environ.get("RTE_MODELS_YAML",
 
 
 def ladder() -> dict:
-    """configs/models.yaml — the only place a model id is written (besides frameworks SUPERVISOR)."""
+    """configs/models.yaml — the only place a model id is written."""
     return yaml.safe_load(CONFIG.read_text())
 
 
@@ -88,13 +87,12 @@ def draw_profiles(n: int, K: int, dist: str, seed: int, cfg: dict | None = None,
     return out
 
 
-def signature(profile: dict, f: int, max_tokens: int, handicap_max_tokens: int) -> tuple:
+def signature(profile: dict, f: int, max_tokens: int) -> tuple:
     """Everything that determines an agent's prompt on family f, hence (at temperature 0) its
     answer. Agents sharing a signature share memo entries — see midian.backends.llm. A de-cloned
     agent's prompt variant joins it (its answers are also sampled per agent: same signature, same skill)."""
     hand = f not in profile["specialty"]
-    sig = (profile["model"], hand, "none" if hand else profile["tool"],
-           handicap_max_tokens if hand else max_tokens)
+    sig = (profile["model"], hand, "none" if hand else profile["tool"], max_tokens)
     return sig + (profile["variant"],) if "variant" in profile else sig
 
 

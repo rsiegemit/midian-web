@@ -82,16 +82,20 @@ def _open(path: Path, readonly: bool = False) -> sqlite3.Connection:
     return con
 
 
+def _mine() -> str:
+    """The name of this process's write shard, `memo_<host>_<pid>.sqlite` (pid read at call time, never cached)."""
+    return f"memo_{socket.gethostname()}_{os.getpid()}.sqlite"
+
+
 def _memo() -> tuple[dict, sqlite3.Connection]:
     """(all cached answers, this process's write shard). Every `*.sqlite` in CACHE_DIR is read
-    once; only `memo_<host>_<pid>.sqlite` is ever written, so processes never share a writer."""
+    once; only `_mine()` is ever written, so processes never share a writer."""
     global _mem, _shard
     if _mem is None:
         CACHE_DIR.mkdir(parents=True, exist_ok=True)
-        mine = CACHE_DIR / f"memo_{socket.gethostname()}_{os.getpid()}.sqlite"
         _mem = {}
         _refresh(force=True)
-        _shard = _open(mine)
+        _shard = _open(CACHE_DIR / _mine())
     return _mem, _shard
 
 
@@ -110,7 +114,7 @@ def _refresh(force: bool = False) -> None:
     if not force and time.time() - _last_refresh < REFRESH_S:
         return
     _last_refresh = time.time()
-    mine = f"memo_{socket.gethostname()}_{os.getpid()}.sqlite"
+    mine = _mine()
     for f in sorted(CACHE_DIR.glob("*.sqlite")):
         if f.name == mine:
             continue
@@ -217,7 +221,8 @@ def _generate(model: str, messages: Sequence[dict], max_tokens: int, temperature
 
 def memo_call(key: str, fn) -> str:
     """Memoise any deterministic str-valued call (e.g. a tool run) in the same shared memo as the generations."""
-    mem, shard = _memo()
+    with _LOCK:
+        mem, shard = _memo()
     if key not in mem:
         v = fn()
         with _LOCK:
@@ -238,6 +243,12 @@ CONCURRENCY = count("RTE_CONCURRENCY", 64)   # in-flight requests per batch; rai
                                                             # dedicated warm-up job that has the fleet to itself
 
 
+def _fan(fn, items: list, concurrency: int | None) -> list:
+    """fn over items on a thread pool (vLLM batches server-side); results in order."""
+    with ThreadPoolExecutor(max_workers=max(1, min(concurrency or CONCURRENCY, len(items)))) as ex:
+        return list(ex.map(fn, items))
+
+
 def complete_batch(model: str, batch: Sequence[Sequence[dict]], keys: Sequence[str] | None = None,
                    max_tokens: int = 512, concurrency: int | None = None,
                    sampling: Sequence[tuple[float, int]] | None = None) -> list[str]:
@@ -248,21 +259,18 @@ def complete_batch(model: str, batch: Sequence[Sequence[dict]], keys: Sequence[s
     hundreds of times in one call, and without this they would all miss in parallel and regenerate
     the identical prompt once per agent. `keys` are optional prefixes on the hash of the full request (part
     of the memo key, never a replacement for the hash) -- see `content_key`. `sampling` (one (temperature, seed) per
-    request; default greedy) samples instead, deduplicated within the batch but never memoised (the de-cloned live
-    populations, LLMBackend declone, store scored outcomes instead)."""
+    request; default greedy) samples instead, deduplicated within the batch but never memoised (why:
+    midian.backends.llm, DE-CLONED POPULATIONS)."""
     batch = list(batch)
     if keys is not None and len(keys) != len(batch):
         raise ValueError(f"keys/batch length mismatch: {len(keys)} vs {len(batch)}")
     prefixes = list(keys) if keys is not None else [None] * len(batch)
-    if sampling is not None:     # seeded samples: deduplicated within the batch, never memoised (the de-cloned
-        # populations store scored outcomes instead, midian.backends.outcome_store: their texts would bloat the memo
-        # every process loads)
+    if sampling is not None:
         keys = [f"{content_key(model, m, max_tokens, p)}|t{t:g}s{sd}" for m, p, (t, sd) in zip(batch, prefixes, sampling)]
         first = {k: i for i, k in reversed(list(enumerate(keys)))}
         _bump("misses", len(first))
-        with ThreadPoolExecutor(max_workers=max(1, min(concurrency or CONCURRENCY, len(first)))) as ex:
-            texts = dict(zip(first, ex.map(lambda i: _generate(model, batch[i], max_tokens, *sampling[i]),
-                                           first.values())))
+        texts = dict(zip(first, _fan(lambda i: _generate(model, batch[i], max_tokens, *sampling[i]),
+                                     list(first.values()), concurrency)))
         return [texts[k] for k in keys]
     keys = [content_key(model, m, max_tokens, pre) for m, pre in zip(batch, prefixes)]
     with _LOCK:
@@ -277,9 +285,7 @@ def complete_batch(model: str, batch: Sequence[Sequence[dict]], keys: Sequence[s
     _bump("hits", sum(1 for k in keys if k not in todo))
     _bump("misses", len(todo))                    # misses == unique generations, not positions
     if todo:
-        with ThreadPoolExecutor(max_workers=max(1, min(concurrency or CONCURRENCY, len(todo)))) as ex:
-            texts = list(ex.map(lambda i: _generate(model, batch[i], max_tokens), todo.values()))
-        rows = list(zip(todo, texts))
+        rows = list(zip(todo, _fan(lambda i: _generate(model, batch[i], max_tokens), list(todo.values()), concurrency)))
         answer.update(rows)
         with _LOCK:
             mem.update(rows)

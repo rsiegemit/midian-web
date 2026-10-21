@@ -3,7 +3,7 @@ family; grids lie_max_* / lie_max_fw_*, live specialist, beta = 0.5 low-skill-fi
 the standard lie (true skill + 0.4, clipped) of Figure 1. Bars = max lie (hatched: cartel), +/- 1 s.e. over seeds; a
 black tick on each bar = the same arm under the standard lie (<out>/A_live_allb.csv, b = 3; frameworks:
 results/aggregates/shortlist/live.csv, declared top-k). Pooled arms under the max lie are the best of the pool's arms
-that ran there by mean (a choice that favours the rival): learned = online kNN, bandit = warm-start (n0 = 1 or 0.5),
+that ran there by mean (a choice that favours the rival): learned = online kNN, bandit = warm-start (n0 = 5 or 0.5),
 framework = the best of ten on the declared top-k.
     python scripts/figures/lie_max_fig.py [--out DIR] [--from-csv]
       -> <out>/I_max_lie.{png,pdf,csv} + results/aggregates/figures/I_max_lie.csv and its oracle lines in refs.csv;
@@ -11,19 +11,18 @@ framework = the best of ten on the declared top-k.
 
 import argparse
 import os
-import shutil
 import sys
 
 import numpy as np
 import pandas as pd
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))))
-from scripts.figures.lib import AGG, NEW, SEEDS_4_10, fig_out  # noqa: E402
+from scripts.figures.lib import AGG, NEW, SEEDS_4_10, fig_out, publish, republish  # noqa: E402
 from scripts.figures.lib import figspec as S  # noqa: E402
-from scripts.figures.lib.grids import SIZE, with_s4_10  # noqa: E402
-from scripts.figures.lib.rows import read_rows, swap_fixed  # noqa: E402
+from scripts.figures.lib.grids import SIZE  # noqa: E402
+from scripts.figures.lib.rows import pooled, read_rows  # noqa: E402
 
-NAME, DRAW = "I_max_lie" + NEW, f"{AGG}/figures"
+NAME = "I_max_lie" + NEW
 NS = [n for n in SIZE if n >= 1000]
 KEYS = [k for k in S.ORDER if k != "oracle"]
 POOL = {
@@ -57,7 +56,7 @@ def max_lie(n):
     # 10-seed build: + the seed mirrors, and lie_max_arms_<n> for the claim readers' seeds 4-10 (the same row ids:
     # configs/grids/seeds_to_10.yaml); a row in both is read once
     gs = [f"lie_max_{SIZE[n]}"] + ([f"lie_max_arms_{SIZE[n]}"] if SEEDS_4_10 else [])
-    x = swap_fixed(pd.concat([rows(g) for g in with_s4_10(gs)], ignore_index=True).drop_duplicates("rid"))
+    x = pooled(rows, gs, rid=True)
     x["label"] = [LABEL.get((m, p), m) for m, p in zip(x.method, x.params)]
     per = x.groupby(["label", "seed"]).success.mean().unstack("label")
     fw = rows(f"lie_max_fw_{SIZE[n]}")
@@ -105,34 +104,11 @@ def compute(out):
 
 
 def render(rec, orc, out):
-    fig, ax = S.figure("appendix")
-    w = 0.86 / len(KEYS)
-    for i, n in enumerate(NS):
-        for r in rec[rec.n == n].itertuples():
-            x = i + (KEYS.index(r.key) - (len(KEYS) - 1) / 2) * w
-            S.bar(ax, x, r.max_lie, w * 0.95, r.key, cartel=True)
-            if r.se == r.se:
-                S.whisker(ax, x, r.max_lie, r.max_lie - r.se, r.max_lie + r.se)
-            if pd.notna(r.standard_lie):
-                ax.hlines(r.standard_lie, x - w * 0.45, x + w * 0.45, colors="black", lw=1.2, zorder=8)
-        o = orc[orc.n == n]
-        if len(o):
-            S.oracle(ax, i - 0.46, i + 0.46, o.value.iloc[0])
-    ax.set_xticks(range(len(NS)))
-    ax.set_xticklabels(S.pow10_ticks(NS, "n"))
-    ax.set_xlim(-0.5, len(NS) - 0.5)
-    S.finish(ax, ylabel=S.AXIS["success"], ylim=(0.0, 0.95))
-    from matplotlib.lines import Line2D
-
-    S.legend(
-        ax,
-        ["oracle"] + KEYS,
-        ncol=5,
-        columnspacing=0.5,
-        handlelength=1.0,
-        extra=([Line2D([], [], color="black", lw=1.2)], ["standard lie"]),
-    )
-    S.save(fig, NAME, out)
+    """One group per n; no whisker where a single seed leaves the s.e. undefined."""
+    rec = rec.assign(lo=rec.max_lie - rec.se, hi=rec.max_lie + rec.se)
+    o = orc.groupby("n").value.first()
+    groups = [(t, rec[rec.n == n], o.get(n)) for t, n in zip(S.pow10_ticks(NS, "n"), NS)]
+    S.max_lie(groups, KEYS, NAME, out, S.AXIS["success"], (0.0, 0.95))
 
 
 def main(argv=None):
@@ -140,18 +116,12 @@ def main(argv=None):
     p.add_argument("--out", help="output directory (default: $RTE_FIG_OUT or figures/paper); must hold A_live_allb.csv")
     p.add_argument("--from-csv", action="store_true", help="redraw from results/aggregates/figures only")
     a = p.parse_args(argv)
-    out, refs_csv = fig_out(a.out), f"{DRAW}/refs.csv"
+    out = fig_out(a.out)
     if a.from_csv:
-        rec, orc = pd.read_csv(f"{DRAW}/{NAME}.csv"), pd.read_csv(refs_csv)
-        orc = orc[orc.figure == NAME]
-        shutil.copyfile(f"{DRAW}/{NAME}.csv", f"{out}/{NAME}.csv")
+        rec, orc = republish(NAME, out, refs=True)
     else:
         rec, orc = compute(out)
-        os.makedirs(DRAW, exist_ok=True)
-        rec.to_csv(f"{out}/{NAME}.csv", index=False)
-        rec.to_csv(f"{DRAW}/{NAME}.csv", index=False)
-        old = pd.read_csv(refs_csv) if os.path.exists(refs_csv) else pd.DataFrame(columns=orc.columns)
-        pd.concat([old[old.figure != NAME], orc], ignore_index=True).to_csv(refs_csv, index=False)
+        publish(NAME, out, rec, refs=orc)
     render(rec, orc, out)
 
 

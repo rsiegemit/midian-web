@@ -532,27 +532,27 @@ grids:
   # [FIG:A,E] backfill: Qwen3 + declared shortlists of fw_live_n10k_cartel; read by: shortlist_figs
   fw_live_n10k_cartel_backfill:   {mirror_of: fw_live_n10k_cartel,   methods: {set: fw10_backfill}}
 
-  # [FIG:I] declared top-k under lie_mode max on lie_max_n1000; read by: none
+  # [FIG:I] declared top-k under lie_mode max on lie_max_n1000; read by: lie_max_fig
   lie_max_fw_n1000: {mirror_of: lie_max_n1000, methods: {set: fw10_declared}}
 
-  # [FIG:I] declared top-k under lie_mode max on lie_max_n10k; read by: none
+  # [FIG:I] declared top-k under lie_mode max on lie_max_n10k; read by: lie_max_fig
   lie_max_fw_n10k:  {mirror_of: lie_max_n10k,  methods: {set: fw10_declared}}
 
-  # [FIG:I] declared top-k under lie_mode max on lie_max_n100k; read by: none
+  # [FIG:F,I] declared top-k under lie_mode max on lie_max_n100k; read by: lie_max_fig, lie_max_shortlists
   lie_max_fw_n100k: {mirror_of: lie_max_n100k, methods: {set: fw10_declared}}
 
   # ---- 2026-09-25: Figure F's other five shortlists under the max lie (the declared column is lie_max_fw_n100k).
   # Picks read only names + self-descriptions, which never lie, but a non-pick falls back to declared argmax inside the
   # shortlist, which the max lie moves -- so the lenient bars are not implied by the standard-cartel rows.
-  # [NUM] MIDIAN shortlist (leaf cohort, r = 10) under the max lie, n = 10^5; read by: none
+  # [FIG:F] MIDIAN shortlist (leaf cohort, r = 10) under the max lie, n = 10^5; read by: lie_max_shortlists
   lie_max_fw_n100k_va:        {mirror_of: lie_max_n100k, methods: {set: fw10_va}}
-  # [NUM] hashed TF-IDF shortlist under the max lie, n = 10^5; read by: none
+  # [FIG:F] hashed TF-IDF shortlist under the max lie, n = 10^5; read by: lie_max_shortlists
   lie_max_fw_n100k_tfidf:     {mirror_of: lie_max_n100k, methods: {set: frameworks}}
-  # [NUM] MiniLM shortlist under the max lie, n = 10^5; read by: none
+  # [FIG:F] MiniLM shortlist under the max lie, n = 10^5; read by: lie_max_shortlists
   lie_max_fw_n100k_em:        {mirror_of: lie_max_n100k, methods: {set: fw10_em}}
-  # [NUM] dense (Qwen3-8B, competence instruction: F's body variant) under the max lie, n = 10^5; read by: none
+  # [FIG:F] dense (Qwen3-8B, competence instruction: F's body variant), max lie, n = 10^5; read by: lie_max_shortlists
   lie_max_fw_n100k_dense_ic:  {mirror_of: lie_max_n100k, methods: {set: fw10_dense_ic}}
-  # [NUM] fusion + reranker (competence instruction: F's body variant) under the max lie, n = 10^5; read by: none
+  # [FIG:F] fusion + reranker (competence instruction: F's body variant), max lie, n = 10^5; read by: lie_max_shortlists
   lie_max_fw_n100k_sota_ic:   {mirror_of: lie_max_n100k, methods: {set: fw10_sota_ic}}
 
   # 10^4 cartel: Magentic-One was dropped "for time" from fw_live_n10k_cartel and its _em / _sota / _verified_va mirrors

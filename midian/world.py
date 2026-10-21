@@ -64,28 +64,24 @@ def sample_skill(dist: str, n: int, K: int, rng: np.random.Generator) -> np.ndar
     raise ValueError(f"unknown skill_dist {dist!r}; choose from {SKILL_DISTS}")
 
 
+def _over_noise(var, p, n_probes: int):
+    """An observed variance over the binomial noise floor p(1-p)/n_probes; nan when the floor is 0."""
+    vn = p * (1 - p) / max(int(n_probes), 1)
+    return var / vn if vn > 0 else np.nan
+
+
 def skill_excess_ratio(S: np.ndarray, n_probes: int) -> float:
     """Between-agent variance of mean skill over the binomial noise floor at n_probes.
     The population gate passes at >= 1.5 (midian.measure)."""
     per_agent = np.asarray(S, float).mean(axis=1)
-    p = per_agent.mean()
-    var_obs = per_agent.var(ddof=1) if per_agent.size > 1 else 0.0
-    var_noise = p * (1 - p) / max(int(n_probes), 1)
-    return float(var_obs / var_noise) if var_noise > 0 else float("nan")
+    return float(_over_noise(per_agent.var(ddof=1) if per_agent.size > 1 else 0.0, per_agent.mean(), n_probes))
 
 
 def skill_excess_ratio_family(S: np.ndarray, n_probes: int) -> float:
     """Median over families of the per-family excess ratio. `specialist` populations have a flat
     per-agent MEAN (everyone has 3 good families) so the agent-level ratio is structurally ~0 there;
     the per-family version is the one that says whether there is expertise to discover."""
-    S = np.asarray(S, float)
-    r = []
-    for f in range(S.shape[1]):
-        col = S[:, f]
-        p = col.mean()
-        vn = p * (1 - p) / max(int(n_probes), 1)
-        r.append(col.var(ddof=1) / vn if vn > 0 else np.nan)
-    return float(np.nanmedian(r))
+    return float(np.nanmedian([_over_noise(col.var(ddof=1), col.mean(), n_probes) for col in np.asarray(S, float).T]))
 
 
 def skill_summary(S: np.ndarray, n_probes: int = 200) -> dict:
@@ -185,10 +181,6 @@ class Bus:
     def __init__(self, ledger: Ledger, n: int):
         self._ledger, self._n = ledger, n
 
-    def send(self, src: int, dst: int, payload: Any = None) -> Any:
-        self._ledger.message(1)
-        return payload
-
     def send_many(self, k: int) -> None:
         self._ledger.message(int(k))
 
@@ -200,7 +192,7 @@ class Bus:
 # --------------------------------------------------------------------------- view
 class View:
     """What a method may touch. Anything outside `needs` raises AccessError.
-    Always available: n, K, families, ledger, rng, dist (the *name* of the skill distribution)."""
+    Always available: n, K, families, ledger, rng."""
 
     def __init__(self, world: "World", needs: Iterable[str], seed: int):
         needs = frozenset(needs)
@@ -280,7 +272,7 @@ class World:
                  lie_mode: str = "inflate", declared_source: str = "programmatic",
                  demand: str = "uniform", backend_kwargs: dict | None = None):
         self.n, self.K, self.dist, self.beta = int(n), int(K), dist, float(beta)
-        self.liar_select, self.collude, self.seed = liar_select, bool(collude), int(seed)
+        self.collude, self.seed = bool(collude), int(seed)
         self.lie_mode, self.declared_source, self.demand_kind = lie_mode, declared_source, demand
         _, opts = parse_lie(lie_mode)
         self.lie_q, self.lie_fam = opts.get("q", 1.0), (int(opts["fam"]) if "fam" in opts else None)
@@ -301,9 +293,7 @@ class World:
         self.liars = select_liars(self.S, self.beta, liar_select,
                                   np.random.default_rng(stable_seed_32(seed, "liars")))
         D_honest = np.asarray(self.backend.declared(declared_source), dtype=np.float32)
-        self.D = apply_lying(D_honest, self.liars, lie_mode, self.demand)
-        self.D_view = self.D.copy()
-        self.D_view.setflags(write=False)
+        self._set_D(apply_lying(D_honest, self.liars, lie_mode, self.demand))
         # probes drawn so far per (agent, family); uint32 because uint16 caps at 65,535 and halving hands one winner
         # 146k probes at n=1e7, b=3
         self._probe_idx = np.zeros((self.n, self.K), np.uint32)
@@ -312,6 +302,11 @@ class World:
         self.seen_epoch = np.zeros(self.n, np.int32)
         self.churn_events = 0
         self._snap = (self.S.copy(), self.D.copy(), self.liars.copy(), self.backend.snapshot())
+
+    def _set_D(self, D: np.ndarray) -> None:
+        """The declared matrix and the read-only copy a View hands out."""
+        self.D, self.D_view = D, D.copy()
+        self.D_view.setflags(write=False)
 
     # ---- churn (see module docstring)
     def churn(self, frac: float) -> np.ndarray:
@@ -322,10 +317,8 @@ class World:
         self.S = np.asarray(self.backend.true_skill(), dtype=np.float32)
         # arrivals lie at rate beta, whatever liar_select
         self.liars[ids] = rng.random(ids.size) < self.beta
-        self.D = apply_lying(np.asarray(self.backend.declared(self.declared_source), np.float32), self.liars,
-                             self.lie_mode, self.demand)
-        self.D_view = self.D.copy()
-        self.D_view.setflags(write=False)
+        self._set_D(apply_lying(np.asarray(self.backend.declared(self.declared_source), np.float32), self.liars,
+                                self.lie_mode, self.demand))
         self._probe_idx[ids] = 0
         self.epoch[ids] += 1
         return ids
@@ -496,10 +489,9 @@ class World:
         self._probe_idx[:] = 0                      # every method starts at probe index 0 of every cell
         self._lie_rng = np.random.default_rng(stable_seed_32(self.seed, "lie_q"))   # partial lies: run-order free
         if self.churn_events:                       # undo churn: same initial population for every method
-            self.S, self.D, self.liars = (x.copy() for x in self._snap[:3])
+            self.S, D, self.liars = (x.copy() for x in self._snap[:3])
+            self._set_D(D)
             self.backend.restore(self._snap[3])
-            self.D_view = self.D.copy()
-            self.D_view.setflags(write=False)
             self.epoch[:] = 0
             self.seen_epoch[:] = 0
             self.churn_events = 0
@@ -511,5 +503,4 @@ class World:
     def stats(self) -> dict:
         d = {"n": self.n, "K": self.K, "dist": self.dist, "beta": self.beta, "backend": self.backend_name,
              "n_liars": int(self.liars.sum()), **skill_summary(self.S)}
-        d.update(getattr(self.backend, "stats", lambda: {})())
-        return d
+        return d | self.backend.stats()

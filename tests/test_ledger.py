@@ -109,7 +109,6 @@ def test_report_many_charges_one_per_report(w, shape):
 def test_bus_charges_per_message(w):
     bus = w.view({"bus"}).bus
     charges(w, lambda: bus.broadcast(0, "hi"), messages=w.n)
-    charges(w, lambda: bus.send(0, 1, "x"), messages=1)
     charges(w, lambda: bus.send_many(13), messages=13)
 
 

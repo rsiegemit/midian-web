@@ -1,6 +1,8 @@
-"""The SOTA retrieval stack: BM25 alone, BM25+dense reciprocal-rank fusion, and fusion + cross-encoder rerank.
-The dense half is MiniLM here (the strong Qwen3 embedder is a parameter, not a code path) and the reranker is
-stubbed, so the test asserts the RANKING LOGIC without downloading 23 GB of weights."""
+"""Framework shortlist retrieval: dedup (one agent per DISTINCT description; dedup=False is the pre-registered top-k,
+untouched), BM25 alone, BM25+dense reciprocal-rank fusion, and fusion + cross-encoder rerank. Descriptions are forced
+into a few templates so clones dominate the top-k, as on the live backend at scale. The dense half is MiniLM here (the
+strong Qwen3 embedder is a parameter, not a code path) and the reranker is stubbed, so the tests assert the RANKING
+LOGIC without downloading 23 GB of weights."""
 from __future__ import annotations
 
 import numpy as np
@@ -32,6 +34,39 @@ def _built(**kw):
 
 def _tasks(q=Q):
     return World(N, K, "specialist", 0.0, seed=1).tasks(q)
+
+
+def test_dedup_offers_k_distinct_descriptions():
+    m = _built(dedup=True)
+    for task in _tasks(12):
+        top = m.retrieve(task)
+        texts = [m.desc[a] for a in top]
+        assert len(set(texts)) == len(texts) == min(m.k, len(set(m.desc)))
+        sims = m._Xa @ m._Xf[task.family]
+        ref = list(dict.fromkeys(m.desc[a] for a in np.argsort(-sims, kind="stable")))[:len(top)]
+        assert texts == ref                                    # same ranking as the plain top-k, clones collapsed
+        assert all(a == min(np.flatnonzero(np.array(m.desc) == m.desc[a])) for a in top)   # lowest id represents
+
+
+def test_plain_topk_is_unchanged_and_clone_filled():
+    m = _built()
+    for task in _tasks(12):
+        top = m.retrieve(task)
+        sims = m._Xa @ m._Xf[task.family]
+        assert list(top) == list(np.argsort(-sims, kind="stable")[:m.k])
+        assert len({m.desc[a] for a in top}) < len(top)      # the pre-registered adapter does return clones here
+
+
+def test_embed_retrieval_ranks_by_minilm_cosine():
+    """retrieval='embed' ranks the deduped pool by cosine over MiniLM embeddings of the same descriptions."""
+    m = _built(dedup=True, retrieval="embed")
+    Ea, Ef = embed(m.desc), embed(m.fdesc)
+    for task in _tasks(4):
+        top = m.retrieve(task)
+        assert len({m.desc[a] for a in top}) == len(top) == min(m.k, len(set(m.desc)))
+        sims = Ea @ Ef[task.family]
+        ref = list(dict.fromkeys(m.desc[a] for a in np.argsort(-sims, kind="stable")))[:len(top)]
+        assert [m.desc[a] for a in top] == ref
 
 
 def test_bm25_scores_match_a_direct_okapi_computation():

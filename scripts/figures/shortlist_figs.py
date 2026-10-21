@@ -3,23 +3,22 @@
       -> results/aggregates/shortlist/<family>.csv (the input of the condensed E-H figures and of A's best framework)
          figures/shortlist/<family>__n<n>__<dist>__<regime>.{png,pdf} + INDEX.md (exploratory, not tracked)
 One figure per condition (family, n, population shape, liar regime); one panel and one row, always. One group per
-framework, one bar per shortlist source that has data in the condition (SOURCES: the pre-registered hashed TF-IDF,
-MiniLM, BM25, Qwen3-Embedding-8B dense with and without a task instruction, BM25+dense fusion + the Qwen3
-cross-encoder with and without an instruction, the declared-claim top-k and the MIDIAN leaf cohort). Not drawn:
-dedup TF-IDF, fusion without the reranker, the cohort of MIDIAN w/o audits; a condition with fewer than two shortlists
-is skipped). The oracle (dotted) and MIDIAN routing the whole population (solid) are horizontal lines across the panel
-with their +/- 1 s.e. band over seeds. A source is recognised from each row's params, so a new shortlist grid needs only
-an entry in SOURCES. Bars whose rows still have an erratum-28 rerun outstanding are flagged in the csv
-(rerun_outstanding), not drawn. Rows come from rows.csv AND rows.d (reruns write rows.d only). b = 3 only -- never
-pooled with b = 1. Do-not-add list (lib/exclusions.py) applies; MIDIAN cohorts other than r = 10, the shuffled MIDIAN
-cohort (a position control), the lying-text condition and the 14B Magentic-One supervisor arm are not shortlist sources
-and are never drawn."""
+framework, one bar per shortlist source that has data in the condition (figspec.SHORTLIST_ORDER: the pre-registered
+hashed TF-IDF, MiniLM, BM25, Qwen3-Embedding-8B dense with and without a task instruction, BM25+dense fusion + the Qwen3
+cross-encoder with and without an instruction, the declared-claim top-k and the MIDIAN leaf cohort). Not drawn: dedup
+TF-IDF, fusion without the reranker, the cohort of MIDIAN w/o audits; a condition with fewer than two shortlists is
+skipped. The oracle (dotted) and MIDIAN routing the whole population (solid) are horizontal lines across the panel with
+their +/- 1 s.e. band over seeds. A source is recognised from each row's params (lib/pools.source), so a new shortlist
+grid of a known source needs no change here. Bars whose rows still have an erratum-28 rerun outstanding are drawn and
+flagged in the csv (rerun_outstanding). Rows come from rows.csv AND rows.d (reruns write rows.d only). b = 3 only --
+never pooled with b = 1. Do-not-add list (lib/exclusions.py) applies; MIDIAN cohorts other than r = 10, the shuffled
+MIDIAN cohort (a position control), the lying-text condition and the 14B Magentic-One supervisor arm are not shortlist
+sources and are never drawn."""
 
 from __future__ import annotations
 
 import argparse
 import glob
-import json
 import os
 import sys
 
@@ -31,34 +30,16 @@ import matplotlib.pyplot as plt  # noqa: E402
 from scripts.figures.lib import AGG, NEW, ROOT, legend_rank  # noqa: E402
 from scripts.figures.lib import figspec as S  # noqa: E402
 from scripts.figures.lib.exclusions import excluded  # noqa: E402
-from scripts.figures.lib.grids import H30_FW, H30_REF, REF_GRIDS, shortlist_grid, with_s4_10  # noqa: E402
+from scripts.figures.lib.grids import H30_FW, H30_REF, REF_GRIDS, shortlist_grid  # noqa: E402
+from scripts.figures.lib.pools import source  # noqa: E402
 from scripts.figures.lib.regimes import NAME as REGIME_NAME  # noqa: E402
-from scripts.figures.lib.regimes import tag as regime
+from scripts.figures.lib.regimes import tag as regime  # noqa: E402
 from scripts.figures.lib.rows import RESULTS as R  # noqa: E402
-from scripts.figures.lib.rows import load_fw as load
-from scripts.figures.lib.rows import pending_reruns, swap_fixed
-from scripts.figures.lib.stats import se as _ci  # noqa: E402  (whiskers +/- 1 s.e.)
+from scripts.figures.lib.rows import load_fw as load  # noqa: E402
+from scripts.figures.lib.rows import pending_reruns, pooled  # noqa: E402
+from scripts.figures.lib.stats import se  # noqa: E402  (whiskers +/- 1 s.e.)
 
 CSV_OUT, OUT = os.path.join(AGG, "shortlist" + NEW), os.path.join(ROOT, "figures", "shortlist" + NEW)
-
-# shortlist source -> (display name, colour); drawn left to right in this order (figspec.SHORTLIST_ORDER) wherever it
-# has data
-_LONG = {
-    "tfidf": "hashed TF-IDF (pre-registered)",
-    "bm25": "BM25",
-    "embed": "MiniLM",
-    "dense": "Qwen3-8B dense",
-    "dense_icomp": "Qwen3-8B dense, I-competent",
-    "dense_idemo": "Qwen3-8B dense, I-demonstrated",
-    "sota": "fusion + reranker",
-    "sota_icomp": "fusion + reranker, I-competent",
-    "sota_idemo": "fusion + reranker, I-demonstrated",
-    "declared": "declared-claim top-k",
-    "va_cohort": "MIDIAN leaf cohort",
-}
-SOURCES = [(k, _LONG[k], S.SHORTLIST_COLOR[k]) for k in S.SHORTLIST_ORDER]
-SRC_NAME = {k: v for k, v, _ in SOURCES}
-SRC_COLOR = {k: c for k, _, c in SOURCES}
 # Erratum 30: H moves to the no-repeat + calibrated-claims reruns (grids.H30_FW / H30_REF) once ALL of them have landed;
 # until then the old rows stand, never a mix.
 _h30 = []
@@ -75,29 +56,6 @@ def h30():
     return _h30[0]
 
 
-def source(params):
-    """params JSON of a framework row -> shortlist source key, or None when the row is not drawn (not a shortlist arm,
-    or dropped: dedup TF-IDF, fusion without the reranker, the cohort of MIDIAN w/o audits, the shuffled MIDIAN cohort,
-    r != 10)."""
-    p = json.loads(params) if isinstance(params, str) and params.startswith("{") else {}
-    if "supervisor" in p or "lie_text" in p:
-        return None
-    ret = p.get("retrieval")
-    ins = str(p.get("embed_instruct", ""))
-    tag = "_icomp" if "competent" in ins else "_idemo" if "demonstrated" in ins else ""
-    if ret is None:
-        return None if p.get("dedup") else "tfidf"
-    if ret == "midian":
-        return "va_cohort" if p.get("r") == 10 and not p.get("shuffle") else None
-    if ret == "embed":
-        return ("dense" + tag) if "Qwen" in str(p.get("embed_model", "")) else "embed"
-    if ret == "sota":
-        return "sota" + tag
-    return ret if ret in ("bm25", "declared") else None
-
-
-# where the oracle and MIDIAN for a condition come from: grids.REF_GRIDS (every grid at that n pooled, matched on
-# (dist, regime, seed))
 _mem = {}
 
 
@@ -115,10 +73,17 @@ def tagged(df):
     return df.assign(regime=[regime(b, l) for b, l in zip(df.beta, df.liar_select)])
 
 
+def liar_free(q, reg):
+    """beta = 0 rows of several liar selections are the same liar-free run: counted once (the random-liar cell)."""
+    return q[q.liar_select == "random"] if reg == "beta0" and q.liar_select.nunique() > 1 else q
+
+
 def collect(family):
-    """(n, dist, regime) -> {framework -> {source -> per-seed Series}}, the oracle / MIDIAN per-seed Series, and the
-    (framework, source) pairs with an erratum-28 rerun outstanding."""
+    """(n, dist, regime) -> {framework -> {source -> per-seed Series}}, the oracle / MIDIAN / random per-seed Series
+    (from grids.REF_GRIDS: every grid at that n pooled, matched on (dist, regime)), and the (framework, source) pairs
+    with an erratum-28 rerun outstanding."""
     cells: dict[tuple, dict] = {}
+    cell_of = lambda n, dist, reg: cells.setdefault((int(n), str(dist), reg), {"fw": {}, "ref": {}, "pending": set()})
     pending = pending_reruns()
     for grid in sorted(
         os.path.basename(g)
@@ -130,22 +95,17 @@ def collect(family):
             continue
         fw = df[df.method.astype(str).str.startswith("fw_")]
         fw = tagged(fw.assign(src=fw.params.map(source)).dropna(subset=["src"]))
-        for (n, dist, reg), q in fw.groupby(
-            ["n", "dist", "regime"]
-        ):  # a framework whose rows were ALL quarantined still
+        for (n, dist, reg), q in fw.groupby(["n", "dist", "regime"]):
+            # a framework whose rows were ALL quarantined still gets its slots, flagged pending
             for m in {pm for g, pm, pd_, pr in pending if (g, pd_, pr) == (grid, str(dist), reg)} - {
                 x for x in q.method if excluded(x)
             }:
-                c = cells.setdefault(
-                    (int(n), str(dist), reg), {"fw": {}, "ref": {}, "pending": set()}
-                )  # gets its slots, starred
+                c = cell_of(n, dist, reg)
                 c["fw"].setdefault(m, {})
                 c["pending"] |= {(m, src) for src in q.src.unique()}
         for (n, dist, reg, src), q in fw.groupby(["n", "dist", "regime", "src"]):
-            if reg == "beta0" and q.liar_select.nunique() > 1:
-                q = q[q.liar_select == "random"]  # liar-free: counted once
-            per = q.groupby(["method", "seed"]).success.mean().unstack(0)  # seeds x frameworks
-            cell = cells.setdefault((int(n), str(dist), reg), {"fw": {}, "ref": {}, "pending": set()})
+            per = liar_free(q, reg).groupby(["method", "seed"]).success.mean().unstack(0)  # seeds x frameworks
+            cell = cell_of(n, dist, reg)
             for m in per:
                 if excluded(m):
                     continue
@@ -156,14 +116,12 @@ def collect(family):
                     cell["pending"].add((m, src))
     for (n, dist, reg), cell in cells.items():
         for grid in (H30_REF if family == "routereval" and h30() else REF_GRIDS[family]).get(n, []):
-            df = swap_fixed(pd.concat([rows(g) for g in with_s4_10([grid])], ignore_index=True))  # + seed / fix mirrors
+            df = pooled(rows, [grid])  # + seed / fix mirrors
             if df.empty:
                 continue
             full = (df.method == "midian") & (df.params.fillna("{}").astype(str) == "{}")  # MIDIAN, the full method
             q = tagged(df[(df.method.isin(["oracle", "random"]) | full) & (df.n == n) & (df.dist.astype(str) == dist)])
-            q = q[q.regime == reg]
-            if reg == "beta0" and q.liar_select.nunique() > 1:
-                q = q[q.liar_select == "random"]
+            q = liar_free(q[q.regime == reg], reg)
             for m, g in q.groupby("method"):
                 s = g.groupby("seed").success.mean().dropna()
                 if len(s) > len(cell["ref"].get(m, [])):
@@ -174,7 +132,7 @@ def collect(family):
 def draw(family, key, cell, csv_rows):
     n, dist, reg = key
     fws = sorted(cell["fw"], key=lambda m: S.ABBR.get(m, m))
-    srcs = [s for s, _, _ in SOURCES if any(s in cell["fw"][m] or (m, s) in cell["pending"] for m in fws)]
+    srcs = [s for s in S.SHORTLIST_ORDER if any(s in cell["fw"][m] or (m, s) in cell["pending"] for m in fws)]
     if not fws or len(srcs) < 2:
         return None  # a single shortlist compares nothing
     w = 0.84 / len(srcs)
@@ -189,7 +147,7 @@ def draw(family, key, cell, csv_rows):
         if m not in cell["ref"]:
             continue
         s = cell["ref"][m]
-        lo, hi = _ci(s)
+        lo, hi = se(s)
         v = float(s.mean())
         c = S.EXPLORE_COLOR.get(m, "#555")
         csv_rows.append([family, reg, dist, n, lbl, "-", v, lo, hi, len(s), False])
@@ -198,29 +156,33 @@ def draw(family, key, cell, csv_rows):
         ax.axhspan(lo, hi, color=c, alpha=0.12, lw=0, zorder=1)
         ax.axhline(v, color=c, ls=ls, lw=1.4, label=f"{lbl} ({v:.3f})", zorder=4)
 
-    stars = []
     for si, src in enumerate(srcs):
         off = (si - (len(srcs) - 1) / 2) * w
         xs, ys, el, eu = [], [], [], []
         for m, xm in zip(fws, xfw):
             s = cell["fw"][m].get(src)
             if s is None or not len(s):
-                if (m, src) in cell["pending"]:
-                    stars.append((xm + off, 0.0))  # every row quarantined: an empty, starred slot
-                continue
-            lo, hi = _ci(s)
+                continue  # every row quarantined: an empty slot
+            lo, hi = se(s)
             v = float(s.mean())
-            star = (m, src) in cell["pending"]
             xs.append(xm + off)
             ys.append(v)
             el.append(v - lo)
             eu.append(hi - v)
-            if star:
-                stars.append((xm + off, hi))
+            star = (m, src) in cell["pending"]
             csv_rows.append([family, reg, dist, n, S.ABBR.get(m, m), src, v, lo, hi, len(s), star])
         if not xs:
             continue
-        ax.bar(xs, ys, w * 0.9, color=SRC_COLOR[src], edgecolor="black", linewidth=0.25, label=SRC_NAME[src], zorder=2)
+        ax.bar(
+            xs,
+            ys,
+            w * 0.9,
+            color=S.SHORTLIST_COLOR[src],
+            edgecolor="black",
+            linewidth=0.25,
+            label=S.SHORTLIST_LONG[src],
+            zorder=2,
+        )
         ax.errorbar(xs, ys, yerr=[el, eu], fmt="none", ecolor="#222", elinewidth=0.4, capsize=0.8, zorder=3)
 
     ax.set_xticks(xfw)
@@ -230,10 +192,9 @@ def draw(family, key, cell, csv_rows):
     ax.grid(axis="y", lw=0.3, alpha=0.35, zorder=0)
     ax.set_axisbelow(True)
     seeds = max((len(s) for m in fws for s in cell["fw"][m].values()), default=0)
-    note = ""
     ax.set_title(
         f"{family} · n = {n:,} · {dist} · {REGIME_NAME.get(reg, reg)}   ({len(fws)} frameworks × {len(srcs)} "
-        f"shortlists, ≤ {seeds} seeds){note}"
+        f"shortlists, ≤ {seeds} seeds)"
     )
     ax.legend(ncol=min(6, len(srcs) + 2), frameon=False, loc="lower center", bbox_to_anchor=(0.5, 1.06))
     stem = f"{OUT}/{family}__n{n}__{dist}__{reg}"
@@ -286,7 +247,7 @@ def main(argv=None):
             "shortlist source. Error bars are +/- 1 s.e. over seeds; an erratum-28 rerun outstanding is flagged in the "
             "csv only. b = 3 only.\n"
             "Do-not-add arms (lib/exclusions.py) are never drawn. Data: results/aggregates/shortlist/<family>.csv.\n\n"
-            "Shortlist sources: " + "; ".join(f"`{k}` = {v}" for k, v, _ in SOURCES) + ".\n\n"
+            "Shortlist sources: " + "; ".join(f"`{k}` = {S.SHORTLIST_LONG[k]}" for k in S.SHORTLIST_ORDER) + ".\n\n"
         )
         for family in families:
             f.write(f"\n## {family}\n")

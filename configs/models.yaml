@@ -1,6 +1,6 @@
-# The agent model ladder (SPEC §1). THE ONLY PLACE A MODEL ID IS WRITTEN, besides
-# `SUPERVISOR` in midian/methods/frameworks/_common.py. Read by midian.backends.llm (population
-# building) and by cluster/slurm/serve_fleet.sbatch (which GPU, which port, how much HBM).
+# The agent model ladder (SPEC §1) and the methods' default models. THE ONLY PLACE A MODEL ID IS WRITTEN. Read by
+# midian.backends.llm (population building), by the methods (`supervisor`, `retrieval`) and by
+# cluster/slurm/serve_fleet.sbatch (which GPU, which port, how much HBM).
 # Swapping the ladder = editing this file. Nothing in the code changes.
 #
 # gpu_share is the fraction of one GPU's HBM given to that server; shares on the same gpu
@@ -29,3 +29,10 @@ tool_min_b: 3.0       # below this an agent gets NO python tool, even on a speci
                       # family: measured, the tool makes small models WORSE (the 1.5B
                       # scored 0.30 with it on chain_sum against 0.65 without), because
                       # they emit code they cannot write and spend their turn on it.
+
+# Default models of the methods (a grid overrides them per arm through params). `supervisor`: the framework rivals'
+# supervisor and midian_llm_descent's chooser (served from the ladder above). `retrieval`: the frameworks' SOTA
+# retrieval stack -- `embed` its strong dense embedder (the frameworks' default embedder stays MiniLM), `rerank` the
+# cross-encoder over the fused pool.
+supervisor: Qwen/Qwen2.5-7B-Instruct
+retrieval: {embed: Qwen/Qwen3-Embedding-8B, rerank: Qwen/Qwen3-Reranker-4B}

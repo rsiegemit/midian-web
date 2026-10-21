@@ -15,32 +15,16 @@ import math
 
 import numpy as np
 
-from ._est import CHUNK, lookup, trimmed_by_reporter
+from ._est import CHUNK, audit_rate, audit_reports, lookup, trimmed_by_reporter
 from .base import Method
-from .midian import AUDIT_RATE, STRIKES
 
 
-class Auditor:
-    """MIDIAN's report audits over a whole build: `rate` of instances re-run, STRIKES mismatches exclude a reporter."""
-
-    def __init__(self, n, rate):
-        self.rate, self.hits, self.excluded = rate, np.zeros(n, np.int32), np.zeros(n, bool)
-
-    def audit(self, view, a, f, k0, rep, reported):
-        """rep[V, peers], reported[V, peers, pulls] about agents a[V] (pulls k0[V] + j); returns probes spent."""
-        v, j = np.nonzero(view.rng.random((a.size, reported.shape[2])) < self.rate)
-        if v.size:
-            truth = view.probe_at(a[v], f, k0[v] + j)
-            np.add.at(self.hits, rep[v][reported[v, :, j] != truth[:, None]], 1)
-            self.excluded |= self.hits >= STRIKES
-        return v.size
-
-
-def halving(view, f, budget, peers=0, delta=1 / 3, auditor=None):
+def halving(view, f, budget, peers=0, delta=1 / 3, rate=0.0, hits=None, excluded=None):
     """Sequential halving over all agents for family f. Returns (best agent, probes used).
     peers>0: the router is NOT a trusted observer — each probe outcome reaches it only as the reports of `peers`
     random other agents (liars may corrupt them), aggregated by a per-reporter trimmed mean, exactly the channel of
-    MIDIAN w/o audits. `auditor` (peers>0 only): audit the reports, mask excluded reporters before trimming."""
+    MIDIAN w/o audits. `rate` > 0 (peers>0 only): MIDIAN's report audits (strikes in `hits`, exclusions in
+    `excluded`, both shared across families); excluded reporters are masked before trimming."""
     n = view.n
     alive, tot, cnt, used, audits = np.arange(n), np.zeros(n), np.zeros(n, np.int64), 0, 0
     rounds = max(1, math.ceil(math.log2(n)))
@@ -55,12 +39,9 @@ def halving(view, f, budget, peers=0, delta=1 / 3, auditor=None):
                 # random peers, never self
                 rep = (a[:, None] + view.rng.integers(1, n, (a.size, peers))) % n
                 reported = view.report_many(rep[:, :, None], a[:, None, None], out[:, None, :], f)
-                ex = None
-                if auditor is not None:
-                    audits += auditor.audit(view, a, f, cnt[a], rep, reported)
-                    ex = auditor.excluded[rep]
-                    ex &= ~ex.all(-1, keepdims=True)               # every peer excluded: all count (MIDIAN's rule)
-                out = trimmed_by_reporter(reported, delta, peers + 1, ex)[:, None] * pulls
+                if rate:
+                    audits += audit_reports(view, rate, hits, excluded, a, np.full(a.size, f), cnt[a], rep, reported)
+                out = trimmed_by_reporter(reported, delta, peers + 1, excluded[rep] if rate else None)[:, None] * pulls
             tot[a] += out.sum(1)
             cnt[a] += pulls
         used += alive.size * pulls
@@ -75,7 +56,7 @@ class SequentialHalving(Method):
     def __init__(self, peer_reported=False, r=10, delta=1 / 3, churn_mode="stale", audit=False, **p):
         super().__init__(peer_reported=peer_reported, r=r, delta=delta, churn_mode=churn_mode, audit=audit, **p)
         self.peers, self.delta, self.churn_mode = (r - 1) if peer_reported else 0, delta, churn_mode
-        self.rate = (AUDIT_RATE if audit is True else float(audit)) if audit else 0.0
+        self.rate = audit_rate(audit)
         if self.rate and not peer_reported:
             raise ValueError("audit needs peer_reported=True (a trusted observer has no reports to audit)")
         if peer_reported:
@@ -83,10 +64,10 @@ class SequentialHalving(Method):
 
     def build(self, view, budget):
         self.view, self.budget = view, budget
-        aud = Auditor(view.n, self.rate) if self.rate else None
+        hits, excluded = np.zeros(view.n, np.int32), np.zeros(view.n, bool)
         per_f = int(view.n * budget.b * (1 - self.rate))                  # audits are paid from the same budget
-        res = [halving(view, f, per_f, self.peers, self.delta, aud) for f in range(view.K)]
-        self.stats = {"excluded": int(aud.excluded.sum())} if aud else {}
+        res = [halving(view, f, per_f, self.peers, self.delta, self.rate, hits, excluded) for f in range(view.K)]
+        self.stats = {"excluded": int(excluded.sum())} if self.rate else {}
         self.best = np.array([a for a, _ in res])
         assert sum(u for _, u in res) <= budget.total_probes(view.n, view.K)
 

@@ -1,11 +1,12 @@
 """Reading stored result rows, and the per-row helpers every figure / number script shares.
 
-    read_rows(grid)           rows.d/*.json + rows.csv of one grid under the current method keys (midian.methods.keys)
-    load_fw(grid)             read_rows de-duplicated the way the framework-shortlist scripts count (every row, b
-    included) label(method, params)     the arm's label, as midian.analyze builds it stat(df, key)          one number
-    per row from the method_stats JSON column pending_reruns()          {(grid, framework, dist, regime)} whose
-    erratum-28 rerun is outstanding
-    swap_fixed(df)            the 10-seed build's MIDIAN: fixed-MIDIAN rows in place of midian{} where they exist
+    read_rows(grid)        rows.d/*.json + rows.csv of one grid under the current method keys (midian.methods.keys)
+    load_fw(grid)          read_rows de-duplicated the way the framework-shortlist scripts count (every row, b included)
+    label(method, params)  the arm's label, as midian.analyze builds it
+    swap_fixed(df)         the 10-seed build's MIDIAN: fixed-MIDIAN rows in place of midian{} where they exist
+    pooled(load, grids)    load(g) for every grid and its seed / MIDIAN-fix mirrors (grids.with_s4_10), swap_fixed
+    stat(df, key)          one number per row from the method_stats JSON column
+    pending_reruns()       {(grid, framework, dist, regime)} whose erratum-28 rerun is outstanding
 RESULTS is $RTE_DATA/results (midian.config).
 """
 
@@ -115,6 +116,13 @@ def swap_fixed(df):
     if "label" in out:
         out.loc[relabel, "label"] = label("midian", "{}")
     return out
+
+
+def pooled(load, gs, rid=False):
+    """swap_fixed of load(g) concatenated over every grid of grids.with_s4_10(gs) (the sources, plus their seed and
+    MIDIAN-fix mirrors under RTE_SEEDS_4_10=1); `rid`: duplicate row ids dropped before the swap."""
+    df = pd.concat([load(g) for g in grids.with_s4_10(gs)], ignore_index=True)
+    return swap_fixed(df.drop_duplicates("rid") if rid else df)
 
 
 def stat(df, key):

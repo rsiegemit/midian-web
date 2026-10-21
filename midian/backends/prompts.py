@@ -3,7 +3,7 @@
 HANDICAP: no exemplar, no family description, no tool. The spec's "difficulty capped" cannot be
 applied per agent — every agent must see the SAME instance for the paired stream and the shared
 verifier to mean anything — and the generation-budget cap that once stood in for it measured
-NON-MONOTONE (it HELPED a 0.5B on syllogism, 0.85 vs 0.30), so it is off by default.
+NON-MONOTONE (it HELPED a 0.5B on syllogism, 0.85 vs 0.30), so it was removed.
 See docs/archive/DEVIATIONS.md and scripts/data/calibrate_families.py.
 """
 from __future__ import annotations
@@ -13,8 +13,7 @@ import re
 from . import families, tools
 
 ANSWER_RE = re.compile(r"<answer>(.*?)</answer>", re.DOTALL | re.IGNORECASE)
-TOOL_RE = {"calculator": re.compile(r"<calc>(.*?)</calc>", re.DOTALL | re.IGNORECASE),
-           "python": re.compile(r"```(?:python)?\s*\n(.*?)```", re.DOTALL)}
+TOOL_RE = {"python": re.compile(r"```(?:python)?\s*\n(.*?)```", re.DOTALL)}
 FORMAT = "Give your final answer inside <answer></answer> tags, with nothing else inside the tags."
 
 # De-cloned populations (LLMBackend declone, 2026-10-16): each agent holds one VARIANT -- a persona line, a reasoning

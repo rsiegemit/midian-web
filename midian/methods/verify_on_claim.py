@@ -9,6 +9,7 @@ observe = 0.
 Params: k=3, max_tries=5, margin=0.15."""
 import numpy as np
 
+from ._decl import declared
 from .base import Method
 
 
@@ -21,8 +22,7 @@ class VerifyOnClaim(Method):
         self.k, self.max_tries, self.margin = k, max_tries, margin
 
     def build(self, view, budget):
-        self.view, self.D = view, view.declared
-        view.ledger.message(view.n)                          # collect declarations
+        self.view, self.D = view, declared(view)
         self.order, self.verdict = {}, {}                   # family -> ranked agents ; (a, f) -> (accepted, mean)
 
     def fetch(self, task):
