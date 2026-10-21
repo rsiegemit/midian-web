@@ -24,6 +24,7 @@ import pytest
 import midian.methods as methods_pkg
 from midian.budget import Budget
 from midian.methods import load_method
+from midian.run import execute
 from midian.world import AccessError, World
 
 N, K, DIST, BETA, SEED, N_TASKS = 100, 16, "specialist", 0.25, 1, 100
@@ -97,11 +98,10 @@ def drive(world, m, stream, name):
     """Run a stream through a built method; returns the outcomes."""
     out = []
     for task in stream:
-        agents = agents_of(m.fetch(task), world.n, name)
-        outs = [world.execute(a, task) for a in agents]
-        for a, o in zip(agents, outs):
-            m.observe(task, a, o)
-        out.append(outs[0] if len(outs) == 1 else int(2 * sum(outs) > len(outs)))
+        o, agents, outs = execute(world, task, agents_of(m.fetch(task), world.n, name))
+        for a, x in zip(agents, outs):
+            m.observe(task, a, x)
+        out.append(o)
     return np.array(out)
 
 
