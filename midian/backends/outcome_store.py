@@ -3,8 +3,10 @@ sampled texts (why: midian.backends.llm, DE-CLONED POPULATIONS).
 
 Per population: `<population dir>/outcomes/<host>_<pid>.sqlite`, one writer per process as in midian.llm_client (NFS:
 `nolock`), every shard read at first use, this process's shard opened at its first write. The build
-(scripts/data/build_declone.py) fills it; a method that probes past the build adds its outcomes, so every later method
-sees the same answer."""
+(scripts/data/build_declone.py) fills it; a method that probes past the build adds its outcomes, so every later reader
+sees the same answer -- except under concurrency: two processes that miss the same key both sample it (vLLM sampling
+is not batch-invariant, so their draws can differ) and each writes its own shard; a reader then gets the last shard it
+loads. Measured at 0.07% of stored outcomes; rows reproduce to about +/-0.01 (docs/reproducing.md, Tier 4)."""
 from __future__ import annotations
 
 import os
