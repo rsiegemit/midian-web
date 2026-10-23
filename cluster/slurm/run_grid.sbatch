@@ -17,7 +17,7 @@ export RTE_DATA HF_HUB_OFFLINE=1
 # Caller-provided values win, so `OMP_NUM_THREADS=8 sbatch -c 8 ...` is honoured; the default is unchanged.
 export OMP_NUM_THREADS="${OMP_NUM_THREADS:-1}" MKL_NUM_THREADS="${MKL_NUM_THREADS:-1}" OPENBLAS_NUM_THREADS="${OPENBLAS_NUM_THREADS:-1}"
 unset http_proxy https_proxy HTTP_PROXY HTTPS_PROXY ALL_PROXY all_proxy SSL_CERT_FILE REQUESTS_CA_BUNDLE CURL_CA_BUNDLE   # llm backend talks to the fleet
-cd "${SLURM_SUBMIT_DIR:-$HOME/rte}"; export PYTHONPATH="$PWD"
+cd "${SLURM_SUBMIT_DIR:-${RTE_REPO:-$HOME/rte}}"; export PYTHONPATH="$PWD"
 # Default to the PROJECT env: only it has torch/transformers/sentence_transformers, which the learned routers
 # (knn_router, mlp_router) import via midian/methods/_learned.py. The miniconda interpreter runs every other
 # method fine, which is why a missing RTE_PYTHON stayed invisible until knn_router at n = 10^5 (2026-09-08).

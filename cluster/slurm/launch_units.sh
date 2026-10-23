@@ -5,6 +5,9 @@
 #   TIME=D-HH:MM:SS: one walltime for every unit, for grids job_time.py has no measurement for (1.5 x the source grid's p95)
 #   UNITS=<ERE>: submit only the planned units whose "method|only|seed" key matches (staging, e.g. a probe warm-up first);
 #     a later run without UNITS submits the rest (the log is the state)
+#   LOCAL=P: no SLURM -- run the units on this machine, at most P at once (memory, not CPUs, sets P: MEM each), each
+#     under flock (never two copies of one unit), a MemoryMax=MEM systemd scope and `timeout` of the planned walltime;
+#     the log gets "local-rc=<exit> <key>" per finished unit and a re-run retries every key without local-rc=0
 #   Needs RTE_DATA, RTE_ACCOUNT, RTE_CPU_PARTITIONS (cluster/cluster.env.example). scripts/launch_units.sh is a symlink here.
 # Enforces OPS_RULES.md:
 #   R1  units come from the GRID LOADER (midian.run), never a hand-written filter list (a hand list dropped a regime once)
@@ -14,7 +17,8 @@
 #   R5  on QOSMaxSubmitJobPerUserLimit wait and retry the SAME unit, never drop it
 set -uo pipefail
 . "$(dirname "$(readlink -f "$0")")/../env.sh"
-need RTE_DATA RTE_ACCOUNT RTE_CPU_PARTITIONS
+need RTE_DATA; [ -n "${LOCAL:-}" ] || need RTE_ACCOUNT RTE_CPU_PARTITIONS
+[[ -z "${LOCAL:-}" || $LOCAL =~ ^[1-9][0-9]*$ ]] || { echo "LOCAL must be a positive integer (units at once)" >&2; exit 2; }
 if [ -n "${TODO:-}" ]; then echo "TODO=1 was renamed ONLY_MISSING=1 (refusing to plan every unit)" >&2; exit 2; fi
 G=${1:?usage: launch_units.sh <grid> [--nice N]}; NICE=0; [ "${2:-}" = "--nice" ] && NICE=${3:?}
 PY="$RTE_DATA/env/rte/bin/python"; LOG="$RTE_DATA/logs/launch_${G}.txt"; mkdir -p "$RTE_DATA/logs/units"; touch "$LOG"
@@ -43,10 +47,24 @@ for blk in blocks(cfg, g):
 for m, only, seed in sorted(plan, key=lambda k: (k[1], k[2], k[0])): print(f"{m}\t{only}\t{seed}\t{slurm(minutes(g, m))}")
 PY
 echo "$G: $(wc -l < "$LOG.plan") units, $(wc -l < "$LOG") already submitted"
+run_local() {   # <key> <method> <only> <seed> <D-HH:MM:SS>
+  local d=0 t=$5 h mm s; [[ $t == *-* ]] && { d=${t%%-*}; t=${t#*-}; }; IFS=: read -r h mm s <<< "$t"
+  flock -n "$RTE_DATA/logs/units/${G}__$(md5sum <<< "$1" | cut -c1-16).lock" \
+    systemd-run --user --scope -q -p MemoryMax="${MEM:-32G}" -p MemorySwapMax=0 \
+    env RTE_PYTHON="$PY" RTE_WORKERS=1 RTE_CONSOLIDATE=0 RTE_FW_PARALLEL="${RTE_FW_PARALLEL:-1}" \
+    timeout -k 30 $((d*86400 + 10#$h*3600 + 10#$mm*60 + 10#$s)) bash cluster/slurm/run_grid.sbatch "$G" --methods "$2" --only "$3" --seeds "$4" \
+    < /dev/null > "$RTE_DATA/logs/units/rte_${G}__$2-local$BASHPID.out" 2>&1
+  echo "local-rc=$? $1" >> "$LOG"
+}
 sub=0
 while IFS=$'\t' read -r m only seed t; do
-  key="$m|$only|$seed"; grep -qF "$key" "$LOG" && continue
+  key="$m|$only|$seed"
+  if [ -n "${LOCAL:-}" ]; then grep -qxF "local-rc=0 $key" "$LOG" && continue; else grep -qF "$key" "$LOG" && continue; fi
   [ -n "${UNITS:-}" ] && ! grep -qE "$UNITS" <<< "$key" && continue
+  if [ -n "${LOCAL:-}" ]; then
+    while [ "$(jobs -rp | wc -l)" -ge "$LOCAL" ]; do wait -n; done
+    run_local "$key" "$m" "$only" "$seed" "${TIME:-$t}" & sub=$((sub+1)); continue
+  fi
   while :; do
     jid=$(sbatch --parsable -p "$RTE_CPU_PARTITIONS" -A "$RTE_ACCOUNT" --nice="$NICE" -c 1 --mem="${MEM:-32G}" --time="${TIME:-$t}" \
       --job-name="rte_${G}__${m}" -o "$RTE_DATA/logs/units/%x-%j.out" -e "$RTE_DATA/logs/units/%x-%j.err" \
@@ -59,4 +77,5 @@ while IFS=$'\t' read -r m only seed t; do
     esac
   done
 done < "$LOG.plan"
+wait
 echo "$G: SUBMITTED $sub"
