@@ -87,6 +87,14 @@ python -m midian.run --grid live_f1_n1000 --only dist=specialist --seeds 1
 - **Memo.** Every model answer is memoised by a content hash of the full request (model, messages, max tokens; decoding is greedy) in a sharded SQLite
   store under `$RTE_DATA/cache/`. With the memo of the original campaign, rerunning a stored live cell makes no model
   calls and reproduces its rows exactly.
+- **De-cloned populations.** Their agents' answers are sampled, not memoised; only the 0/1 outcome is kept, in the
+  population's outcome store (`midian/backends/outcome_store.py`). When concurrent processes on one population both miss
+  the same (agent, family, instance), each samples it, and vLLM sampling is not batch-invariant, so the two draws can
+  differ; a later reader takes whichever shard it reads last. On specialist n = 10<sup>3</sup> seed 1, 1,461 of 83,144
+  stored outcomes were drawn by more than one process and 55 (0.07%) disagree. A single-process rerun of 18 rows
+  reproduced 8 exactly; the other 10 differed in 1-4 of 300 tasks (success within 0.014). De-cloned rows therefore
+  reproduce to about ±0.01; a rerun whose outcomes are all in the shipped stores samples nothing and reproduces its row
+  exactly.
 - **Frameworks.** Framework rows are reproducible in distribution only: the calls a framework makes inside its own
   environment are not memoised. Their rows are excluded from the exact parity check.
 - **Cost.** A cold MIDIAN build at n = 10<sup>5</sup>, b = 3 took 16.6 h of the fleet; a framework unit at
